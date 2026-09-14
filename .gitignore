@@ -1,0 +1,11 @@
+# Large 3D source files and archives (>100MB GitHub limit)
+*.blend
+*.blend1
+*.rar
+unpack file/
+*.hdr
+
+# Dependencies & system files
+node_modules/
+.DS_Store
+*.log

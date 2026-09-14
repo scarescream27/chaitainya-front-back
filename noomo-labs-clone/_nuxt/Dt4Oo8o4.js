@@ -1,0 +1,1 @@
+import{a as t,__tla as o}from"./iNjJ8EkR.js";import{k as e}from"./CkGjpDBV.js";let a,r=Promise.all([(()=>{try{return o}catch{}})()]).then(async()=>{a=e({__name:"privacy-policy",setup(l){return t({title:"Noomo Labs | Privacy Policy",meta:[{name:"description",content:"Noomo Labs privacy policy page."}]}),(i,c)=>null}})});export{r as __tla,a as default};
