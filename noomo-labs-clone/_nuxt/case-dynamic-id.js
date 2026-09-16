@@ -1,0 +1,82 @@
+/**
+ * ============================================================================
+ * File: case-dynamic-id.js
+ * Purpose: Dynamic case study route loader for /cases/:id.
+ * ============================================================================
+ */
+import { u as l, o as c, _, __tla as m } from "./app-main.js";
+import { C as p, a as d, __tla as u } from "./header-navbar.js";
+import { E as h, F as v, L as t, J as y, H as I } from "./vue-runtime.js";
+import { __tla as g } from "./case-info-shared.js";
+import "./lil-gui-customizer.js";
+let o,
+  f = Promise.all([
+    (() => {
+      try {
+        return m;
+      } catch {}
+    })(),
+    (() => {
+      try {
+        return u;
+      } catch {}
+    })(),
+    (() => {
+      try {
+        return g;
+      } catch {}
+    })(),
+  ]).then(async () => {
+    let a;
+    ((a = { class: "case-page" }),
+      (o = {
+        __name: "[id]",
+        setup(A) {
+          const r = l();
+          h(() => {
+            r.hideCursor("", "none");
+          });
+          const i = {
+            name: "Intel | AI.IO",
+            description:
+              "An immersive AI experience for Intel's booth at AWS re:Invent, marked by a personalized journey leading users through interactive athletic drills.",
+            tags: [
+              "Interactive Kiosk",
+              "AI",
+              "Booth experience",
+              "Activation campaign",
+            ],
+            awards: [
+              "FWA of the day",
+              "Best AI experience MWC 2024 (Techradar)",
+            ],
+            link: "https://noomoagency.com/work/creating-immersive-activation-ai-experience-for-intel-booth",
+            video: "/video/interactive_ai_wall.mp4",
+            buttonText: "View Case<br> study",
+            nextCase: "/cases/the-silly-bunny",
+            videoPoster: "/images/cus/AI.IO.png",
+          };
+          return (
+            c((s, n, e) => {
+              r.startTransition(s.path, n.path, e);
+            }),
+            (s, n) => {
+              const e = _;
+              return (
+                I(),
+                v("div", a, [
+                  t(e, null, {
+                    default: y(() => [
+                      t(p, { video: i.video }, null, 8, ["video"]),
+                    ]),
+                    _: 1,
+                  }),
+                  t(d, { page: i }),
+                ])
+              );
+            }
+          );
+        },
+      }));
+  });
+export { f as __tla, o as default };

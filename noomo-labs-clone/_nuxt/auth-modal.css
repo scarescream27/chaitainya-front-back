@@ -1,0 +1,491 @@
+/**
+ * ============================================================================
+ * Chaitanya 2k26 — Auth Modal & Dialog Styles
+ * ============================================================================
+ */
+
+/* Modal Root Overlay */
+.chaitanya-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 7, 10, 0.82);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 20px;
+}
+
+.chaitanya-modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Main Modal Card */
+.chaitanya-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: rgba(15, 16, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 36px 32px 32px;
+  color: #f5f5f7;
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chaitanya-modal-backdrop.active .chaitanya-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.chaitanya-modal-card.admin-wide {
+  max-width: 820px;
+}
+
+/* Corner Accents */
+.chaitanya-modal-card .corner {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  user-select: none;
+}
+.chaitanya-modal-card .corner-tl { top: 10px; left: 12px; }
+.chaitanya-modal-card .corner-tr { top: 10px; right: 12px; }
+.chaitanya-modal-card .corner-bl { bottom: 10px; left: 12px; }
+.chaitanya-modal-card .corner-br { bottom: 10px; right: 12px; }
+
+/* Close Button */
+.chaitanya-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.chaitanya-modal-close:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+/* Headers */
+.chaitanya-modal-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.chaitanya-modal-tag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #00e5ff;
+  margin-bottom: 8px;
+}
+
+.chaitanya-modal-title {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 38px;
+  line-height: 0.95;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.chaitanya-modal-subtitle {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: #8f929d;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Notice / Banner */
+.chaitanya-modal-banner {
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #b0e8ff;
+  line-height: 1.4;
+}
+
+.chaitanya-modal-banner.warning {
+  background: rgba(255, 179, 0, 0.08);
+  border-color: rgba(255, 179, 0, 0.3);
+  color: #ffd580;
+}
+
+.chaitanya-modal-banner.danger {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.35);
+  color: #ff8080;
+}
+
+/* Google Sign-in Button */
+.btn-google-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  background: #ffffff;
+  color: #0d0e12;
+  border: 1px solid #ffffff;
+  border-radius: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
+}
+
+.btn-google-auth:hover {
+  background: #f0f0f5;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.22);
+}
+
+.btn-google-auth:active {
+  transform: translateY(0);
+}
+
+.btn-google-auth svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Form Fields (for Attendee Details) */
+.chaitanya-form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.chaitanya-form-label {
+  display: block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #a4a7b5;
+  margin-bottom: 6px;
+}
+
+.chaitanya-form-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.chaitanya-form-input:focus {
+  outline: none;
+  border-color: #00e5ff;
+  background: rgba(0, 229, 255, 0.05);
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+}
+
+.chaitanya-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Form Divider */
+.chaitanya-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.chaitanya-divider::before,
+.chaitanya-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chaitanya-divider span {
+  padding: 0 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #6d707c;
+  text-transform: uppercase;
+}
+
+/* Mode Switchers */
+.chaitanya-modal-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #8c8f9b;
+}
+
+.chaitanya-link-btn {
+  background: transparent;
+  border: none;
+  color: #00e5ff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-transform: uppercase;
+}
+
+.chaitanya-link-btn:hover {
+  color: #ffffff;
+}
+
+/* Profile Card View */
+.profile-avatar-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #00e5ff;
+  padding: 3px;
+  object-fit: cover;
+  background: #000;
+  margin-bottom: 12px;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.35);
+}
+
+.profile-name {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 28px;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 4px;
+  letter-spacing: 0.5px;
+}
+
+.profile-email {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #8f929d;
+  margin: 0 0 10px;
+}
+
+.profile-role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  background: rgba(0, 229, 255, 0.12);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.profile-role-badge.admin {
+  background: rgba(255, 61, 0, 0.15);
+  color: #ff5722;
+  border-color: rgba(255, 61, 0, 0.4);
+}
+
+.profile-meta-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.profile-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+}
+
+.profile-meta-row:last-child {
+  border-bottom: none;
+}
+
+.profile-meta-label {
+  color: #7b7e8c;
+  text-transform: uppercase;
+}
+
+.profile-meta-val {
+  color: #fff;
+  font-weight: 500;
+}
+
+.profile-events-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.profile-event-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #e0e0e5;
+}
+
+/* Secondary Button / Sign Out */
+.btn-secondary-action {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  color: #ff5252;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.btn-secondary-action:hover {
+  background: rgba(255, 82, 82, 0.12);
+  border-color: #ff5252;
+}
+
+/* Admin Table */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+
+.admin-stat-num {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 32px;
+  color: #00e5ff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.admin-stat-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: #8b8f9e;
+  text-transform: uppercase;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  text-align: left;
+}
+
+.admin-table th {
+  background: rgba(255, 255, 255, 0.06);
+  color: #00e5ff;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.admin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #d1d4de;
+}
+
+.admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Responsive tweaks */
+@media (max-width: 767px) {
+  .chaitanya-modal-card {
+    padding: 28px 20px 24px;
+  }
+  .chaitanya-modal-title {
+    font-size: 28px;
+  }
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

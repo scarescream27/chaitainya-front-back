@@ -1,0 +1,120 @@
+/**
+ * ============================================================================
+ * File: case-intel-ai.js
+ * Purpose: Case study page: Intel AI IO interactive experience.
+ * ============================================================================
+ */
+import { u as c, o as m, a as l, _ as p, __tla as v } from "./app-main.js";
+import { C as I, a as d, __tla as _ } from "./header-navbar.js";
+import { E as h, F as u, L as a, J as g, H as b } from "./vue-runtime.js";
+import { __tla as f } from "./case-info-shared.js";
+import "./lil-gui-customizer.js";
+let s,
+  A = Promise.all([
+    (() => {
+      try {
+        return v;
+      } catch {}
+    })(),
+    (() => {
+      try {
+        return _;
+      } catch {}
+    })(),
+    (() => {
+      try {
+        return f;
+      } catch {}
+    })(),
+  ]).then(async () => {
+    let o;
+    ((o = { class: "case-page" }),
+      (s = {
+        __name: "intel-ai-io",
+        setup(y) {
+          const i = c();
+          h(() => {
+            i.hideCursor("", "none");
+          });
+          const e = {
+            name: "Intel | AI.IO",
+            description:
+              "An immersive AI experience for Intel's booth at AWS re:Invent, marked by a personalized journey leading users through interactive athletic drills.",
+            tags: [
+              "Interactive Kiosk",
+              "AI",
+              "Booth experience",
+              "Activation campaign",
+            ],
+            awards: [
+              "FWA of the day",
+              "Best AI experience MWC 2024 (Techradar)",
+            ],
+            link: "https://noomoagency.com/work/creating-immersive-activation-ai-experience-for-intel-booth",
+            video: "/video/interactive_ai_wall_opt.mp4",
+            buttonText: "View Case<br>Study",
+            nextCase: "/cases/the-silly-bunny",
+            videoPoster: "/images/cus/AI.IO.png",
+          };
+          return (
+            m((n, r, t) => {
+              i.startTransition(n.path, r.path, t);
+            }),
+            l({
+              title: "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+              meta: [
+                {
+                  name: "description",
+                  content:
+                    "Immersive activation campaign for ai.io and Intel booth at AWS re:Invent",
+                },
+                {
+                  name: "og:title",
+                  property: "og:title",
+                  content:
+                    "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+                },
+                {
+                  name: "og:description",
+                  property: "og:description",
+                  content:
+                    "Immersive activation campaign for ai.io and Intel booth at AWS re:Invent",
+                },
+                {
+                  name: "twitter:title",
+                  content:
+                    "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+                },
+                {
+                  name: "twitter:description",
+                  content:
+                    "Immersive activation campaign for ai.io and Intel booth at AWS re:Invent",
+                },
+              ],
+            }),
+            (n, r) => {
+              const t = p;
+              return (
+                b(),
+                u("div", o, [
+                  a(t, null, {
+                    default: g(() => [
+                      a(
+                        I,
+                        { video: { video: e.video, poster: e.videoPoster } },
+                        null,
+                        8,
+                        ["video"],
+                      ),
+                    ]),
+                    _: 1,
+                  }),
+                  a(d, { page: e }),
+                ])
+              );
+            }
+          );
+        },
+      }));
+  });
+export { A as __tla, s as default };
