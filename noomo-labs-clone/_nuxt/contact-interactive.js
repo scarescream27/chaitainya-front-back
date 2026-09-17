@@ -271,22 +271,29 @@ export function initContactForm5Fields() {
   function showSuccessCard(nameVal, teamVal) {
     if (!heartWrap) return;
     heartWrap.innerHTML = `
-      <div class="heart-dispatch-inner" style="text-align:center; padding:20px 24px;">
-        <span style="font-size:36px; display:block; margin-bottom:8px; color:#000;">✓</span>
-        <h3 class="heart-success-title" style="font-family:DrukMedium,sans-serif; font-size:26px; text-transform:uppercase; margin-bottom:6px; color:#000; letter-spacing:0.5px;">MESSAGE DISPATCHED</h3>
-        <p class="heart-success-subtitle" style="font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.45; color:#333; margin-bottom:14px;">
+      <div class="heart-dispatch-inner">
+        <span class="heart-check">✓</span>
+        <h3 class="heart-success-title">MESSAGE DISPATCHED</h3>
+        <p class="heart-success-subtitle">
           Thank you, <strong>${nameVal || "Friend"}</strong>${teamVal ? " (Team: <strong>" + teamVal + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitainyahptu@gmail.com</strong>.
         </p>
-        <button type="button" class="heart-reset-btn" id="btn-contact-reset" style="background:#000; color:#fff; border:none; padding:9px 18px; border-radius:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">[ SEND ANOTHER MESSAGE ]</button>
+        <button type="button" class="heart-reset-btn" id="btn-contact-reset">[ SEND ANOTHER MESSAGE ]</button>
       </div>
     `;
 
     const activeGsap = window.gsap || gsap;
     if (activeGsap) {
-      activeGsap.to(heartWrap, { duration: 0.6, opacity: 1, pointerEvents: "auto", delay: 0.2, ease: "power2.out" });
+      activeGsap.fromTo(
+        heartWrap,
+        { opacity: 0, scale: 0.94, left: "50%", top: "50%", xPercent: -50, yPercent: -50 },
+        { duration: 0.5, opacity: 1, scale: 1, left: "50%", top: "50%", xPercent: -50, yPercent: -50, pointerEvents: "auto", delay: 0.15, ease: "power2.out" }
+      );
     } else {
       heartWrap.style.opacity = "1";
       heartWrap.style.pointerEvents = "auto";
+      heartWrap.style.left = "50%";
+      heartWrap.style.top = "50%";
+      heartWrap.style.transform = "translate(-50%, -50%)";
     }
 
     const resetBtn = heartWrap.querySelector("#btn-contact-reset");
@@ -296,7 +303,16 @@ export function initContactForm5Fields() {
         if (heroH1) heroH1.textContent = originalH1;
         const bubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];
         if (activeGsap) {
-          activeGsap.to(heartWrap, { duration: 0.3, opacity: 0, pointerEvents: "none" });
+          activeGsap.to(heartWrap, {
+            duration: 0.25,
+            opacity: 0,
+            scale: 0.94,
+            pointerEvents: "none",
+            left: "50%",
+            top: "50%",
+            xPercent: -50,
+            yPercent: -50
+          });
           activeGsap.to(bubbles, {
             duration: 0.5,
             x: "0%",
