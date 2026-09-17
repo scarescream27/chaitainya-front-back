@@ -20,6 +20,14 @@
   pointer-events: none !important;
 }
 
+body:has(.privacy-page-root) .transition-component,
+.has-privacy-policy .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  clip-path: circle(0 at 50% 50%) !important;
+  -webkit-clip-path: circle(0 at 50% 50%) !important;
+}
+
 @media (max-width: 767px) {
   .privacy-page-root {
     background-size: 10%;
@@ -80,6 +88,12 @@
   border-bottom: 2px solid #000000;
   padding-bottom: 30px;
   margin-bottom: 36px;
+  position: relative;
+  z-index: 10;
+  opacity: 1 !important;
+  height: auto !important;
+  width: 100% !important;
+  display: block !important;
 }
 
 .privacy-tag-badge {

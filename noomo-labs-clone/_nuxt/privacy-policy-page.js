@@ -18,6 +18,17 @@ let a,
     a = e({
       __name: "privacy-policy",
       setup(l) {
+        try {
+          document.body.classList.add("has-privacy-policy");
+          const trans = document.querySelector(".transition-component");
+          if (trans) {
+            trans.style.display = "none";
+            trans.style.opacity = "0";
+            trans.style.clipPath = "circle(0 at 50% 50%)";
+            trans.style.webkitClipPath = "circle(0 at 50% 50%)";
+          }
+        } catch (e) {}
+
         t({
           title: "Chaitainya 2k26 | Privacy Policy",
           meta: [
@@ -43,7 +54,7 @@ let a,
             </div>
 
             <!-- Hero Header -->
-            <header class="privacy-hero">
+            <div class="privacy-hero">
               <span class="privacy-tag-badge">Official Directive & Data Protection</span>
               <h1>Privacy Policy</h1>
               <p class="subtitle">Chaitanya 2k26 — Himachal Pradesh Technical University (HPTU)</p>
@@ -54,7 +65,7 @@ let a,
                 <span>•</span>
                 <span>Custodian: Organizing Committee & Tech Council</span>
               </div>
-            </header>
+            </div>
 
             <!-- Quick Jump Nav -->
             <nav class="privacy-quick-nav">
