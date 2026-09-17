@@ -50,10 +50,12 @@ export async function submitToWeb3Forms(formData) {
   const payload = {
     access_key: accessKey,
     name: formData.name || "Anonymous",
+    team_name: formData.team_name || "N/A",
     email: formData.email || "no-reply@chaitanya2k26.org",
-    category: formData.selected || formData.category || "General Inquiry",
-    message: formData.message || "",
-    subject: `[Chaitanya 2k26] ${formData.selected || "Inquiry"} from ${formData.name}`,
+    contact_no: formData.contact_no || "N/A",
+    query: formData.query || formData.message || "",
+    message: `Team: ${formData.team_name || "N/A"}\nContact No: ${formData.contact_no || "N/A"}\n\nQuery:\n${formData.query || formData.message || ""}`,
+    subject: `[Chaitanya 2k26] Query from ${formData.name || "Participant"} (Team: ${formData.team_name || "Individual"})`,
     from_name: DEFAULT_WEB3FORMS_CONFIG.fromName,
   };
 

@@ -1,21 +1,19 @@
 /**
  * ============================================================================
- * Chaitanya 2k26 — Contact Form Interactive Animations & Web3Forms Controller
+ * Chaitanya 2k26 — Contact Form Interactive Controller (5 Custom Fields)
  * ============================================================================
- * Features:
- * 1. Real-time SVG Progress Rim on active bubbles (0% to 100% fill as you type).
- * 2. Concentric Keystroke Liquid Ripple Wave expanding from bubble center.
- * 3. Live Monospace HUD Badge displaying character count & validation state.
- * 4. Dynamic Kinetic Hero Title greeting as user types their name.
- * 5. Web Audio tactile typing acoustics (synchronized with audio toggle).
- * 6. Transmitting radar animation & Web3Forms API submission to chaitainyahptu@gmail.com.
- * 7. Celebratory success card with reset capability.
+ * Fields:
+ * 1. Name
+ * 2. Team Name
+ * 3. Email
+ * 4. Contact No
+ * 5. Query
+ * Action: SEND ->
  */
 
 import { submitToWeb3Forms, isWeb3FormsLive } from "./web3forms-config.js";
 import { h as gsap } from "./app-main.js";
 
-// Make globally accessible
 if (typeof window !== "undefined") {
   window.gsap = window.gsap || gsap;
   window.__submitToWeb3Forms = submitToWeb3Forms;
@@ -38,8 +36,7 @@ function playKeystrokeSound() {
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
-    // Crisp tactile acoustic blip
+
     osc.type = "sine";
     osc.frequency.setValueAtTime(500 + Math.random() * 220, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.04);
@@ -52,18 +49,12 @@ function playKeystrokeSound() {
 
     osc.start();
     osc.stop(audioCtx.currentTime + 0.05);
-  } catch (e) {
-    // Audio optional / safe ignore
-  }
+  } catch (e) {}
 }
 
-/**
- * Injects radiant SVG progress ring and HUD badge into a bubble wrapper
- */
 function enhanceBubble(wrapper, labelText = "FIELD") {
   if (!wrapper || wrapper.querySelector(".bubble-progress-svg")) return;
 
-  // 1. Insert SVG Progress Ring
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("class", "bubble-progress-svg");
   svg.setAttribute("viewBox", "0 0 100 100");
@@ -73,14 +64,12 @@ function enhanceBubble(wrapper, labelText = "FIELD") {
   `;
   wrapper.appendChild(svg);
 
-  // 2. Insert HUD Badge
   const hud = document.createElement("div");
   hud.className = "bubble-hud-badge";
   hud.textContent = `[ ${labelText} ]`;
   wrapper.appendChild(hud);
 
-  // 3. Focus and blur class synchronization
-  const inputEl = wrapper.querySelector("input, textarea, select");
+  const inputEl = wrapper.querySelector("input, textarea");
   if (inputEl) {
     inputEl.addEventListener("focus", () => {
       wrapper.classList.add("is-active");
@@ -91,20 +80,17 @@ function enhanceBubble(wrapper, labelText = "FIELD") {
   }
 }
 
-/**
- * Triggers concentric liquid ripple wave inside the bubble
- */
-function triggerRipple(wrapper) {
+function triggerRipple(wrapper, isError = false) {
   if (!wrapper) return;
   const ripple = document.createElement("div");
   ripple.className = "keystroke-ripple";
+  if (isError) {
+    ripple.style.borderColor = "#ff3333";
+  }
   wrapper.appendChild(ripple);
   setTimeout(() => ripple.remove(), 700);
 }
 
-/**
- * Updates progress ring stroke & HUD badge text
- */
 function updateProgress(wrapper, percent, hudText, isValid = false) {
   if (!wrapper) return;
   const bar = wrapper.querySelector(".bubble-progress-bar");
@@ -123,41 +109,70 @@ function updateProgress(wrapper, percent, hudText, isValid = false) {
   }
 }
 
-/**
- * Main initializer for Contact Form animations
- */
-export function initContactFormAnimations() {
+export function initContactForm5Fields() {
   if (typeof document === "undefined") return;
 
-  const form = document.querySelector(".contact-form form");
-  if (!form || form.dataset.animated === "true") return;
-  form.dataset.animated = "true";
+  const wrapper = document.querySelector(".contact-form .wrapper");
+  if (!wrapper) return;
 
-  const wrappers = form.querySelectorAll(".input-wrapper");
-  if (wrappers.length < 5) return;
+  if (wrapper.dataset.fiveFieldsInitialized === "true") return;
+  wrapper.dataset.fiveFieldsInitialized = "true";
 
-  const nameWrap = wrappers[0];
-  const emailWrap = wrappers[1];
-  const messageWrap = wrappers[2];
-  const categoryWrap = wrappers[3];
-  const sendWrap = wrappers[4];
-  const heartWrap = wrappers[5] || form.querySelector(".heart");
+  // Build the 5 fields + Send + Heart HTML
+  wrapper.innerHTML = `
+    <form class="contact-chaitanya-form" onsubmit="return false;">
+      <div class="input-wrapper" data-field="name">
+        <input type="text" name="name" placeholder="[YOUR NAME]" autocomplete="off" spellcheck="false" />
+        <div class="outline"></div>
+      </div>
+      <div class="input-wrapper" data-field="team_name">
+        <input type="text" name="team_name" placeholder="[TEAM NAME]" autocomplete="off" spellcheck="false" />
+        <div class="outline"></div>
+      </div>
+      <div class="input-wrapper" data-field="email">
+        <input type="email" name="email" placeholder="[YOUR EMAIL]" autocomplete="off" spellcheck="false" />
+        <div class="outline"></div>
+      </div>
+      <div class="input-wrapper" data-field="contact_no">
+        <input type="tel" name="contact_no" placeholder="[CONTACT NO]" autocomplete="off" spellcheck="false" />
+        <div class="outline"></div>
+      </div>
+      <div class="input-wrapper input-wrapper-text" data-field="query">
+        <textarea name="query" placeholder="[YOUR QUERY]" rows="1" spellcheck="false"></textarea>
+        <div class="outline"></div>
+      </div>
+      <div class="input-wrapper send" data-field="send">
+        <p>SEND →</p>
+      </div>
+      <div class="input-wrapper heart"></div>
+    </form>
+  `;
 
-  // Enhance individual bubbles
+  const form = wrapper.querySelector("form");
+  const nameWrap = form.querySelector('[data-field="name"]');
+  const teamWrap = form.querySelector('[data-field="team_name"]');
+  const emailWrap = form.querySelector('[data-field="email"]');
+  const contactWrap = form.querySelector('[data-field="contact_no"]');
+  const queryWrap = form.querySelector('[data-field="query"]');
+  const sendWrap = form.querySelector('[data-field="send"]');
+  const heartWrap = form.querySelector(".heart");
+
   enhanceBubble(nameWrap, "ENTER NAME");
+  enhanceBubble(teamWrap, "ENTER TEAM NAME");
   enhanceBubble(emailWrap, "ENTER EMAIL");
-  enhanceBubble(messageWrap, "PROJECT / QUERY DETAILS");
-  enhanceBubble(categoryWrap, "INQUIRY CATEGORY");
+  enhanceBubble(contactWrap, "ENTER CONTACT NO");
+  enhanceBubble(queryWrap, "ENTER YOUR QUERY");
 
   const nameInput = nameWrap.querySelector("input");
+  const teamInput = teamWrap.querySelector("input");
   const emailInput = emailWrap.querySelector("input");
-  const messageInput = messageWrap.querySelector("textarea");
-  const categorySelect = categoryWrap.querySelector("select");
+  const contactInput = contactWrap.querySelector("input");
+  const queryInput = queryWrap.querySelector("textarea");
 
   const heroH1 = document.querySelector(".contact-hero h1");
   const originalH1 = heroH1 ? heroH1.textContent : "LET'S CREATE SOMETHING AMAZING TOGETHER";
 
-  // 1. Name Input Listener
+  // 1. Name Input
   if (nameInput) {
     nameInput.addEventListener("input", (e) => {
       const val = e.target.value.trim();
@@ -182,7 +197,24 @@ export function initContactFormAnimations() {
     });
   }
 
-  // 2. Email Input Listener
+  // 2. Team Name Input
+  if (teamInput) {
+    teamInput.addEventListener("input", (e) => {
+      const val = e.target.value.trim();
+      const pct = Math.min(1, val.length / 3);
+      const valid = val.length >= 2;
+      updateProgress(
+        teamWrap,
+        pct,
+        valid ? `[ ${val.length} CHARS • TEAM READY ✓ ]` : `[ ${val.length}/2 CHARS • TYPE TEAM ]`,
+        valid
+      );
+      triggerRipple(teamWrap);
+      playKeystrokeSound();
+    });
+  }
+
+  // 3. Email Input
   if (emailInput) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     emailInput.addEventListener("input", (e) => {
@@ -200,71 +232,58 @@ export function initContactFormAnimations() {
     });
   }
 
-  // 3. Message Textarea Listener
-  if (messageInput) {
-    messageInput.addEventListener("input", (e) => {
+  // 4. Contact No Input (phone number)
+  if (contactInput) {
+    contactInput.addEventListener("input", (e) => {
       const val = e.target.value.trim();
-      const valid = val.length >= 5;
+      const digits = val.replace(/[^0-9]/g, "");
+      const valid = digits.length >= 10;
+      const pct = Math.min(1, digits.length / 10);
+      updateProgress(
+        contactWrap,
+        pct,
+        valid ? `[ ${digits.length} DIGITS • PHONE VERIFIED ✓ ]` : `[ ${digits.length}/10 DIGITS • ENTER PHONE ]`,
+        valid
+      );
+      triggerRipple(contactWrap);
+      playKeystrokeSound();
+    });
+  }
+
+  // 5. Query Textarea
+  if (queryInput) {
+    queryInput.addEventListener("input", (e) => {
+      const val = e.target.value.trim();
+      const valid = val.length >= 3;
       const pct = Math.min(1, val.length / 20);
       updateProgress(
-        messageWrap,
+        queryWrap,
         pct,
-        valid ? `[ ${val.length} CHARS • READY ✓ ]` : `[ ${val.length}/5 CHARS • TYPE MESSAGE ]`,
+        valid ? `[ ${val.length} CHARS • QUERY READY ✓ ]` : `[ ${val.length}/3 CHARS • TYPE QUERY ]`,
         valid
       );
-      triggerRipple(messageWrap);
+      triggerRipple(queryWrap);
       playKeystrokeSound();
     });
   }
 
-  // 4. Category Select Listener
-  if (categorySelect) {
-    categorySelect.addEventListener("change", (e) => {
-      const val = e.target.value;
-      const valid = val && val !== "none";
-      updateProgress(
-        categoryWrap,
-        valid ? 1.0 : 0,
-        valid ? `[ ${val.toUpperCase()} ✓ ]` : `[ SELECT CATEGORY ]`,
-        valid
-      );
-      triggerRipple(categoryWrap);
-      playKeystrokeSound();
-    });
-  }
-
-  // Helper: Display Transmitting State
-  window.__setContactTransmitting = (isTransmitting) => {
-    if (!sendWrap) return;
-    if (isTransmitting) {
-      sendWrap.classList.add("transmitting");
-      sendWrap.dataset.origHtml = sendWrap.innerHTML;
-      sendWrap.innerHTML = `<p><span class="radar-spinner"></span> TRANSMITTING...</p>`;
-    } else {
-      sendWrap.classList.remove("transmitting");
-      if (sendWrap.dataset.origHtml) {
-        sendWrap.innerHTML = sendWrap.dataset.origHtml;
-      }
-    }
-  };
-
-  // Helper: Reveal celebratory dispatched card
-  function showSuccessCard(nameVal) {
+  // Helper: show celebratory card
+  function showSuccessCard(nameVal, teamVal) {
     if (!heartWrap) return;
     heartWrap.innerHTML = `
-      <div class="heart-dispatch-inner" style="text-align:center; padding:16px;">
+      <div class="heart-dispatch-inner" style="text-align:center; padding:20px 24px;">
         <span style="font-size:36px; display:block; margin-bottom:8px; color:#000;">✓</span>
-        <h3 class="heart-success-title" style="font-family:DrukMedium,sans-serif; font-size:26px; text-transform:uppercase; margin-bottom:6px; color:#000;">MESSAGE DISPATCHED</h3>
-        <p class="heart-success-subtitle" style="font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.4; color:#333; margin-bottom:14px;">
-          Thank you, <strong>${nameVal || "Friend"}</strong>! Your inquiry has been forwarded directly to <strong>chaitainyahptu@gmail.com</strong>.
+        <h3 class="heart-success-title" style="font-family:DrukMedium,sans-serif; font-size:26px; text-transform:uppercase; margin-bottom:6px; color:#000; letter-spacing:0.5px;">MESSAGE DISPATCHED</h3>
+        <p class="heart-success-subtitle" style="font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.45; color:#333; margin-bottom:14px;">
+          Thank you, <strong>${nameVal || "Friend"}</strong>${teamVal ? " (Team: <strong>" + teamVal + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitainyahptu@gmail.com</strong>.
         </p>
-        <button type="button" class="heart-reset-btn" id="btn-contact-reset" style="background:#000; color:#fff; border:none; padding:8px 16px; border-radius:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; text-transform:uppercase;">[ SEND ANOTHER MESSAGE ]</button>
+        <button type="button" class="heart-reset-btn" id="btn-contact-reset" style="background:#000; color:#fff; border:none; padding:9px 18px; border-radius:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">[ SEND ANOTHER MESSAGE ]</button>
       </div>
     `;
 
     const activeGsap = window.gsap || gsap;
     if (activeGsap) {
-      activeGsap.to(heartWrap, { duration: 0.6, opacity: 1, pointerEvents: "auto", delay: 0.25, ease: "power2.out" });
+      activeGsap.to(heartWrap, { duration: 0.6, opacity: 1, pointerEvents: "auto", delay: 0.2, ease: "power2.out" });
     } else {
       heartWrap.style.opacity = "1";
       heartWrap.style.pointerEvents = "auto";
@@ -275,9 +294,10 @@ export function initContactFormAnimations() {
       resetBtn.addEventListener("click", () => {
         form.reset();
         if (heroH1) heroH1.textContent = originalH1;
+        const bubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];
         if (activeGsap) {
           activeGsap.to(heartWrap, { duration: 0.3, opacity: 0, pointerEvents: "none" });
-          activeGsap.to([nameWrap, emailWrap, messageWrap, categoryWrap, sendWrap], {
+          activeGsap.to(bubbles, {
             duration: 0.5,
             x: "0%",
             opacity: 1,
@@ -287,98 +307,124 @@ export function initContactFormAnimations() {
         } else {
           heartWrap.style.opacity = "0";
           heartWrap.style.pointerEvents = "none";
-          [nameWrap, emailWrap, messageWrap, categoryWrap, sendWrap].forEach(el => {
+          bubbles.forEach(el => {
             el.style.opacity = "1";
             el.style.transform = "none";
             el.style.pointerEvents = "auto";
           });
         }
         sendWrap.classList.remove("transmitting");
-        if (sendWrap.dataset.origHtml) sendWrap.innerHTML = sendWrap.dataset.origHtml;
+        sendWrap.innerHTML = `<p>SEND →</p>`;
         updateProgress(nameWrap, 0, "[ ENTER NAME ]");
+        updateProgress(teamWrap, 0, "[ ENTER TEAM NAME ]");
         updateProgress(emailWrap, 0, "[ ENTER EMAIL ]");
-        updateProgress(messageWrap, 0, "[ PROJECT / QUERY DETAILS ]");
-        updateProgress(categoryWrap, 0, "[ INQUIRY CATEGORY ]");
+        updateProgress(contactWrap, 0, "[ ENTER CONTACT NO ]");
+        updateProgress(queryWrap, 0, "[ ENTER YOUR QUERY ]");
       });
     }
   }
 
-  // 5. Send Button Interceptor
+  // 6. Send Button & Submission Handler
   if (sendWrap) {
     sendWrap.addEventListener("click", async (e) => {
-      const nameVal = nameInput ? nameInput.value.trim() : "";
-      const emailVal = emailInput ? emailInput.value.trim() : "";
-      const msgVal = messageInput ? messageInput.value.trim() : "";
-      const catVal = categorySelect ? categorySelect.value : "General Inquiry";
+      e.preventDefault();
+      e.stopPropagation();
 
-      // Basic client validation check
+      const nameVal = nameInput ? nameInput.value.trim() : "";
+      const teamVal = teamInput ? teamInput.value.trim() : "";
+      const emailVal = emailInput ? emailInput.value.trim() : "";
+      const contactVal = contactInput ? contactInput.value.trim() : "";
+      const queryVal = queryInput ? queryInput.value.trim() : "";
+
+      // Validation 1: Name
       if (!nameVal || nameVal.length < 2) {
         if (nameInput) nameInput.focus();
-        updateProgress(nameWrap, 0, "[ ERROR: PLEASE ENTER NAME ]");
-        triggerRipple(nameWrap);
+        updateProgress(nameWrap, 0, "[ ERROR: ENTER NAME ]");
+        triggerRipple(nameWrap, true);
         return;
       }
 
+      // Validation 2: Team Name
+      if (!teamVal || teamVal.length < 2) {
+        if (teamInput) teamInput.focus();
+        updateProgress(teamWrap, 0, "[ ERROR: ENTER TEAM NAME ]");
+        triggerRipple(teamWrap, true);
+        return;
+      }
+
+      // Validation 3: Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailVal || !emailRegex.test(emailVal)) {
         if (emailInput) emailInput.focus();
         updateProgress(emailWrap, 0, "[ ERROR: VALID EMAIL REQUIRED ]");
-        triggerRipple(emailWrap);
+        triggerRipple(emailWrap, true);
         return;
       }
 
-      if (!msgVal || msgVal.length < 2) {
-        if (messageInput) messageInput.focus();
-        updateProgress(messageWrap, 0, "[ ERROR: PLEASE ENTER MESSAGE ]");
-        triggerRipple(messageWrap);
+      // Validation 4: Contact No
+      const digits = contactVal.replace(/[^0-9]/g, "");
+      if (!contactVal || digits.length < 10) {
+        if (contactInput) contactInput.focus();
+        updateProgress(contactWrap, 0, "[ ERROR: 10-DIGIT PHONE REQUIRED ]");
+        triggerRipple(contactWrap, true);
         return;
       }
 
-      // If Vue's form submit will not handle it, handle it directly:
-      window.__setContactTransmitting(true);
+      // Validation 5: Query
+      if (!queryVal || queryVal.length < 3) {
+        if (queryInput) queryInput.focus();
+        updateProgress(queryWrap, 0, "[ ERROR: ENTER YOUR QUERY ]");
+        triggerRipple(queryWrap, true);
+        return;
+      }
+
+      // Enter Transmitting Radar State
+      sendWrap.classList.add("transmitting");
+      sendWrap.innerHTML = `<p><span class="radar-spinner"></span> TRANSMITTING...</p>`;
 
       try {
         await submitToWeb3Forms({
           name: nameVal,
+          team_name: teamVal,
           email: emailVal,
-          category: catVal === "none" ? "General Inquiry" : catVal,
-          message: msgVal,
+          contact_no: contactVal,
+          query: queryVal,
         });
 
         const activeGsap = window.gsap || gsap;
+        const bubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];
         if (activeGsap) {
-          activeGsap.to(nameWrap, { duration: 0.5, x: "200%", opacity: 0, pointerEvents: "none", ease: "power2.inOut" });
-          activeGsap.to(emailWrap, { duration: 0.5, x: "100%", opacity: 0, pointerEvents: "none", ease: "power2.inOut" });
-          activeGsap.to(messageWrap, { duration: 0.5, x: "0%", opacity: 0, pointerEvents: "none", ease: "power2.inOut" });
-          activeGsap.to(categoryWrap, { duration: 0.5, x: "-100%", opacity: 0, pointerEvents: "none", ease: "power2.inOut" });
-          activeGsap.to(sendWrap, { duration: 0.5, x: "-200%", opacity: 0, pointerEvents: "none", ease: "power2.inOut" });
+          activeGsap.to(bubbles, {
+            duration: 0.5,
+            x: (i) => (i < 3 ? "150%" : "-150%"),
+            opacity: 0,
+            pointerEvents: "none",
+            stagger: 0.04,
+            ease: "power2.inOut",
+          });
         }
-        showSuccessCard(nameVal);
+        showSuccessCard(nameVal, teamVal);
       } catch (err) {
-        console.error("Submission failed:", err);
-        window.__setContactTransmitting(false);
-        alert("Transmission error: " + (err.message || "Please verify your internet connection."));
+        console.error("Submission error:", err);
+        sendWrap.classList.remove("transmitting");
+        sendWrap.innerHTML = `<p>RETRY →</p>`;
+        alert("Transmission error: " + (err.message || "Failed to deliver. Please check connection."));
       }
-    }, true);
+    });
   }
 }
 
-/**
- * Setup observer to automatically enhance contact form whenever it enters the DOM
- */
 export function setupContactPageWatcher() {
   if (typeof document === "undefined") return;
 
   const check = () => {
-    if (document.querySelector(".contact-form form")) {
-      initContactFormAnimations();
+    if (document.querySelector(".contact-form .wrapper")) {
+      initContactForm5Fields();
     }
   };
 
-  // Initial check
   check();
 
-  // Watch for dynamic route transitions
   const observer = new MutationObserver(() => {
     check();
   });
@@ -386,7 +432,6 @@ export function setupContactPageWatcher() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Auto-run watcher in browser
 if (typeof window !== "undefined") {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupContactPageWatcher);
