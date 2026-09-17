@@ -166,6 +166,10 @@ function checkUrlRoute() {
 export function openAuthModal(mode = "login", options = {}) {
   initAuthModal();
   currentMode = mode;
+  if (typeof window !== "undefined") {
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+  }
 
   // Remove any duplicate backdrop elements in DOM to ensure single source of truth
   const backdrops = document.querySelectorAll("#chaitanya-auth-backdrop");
@@ -467,22 +471,22 @@ function renderProfileView(container, user) {
 async function renderAdminView(container, user) {
   const card = document.getElementById("chaitanya-modal-content");
 
-  // 1. Not signed in: Prompt specifically for chaitainyahptu@gmail.com
+  // 1. Not signed in: Prompt specifically for chaitanyahptu@gmail.com
   if (!user) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
         <div class="chaitanya-modal-tag">[ 401 • Security Verification ]</div>
         <h2 class="chaitanya-modal-title">Admin Access</h2>
-        <p class="chaitanya-modal-subtitle">Administrator dashboard is restricted exclusively to chaitainyahptu@gmail.com</p>
+        <p class="chaitanya-modal-subtitle">Administrator dashboard is restricted exclusively to chaitanyahptu@gmail.com</p>
       </div>
       <div class="chaitanya-modal-banner warning">
         <span>🔒</span>
-        <div>Fest administrative tools require signing in with <strong>chaitainyahptu@gmail.com</strong>.</div>
+        <div>Fest administrative tools require signing in with <strong>chaitanyahptu@gmail.com</strong>.</div>
       </div>
       <button type="button" class="btn-google-auth" id="btn-admin-signin">
         ${GOOGLE_ICON_SVG}
-        <span>[ Sign In with chaitainyahptu@gmail.com ]</span>
+        <span>[ Sign In with chaitanyahptu@gmail.com ]</span>
       </button>
       <div class="chaitanya-modal-footer">
         Not an administrator? 
@@ -495,7 +499,7 @@ async function renderAdminView(container, user) {
       btn.addEventListener("click", async () => {
         try {
           await signInWithGoogle({
-            email: "chaitainyahptu@gmail.com",
+            email: "chaitanyahptu@gmail.com",
             displayName: "Fest Administrator",
           });
           renderAdminView(container, getCurrentUser());
@@ -514,14 +518,14 @@ async function renderAdminView(container, user) {
     return;
   }
 
-  // 2. Signed in, but NOT authorized as chaitainyahptu@gmail.com -> 403 Access Denied
+  // 2. Signed in, but NOT authorized as chaitanyahptu@gmail.com -> 403 Access Denied
   if (!isAdminUser(user.email)) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
         <div class="chaitanya-modal-tag">[ 403 • ACCESS RESTRICTED ]</div>
         <h2 class="chaitanya-modal-title">Access Denied</h2>
-        <p class="chaitanya-modal-subtitle">Administrator privileges are restricted exclusively to chaitainyahptu@gmail.com</p>
+        <p class="chaitanya-modal-subtitle">Administrator privileges are restricted exclusively to chaitanyahptu@gmail.com</p>
       </div>
 
       <div class="chaitanya-modal-banner danger">
@@ -542,13 +546,13 @@ async function renderAdminView(container, user) {
         </div>
         <div class="profile-meta-row">
           <span class="profile-meta-label">Authorized Admin</span>
-          <span class="profile-meta-val">chaitainyahptu@gmail.com</span>
+          <span class="profile-meta-val">chaitanyahptu@gmail.com</span>
         </div>
       </div>
 
       <button type="button" class="btn-google-auth" id="btn-switch-admin-account">
         ${GOOGLE_ICON_SVG}
-        <span>[ Switch to chaitainyahptu@gmail.com ]</span>
+        <span>[ Switch to chaitanyahptu@gmail.com ]</span>
       </button>
 
       <button type="button" class="btn-secondary-action" id="btn-denied-return-profile" style="margin-top:12px;">
@@ -562,7 +566,7 @@ async function renderAdminView(container, user) {
         try {
           await signOutUser();
           await signInWithGoogle({
-            email: "chaitainyahptu@gmail.com",
+            email: "chaitanyahptu@gmail.com",
             displayName: "Fest Administrator",
           });
           renderAdminView(container, getCurrentUser());

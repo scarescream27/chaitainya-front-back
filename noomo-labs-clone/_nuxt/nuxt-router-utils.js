@@ -70,7 +70,7 @@ let st,
       mAdmin = d("span", null, "Admin", -1),
       mContact = d("span", null, "Contact Us", -1),
       _t = at(
-        '<div class="bottom"><a target="_blank" href="mailto:chaitainyahptu@gmail.com">chaitainyahptu@gmail.com</a></div>',
+        '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
         1,
       ),
       Mt = {

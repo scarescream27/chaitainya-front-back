@@ -30,7 +30,7 @@ let a,
         } catch (e) {}
 
         t({
-          title: "Chaitainya 2k26 | Privacy Policy",
+          title: "Chaitanya 2k26 | Privacy Policy",
           meta: [
             {
               name: "description",
@@ -142,7 +142,7 @@ let a,
                 </p>
                 <ul>
                   <li><strong>Firebase Authentication:</strong> Identity sessions and authentication tokens are safeguarded via Google Firebase Infrastructure adhering to ISO/IEC 27001 and SOC standards.</li>
-                  <li><strong>Restricted Root Admin Access:</strong> Privileged access to the festival administrative backend is cryptographically isolated and restricted solely to the verified coordinator email: <code>chaitainyahptu@gmail.com</code>.</li>
+                  <li><strong>Restricted Root Admin Access:</strong> Privileged access to the festival administrative backend is cryptographically isolated and restricted solely to the verified coordinator email: <code>chaitanyahptu@gmail.com</code>.</li>
                   <li><strong>HTTPS & Transport Security:</strong> All client-server communications are conducted over end-to-end encrypted TLS/HTTPS channels.</li>
                   <li><strong>No Plaintext Passwords:</strong> User credentials are protected using salted cryptographic hashes handled entirely by Firebase identity services.</li>
                 </ul>
@@ -157,7 +157,7 @@ let a,
                 <p>We utilize carefully audited external services to power portal capabilities:</p>
                 <ul>
                   <li><strong>Google Firebase:</strong> User authentication, secure token exchange, and persistent application state.</li>
-                  <li><strong>Web3Forms:</strong> Serverless contact form submission dispatching inquiries directly to <code>chaitainyahptu@gmail.com</code> with SSL encryption.</li>
+                  <li><strong>Web3Forms:</strong> Serverless contact form submission dispatching inquiries directly to <code>chaitanyahptu@gmail.com</code> with SSL encryption.</li>
                   <li><strong>Interactive 3D Engine:</strong> Client-side Three.js and WebGL animations render entirely on your local GPU without exporting biometric or device profiling data.</li>
                 </ul>
               </article>
@@ -202,7 +202,7 @@ let a,
                   For questions regarding data privacy, grievance redressal, or certificate verification, please reach out directly to the festival tech council:
                 </p>
                 <div class="privacy-callout">
-                  <strong>Official Nodal Email:</strong> <a href="mailto:chaitainyahptu@gmail.com" style="color:#000; text-decoration:underline;">chaitainyahptu@gmail.com</a><br/>
+                  <strong>Official Nodal Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:#000; text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
                   <strong>Institution:</strong> Himachal Pradesh Technical University (HPTU), Hamirpur, H.P., India<br/>
                   <strong>Festival Secretariat:</strong> Chaitanya 2k26 Organizing Committee
                 </div>

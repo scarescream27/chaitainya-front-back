@@ -64,10 +64,10 @@ export function isFirebaseConfigured(config = getFirebaseConfig()) {
 
 // Admin email with exclusive privileges to access fest registrant dashboards
 export const ADMIN_EMAILS = [
-  "chaitainyahptu@gmail.com"
+  "chaitanyahptu@gmail.com"
 ];
 
 export function isAdminUser(email) {
   if (!email) return false;
-  return email.trim().toLowerCase() === "chaitainyahptu@gmail.com";
+  return email.trim().toLowerCase() === "chaitanyahptu@gmail.com";
 }

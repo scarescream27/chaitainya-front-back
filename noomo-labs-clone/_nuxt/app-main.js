@@ -45486,7 +45486,7 @@ void main() {
             v = ($) => {
               e.trackEvent({
                 event: "click change jellyfish params",
-                category: "Chaitainya 2k26",
+                category: "Chaitanya 2k26",
                 action: "click",
                 label: "Customization of jellyfish",
                 value: $,

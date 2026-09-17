@@ -53,7 +53,7 @@ let s,
               a.startTransition(o.path, r.path, t);
             }),
             m({
-              title: "Chaitainya 2k26 | AR experience for children\u2019s book.",
+              title: "Chaitanya 2k26 | AR experience for children\u2019s book.",
               meta: [
                 {
                   name: "description",
@@ -64,7 +64,7 @@ let s,
                   name: "og:title",
                   property: "og:title",
                   content:
-                    "Chaitainya 2k26 | AR experience for children\u2019s book.",
+                    "Chaitanya 2k26 | AR experience for children\u2019s book.",
                 },
                 {
                   name: "og:description",
@@ -75,7 +75,7 @@ let s,
                 {
                   name: "twitter:title",
                   content:
-                    "Chaitainya 2k26 | AR experience for children\u2019s book.",
+                    "Chaitanya 2k26 | AR experience for children\u2019s book.",
                 },
                 {
                   name: "twitter:description",

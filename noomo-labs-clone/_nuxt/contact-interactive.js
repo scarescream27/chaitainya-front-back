@@ -275,7 +275,7 @@ export function initContactForm5Fields() {
         <span class="heart-check">✓</span>
         <h3 class="heart-success-title">MESSAGE DISPATCHED</h3>
         <p class="heart-success-subtitle">
-          Thank you, <strong>${nameVal || "Friend"}</strong>${teamVal ? " (Team: <strong>" + teamVal + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitainyahptu@gmail.com</strong>.
+          Thank you, <strong>${nameVal || "Friend"}</strong>${teamVal ? " (Team: <strong>" + teamVal + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitanyahptu@gmail.com</strong>.
         </p>
         <button type="button" class="heart-reset-btn" id="btn-contact-reset">[ SEND ANOTHER MESSAGE ]</button>
       </div>

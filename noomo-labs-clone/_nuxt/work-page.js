@@ -123,7 +123,7 @@ let an,
       He;
     ((me = { class: "works-hero" }),
       (pe = { class: "wrapper" }),
-      (ue = c("h1", null, " Chaitainya experiences ", -1)),
+      (ue = c("h1", null, " Chaitanya experiences ", -1)),
       (ye = { class: "blur-parent" }),
       (we = c("div", { class: "back" }, null, -1)),
       (ge = c("div", { class: "points" }, null, -1)),
@@ -983,12 +983,12 @@ void main() {
               f.startTransition(P.path, T.path, E);
             }),
             Hn({
-              title: "Chaitainya 2k26 | Works",
+              title: "Chaitanya 2k26 | Works",
               meta: [
                 {
                   name: "description",
                   content:
-                    "Chaitainya 2k26 works page showcasing our projects and services.",
+                    "Chaitanya 2k26 works page showcasing our projects and services.",
                 },
               ],
             }),

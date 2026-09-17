@@ -61,7 +61,7 @@ let s,
               i.startTransition(n.path, r.path, t);
             }),
             l({
-              title: "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+              title: "Chaitanya 2k26 | Immersive AI experience for Intel booth",
               meta: [
                 {
                   name: "description",
@@ -72,7 +72,7 @@ let s,
                   name: "og:title",
                   property: "og:title",
                   content:
-                    "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+                    "Chaitanya 2k26 | Immersive AI experience for Intel booth",
                 },
                 {
                   name: "og:description",
@@ -83,7 +83,7 @@ let s,
                 {
                   name: "twitter:title",
                   content:
-                    "Chaitainya 2k26 | Immersive AI experience for Intel booth",
+                    "Chaitanya 2k26 | Immersive AI experience for Intel booth",
                 },
                 {
                   name: "twitter:description",

@@ -3,17 +3,17 @@
  * Chaitanya 2k26 — Web3Forms Integration Config & Helper
  * ============================================================================
  * Web3Forms allows contact form submissions to be emailed directly to
- * chaitainyahptu@gmail.com without a backend server.
+ * chaitanyahptu@gmail.com without a backend server.
  *
  * To use a live key:
- * 1. Visit https://web3forms.com/ and generate a free access key for chaitainyahptu@gmail.com
+ * 1. Visit https://web3forms.com/ and generate a free access key for chaitanyahptu@gmail.com
  * 2. Paste your access key below or save it via localStorage.setItem('chaitanya_web3forms_key', 'YOUR_KEY')
  */
 
 export const DEFAULT_WEB3FORMS_CONFIG = {
-  // Official Web3Forms Access Key for chaitainyahptu@gmail.com
+  // Official Web3Forms Access Key for chaitanyahptu@gmail.com
   accessKey: "075fadc5-56c0-4c3e-a47f-97224e0b9446",
-  recipientEmail: "chaitainyahptu@gmail.com",
+  recipientEmail: "chaitanyahptu@gmail.com",
   fromName: "Chaitanya 2k26 Fest Portal",
   subjectPrefix: "Chaitanya 2k26 Inquiry",
 };

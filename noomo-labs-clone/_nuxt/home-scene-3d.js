@@ -6364,7 +6364,7 @@ let Ws,
                     opacity: 1,
                     side: He,
                   }),
-                  U = A.generateShapes("CHAITAINYA 2K26", 1.8 * N),
+                  U = A.generateShapes("CHAITANYA 2K26", 1.8 * N),
                   $ = new pl(U);
                 $.computeBoundingBox();
                 const W = -0.5 * ($.boundingBox.max.x - $.boundingBox.min.x);
@@ -7389,7 +7389,7 @@ let Ws,
       (Ao = O(
         "p",
         null,
-        " Each project at Chaitainya 2k26 serves as a testament to our commitment to innovation and excellence ",
+        " Each project at Chaitanya 2k26 serves as a testament to our commitment to innovation and excellence ",
         -1,
       )),
       (To = [Ao]),
@@ -7597,7 +7597,7 @@ let Ws,
                       [
                         Co,
                         Lt(
-                          " Engage with us at Chaitainya 2k26, where technology meets creativity, and every interaction is an opportunity for innovation ",
+                          " Engage with us at Chaitanya 2k26, where technology meets creativity, and every interaction is an opportunity for innovation ",
                         ),
                       ],
                       512,

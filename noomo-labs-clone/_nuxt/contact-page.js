@@ -4279,7 +4279,7 @@ attempted value: ${i}
                         "a",
                         {
                           class: "title",
-                          href: "mailto:chaitainyahptu@gmail.com",
+                          href: "mailto:chaitanyahptu@gmail.com",
                           target: "_blank",
                           onMouseleave:
                             s[8] ||
@@ -4289,7 +4289,7 @@ attempted value: ${i}
                             s[9] ||
                             (s[9] = (a) => g(e).blendCursor("difference")),
                         },
-                        "chaitainyahptu@gmail.com",
+                        "chaitanyahptu@gmail.com",
                         32,
                       ),
                       Te(
@@ -4351,7 +4351,7 @@ attempted value: ${i}
               e.startTransition(t.path, s.path, r);
             }),
             Fa({
-              title: "Chaitainya 2k26 | Connect",
+              title: "Chaitanya 2k26 | Connect",
               meta: [
                 {
                   name: "description",
@@ -4361,7 +4361,7 @@ attempted value: ${i}
                 {
                   name: "og:title",
                   property: "og:title",
-                  content: "Chaitainya 2k26 | Connect",
+                  content: "Chaitanya 2k26 | Connect",
                 },
                 {
                   name: "og:description",
@@ -4369,7 +4369,7 @@ attempted value: ${i}
                   content:
                     "Let\u2019s discuss your next engaging website or activation campaign.",
                 },
-                { name: "twitter:title", content: "Chaitainya 2k26 | Connect" },
+                { name: "twitter:title", content: "Chaitanya 2k26 | Connect" },
                 {
                   name: "twitter:description",
                   content:

@@ -340,7 +340,7 @@ export function getDemoAttendees() {
     {
       uid: "usr_101",
       displayName: "Aditya Sharma",
-      email: "chaitainyahptu@gmail.com",
+      email: "chaitanyahptu@gmail.com",
       role: "admin",
       college: "HPTU Hamirpur",
       phone: "+91 98160 00001",

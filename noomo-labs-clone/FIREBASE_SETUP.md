@@ -40,7 +40,7 @@ This guide details how to connect your own Firebase project to the **Chaitanya 2
 2. Click **"Get started"**.
 3. Under the **"Sign-in method"** tab, select **Google**.
 4. Toggle **Enable**.
-5. Set your **Project support email** (e.g., `chaitainyahptu@gmail.com`).
+5. Set your **Project support email** (e.g., `chaitanyahptu@gmail.com`).
 6. Click **Save**.
 7. Under the **"Settings" > "Authorized domains"** tab:
    - Ensure `localhost` is listed (it is included by default).
@@ -73,16 +73,16 @@ service cloud.firestore {
       // Users can write/update only their own record
       allow create, update: if request.auth != null && request.auth.uid == userId;
       
-      // Fest admin has full read/write access (chaitainyahptu@gmail.com exclusively)
+      // Fest admin has full read/write access (chaitanyahptu@gmail.com exclusively)
       allow read, write: if request.auth != null && 
-        request.auth.token.email.lower() == "chaitainyahptu@gmail.com";
+        request.auth.token.email.lower() == "chaitanyahptu@gmail.com";
     }
     
     // Fest Events collection
     match /events/{eventId} {
       allow read: if true; // Publicly viewable
       allow write: if request.auth != null && 
-        request.auth.token.email.lower() == "chaitainyahptu@gmail.com";
+        request.auth.token.email.lower() == "chaitanyahptu@gmail.com";
     }
   }
 }
@@ -97,16 +97,16 @@ In [`noomo-labs-clone/_nuxt/firebase-config.js`](./_nuxt/firebase-config.js):
 
 ```javascript
 export const ADMIN_EMAILS = [
-  "chaitainyahptu@gmail.com"
+  "chaitanyahptu@gmail.com"
 ];
 
 export function isAdminUser(email) {
   if (!email) return false;
-  return email.trim().toLowerCase() === "chaitainyahptu@gmail.com";
+  return email.trim().toLowerCase() === "chaitanyahptu@gmail.com";
 }
 ```
 
-When users log in with `chaitainyahptu@gmail.com`:
+When users log in with `chaitanyahptu@gmail.com`:
 1. Their role in the profile is automatically flagged as `[ADMIN]`.
 2. Clicking the `[ADMIN]` navbar button grants full access to the **Fest Registrations Management Table** and CSV export.
 

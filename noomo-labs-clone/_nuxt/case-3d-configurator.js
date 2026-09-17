@@ -54,7 +54,7 @@ let s,
             }),
             g({
               title:
-                "Chaitainya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
+                "Chaitanya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
               meta: [
                 {
                   name: "description",
@@ -65,7 +65,7 @@ let s,
                   name: "og:title",
                   property: "og:title",
                   content:
-                    "Chaitainya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
+                    "Chaitanya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
                 },
                 {
                   name: "og:description",
@@ -76,7 +76,7 @@ let s,
                 {
                   name: "twitter:title",
                   content:
-                    "Chaitainya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
+                    "Chaitanya 2k26 | 3D configurator - a new level of 3D rendering on the web.",
                 },
                 {
                   name: "twitter:description",
