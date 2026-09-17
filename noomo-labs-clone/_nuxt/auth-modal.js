@@ -401,7 +401,7 @@ function renderProfileView(container, user) {
       </div>
       <div class="profile-meta-row">
         <span class="profile-meta-label">Status</span>
-        <span class="profile-meta-val" style="color:#00e5ff;">✓ Active Fest Pass</span>
+        <span class="profile-meta-val">✓ Active Fest Pass</span>
       </div>
     </div>
 
@@ -413,7 +413,7 @@ function renderProfileView(container, user) {
     </div>
 
     ${user.role === "admin" ? `
-      <button type="button" class="btn-google-auth" id="btn-open-admin-from-profile" style="margin-top:16px; background:#00e5ff; color:#000; border-color:#00e5ff;">
+      <button type="button" class="btn-google-auth" id="btn-open-admin-from-profile" style="margin-top:16px;">
         <span>[ Open Admin Dashboard ]</span>
       </button>
     ` : ''}
@@ -450,7 +450,7 @@ async function renderAdminView(container, user) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag" style="color:#ff5252;">[ 401 • Security Verification ]</div>
+        <div class="chaitanya-modal-tag">[ 401 • Security Verification ]</div>
         <h2 class="chaitanya-modal-title">Admin Access</h2>
         <p class="chaitanya-modal-subtitle">Administrator dashboard is restricted exclusively to chaitainyahptu@gmail.com</p>
       </div>
@@ -497,7 +497,7 @@ async function renderAdminView(container, user) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag" style="color:#ff4444;">[ 403 • ACCESS RESTRICTED ]</div>
+        <div class="chaitanya-modal-tag">[ 403 • ACCESS RESTRICTED ]</div>
         <h2 class="chaitanya-modal-title">Access Denied</h2>
         <p class="chaitanya-modal-subtitle">Administrator privileges are restricted exclusively to chaitainyahptu@gmail.com</p>
       </div>
@@ -516,11 +516,11 @@ async function renderAdminView(container, user) {
         </div>
         <div class="profile-meta-row">
           <span class="profile-meta-label">Account Role</span>
-          <span class="profile-meta-val" style="color:#ffd580;">${(user.role || 'ATTENDEE').toUpperCase()}</span>
+          <span class="profile-meta-val">${(user.role || 'ATTENDEE').toUpperCase()}</span>
         </div>
         <div class="profile-meta-row">
           <span class="profile-meta-label">Authorized Admin</span>
-          <span class="profile-meta-val" style="color:#00e5ff;">chaitainyahptu@gmail.com</span>
+          <span class="profile-meta-val">chaitainyahptu@gmail.com</span>
         </div>
       </div>
 
@@ -564,7 +564,7 @@ async function renderAdminView(container, user) {
 
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag" style="color:#00e5ff;">[ Chaitanya 2k26 • Admin Portal ]</div>
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
       <h2 class="chaitanya-modal-title">Fest Registrations</h2>
       <p class="chaitanya-modal-subtitle">Authorized Admin: ${user.email}</p>
     </div>
@@ -599,7 +599,7 @@ async function renderAdminView(container, user) {
 
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag" style="color:#00e5ff;">[ Chaitanya 2k26 • Admin Portal ]</div>
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
       <h2 class="chaitanya-modal-title">Fest Registrations</h2>
       <p class="chaitanya-modal-subtitle">Participant database and event enrollment management (Admin: ${user.email})</p>
     </div>
