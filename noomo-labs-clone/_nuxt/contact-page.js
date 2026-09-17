@@ -3902,7 +3902,10 @@ attempted value: ${i}
       Jn,
       Yn,
       Hn,
-      Wn;
+      Wn,
+      O1,
+      O2,
+      O3;
     ((mn = { class: "contact-form" }),
       (vn = { class: "wrapper" }),
       (yn = b("div", { class: "outline" }, null, -1)),
@@ -3914,13 +3917,16 @@ attempted value: ${i}
       (Fn = b(
         "option",
         { disabled: "", selected: "", value: "none" },
-        "PROJECT BUDGET (USD)",
+        "[ SELECT INQUIRY CATEGORY ]",
         -1,
       )),
-      (On = b("option", { value: "50K\u2013100K" }, "50K\u2013100K", -1)),
-      (En = b("option", { value: "100K\u2013300K" }, "100K\u2013300K", -1)),
-      (Sn = b("option", { value: "300K+" }, "300K+", -1)),
-      (kn = [Fn, On, En, Sn]),
+      (On = b("option", { value: "General Inquiry" }, "GENERAL INQUIRY", -1)),
+      (En = b("option", { value: "Hackathons & Tech Events" }, "HACKATHONS & TECH EVENTS", -1)),
+      (Sn = b("option", { value: "Sponsorship & Partnerships" }, "SPONSORSHIP & PARTNERSHIPS", -1)),
+      (O1 = b("option", { value: "Workshops & Registrations" }, "WORKSHOPS & REGISTRATIONS", -1)),
+      (O2 = b("option", { value: "Esports & Cultural Competitions" }, "ESPORTS & CULTURAL", -1)),
+      (O3 = b("option", { value: "Campus Ambassador Program" }, "CAMPUS AMBASSADOR", -1)),
+      (kn = [Fn, On, En, Sn, O1, O2, O3]),
       (jn = b("p", null, "SEND \u2192", -1)),
       (An = [jn]),
       ($n = b(
@@ -3986,11 +3992,10 @@ attempted value: ${i}
                 (X.value.style.height = X.value.scrollHeight + "px"));
             },
             I = A(async (R) => {
-              (await Es(
-                "/api/sendForm",
-                { method: "post", body: R },
-                "$XBfTGx8AKn",
-              ).then((x) => {}),
+              (await (window.__submitToWeb3Forms
+                ? window.__submitToWeb3Forms(R)
+                : Promise.resolve({ success: true })
+              ).catch((err) => console.warn("Submission catch:", err)),
                 ge.set(u.value, { transition: "none" }),
                 ge.to(s.value, {
                   duration: 0.5,
