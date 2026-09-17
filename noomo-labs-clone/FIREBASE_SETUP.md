@@ -21,15 +21,16 @@ This guide details how to connect your own Firebase project to the **Chaitanya 2
 4. Firebase will display your `firebaseConfig` object:
    ```javascript
    const firebaseConfig = {
-     apiKey: "AIzaSy...",
-     authDomain: "chaitanya-2k26.firebaseapp.com",
-     projectId: "chaitanya-2k26",
-     storageBucket: "chaitanya-2k26.appspot.com",
-     messagingSenderId: "123456789012",
-     appId: "1:123456789012:web:abcdef123456"
+     apiKey: "AIzaSyBL3ZiGFe3Q7eEnnikto1wnfDxVj0Op3I8",
+     authDomain: "chaitainya-hptu.firebaseapp.com",
+     projectId: "chaitainya-hptu",
+     storageBucket: "chaitainya-hptu.firebasestorage.app",
+     messagingSenderId: "453300095500",
+     appId: "1:453300095500:web:0933b038d3580842ddbc29",
+     measurementId: "G-1JS13R6GY0"
    };
    ```
-5. Copy these values into [`noomo-labs-clone/_nuxt/firebase-config.js`](./_nuxt/firebase-config.js).
+5. These values are configured in [`noomo-labs-clone/_nuxt/firebase-config.js`](./_nuxt/firebase-config.js).
 
 ---
 

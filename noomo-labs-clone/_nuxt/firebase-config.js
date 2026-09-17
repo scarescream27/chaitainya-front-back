@@ -9,12 +9,13 @@
  */
 
 export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAl6NQ4jRdiL5mmBlBXPXPpnFkqzFE493U",
-  authDomain: "samachar-setu-88qx2.firebaseapp.com",
-  projectId: "samachar-setu-88qx2",
-  storageBucket: "samachar-setu-88qx2.firebasestorage.app",
-  messagingSenderId: "1054011658339",
-  appId: "1:1054011658339:web:73111f322dfbde48a62856"
+  apiKey: "AIzaSyBL3ZiGFe3Q7eEnnikto1wnfDxVj0Op3I8",
+  authDomain: "chaitainya-hptu.firebaseapp.com",
+  projectId: "chaitainya-hptu",
+  storageBucket: "chaitainya-hptu.firebasestorage.app",
+  messagingSenderId: "453300095500",
+  appId: "1:453300095500:web:0933b038d3580842ddbc29",
+  measurementId: "G-1JS13R6GY0"
 };
 
 // Allows runtime override via window or localStorage for immediate testing

@@ -16,6 +16,7 @@ import {
 let firebaseApp = null;
 let firebaseAuth = null;
 let firebaseFirestore = null;
+let firebaseAnalytics = null;
 let currentUser = null;
 let isInitialized = false;
 let authListeners = [];
@@ -28,7 +29,7 @@ const ATTENDEES_STORAGE_KEY = "chaitanya_attendees_list";
  * Initialize Firebase dynamically from official Google CDN ESM modules
  */
 export async function initFirebase() {
-  if (isInitialized) return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore };
+  if (isInitialized) return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore, analytics: firebaseAnalytics };
 
   const config = getFirebaseConfig();
 
@@ -61,6 +62,20 @@ export async function initFirebase() {
       firebaseApp = getApps().length === 0 ? initializeApp(config) : getApp();
       firebaseAuth = getAuth(firebaseApp);
       firebaseFirestore = getFirestore(firebaseApp);
+
+      // Initialize Firebase Analytics if measurementId is provided and environment is supported
+      if (config.measurementId) {
+        try {
+          const { getAnalytics, isSupported } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
+          );
+          if (await isSupported()) {
+            firebaseAnalytics = getAnalytics(firebaseApp);
+          }
+        } catch (analyticsErr) {
+          console.info("Firebase analytics not available in current environment:", analyticsErr);
+        }
+      }
 
       // Listen to real Firebase Auth State
       onAuthStateChanged(firebaseAuth, async (fbUser) => {
@@ -97,7 +112,7 @@ export async function initFirebase() {
       });
 
       isInitialized = true;
-      return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore };
+      return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore, analytics: firebaseAnalytics };
     } catch (err) {
       console.error("Failed to load Firebase SDK modules:", err);
     }
@@ -377,3 +392,8 @@ function saveDemoAttendee(user) {
     } catch (e) {}
   }
 }
+
+export function getFirebaseAnalytics() {
+  return firebaseAnalytics;
+}
+
