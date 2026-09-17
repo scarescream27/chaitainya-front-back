@@ -9,6 +9,7 @@ import {
   signOutUser,
   getCurrentUser,
   getRegisteredAttendees,
+  getDemoAttendees,
   subscribeAuthState,
 } from "./auth-service.js";
 import { isFirebaseConfigured, getFirebaseConfig, isAdminUser } from "./firebase-config.js";
@@ -31,6 +32,12 @@ let currentMode = "login"; // "login" | "register" | "profile" | "admin"
  */
 export function initAuthModal() {
   if (typeof document === "undefined") return;
+
+  const existingBackdrop = document.getElementById("chaitanya-auth-backdrop");
+  if (existingBackdrop) {
+    modalBackdrop = existingBackdrop;
+    return;
+  }
 
   if (!modalBackdrop) {
     modalBackdrop = document.createElement("div");
@@ -91,9 +98,10 @@ export function initAuthModal() {
       }
     });
 
-    // Listen to hash changes (#login, #register, #admin)
-    window.addEventListener("hashchange", checkUrlHash);
-    checkUrlHash();
+    // Listen to hash and route changes (#login, #register, #admin, /login, /register, /admin)
+    window.addEventListener("hashchange", checkUrlRoute);
+    window.addEventListener("popstate", checkUrlRoute);
+    checkUrlRoute();
 
     // Subscribe to auth changes to keep navbar updated
     subscribeAuthState(syncNavbarAuthState);
@@ -103,8 +111,8 @@ export function initAuthModal() {
 export function syncNavbarAuthState(user) {
   if (typeof document === "undefined") return;
 
-  const registerLinks = document.querySelectorAll('a[href="#register"], a[href="#profile"]');
-  const loginLinks = document.querySelectorAll('a[href="#login"], a[href="#logout"]');
+  const registerLinks = document.querySelectorAll('a[href="#register"], a[href="#profile"], a[href="/register"], a[href="/profile"]');
+  const loginLinks = document.querySelectorAll('a[href="#login"], a[href="#logout"], a[href="/login"], a[href="/logout"]');
 
   if (user) {
     const firstName = user.displayName ? user.displayName.split(" ")[0].toUpperCase() : "PROFILE";
@@ -138,14 +146,17 @@ export function syncNavbarAuthState(user) {
   }
 }
 
-function checkUrlHash() {
+function checkUrlRoute() {
   const hash = window.location.hash;
-  if (hash === "#login") {
+  const path = window.location.pathname.replace(/\/$/, "");
+  if (hash === "#login" || path === "/login") {
     openAuthModal("login");
-  } else if (hash === "#register") {
+  } else if (hash === "#register" || path === "/register") {
     openAuthModal("register");
-  } else if (hash === "#admin") {
+  } else if (hash === "#admin" || path === "/admin") {
     openAuthModal("admin");
+  } else if (hash === "#profile" || path === "/profile") {
+    openAuthModal("profile");
   }
 }
 
@@ -156,7 +167,18 @@ export function openAuthModal(mode = "login", options = {}) {
   initAuthModal();
   currentMode = mode;
 
-  const card = modalBackdrop.querySelector("#chaitanya-modal-content");
+  // Remove any duplicate backdrop elements in DOM to ensure single source of truth
+  const backdrops = document.querySelectorAll("#chaitanya-auth-backdrop");
+  if (backdrops.length > 1) {
+    for (let i = 1; i < backdrops.length; i++) {
+      backdrops[i].remove();
+    }
+  }
+  if (!modalBackdrop || !document.body.contains(modalBackdrop)) {
+    modalBackdrop = document.getElementById("chaitanya-auth-backdrop");
+  }
+
+  const card = modalBackdrop?.querySelector("#chaitanya-modal-content");
   if (card) {
     if (mode === "admin") {
       card.classList.add("admin-wide");
@@ -166,7 +188,7 @@ export function openAuthModal(mode = "login", options = {}) {
   }
 
   renderModalContent();
-  modalBackdrop.classList.add("active");
+  if (modalBackdrop) modalBackdrop.classList.add("active");
 }
 
 /**
@@ -194,7 +216,7 @@ export function closeAuthModal() {
  * Render modal contents based on currentMode
  */
 async function renderModalContent() {
-  const body = document.getElementById("chaitanya-modal-body");
+  const body = modalBackdrop?.querySelector("#chaitanya-modal-body") || document.getElementById("chaitanya-modal-body");
   if (!body) return;
 
   const user = getCurrentUser();
@@ -573,7 +595,15 @@ async function renderAdminView(container, user) {
     </div>
   `;
 
-  const attendees = await getRegisteredAttendees();
+  let attendees = [];
+  try {
+    attendees = await getRegisteredAttendees();
+  } catch (err) {
+    console.warn("Could not load attendees:", err);
+  }
+  if (!attendees || attendees.length === 0) {
+    attendees = getDemoAttendees();
+  }
 
   const totalUsers = attendees.length;
   const colleges = new Set(attendees.map((a) => a.college).filter(Boolean)).size;

@@ -224,16 +224,34 @@ export async function signOutUser() {
  * Get active user
  */
 export function getCurrentUser() {
+  if (typeof window !== "undefined" && window.__chaitanyaCurrentUser !== undefined) {
+    return window.__chaitanyaCurrentUser;
+  }
   return currentUser;
 }
 
 export function setSimulatedUser(user) {
   currentUser = user;
+  if (typeof window !== "undefined") {
+    window.__chaitanyaCurrentUser = user;
+    try {
+      if (user) sessionStorage.setItem("chaitanya_active_user", JSON.stringify(user));
+      else sessionStorage.removeItem("chaitanya_active_user");
+    } catch (e) {}
+  }
   notifyListeners();
 }
 
 if (typeof window !== "undefined") {
   window.__setSimulatedUser = setSimulatedUser;
+  window.getCurrentUser = getCurrentUser;
+  try {
+    const saved = sessionStorage.getItem("chaitanya_active_user");
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      window.__chaitanyaCurrentUser = currentUser;
+    }
+  } catch (e) {}
 }
 
 /**
@@ -297,7 +315,7 @@ export async function getRegisteredAttendees() {
   return getDemoAttendees();
 }
 
-function getDemoAttendees() {
+export function getDemoAttendees() {
   try {
     const raw = localStorage.getItem(ATTENDEES_STORAGE_KEY);
     if (raw) return JSON.parse(raw);
