@@ -11,8 +11,8 @@
  */
 
 export const DEFAULT_WEB3FORMS_CONFIG = {
-  // Replace with your Web3Forms Access Key from https://web3forms.com
-  accessKey: "YOUR_WEB3FORMS_ACCESS_KEY",
+  // Official Web3Forms Access Key for chaitainyahptu@gmail.com
+  accessKey: "075fadc5-56c0-4c3e-a47f-97224e0b9446",
   recipientEmail: "chaitainyahptu@gmail.com",
   fromName: "Chaitanya 2k26 Fest Portal",
   subjectPrefix: "Chaitanya 2k26 Inquiry",
