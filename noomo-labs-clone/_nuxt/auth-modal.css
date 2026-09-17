@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================================
  * Chaitanya 2k26 — Auth Modal & Dialog Styles (Original Website UI Theme)
  * ============================================================================
@@ -41,8 +41,10 @@
   position: relative;
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
   background-color: rgba(255, 255, 255, 0.88);
   background-image: url(/images/footerPatern.png);
   background-repeat: repeat;
@@ -55,11 +57,18 @@
     0 4px 20px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 #ffffff;
   border-radius: 28px;
-  padding: 40px 36px 36px;
+  padding: 32px 32px 28px;
   color: #000000;
   transform: translateY(20px) scale(0.97);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.3s ease;
   box-sizing: border-box;
+}
+
+.chaitanya-modal-card::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 .chaitanya-modal-backdrop.active .chaitanya-modal-card {
@@ -113,7 +122,7 @@
 /* Headers */
 .chaitanya-modal-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .chaitanya-modal-tag {
@@ -124,17 +133,17 @@
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: #000000;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .chaitanya-modal-title {
   font-family: "DrukMedium", sans-serif;
-  font-size: 54px;
+  font-size: 48px;
   line-height: 0.88;
   letter-spacing: -0.5px;
   text-transform: uppercase;
   color: #000000;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .chaitanya-modal-subtitle {
@@ -221,7 +230,7 @@
 
 /* Form Fields */
 .chaitanya-form-group {
-  margin-bottom: 16px;
+  margin-bottom: 13px;
   text-align: left;
 }
 
@@ -267,7 +276,7 @@
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 22px 0;
+  margin: 16px 0;
 }
 
 .chaitanya-divider::before,

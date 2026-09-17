@@ -336,7 +336,7 @@ function renderRegisterView(container, isConfigured) {
       </div>
 
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">WhatsApp / Contact Number</label>
+        <label class="chaitanya-form-label">Contact No</label>
         <input type="tel" id="reg-phone" class="chaitanya-form-input" placeholder="e.g. +91 98765 43210" required />
       </div>
 
