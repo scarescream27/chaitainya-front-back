@@ -6893,46 +6893,55 @@ let Ws,
             },
             Wa = () => {
               _.time = rt.getElapsedTime();
-              for (const N of ri) {
-                const A = N;
-                _.buffer === P.texture &&
-                  ((mt = Y.gl.toneMapping),
-                  (Z = Y.scene.background),
-                  (Wt = A.material.side),
-                  S.background && (Y.scene.background = S.background),
-                  (A.material = k),
-                  Y.gl.setRenderTarget(P),
-                  Y.gl.render(Y.scene, Y.camera),
-                  (A.material = _),
-                  (A.material.thickness = S.thickness),
-                  (A.material.side = Wt),
-                  (A.material.buffer = P.texture),
-                  (Y.scene.background = Z),
-                  Y.gl.setRenderTarget(null),
-                  (A.material = _),
-                  (Y.gl.toneMapping = mt));
+              if (ri.length > 0 && _.buffer === P.texture) {
+                const A = ri[0];
+                mt = Y.gl.toneMapping;
+                Z = Y.scene.background;
+                Wt = A.material.side;
+                S.background && (Y.scene.background = S.background);
+                A.material = k;
+                for (let qi = 0; qi < Pt.length; qi++) {
+                  Pt[qi].mesh.visible = !1;
+                }
+                Y.gl.setRenderTarget(P);
+                Y.gl.render(Y.scene, Y.camera);
+                for (let qi = 0; qi < Pt.length; qi++) {
+                  Pt[qi].mesh.visible = !0;
+                }
+                A.material = _;
+                A.material.thickness = S.thickness;
+                A.material.side = Wt;
+                A.material.buffer = P.texture;
+                Y.scene.background = Z;
+                Y.gl.setRenderTarget(null);
+                A.material = _;
+                Y.gl.toneMapping = mt;
               }
             },
             As = () => {
               H.time = rt.getElapsedTime();
-              for (const N of rs) {
-                const A = N;
-                H.buffer === F.texture &&
-                  ((wt = Y.gl.toneMapping),
-                  (D = Y.scene.background),
-                  (Ie = A.material.side),
-                  M.background && (Y.scene.background = M.background),
-                  (A.material = T),
-                  Y.gl.setRenderTarget(F),
-                  Y.gl.render(Y.scene, Y.camera),
-                  (A.material = H),
-                  (A.material.thickness = M.thickness),
-                  (A.material.side = Ie),
-                  (A.material.buffer = F.texture),
-                  (Y.scene.background = D),
-                  Y.gl.setRenderTarget(null),
-                  (A.material = H),
-                  (Y.gl.toneMapping = wt));
+              if (rs.length > 0 && H.buffer === F.texture) {
+                const A = rs[0];
+                wt = Y.gl.toneMapping;
+                D = Y.scene.background;
+                Ie = A.material.side;
+                M.background && (Y.scene.background = M.background);
+                for (let qi = 0; qi < rs.length; qi++) {
+                  rs[qi].visible = !1;
+                }
+                Y.gl.setRenderTarget(F);
+                Y.gl.render(Y.scene, Y.camera);
+                for (let qi = 0; qi < rs.length; qi++) {
+                  rs[qi].visible = !0;
+                }
+                A.material = H;
+                A.material.thickness = M.thickness;
+                A.material.side = Ie;
+                A.material.buffer = F.texture;
+                Y.scene.background = D;
+                Y.gl.setRenderTarget(null);
+                A.material = H;
+                Y.gl.toneMapping = wt;
               }
             },
             Da = () => {
@@ -7708,64 +7717,43 @@ let Ws,
             }));
           const d = () => {
               e.add(() => {
-                i
-                  ? (V.to(o.value, {
-                      width: i ? "100%" : 0,
-                      ease: "power2.inOut",
-                      duration: 1.2,
-                      delay: 0.4,
-                    }),
-                    V.to([o.value, s.value, n.value], {
-                      opacity: 0,
-                      ease: "power2.inOut",
-                      duration: 0.5,
-                      delay: 0.8,
-                    }),
-                    V.to(a.value, {
-                      opacity: 1,
-                      pointerEvents: "auto",
-                      ease: "power2.inOut",
-                      duration: 0.5,
-                      delay: 1.2,
-                    }),
-                    V.to(r.value, {
-                      transform: "scale(1)",
-                      width: i ? 110 : 184,
-                      ease: "power2.inOut",
-                      duration: 0.5,
-                      delay: 1.8,
-                    }))
-                  : (V.to(o.value, {
-                      width: i ? "100%" : 0,
-                      ease: "power2.inOut",
-                      duration: 1.2,
-                      delay: 0.4,
-                    }),
-                    V.to([n.value, s.value], {
-                      width: 0,
-                      ease: "power2.out",
-                      duration: 0.6,
-                      delay: 1.1,
-                    }),
-                    V.to([c.value, u.value], {
-                      clipPath: "inset(0% 0% 0% 0%)",
-                      ease: "power2.out",
-                      duration: 0.6,
-                      delay: 1.8,
-                    }),
-                    V.to(a.value, {
-                      pointerEvents: "auto",
-                      ease: "power2.inOut",
-                      duration: 0.1,
-                      delay: 2.5,
-                    }),
-                    V.to(r.value, {
-                      transform: "scale(1)",
-                      width: i ? 110 : 184,
-                      ease: "power2.inOut",
-                      duration: 0.5,
-                      delay: 2.4,
-                    }));
+                const isSmall = i || (typeof window !== "undefined" && window.innerWidth <= 767);
+                V.to([o.value, s.value, n.value], {
+                  opacity: 0,
+                  ease: "power2.inOut",
+                  duration: 0.4,
+                  delay: 0.3,
+                });
+                V.to(a.value, {
+                  opacity: 1,
+                  pointerEvents: "auto",
+                  ease: "power2.inOut",
+                  duration: 0.4,
+                  delay: 0.5,
+                });
+                if (isSmall) {
+                  V.to(r.value, {
+                    transform: "scale(1)",
+                    width: 110,
+                    ease: "power2.inOut",
+                    duration: 0.5,
+                    delay: 0.6,
+                  });
+                } else {
+                  V.to([c.value, u.value], {
+                    clipPath: "inset(0% 0% 0% 0%)",
+                    ease: "power2.out",
+                    duration: 0.6,
+                    delay: 0.5,
+                  });
+                  V.to(r.value, {
+                    transform: "scale(1)",
+                    width: 184,
+                    ease: "power2.out",
+                    duration: 0.6,
+                    delay: 0.5,
+                  });
+                }
               });
             },
             p = () => {
@@ -7777,6 +7765,11 @@ let Ws,
                     pointerEvents: "none",
                     duration: 0.7,
                     ease: "power2.inOut",
+                    onComplete: () => {
+                      if (l.value) {
+                        l.value.style.display = "none";
+                      }
+                    },
                   });
                 }));
             };
