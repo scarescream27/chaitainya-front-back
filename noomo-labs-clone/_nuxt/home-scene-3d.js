@@ -7419,123 +7419,95 @@ let Ws,
             }));
           const u = () => {
             a.add(() => {
-              ((l = V.timeline({})),
+              V.set([n.value, r.value, o.value, s.value], { opacity: 0 });
+              V.set(i.value, { opacity: 1 });
+              V.fromTo(
+                i.value,
+                { opacity: 1 },
+                {
+                  opacity: 0,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: "body",
+                    start: "top top",
+                    end: "top+=500 top",
+                    scrub: !0,
+                  },
+                },
+              );
+              ((l = V.timeline({
+                scrollTrigger: {
+                  trigger: "body",
+                  start: "top+=500 top",
+                  end: "top+=4100 top",
+                  scrub: !0,
+                },
+              })),
                 l
                   .fromTo(
-                    i.value,
-                    { opacity: 1 },
-                    {
-                      opacity: 0,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top top",
-                        end: "top+=500 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo(
                     o.value,
                     { opacity: 0 },
-                    {
-                      opacity: 1,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=500 top",
-                        end: "top+=1000 top",
-                        scrub: !0,
-                      },
-                    },
+                    { opacity: 1, duration: 500, ease: "none" },
                   )
+                  .to(o.value, { opacity: 1, duration: 2700, ease: "none" })
                   .fromTo(
                     o.value,
                     { opacity: 1 },
-                    {
-                      opacity: 0,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=3700 top",
-                        end: "top+=4100 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo(
-                    s.value,
-                    { opacity: 0 },
-                    {
-                      opacity: 1,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start:
-                          window.innerWidth > 1024
-                            ? "top+=8000 top"
-                            : "top+=8500 top",
-                        end:
-                          window.innerWidth > 1024
-                            ? "top+=8500 top"
-                            : "top+=9000 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo(o.value, { opacity: 0 }, { opacity: 0 })
-                  .fromTo(s.value, { opacity: 0 }, { opacity: 0 }),
-                (c = V.timeline()),
+                    { opacity: 0, duration: 400, ease: "none" },
+                  ));
+              const isLarge = window.innerWidth > 1024;
+              V.fromTo(
+                s.value,
+                { opacity: 0 },
+                {
+                  opacity: 1,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: "body",
+                    start: isLarge ? "top+=8000 top" : "top+=8500 top",
+                    end: isLarge ? "top+=8500 top" : "top+=9000 top",
+                    scrub: !0,
+                  },
+                },
+              );
+              ((c = V.timeline({
+                scrollTrigger: {
+                  trigger: "body",
+                  start: "top+=4500 top",
+                  end: "top+=5400 top",
+                  scrub: !0,
+                },
+              })),
                 c
                   .fromTo(
                     n.value,
                     { opacity: 0 },
-                    {
-                      opacity: 1,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=4500 top",
-                        end: "top+=4900 top",
-                        scrub: !0,
-                      },
-                    },
+                    { opacity: 1, duration: 400, ease: "none" },
                   )
                   .fromTo(
                     n.value,
                     { opacity: 1 },
-                    {
-                      opacity: 0,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=4900 top",
-                        end: "top+=5400 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo(
-                    r.value,
-                    { opacity: 0 },
-                    {
-                      opacity: 1,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=5300 top",
-                        end: "top+=5700 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo(
-                    r.value,
-                    { opacity: 1 },
-                    {
-                      opacity: 0,
-                      scrollTrigger: {
-                        trigger: "body",
-                        start: "top+=5700 top",
-                        end: "top+=6100 top",
-                        scrub: !0,
-                      },
-                    },
-                  )
-                  .fromTo([r.value, n.value], { opacity: 0 }, { opacity: 0 }));
+                    { opacity: 0, duration: 500, ease: "none" },
+                  ));
+              const cRight = V.timeline({
+                scrollTrigger: {
+                  trigger: "body",
+                  start: "top+=5300 top",
+                  end: "top+=6100 top",
+                  scrub: !0,
+                },
+              });
+              cRight
+                .fromTo(
+                  r.value,
+                  { opacity: 0 },
+                  { opacity: 1, duration: 400, ease: "none" },
+                )
+                .fromTo(
+                  r.value,
+                  { opacity: 1 },
+                  { opacity: 0, duration: 400, ease: "none" },
+                );
             });
           };
           return (d, p) => (
