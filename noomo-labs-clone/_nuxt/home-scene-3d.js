@@ -6719,10 +6719,16 @@ let Ws,
                     !t &&
                       window.innerWidth < 1024 &&
                       W.scale.set(8e3, 8e3, 8e3),
-                    (W.children[0].material = I.clone()),
-                    rs.push(W.children[0]),
-                    As(),
+                    (W.children[0].material = new Ns({
+                      color: 16777215,
+                      transparent: !0,
+                      opacity: 0.12,
+                      roughness: 0.2,
+                      metalness: 0.1,
+                      side: He,
+                    })),
                     (W.children[1].material.transparent = !0),
+                    (W.children[1].material.side = He),
                     c.add(() => {
                       V.fromTo(
                         W.children[1].material.map.offset,
@@ -6737,7 +6743,6 @@ let Ws,
                     }),
                     ci.push(W.children[0]));
                 }),
-                (A.children[1].children[3].children[1].material.side = He),
                 A.children[5].children.forEach((W, Q) => {
                   if (
                     (ui.push(W),
@@ -6918,32 +6923,7 @@ let Ws,
                 Y.gl.toneMapping = mt;
               }
             },
-            As = () => {
-              H.time = rt.getElapsedTime();
-              if (rs.length > 0 && H.buffer === F.texture) {
-                const A = rs[0];
-                wt = Y.gl.toneMapping;
-                D = Y.scene.background;
-                Ie = A.material.side;
-                M.background && (Y.scene.background = M.background);
-                for (let qi = 0; qi < rs.length; qi++) {
-                  rs[qi].visible = !1;
-                }
-                Y.gl.setRenderTarget(F);
-                Y.gl.render(Y.scene, Y.camera);
-                for (let qi = 0; qi < rs.length; qi++) {
-                  rs[qi].visible = !0;
-                }
-                A.material = H;
-                A.material.thickness = M.thickness;
-                A.material.side = Ie;
-                A.material.buffer = F.texture;
-                Y.scene.background = D;
-                Y.gl.setRenderTarget(null);
-                A.material = H;
-                Y.gl.toneMapping = wt;
-              }
-            },
+            As = () => {},
             Da = () => {
               (d.gravity.set(0, 2, 0),
                 new Ma(m, d),
@@ -7190,7 +7170,7 @@ let Ws,
                       ease: "power2.out",
                     }),
                       V.to(mi.material, {
-                        distortion: 15,
+                        opacity: 0.22,
                         duration: 0.5,
                         ease: "power2.out",
                       }));
@@ -7208,7 +7188,7 @@ let Ws,
                     ease: "power2.out",
                   }),
                     V.to(mi.material, {
-                      distortion: 0,
+                      opacity: 0.12,
                       duration: 0.5,
                       ease: "power2.out",
                     }));
