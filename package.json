@@ -1,0 +1,29 @@
+{
+  "name": "chaitanya-2k26",
+  "version": "1.0.0",
+  "description": "Official 3D WebGL Web Platform for Chaitanya 2k26 — Annual Tech & Cultural Fest of Himachal Pradesh Technical University (HPTU Hamirpur)",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py",
+    "dev": "python server.py",
+    "serve": "npx serve . -l 3000",
+    "build": "echo 'Static web assets ready'"
+  },
+  "keywords": [
+    "chaitanya-2k26",
+    "hptu-hamirpur",
+    "threejs",
+    "webgl",
+    "cannon-es",
+    "gsap",
+    "college-fest",
+    "tech-cultural-fest"
+  ],
+  "author": "HPTU Hamirpur <chaitanyahptu@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://chaitanya2k26.hptu.ac.in",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scarescream27/chaitainya-front-back.git"
+  }
+}
