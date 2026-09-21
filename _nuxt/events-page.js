@@ -65,9 +65,13 @@ export function renderEventsPageHtml() {
 
   return `
     <div class="events-page-root" id="chaitanya-events-page">
+      <!-- Top Scroll Progress Bar -->
+      <div id="events-scroll-progress"></div>
+
       <div class="events-container">
         <!-- 1. Hero Section -->
-        <header class="events-hero">
+        <div class="events-hero">
+          <span class="events-hero-coords">[ 31.7088° N, 76.5273° E // HPTU HAMIRPUR ]</span>
           <span class="events-hero-tag">CHAITANYA 2K26 // SCHEDULE & COMPETITIONS</span>
           <h1 class="events-hero-title">ARENAS & SHOWCASE</h1>
           <p class="events-hero-subtitle">
@@ -80,7 +84,7 @@ export function renderEventsPageHtml() {
             <span class="events-stat-pill">[ 2 DAYS // MARCH 26-27 ]</span>
             <span class="events-stat-pill">[ SBI UPI QR // 0% FEE ]</span>
           </div>
-        </header>
+        </div>
 
         <!-- 2. Sticky Category Toolbar & Search -->
         <div class="events-toolbar">
@@ -105,14 +109,25 @@ export function renderEventsPageHtml() {
         </div>
       </div>
 
-      <!-- 4. Interactive Event Dossier Drawer -->
+      <!-- 4. Floating Brutalist Scroll HUD -->
+      <div class="events-scroll-hud" id="events-scroll-hud">
+        <div class="events-scroll-metric">
+          <span class="pulse-dot"></span>
+          <span id="events-scroll-counter">12 ARENAS</span>
+        </div>
+        <button class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">
+          [ ↑ TOP ]
+        </button>
+      </div>
+
+      <!-- 5. Interactive Event Dossier Drawer -->
       <div class="event-dossier-overlay" id="event-dossier-overlay">
         <div class="event-dossier-panel" id="event-dossier-panel">
           <!-- Populated dynamically -->
         </div>
       </div>
 
-      <!-- 5. Registration & Payment Modal -->
+      <!-- 6. Registration & Payment Modal -->
       <div class="event-reg-modal" id="event-reg-modal">
         <div class="event-reg-card" id="event-reg-card">
           <!-- Populated dynamically -->
@@ -628,6 +643,216 @@ export function closeEventRegistration() {
 }
 
 /**
+ * Fast cascade reveal for newly rendered event cards
+ */
+export function triggerCardsReveal() {
+  if (typeof document === "undefined") return;
+  const cards = Array.from(document.querySelectorAll(".event-card"));
+  if (!cards.length) return;
+
+  // Stagger reveal for visible cards
+  cards.forEach((card, index) => {
+    const delay = Math.min((index % 4) * 60, 240);
+    setTimeout(() => {
+      card.classList.add("is-revealed");
+    }, delay);
+  });
+}
+
+let scrollMotionCleanup = null;
+
+/**
+ * Initialize Scroll Motion UI, Top Progress Bar, Sticky Toolbar Morph, and Parallax
+ */
+export function initScrollMotion() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  if (scrollMotionCleanup) {
+    try {
+      scrollMotionCleanup();
+    } catch {}
+    scrollMotionCleanup = null;
+  }
+
+  const progressBar = document.getElementById("events-scroll-progress");
+  const scrollHud = document.getElementById("events-scroll-hud");
+  const scrollTopBtn = document.getElementById("events-scroll-top-btn");
+  const scrollCounter = document.getElementById("events-scroll-counter");
+  const toolbar = document.querySelector(".events-toolbar");
+  const heroCoords = document.querySelector(".events-hero-coords");
+  const heroTitle = document.querySelector(".events-hero-title");
+  const grid = document.getElementById("events-card-grid");
+
+  // Smooth Scroll-to-Top Button
+  if (scrollTopBtn) {
+    scrollTopBtn.onclick = (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  }
+
+  // 1. Throttled RAF Scroll Handler
+  let ticking = false;
+  const onScroll = () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = scrollHeight > 0 ? Math.min(Math.max((scrollTop / scrollHeight) * 100, 0), 100) : 0;
+
+        // Top edge progress accent
+        if (progressBar) {
+          progressBar.style.width = `${progress.toFixed(1)}%`;
+        }
+
+        // Pinned sticky toolbar morphing state
+        if (toolbar) {
+          if (scrollTop > 160) {
+            toolbar.classList.add("is-pinned");
+          } else {
+            toolbar.classList.remove("is-pinned");
+          }
+        }
+
+        // Floating Brutalist HUD
+        if (scrollHud) {
+          if (scrollTop > 220) {
+            scrollHud.classList.add("active");
+            if (scrollCounter) {
+              scrollCounter.textContent = `${Math.round(progress)}% EXPLORED`;
+            }
+          } else {
+            scrollHud.classList.remove("active");
+          }
+        }
+
+        // Hero Ambient Parallax (fade & subtle vertical shift)
+        if (heroCoords && scrollTop < 600) {
+          heroCoords.style.transform = `translate3d(0, ${scrollTop * 0.15}px, 0)`;
+        }
+        if (heroTitle && scrollTop < 600) {
+          const scale = Math.max(1 - scrollTop / 1200, 0.9);
+          const opacity = Math.max(1 - scrollTop / 500, 0.4);
+          heroTitle.style.transform = `scale(${scale})`;
+          heroTitle.style.opacity = `${opacity}`;
+        }
+
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  // 2. Card In-View Scroll Reveal
+  const setupCardAnimations = () => {
+    const cards = Array.from(document.querySelectorAll(".event-card"));
+    if (!cards.length) return;
+
+    // Check for GSAP + ScrollTrigger
+    const gsap = window.gsap;
+    const ScrollTrigger = gsap?.core?.globals()?.ScrollTrigger || window.ScrollTrigger;
+
+    if (gsap && ScrollTrigger) {
+      try {
+        gsap.registerPlugin(ScrollTrigger);
+        cards.forEach((card, index) => {
+          if (card.classList.contains("is-revealed")) return;
+
+          ScrollTrigger.create({
+            trigger: card,
+            start: "top 88%",
+            once: true,
+            onEnter: () => {
+              const delay = (index % 3) * 0.08;
+              gsap.to(card, {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.55,
+                delay: delay,
+                ease: "power2.out",
+                onComplete: () => {
+                  card.classList.add("is-revealed");
+                  card.style.transform = "";
+                },
+              });
+            },
+          });
+        });
+        return;
+      } catch (e) {
+        console.warn("GSAP ScrollTrigger fallback:", e);
+      }
+    }
+
+    // High performance IntersectionObserver fallback
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const card = entry.target;
+              observer.unobserve(card);
+              const idx = cards.indexOf(card);
+              const delay = (idx % 3) * 60;
+              setTimeout(() => {
+                card.classList.add("is-revealed");
+              }, delay);
+            }
+          });
+        },
+        { rootMargin: "0px 0px -40px 0px", threshold: 0.1 }
+      );
+
+      cards.forEach((card) => {
+        if (!card.classList.contains("is-revealed")) {
+          observer.observe(card);
+        }
+      });
+    } else {
+      cards.forEach((c) => c.classList.add("is-revealed"));
+    }
+  };
+
+  setupCardAnimations();
+
+  // 3. Subtle 3D Card Perspective Tilt on Hover
+  const onMouseMove = (e) => {
+    const card = e.target.closest(".event-card.is-revealed");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    const rotX = -(y / (rect.height / 2)) * 3.5;
+    const rotY = (x / (rect.width / 2)) * 3.5;
+    card.style.transform = `perspective(1000px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-5px) scale(1.01)`;
+  };
+
+  const onMouseLeave = (e) => {
+    const card = e.target.closest(".event-card.is-revealed");
+    if (card) {
+      card.style.transform = "";
+    }
+  };
+
+  if (grid) {
+    grid.addEventListener("mousemove", onMouseMove, { passive: true });
+    grid.addEventListener("mouseout", onMouseLeave, { passive: true });
+  }
+
+  scrollMotionCleanup = () => {
+    window.removeEventListener("scroll", onScroll);
+    if (grid) {
+      grid.removeEventListener("mousemove", onMouseMove);
+      grid.removeEventListener("mouseout", onMouseLeave);
+    }
+  };
+}
+
+/**
  * Refresh Cards Grid in-place without rebuilding entire page
  */
 export function refreshEventsGrid() {
@@ -642,6 +867,9 @@ export function refreshEventsGrid() {
         <p>No competitions match your current search or category filter. Try clearing your search.</p>
       </div>
     `;
+
+  // Animate newly mounted cards
+  triggerCardsReveal();
 }
 
 /**
@@ -659,6 +887,16 @@ export function initEventsPage() {
   const regModal = document.getElementById("event-reg-modal");
   if (regModal && regModal.parentElement !== document.body) {
     document.body.appendChild(regModal);
+  }
+
+  const scrollHud = document.getElementById("events-scroll-hud");
+  if (scrollHud && scrollHud.parentElement !== document.body) {
+    document.body.appendChild(scrollHud);
+  }
+
+  const progressBar = document.getElementById("events-scroll-progress");
+  if (progressBar && progressBar.parentElement !== document.body) {
+    document.body.appendChild(progressBar);
   }
 
   // Category toolbar clicks
@@ -701,7 +939,7 @@ export function initEventsPage() {
   }
 
   // Delegated clicks on Event Cards
-  root.addEventListener("click", (e) => {
+  document.addEventListener("click", (e) => {
     const detailsBtn = e.target.closest('button[data-action="view-details"]');
     if (detailsBtn) {
       const evId = detailsBtn.getAttribute("data-event-id");
@@ -742,6 +980,9 @@ export function initEventsPage() {
   subscribeAuthState(() => {
     refreshEventsGrid();
   });
+
+  // Initialize Scroll Motion UI
+  initScrollMotion();
 }
 
 // Window global hooks for smooth router integration
@@ -749,5 +990,7 @@ if (typeof window !== "undefined") {
   window.openEventDossier = openEventDossier;
   window.openEventRegistration = openEventRegistration;
   window.initEventsPage = initEventsPage;
+  window.initScrollMotion = initScrollMotion;
+  window.triggerCardsReveal = triggerCardsReveal;
   window.renderEventsPageHtml = renderEventsPageHtml;
 }
