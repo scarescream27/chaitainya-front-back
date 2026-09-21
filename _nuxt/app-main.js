@@ -4189,6 +4189,15 @@ let At,
             ).then((t) => t.default || t),
         },
         {
+          name: "events",
+          path: "/events",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./events-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
           name: "work",
           path: "/work",
           meta: {},

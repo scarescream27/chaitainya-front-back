@@ -11,6 +11,10 @@ import {
   getRegisteredAttendees,
   getDemoAttendees,
   subscribeAuthState,
+  getAllTeams,
+  getAllPayments,
+  approvePayment,
+  rejectPayment,
 } from "./auth-service.js";
 import { isFirebaseConfigured, getFirebaseConfig, isAdminUser } from "./firebase-config.js";
 
@@ -591,109 +595,516 @@ async function renderAdminView(container, user) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
       <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
-      <h2 class="chaitanya-modal-title">Fest Registrations</h2>
+      <h2 class="chaitanya-modal-title">Fest Command Center</h2>
       <p class="chaitanya-modal-subtitle">Authorized Admin: ${user.email}</p>
     </div>
     <div style="text-align:center; padding: 20px; font-family:IBM Plex Mono;">
-      Loading registered attendees...
+      Loading fest database...
     </div>
   `;
 
   let attendees = [];
+  let teams = [];
+  let payments = [];
+
   try {
-    attendees = await getRegisteredAttendees();
+    const [attRes, teamRes, payRes] = await Promise.all([
+      getRegisteredAttendees().catch(() => []),
+      getAllTeams().catch(() => []),
+      getAllPayments().catch(() => []),
+    ]);
+    attendees = attRes && attRes.length ? attRes : getDemoAttendees();
+    teams = teamRes && teamRes.length ? teamRes : [];
+    payments = payRes && payRes.length ? payRes : [];
   } catch (err) {
-    console.warn("Could not load attendees:", err);
-  }
-  if (!attendees || attendees.length === 0) {
+    console.warn("Could not load admin data:", err);
     attendees = getDemoAttendees();
   }
 
-  const totalUsers = attendees.length;
-  const colleges = new Set(attendees.map((a) => a.college).filter(Boolean)).size;
-  const totalEvents = attendees.reduce(
-    (acc, a) => acc + (a.registeredEvents?.length || 0),
-    0,
-  );
+  let adminActiveTab = "attendees";
 
-  const rows = attendees
-    .map(
-      (a) => `
-      <tr>
-        <td><strong>${a.displayName || "Unknown"}</strong></td>
-        <td>${a.email || "-"}</td>
-        <td>${a.college || "HPTU"}</td>
-        <td>${a.phone || "-"}</td>
-        <td><span class="profile-role-badge ${a.role === "admin" ? "admin" : ""}" style="font-size:9px; padding:2px 8px;">${a.role || "attendee"}</span></td>
-        <td>${(a.registeredEvents || []).join(", ") || "General Pass"}</td>
-      </tr>
-    `,
-    )
-    .join("");
+  function renderAdminTabContent() {
+    let statsHtml = "";
+    let tableHtml = "";
+    const pendingPayments = payments.filter((p) => (p.status || "").toLowerCase().includes("pending"));
 
-  container.innerHTML = `
-    <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
-      <h2 class="chaitanya-modal-title">Fest Registrations</h2>
-      <p class="chaitanya-modal-subtitle">Participant database and event enrollment management (Admin: ${user.email})</p>
-    </div>
+    if (adminActiveTab === "attendees") {
+      const totalUsers = attendees.length;
+      const colleges = new Set(attendees.map((a) => a.college).filter(Boolean)).size;
+      const totalEvents = attendees.reduce(
+        (acc, a) => acc + (a.registeredEvents?.length || 0),
+        0,
+      );
 
-    <div class="admin-stats-grid">
-      <div class="admin-stat-card">
-        <div class="admin-stat-num">${totalUsers}</div>
-        <div class="admin-stat-label">Registered Attendees</div>
-      </div>
-      <div class="admin-stat-card">
-        <div class="admin-stat-num">${colleges || 1}</div>
-        <div class="admin-stat-label">Colleges Represented</div>
-      </div>
-      <div class="admin-stat-card">
-        <div class="admin-stat-num">${totalEvents}</div>
-        <div class="admin-stat-label">Event Entries</div>
-      </div>
-    </div>
+      statsHtml = `
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${totalUsers}</div>
+            <div class="admin-stat-label">Registered Attendees</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${colleges || 1}</div>
+            <div class="admin-stat-label">Colleges Represented</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${totalEvents}</div>
+            <div class="admin-stat-label">Event Entries</div>
+          </div>
+        </div>
+      `;
 
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
+      const rows = attendees
+        .map(
+          (a) => `
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>College</th>
-            <th>Contact</th>
-            <th>Role</th>
-            <th>Events</th>
+            <td><strong>${a.displayName || "Unknown"}</strong></td>
+            <td>${a.email || "-"}</td>
+            <td>${a.college || "HPTU"}</td>
+            <td>${a.phone || "-"}</td>
+            <td><span class="profile-role-badge ${a.role === "admin" ? "admin" : ""}" style="font-size:9px; padding:2px 8px;">${a.role || "attendee"}</span></td>
+            <td>${(a.registeredEvents || []).join(", ") || "General Pass"}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-    </div>
+        `,
+        )
+        .join("");
 
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button type="button" class="btn-google-auth" id="btn-export-csv" style="width:auto; padding:8px 16px; font-size:11px;">
-        <span>[ Export CSV ]</span>
-      </button>
-      <button type="button" class="chaitanya-link-btn" id="btn-back-to-profile">
-        [ Return to Profile ]
-      </button>
-    </div>
+      tableHtml = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>College</th>
+                <th>Contact</th>
+                <th>Role</th>
+                <th>Events</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="6" style="text-align:center;">No attendees registered yet</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (adminActiveTab === "teams") {
+      const totalTeams = teams.length;
+      const totalMembers = teams.reduce((acc, t) => acc + (t.members ? t.members.length : 1), 0);
+      const eventsCount = new Set(teams.map((t) => t.eventName).filter(Boolean)).size;
+
+      statsHtml = `
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${totalTeams}</div>
+            <div class="admin-stat-label">Registered Squads</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${totalMembers}</div>
+            <div class="admin-stat-label">Total Squad Members</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${eventsCount}</div>
+            <div class="admin-stat-label">Active Arenas</div>
+          </div>
+        </div>
+      `;
+
+      const rows = teams
+        .map(
+          (t) => `
+          <tr>
+            <td><strong>${t.teamName || "Squad"}</strong></td>
+            <td><code style="background:#000; color:#fff; padding:2px 6px; border-radius:4px;">${t.teamCode || "-"}</code></td>
+            <td>${t.eventName || "-"}</td>
+            <td>${t.leaderName || "-"} (${t.leaderEmail || "-"})</td>
+            <td>${t.members ? t.members.length : 1} / ${t.maxTeamSize || 4}</td>
+            <td><span class="badge-status ${t.paymentStatus || "free"}">${(t.paymentStatus || "free").toUpperCase()}</span></td>
+          </tr>
+        `,
+        )
+        .join("");
+
+      tableHtml = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Squad Name</th>
+                <th>Team Code</th>
+                <th>Arena / Event</th>
+                <th>Leader (Contact)</th>
+                <th>Size</th>
+                <th>Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="6" style="text-align:center;">No squads registered yet</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (adminActiveTab === "payments") {
+      const totalPay = payments.length;
+      const pendingCount = pendingPayments.length;
+      const totalVolume = payments
+        .filter((p) => (p.status || "").toLowerCase() === "verified")
+        .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+
+      statsHtml = `
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">₹${totalVolume.toLocaleString()}</div>
+            <div class="admin-stat-label">Verified Collections</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num" style="color:${pendingCount > 0 ? '#b30000' : '#000'}">${pendingCount}</div>
+            <div class="admin-stat-label">Pending Verifications</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">${totalPay}</div>
+            <div class="admin-stat-label">Total Submissions</div>
+          </div>
+        </div>
+      `;
+
+      const rows = payments
+        .map(
+          (p) => {
+            const isPending = (p.status || "").toLowerCase().includes("pending");
+            return `
+          <tr data-payment-row="${p.paymentId}">
+            <td><strong>${p.eventTitle || p.eventName || "Arena Pass"}</strong></td>
+            <td>${p.payerName || p.userName || p.leaderName || "Participant"}<br/><small style="color:#666;">${p.payerEmail || p.userEmail || "-"}</small></td>
+            <td><strong>₹${p.amount || 0}</strong></td>
+            <td><code style="font-size:11px; background:#f0f0f0; padding:2px 4px; border-radius:3px;">${p.transactionRef || p.utrNumber || "N/A"}</code></td>
+            <td><span class="badge-status ${isPending ? "pending" : (p.status || "verified")}" id="status-badge-${p.paymentId}">${(p.status || "pending").toUpperCase()}</span></td>
+            <td id="actions-${p.paymentId}">
+              ${
+                isPending
+                  ? `
+                  <div class="admin-action-btn-group">
+                    <button type="button" class="btn-action-approve" data-id="${p.paymentId}" title="Approve SBI UPI UTR">✓ Approve</button>
+                    <button type="button" class="btn-action-reject" data-id="${p.paymentId}" title="Reject invalid UTR">✕ Reject</button>
+                  </div>
+                `
+                  : `<small style="color:#666;">${p.verifiedBy ? "By " + p.verifiedBy.split("@")[0] : "Completed"}</small>`
+              }
+            </td>
+          </tr>
+        `;
+          },
+        )
+        .join("");
+
+      tableHtml = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Arena</th>
+                <th>Registrant</th>
+                <th>Amount</th>
+                <th>UPI UTR / Ref</th>
+                <th>Status</th>
+                <th>Verification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="6" style="text-align:center;">No payment records found</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    const pendingPaymentsCount = pendingPayments.length;
+
+    return `
+      <div class="admin-tabs-nav">
+        <button type="button" class="admin-tab-btn ${adminActiveTab === "attendees" ? "active" : ""}" data-tab="attendees">
+          [ 01. ATTENDEES (${attendees.length}) ]
+        </button>
+        <button type="button" class="admin-tab-btn ${adminActiveTab === "teams" ? "active" : ""}" data-tab="teams">
+          [ 02. SQUADS & TEAMS (${teams.length}) ]
+        </button>
+        <button type="button" class="admin-tab-btn ${adminActiveTab === "payments" ? "active" : ""}" data-tab="payments">
+          [ 03. UPI PAYMENTS & UTR (${pendingPaymentsCount} PENDING) ]
+        </button>
+      </div>
+      ${statsHtml}
+      ${tableHtml}
+    `;
+  }
+
+  function renderFullAdmin() {
+    container.innerHTML = `
+      <div class="chaitanya-modal-header">
+        <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
+        <h2 class="chaitanya-modal-title">Fest Command Center</h2>
+        <p class="chaitanya-modal-subtitle">Participant database, squad rosters & UPI verification (Admin: ${user.email})</p>
+      </div>
+
+      <div id="admin-tab-container">
+        ${renderAdminTabContent()}
+      </div>
+
+      <div class="admin-export-bar">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn-google-auth" id="btn-export-excel" style="width:auto; padding:8px 16px; font-size:11px; background:#107c41; color:#fff; border-color:#107c41;">
+            <span>[ 📊 Download Master Excel (.xls) ]</span>
+          </button>
+          <button type="button" class="btn-google-auth" id="btn-export-csv" style="width:auto; padding:8px 14px; font-size:11px;">
+            <span>[ 📄 Export CSV ]</span>
+          </button>
+        </div>
+        <button type="button" class="chaitanya-link-btn" id="btn-back-to-profile">
+          [ Return to Profile ]
+        </button>
+      </div>
+    `;
+
+    // Attach Tab switching listener
+    const tabContainer = container.querySelector("#admin-tab-container");
+    if (tabContainer) {
+      tabContainer.addEventListener("click", async (e) => {
+        const tabBtn = e.target.closest(".admin-tab-btn");
+        if (tabBtn) {
+          const tab = tabBtn.getAttribute("data-tab");
+          if (tab && tab !== adminActiveTab) {
+            adminActiveTab = tab;
+            tabContainer.innerHTML = renderAdminTabContent();
+          }
+          return;
+        }
+
+        const approveBtn = e.target.closest(".btn-action-approve");
+        if (approveBtn) {
+          const id = approveBtn.getAttribute("data-id");
+          approveBtn.disabled = true;
+          approveBtn.textContent = "Verifying...";
+          try {
+            await approvePayment(id);
+            const badge = tabContainer.querySelector(`#status-badge-${id}`);
+            if (badge) {
+              badge.className = "badge-status verified";
+              badge.textContent = "VERIFIED";
+            }
+            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
+            if (actionsCell) {
+              actionsCell.innerHTML = `<span style="color:#155724; font-weight:600; font-size:11px;">✓ Verified</span>`;
+            }
+          } catch (err) {
+            alert("Approval failed: " + err.message);
+            approveBtn.disabled = false;
+            approveBtn.textContent = "✓ Approve";
+          }
+          return;
+        }
+
+        const rejectBtn = e.target.closest(".btn-action-reject");
+        if (rejectBtn) {
+          const id = rejectBtn.getAttribute("data-id");
+          const reason = prompt("Enter rejection reason (or leave default):", "Invalid UTR / Payment Not Received");
+          if (reason === null) return;
+          rejectBtn.disabled = true;
+          rejectBtn.textContent = "Rejecting...";
+          try {
+            await rejectPayment(id, reason);
+            const badge = tabContainer.querySelector(`#status-badge-${id}`);
+            if (badge) {
+              badge.className = "badge-status rejected";
+              badge.textContent = "REJECTED";
+            }
+            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
+            if (actionsCell) {
+              actionsCell.innerHTML = `<span style="color:#721c24; font-weight:600; font-size:11px;">✕ Rejected</span>`;
+            }
+          } catch (err) {
+            alert("Rejection failed: " + err.message);
+            rejectBtn.disabled = false;
+            rejectBtn.textContent = "✕ Reject";
+          }
+          return;
+        }
+      });
+    }
+
+    // Export Excel button
+    const btnExcel = container.querySelector("#btn-export-excel");
+    if (btnExcel) {
+      btnExcel.addEventListener("click", () => {
+        exportMasterExcel(attendees, teams, payments);
+      });
+    }
+
+    // Export CSV button
+    const btnCsv = container.querySelector("#btn-export-csv");
+    if (btnCsv) {
+      btnCsv.addEventListener("click", () => {
+        if (adminActiveTab === "teams") exportTeamsCSV(teams);
+        else if (adminActiveTab === "payments") exportPaymentsCSV(payments);
+        else exportAttendeesCSV(attendees);
+      });
+    }
+
+    // Return to Profile button
+    const btnBack = container.querySelector("#btn-back-to-profile");
+    if (btnBack) {
+      btnBack.addEventListener("click", () => {
+        openAuthModal("profile");
+      });
+    }
+  }
+
+  renderFullAdmin();
+}
+
+function exportMasterExcel(attendees, teams, payments) {
+  const escapeXml = (str) =>
+    String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+
+  const buildSheet = (name, headers, rows) => `
+    <Worksheet ss:Name="${escapeXml(name)}">
+      <Table>
+        <Row>
+          ${headers.map((h) => `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("")}
+        </Row>
+        ${rows
+          .map(
+            (r) => `
+          <Row>
+            ${r.map((cell) => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("")}
+          </Row>`
+          )
+          .join("")}
+      </Table>
+    </Worksheet>
   `;
 
-  const btnExport = container.querySelector("#btn-export-csv");
-  if (btnExport) {
-    btnExport.addEventListener("click", () => {
-      exportAttendeesCSV(attendees);
-    });
-  }
+  const attendeeHeaders = ["Name", "Email", "College", "Phone", "Role", "Registered Events"];
+  const attendeeRows = attendees.map((a) => [
+    a.displayName || "Unknown",
+    a.email || "-",
+    a.college || "HPTU",
+    a.phone || "-",
+    a.role || "attendee",
+    (a.registeredEvents || []).join("; "),
+  ]);
 
-  const btnBack = container.querySelector("#btn-back-to-profile");
-  if (btnBack) {
-    btnBack.addEventListener("click", () => {
-      openAuthModal("profile");
-    });
-  }
+  const teamHeaders = ["Team Name", "Team Code", "Arena / Event", "Leader Name", "Leader Email", "Leader Phone", "College", "Members Count", "Payment Status", "Registered At"];
+  const teamRows = teams.map((t) => [
+    t.teamName || "-",
+    t.teamCode || "-",
+    t.eventName || "-",
+    t.leaderName || "-",
+    t.leaderEmail || "-",
+    t.leaderPhone || "-",
+    t.college || "-",
+    t.teamSize || (t.members ? t.members.length : 1),
+    (t.paymentStatus || "free").toUpperCase(),
+    t.registeredAt ? new Date(t.registeredAt).toLocaleString() : "-",
+  ]);
+
+  const paymentHeaders = ["Payment ID", "Arena / Event", "Registrant", "Email", "Phone", "Amount (INR)", "12-Digit UTR", "Status", "Verified By", "Timestamp"];
+  const paymentRows = payments.map((p) => [
+    p.paymentId || "-",
+    p.eventName || "-",
+    p.userName || p.leaderName || "-",
+    p.userEmail || "-",
+    p.userPhone || "-",
+    p.amount || 0,
+    p.utrNumber || "-",
+    (p.status || "pending").toUpperCase(),
+    p.verifiedBy || "-",
+    p.submittedAt ? new Date(p.submittedAt).toLocaleString() : "-",
+  ]);
+
+  const xmlContent = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="HeaderStyle">
+   <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#000000" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+ ${buildSheet("Attendees", attendeeHeaders, attendeeRows)}
+ ${buildSheet("Teams & Squads", teamHeaders, teamRows)}
+ ${buildSheet("Payments & UTRs", paymentHeaders, paymentRows)}
+</Workbook>`;
+
+  const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `chaitanya_2k26_master_database_${Date.now()}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function exportTeamsCSV(teams) {
+  const headers = ["TeamName,TeamCode,EventName,LeaderName,LeaderEmail,LeaderPhone,College,TeamSize,PaymentStatus,RegisteredAt"];
+  const rows = teams.map((t) =>
+    [
+      `"${t.teamName || ""}"`,
+      `"${t.teamCode || ""}"`,
+      `"${t.eventName || ""}"`,
+      `"${t.leaderName || ""}"`,
+      `"${t.leaderEmail || ""}"`,
+      `"${t.leaderPhone || ""}"`,
+      `"${t.college || ""}"`,
+      `"${t.teamSize || (t.members ? t.members.length : 1)}"`,
+      `"${t.paymentStatus || "free"}"`,
+      `"${t.registeredAt || ""}"`,
+    ].join(","),
+  );
+
+  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `chaitanya_2k26_squads_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportPaymentsCSV(payments) {
+  const headers = ["PaymentId,EventName,UserName,UserEmail,UserPhone,Amount,UTRNumber,Status,VerifiedBy,SubmittedAt"];
+  const rows = payments.map((p) =>
+    [
+      `"${p.paymentId || ""}"`,
+      `"${p.eventName || ""}"`,
+      `"${p.userName || p.leaderName || ""}"`,
+      `"${p.userEmail || ""}"`,
+      `"${p.userPhone || ""}"`,
+      `"${p.amount || 0}"`,
+      `"${p.utrNumber || ""}"`,
+      `"${p.status || "pending"}"`,
+      `"${p.verifiedBy || ""}"`,
+      `"${p.submittedAt || ""}"`,
+    ].join(","),
+  );
+
+  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `chaitanya_2k26_payments_utr_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function exportAttendeesCSV(attendees) {
@@ -725,4 +1136,10 @@ function showAuthError(msg) {
     box.style.display = "block";
     box.textContent = msg;
   }
+}
+
+if (typeof window !== "undefined") {
+  window.openAuthModal = openAuthModal;
+  window.closeAuthModal = closeAuthModal;
+  window.initAuthModal = initAuthModal;
 }

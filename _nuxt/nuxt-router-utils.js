@@ -178,7 +178,11 @@ let st,
                         class: "right-menu",
                       },
                       [
-                        d("a", { href: "#events" }, [O("["), tabEvents, O("]")]),
+                        Y(
+                          z,
+                          { to: "/events" },
+                          { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
+                        ),
                         d(
                           "a",
                           {
@@ -256,9 +260,8 @@ let st,
                           [
                             d("div", mt, [
                               d(
-                                "a",
+                                "span",
                                 {
-                                  href: "#events",
                                   onClick:
                                     o[4] ||
                                     (o[4] = (_) =>
@@ -266,7 +269,16 @@ let st,
                                         !w(n).getMobileMenuOpen,
                                       )),
                                 },
-                                [O("["), mEvents, O("]")],
+                                [
+                                  Y(
+                                    z,
+                                    { to: "/events" },
+                                    {
+                                      default: Z(() => [O("["), mEvents, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                ],
                               ),
                               d(
                                 "a",

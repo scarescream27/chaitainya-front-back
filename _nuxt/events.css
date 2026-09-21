@@ -1,0 +1,931 @@
+/**
+ * ============================================================================
+ * Chaitanya 2k26 — Events Page & Competition Arena Styles
+ * ============================================================================
+ * High-impact brutalist glassmorphic aesthetic matching the main site & /contact:
+ * - Frosted ethereal glassmorphism with subtle noise texture
+ * - Bold display headers in DrukMedium
+ * - Monospace tags, brackets, and badges in IBM Plex Mono
+ * - High-contrast responsive card grid and slide-in dossier drawer
+ */
+
+/* Main Page Container */
+.events-page-root {
+  min-height: 100vh;
+  width: 100%;
+  padding: 85px 24px 60px;
+  background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff), linear-gradient(0deg, #96bbff, #edf4ff);
+  background-repeat: repeat;
+  background-size: 80px;
+  background-attachment: fixed;
+  box-sizing: border-box;
+  position: relative;
+}
+
+body:has(.events-page-root) .transition-component,
+.has-events-page .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  clip-path: circle(0 at 50% 50%) !important;
+  -webkit-clip-path: circle(0 at 50% 50%) !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 991px) {
+  .events-page-root {
+    padding: 72px 12px 48px;
+  }
+}
+
+.events-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ============================================================================
+ * 1. HERO SECTION
+ * ============================================================================ */
+.events-hero {
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.events-hero-tag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #000000;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 12px;
+}
+
+.events-hero-title {
+  font-family: "DrukMedium", sans-serif;
+  font-size: clamp(42px, 7vw, 92px);
+  line-height: 0.85;
+  letter-spacing: -1.5px;
+  text-transform: uppercase;
+  color: #000000;
+  margin: 0 0 10px;
+}
+
+.events-hero-subtitle {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.75);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  max-width: 680px;
+  margin: 0 auto 20px;
+  line-height: 1.4;
+}
+
+/* Stats Pill Strip */
+.events-stats-strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.events-stat-pill {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #000000;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid #ffffff;
+  padding: 6px 14px;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(0, 40, 100, 0.06);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.events-stat-pill.highlight {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+/* ============================================================================
+ * 2. STICKY FILTER BAR & SEARCH
+ * ============================================================================ */
+.events-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 50;
+  margin-bottom: 32px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid #ffffff;
+  border-radius: 40px;
+  box-shadow: 0 12px 36px rgba(0, 40, 120, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 991px) {
+  .events-toolbar {
+    top: 62px;
+    flex-direction: column;
+    border-radius: 20px;
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+/* Category Filter Tabs */
+.events-categories {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 2px 0;
+  max-width: 100%;
+}
+
+.events-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.events-cat-btn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #000000;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 30px;
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.events-cat-btn:hover {
+  background: #ffffff;
+  border-color: #000000;
+  transform: translateY(-1px);
+}
+
+.events-cat-btn.active {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.events-cat-btn .cat-count {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* Search Box */
+.events-search-wrap {
+  position: relative;
+  min-width: 260px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 991px) {
+  .events-search-wrap {
+    width: 100%;
+  }
+}
+
+.events-search-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  border-radius: 30px;
+  padding: 8px 36px 8px 16px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: #000000;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.events-search-input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.events-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  color: #666666;
+  padding: 0;
+  display: none;
+}
+
+.events-search-clear.active {
+  display: block;
+}
+
+/* ============================================================================
+ * 3. EVENT CARDS GRID
+ * ============================================================================ */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 22px;
+}
+
+@media (max-width: 767px) {
+  .events-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Individual Event Card */
+.event-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.88);
+  background-image: url(/images/footerPatern.png);
+  background-repeat: repeat;
+  background-size: 70px;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 2px solid #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 
+    0 20px 48px rgba(0, 30, 90, 0.06),
+    0 2px 10px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 #ffffff;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 28px 60px rgba(0, 30, 90, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 #ffffff;
+  border-color: #000000;
+}
+
+/* Corner plus glyphs */
+.event-card .corner {
+  position: absolute;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+.event-card .corner-tl { top: 8px; left: 10px; }
+.event-card .corner-tr { top: 8px; right: 10px; }
+.event-card .corner-bl { bottom: 8px; left: 10px; }
+.event-card .corner-br { bottom: 8px; right: 10px; }
+
+/* Card Top Badges */
+.event-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.event-badge-category {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+}
+
+.event-badge-format {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #333333;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Card Titles */
+.event-card-title {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 28px;
+  line-height: 0.95;
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+  color: #000000;
+  margin: 0 0 8px;
+}
+
+.event-card-tagline {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.4;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+/* Card Metadata Grid */
+.event-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 18px;
+}
+
+.event-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+.event-meta-label {
+  color: #666666;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.event-meta-val {
+  color: #000000;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.event-meta-val.prize {
+  color: #005a3c;
+  font-weight: 700;
+}
+
+/* Card Action Buttons */
+.event-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.event-btn-details {
+  flex: 1;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  color: #000000;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 10px;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+  text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.event-btn-details:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.event-btn-register {
+  flex: 1.2;
+  background: #000000;
+  border: 1.5px solid #000000;
+  color: #ffffff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 10px;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+  text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.event-btn-register:hover {
+  background: #222222;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.event-btn-register.registered {
+  background: #005a3c;
+  border-color: #005a3c;
+  color: #ffffff;
+}
+
+/* Empty State */
+.events-empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-family: "IBM Plex Mono", monospace;
+  color: #666666;
+  grid-column: 1 / -1;
+}
+
+.events-empty h3 {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 32px;
+  color: #000000;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+ * 4. EVENT DETAILS DOSSIER DRAWER
+ * ============================================================================ */
+.event-dossier-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999 !important;
+  background: rgba(220, 232, 252, 0.5);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.event-dossier-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.event-dossier-panel {
+  width: 100%;
+  max-width: 620px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.94);
+  background-image: url(/images/footerPatern.png);
+  background-repeat: repeat;
+  background-size: 80px;
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
+  border-left: 2px solid #ffffff;
+  box-shadow: -20px 0 60px rgba(0, 30, 90, 0.15);
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 32px 28px 40px;
+  box-sizing: border-box;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.event-dossier-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.event-dossier-overlay.active .event-dossier-panel {
+  transform: translateX(0);
+}
+
+.event-dossier-close {
+  align-self: flex-end;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  color: #000000;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 30px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+.event-dossier-close:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* Dossier Header */
+.event-dossier-badge {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.event-dossier-title {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 38px;
+  line-height: 0.92;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  color: #000000;
+  margin: 0 0 10px;
+}
+
+.event-dossier-tagline {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #444444;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* Dossier Specs Grid */
+.event-dossier-specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .event-dossier-specs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.event-spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-spec-k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #777777;
+  text-transform: uppercase;
+}
+
+.event-spec-v {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+  text-transform: uppercase;
+}
+
+/* Dossier Content Blocks */
+.event-dossier-section {
+  margin-bottom: 24px;
+}
+
+.event-dossier-heading {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #000000;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.event-dossier-text {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #222222;
+  line-height: 1.6;
+}
+
+.event-dossier-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-dossier-list li {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #111111;
+  position: relative;
+  padding-left: 20px;
+}
+
+.event-dossier-list li:before {
+  content: "+";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: #000000;
+}
+
+/* Coordinator Box */
+.event-coordinator-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.event-coord-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-coord-name {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.event-coord-role {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: #666666;
+  text-transform: uppercase;
+}
+
+.event-coord-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.event-coord-btn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #000000;
+  background: #ffffff;
+  border: 1px solid #000000;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.event-coord-btn:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* ============================================================================
+ * 5. REGISTRATION & PAYMENT MODAL
+ * ============================================================================ */
+.event-reg-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100000 !important;
+  background: rgba(220, 232, 252, 0.55);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.event-reg-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.event-reg-card {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background: rgba(255, 255, 255, 0.94);
+  background-image: url(/images/footerPatern.png);
+  background-repeat: repeat;
+  background-size: 80px;
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
+  border: 2px solid #ffffff;
+  border-radius: 28px;
+  padding: 32px 28px;
+  box-shadow: 0 30px 90px rgba(0, 40, 120, 0.15);
+  box-sizing: border-box;
+}
+
+.event-reg-card::-webkit-scrollbar {
+  display: none;
+}
+
+.event-reg-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  color: #000000;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 30px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.event-reg-close:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+.event-reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.event-reg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-reg-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.event-reg-input {
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #000000;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.event-reg-input:focus {
+  border-color: #000000;
+}
+
+/* Payment Box with QR Code */
+.event-upi-payment-box {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid #000000;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.event-qr-display {
+  width: 140px;
+  height: 140px;
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 10px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.event-qr-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.event-upi-id-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f0f0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.event-upi-copy-btn {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.event-submit-btn {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 20px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.event-submit-btn:hover {
+  background: #222222;
+  transform: translateY(-1px);
+}
