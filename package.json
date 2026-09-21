@@ -1,6 +1,6 @@
 {
   "name": "chaitanya-2k26",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Official 3D WebGL Web Platform for Chaitanya 2k26 — Annual Tech & Cultural Fest of Himachal Pradesh Technical University (HPTU Hamirpur)",
   "main": "server.py",
   "scripts": {
@@ -16,6 +16,9 @@
     "webgl",
     "cannon-es",
     "gsap",
+    "scroll-motion-ui",
+    "events-arena",
+    "sbi-upi-verification",
     "college-fest",
     "tech-cultural-fest"
   ],
