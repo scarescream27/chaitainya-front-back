@@ -87,12 +87,15 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
     : h("span", { class: "nav-avatar nav-avatar-initials", "aria-hidden": "true" }, initials);
   return [
     // Keyed on the avatar so a name/photo change re-mounts the link.
-    link(`nav-profile:${initials}:${user.photoURL || ""}`, "/profile", "Profile", () => goTo("/profile"), { class: "nav-profile", "aria-label": "Open your profile" }, [
-      avatar,
-      text("["),
-      h("span", null, "Profile"),
-      text("]"),
-    ]),
+    // Avatar only; the label stays available to screen readers and as a tooltip.
+    link(
+      `nav-profile:${initials}:${user.photoURL || ""}`,
+      "/profile",
+      "Profile",
+      () => goTo("/profile"),
+      { class: "nav-profile", "aria-label": "Your profile", title: "Profile" },
+      [avatar],
+    ),
     link("nav-logout", "#logout", "Logout", logOutAndLeave),
   ];
 }
@@ -1281,7 +1284,8 @@ let st,
             rt(() => {
               ((k.value = window.innerWidth < 1024 && window.innerWidth > 767),
                 (m = J.create({
-                  smooth: 0.8,
+                  // How far (seconds) the page trails the scroll input; 0.8 felt sluggish.
+                  smooth: 0.4,
                   effects: !1,
                   normalizeScroll: g,
                   ignoreMobileResize: !0,

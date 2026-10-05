@@ -1,0 +1,128 @@
+/* ==========================================================================
+   Site loader — "CHAITANYA" in several languages, then a curved curtain lift.
+   Ported from the React/Framer Motion WordsPreloader (Chaitanya-Frontend),
+   recoloured to the site's palette (sky gradient + pattern, black Druk type).
+   ========================================================================== */
+
+/* Until the loader element exists, keep the page hidden (head script adds
+   .ch-preload and always removes it within 3s, so this can never hang). */
+html.ch-preload body {
+  visibility: hidden;
+}
+
+html.ch-preload,
+html.site-loading {
+  background: #f7faff;
+}
+
+#site-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: visible;
+  background-color: #dbe7fb;
+  background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff);
+  background-repeat: repeat, no-repeat;
+  background-size: 80px, 100% 100%;
+  color: #000000;
+  transform: translate3d(0, 0, 0);
+  /* Only transform animates (GPU-composited), so the lift stays smooth even
+     while the 3D scene is busy loading on the main thread. */
+  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.2s;
+  will-change: transform;
+}
+
+/* Curved bottom edge of the curtain: an ellipse that grows out of the
+   loader's bottom edge as it lifts (scaleY, also GPU-only). */
+#site-loader::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: -25%;
+  width: 150%;
+  height: 22vh;
+  margin-top: -1px;
+  background: url(/images/footerPatern.png) repeat 0 0 / 80px, #b4cbf5;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 1.1s cubic-bezier(0.33, 1, 0.68, 1) 0.2s;
+  will-change: transform;
+}
+
+#site-loader.is-leaving {
+  transform: translate3d(0, calc(-100% - 22vh), 0);
+  pointer-events: none;
+}
+
+#site-loader.is-leaving::after {
+  transform: scaleY(1);
+}
+
+.site-loader-word {
+  margin: 0;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-family: "DrukMedium", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(56px, 11vw, 168px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: site-loader-in 1s ease 0.2s forwards;
+}
+
+/* Scripts Druk doesn't cover fall back to a bolder system face. */
+.site-loader-word[lang]:not([lang="en"]) {
+  font-weight: 700;
+  letter-spacing: 0;
+  font-size: clamp(44px, 8vw, 128px);
+}
+
+.site-loader-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  margin: 0;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #005a3c;
+  opacity: 0;
+  animation: site-loader-in 1s ease 0.4s forwards;
+}
+
+@keyframes site-loader-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #site-loader {
+    transition: opacity 0.3s ease;
+  }
+
+  #site-loader.is-leaving {
+    transform: none;
+    opacity: 0;
+  }
+
+  #site-loader::after {
+    display: none;
+  }
+
+  .site-loader-word,
+  .site-loader-tag {
+    animation: none;
+    opacity: 1;
+  }
+}

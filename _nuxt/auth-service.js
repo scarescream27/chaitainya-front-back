@@ -943,6 +943,154 @@ export function isEventRegistered(eventIdOrTitle) {
 }
 
 // ----------------------------------------------------------------------------
+// DEREGISTRATION & PROFILE DELETION
+// ----------------------------------------------------------------------------
+
+// Registrations a participant may cancel themselves. Paid bookings (pending or
+// verified) keep their payment trail, so organisers handle those.
+const SELF_CANCELLABLE = [PAYMENT_STATUS.FREE, PAYMENT_STATUS.TEAM, PAYMENT_STATUS.REJECTED];
+
+export function canCancelRegistration(registration) {
+  return SELF_CANCELLABLE.includes(registration?.payment_status);
+}
+
+/**
+ * Cancel the signed-in user's registration for one event. The registration is
+ * deleted (not just marked cancelled) so the user can register again later.
+ * A team leader's team is removed with it, but only while no teammate has
+ * linked their account; a teammate is simply taken off the team.
+ */
+export async function cancelRegistration(eventId) {
+  const user = requireUser();
+  const regId = registrationId(eventId, user.uid);
+  const registration = await getDocData("registrations", regId);
+  const title = registration?.event_title || getEventById(eventId)?.title || eventId;
+
+  if (registration && !canCancelRegistration(registration)) {
+    throw new Error(`Your ${title} registration includes a payment, so it can't be cancelled online. Please contact the fest team.`);
+  }
+
+  let team = null;
+  let teamAction = null; // "delete" | "leave"
+  if (registration?.team_id) {
+    team = await getDocData("teams", registration.team_id);
+    if (team && team.leaderUid === user.uid) {
+      const others = (team.linkedMembers || []).filter((m) => m.uid !== user.uid);
+      if (others.length) {
+        throw new Error(
+          `${others.map((m) => m.name).join(", ")} ${others.length > 1 ? "have" : "has"} joined your team for ${title}. Ask them to deregister first, or contact the fest team.`
+        );
+      }
+      teamAction = "delete";
+    } else if (team && (team.memberUids || []).includes(user.uid)) {
+      teamAction = "leave";
+    }
+  }
+
+  if (isLive()) {
+    const { doc, writeBatch, arrayRemove, serverTimestamp } = fsMod;
+    const batch = writeBatch(firebaseFirestore);
+    if (registration) batch.delete(doc(firebaseFirestore, "registrations", regId));
+    if (teamAction === "delete") batch.delete(doc(firebaseFirestore, "teams", team.teamId));
+    if (teamAction === "leave") {
+      batch.update(doc(firebaseFirestore, "teams", team.teamId), {
+        memberUids: team.memberUids.filter((uid) => uid !== user.uid),
+        linkedMembers: (team.linkedMembers || []).filter((m) => m.uid !== user.uid),
+      });
+    }
+    batch.set(
+      doc(firebaseFirestore, "users", user.uid),
+      {
+        registeredEvents: arrayRemove(title),
+        registeredEventIds: arrayRemove(eventId),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    try {
+      await batch.commit();
+    } catch (err) {
+      throw friendlyError(err, "Could not cancel the registration. Please try again.");
+    }
+  } else {
+    const db = demoDb();
+    if (db.registrations) delete db.registrations[regId];
+    if (teamAction === "delete" && db.teams) delete db.teams[team.teamId];
+    if (teamAction === "leave" && db.teams?.[team.teamId]) {
+      const t = db.teams[team.teamId];
+      t.memberUids = (t.memberUids || []).filter((uid) => uid !== user.uid);
+      t.linkedMembers = (t.linkedMembers || []).filter((m) => m.uid !== user.uid);
+    }
+    demoSave(db);
+  }
+
+  user.registeredEvents = (user.registeredEvents || []).filter((t) => t !== title);
+  user.registeredEventIds = (user.registeredEventIds || []).filter((id) => id !== eventId);
+  if (!isLive()) demoSet("users", user.uid, { ...user });
+  persistDemoUser();
+  notifyListeners();
+  return { success: true, eventId, title };
+}
+
+/**
+ * Delete the signed-in user's profile: cancel every registration, delete the
+ * users/{uid} document and the sign-in account, then sign out. Signing in
+ * again starts a brand-new profile.
+ */
+export async function deleteMyProfile() {
+  const user = requireUser();
+  const regs = await getMyRegistrations();
+
+  const locked = regs.filter((r) => !canCancelRegistration(r.registration));
+  if (locked.length) {
+    throw new Error(
+      `You have paid registrations (${locked.map((r) => r.registration.event_title).join(", ")}). Please contact the fest team to cancel those before deleting your profile.`
+    );
+  }
+  // Fails early (nothing deleted yet) if a team you lead has linked teammates.
+  for (const r of regs) {
+    const team = r.team;
+    if (team && team.leaderUid === user.uid && (team.linkedMembers || []).some((m) => m.uid !== user.uid)) {
+      throw new Error(`Teammates have joined your team for ${r.registration.event_title}. Ask them to deregister first, or contact the fest team.`);
+    }
+  }
+  for (const r of regs) await cancelRegistration(r.registration.event_id);
+
+  if (isLive()) {
+    const { doc, deleteDoc } = fsMod;
+    try {
+      await deleteDoc(doc(firebaseFirestore, "users", user.uid));
+    } catch (err) {
+      throw friendlyError(err, "Your registrations were cancelled, but the profile could not be deleted. Please try again.");
+    }
+    // Remove the sign-in account too. Firebase asks for a recent sign-in
+    // before deleting an account, so confirm with Google once if needed.
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser) {
+      try {
+        await authMod.deleteUser(fbUser);
+      } catch (err) {
+        if (err?.code === "auth/requires-recent-login") {
+          try {
+            await authMod.reauthenticateWithPopup(fbUser, new authMod.GoogleAuthProvider());
+            await authMod.deleteUser(fbUser);
+          } catch (e) {
+            // Profile data is already gone; signing out is enough to start over.
+          }
+        }
+      }
+    }
+  } else {
+    const db = demoDb();
+    if (db.users) delete db.users[user.uid];
+    demoSave(db);
+  }
+
+  await signOutUser();
+  return { success: true };
+}
+
+// ----------------------------------------------------------------------------
 // DIGITAL ID VERIFICATION (organisers)
 // ----------------------------------------------------------------------------
 

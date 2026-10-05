@@ -86,7 +86,8 @@ service cloud.firestore {
                                'studentId', 'registeredEvents', 'registeredEventIds', 'updatedAt'])
       );
 
-      allow delete: if isAdmin();
+      // Owners may delete their own profile ("Delete profile" on /profile).
+      allow delete: if isAdmin() || isUser(userId);
     }
 
     // =========================================================================
@@ -133,9 +134,24 @@ service cloud.firestore {
         data().linkedMembers.size() == resource.data.linkedMembers.size() + 1 &&
         data().linkedMembers[data().linkedMembers.size() - 1].uid == request.auth.uid &&
         data().memberUids.size() <= resource.data.maxTeamSize
+      ) || (
+        // A linked teammate (not the leader) may take only themself off the team.
+        isAuthenticated() &&
+        request.auth.uid in resource.data.memberUids &&
+        request.auth.uid != resource.data.leaderUid &&
+        changedKeys().hasOnly(['memberUids', 'linkedMembers']) &&
+        data().memberUids == resource.data.memberUids.removeAll([request.auth.uid]) &&
+        data().linkedMembers.size() == resource.data.linkedMembers.size() - 1
       );
 
-      allow delete: if isAdmin();
+      // The leader may delete their team while nobody else has linked to it
+      // and nothing has been paid (deregistering from a team event).
+      allow delete: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.leaderUid == request.auth.uid &&
+        resource.data.memberUids == [request.auth.uid] &&
+        resource.data.paymentStatus in ['free', 'rejected']
+      );
     }
 
     // Legacy collections (no longer written by the app)
@@ -182,7 +198,13 @@ service cloud.firestore {
         data().registration_status == 'cancelled'
       );
 
-      allow delete: if isAdmin();
+      // Owners may deregister (delete) a registration that carries no payment,
+      // so they can register again later. Paid bookings go through organisers.
+      allow delete: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.user_id == request.auth.uid &&
+        resource.data.payment_status in ['free', 'team', 'rejected']
+      );
     }
 
     // =========================================================================

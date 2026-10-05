@@ -6277,6 +6277,21 @@ let Ws,
                     (N.geometry.dispose(), N.material.dispose());
                 }),
                 V.ticker.remove(Ms));
+              // Free the GPU: each visit to the home page creates a new WebGL
+              // renderer, and browsers drop (and stall on) leaked contexts.
+              // Models load asynchronously; if the visitor leaves before they
+              // finish, the loader must not start the render loop afterwards.
+              Ms.__disposed = !0;
+              // The 60fps cap is only for this scene; give other pages back
+              // full-rate GSAP (smooth scroll) on 120Hz screens.
+              V.ticker.fps();
+              try {
+                [E, R, P, F].forEach((t) => t && t.dispose && t.dispose());
+                m.environment && m.environment.dispose && m.environment.dispose();
+                y.dispose();
+                y.forceContextLoss();
+                y.domElement.remove();
+              } catch (err) {}
             }),
             we(() => {
               Fa();
@@ -6815,10 +6830,11 @@ let Ws,
                   A.children[6].scale.y * 1.2,
                   A.children[6].scale.z * 1.2,
                 ),
-                V.ticker.lagSmoothing(500, 33),
-                // Cap at 60fps: on 120Hz screens this halves GPU work with no visible loss.
-                V.ticker.fps(60),
-                V.ticker.add(Ms),
+                Ms.__disposed ||
+                  (V.ticker.lagSmoothing(500, 33),
+                  // Cap at 60fps: on 120Hz screens this halves GPU work with no visible loss.
+                  V.ticker.fps(60),
+                  V.ticker.add(Ms)),
                 i.setPreloaderPercentage(90),
                 La());
             },
@@ -7236,6 +7252,7 @@ let Ws,
                 }));
             },
             Ms = () => {
+              if (Ms.__disposed) return void V.ticker.remove(Ms);
               const N = rt.getDelta();
               (fs && qa(),
                 Kt && Ka(N),

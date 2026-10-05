@@ -1432,6 +1432,14 @@ html.pp-open {
 
 /* The custom cursor must stay above every overlay (the site hides the system
    cursor), otherwise the pointer disappears inside modals and panels. */
+/* No backdrop blur on the cursor: re-blurring under it on every mouse move
+   (often over the WebGL scene) was a constant GPU cost for a 25px dot. */
+#cursor .wrapper {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(255, 255, 255, 0.85);
+}
+
 #cursor {
   z-index: 2147483000 !important;
   opacity: 0;
@@ -1492,7 +1500,6 @@ html.not-home header {
   background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff);
   background-repeat: repeat;
   background-size: 80px, auto;
-  background-attachment: fixed;
   box-sizing: border-box;
   font-family: "IBM Plex Mono", monospace;
   color: #000000;
@@ -1507,9 +1514,7 @@ html.not-home header {
 }
 
 .prof-card {
-  background: rgba(255, 255, 255, 0.82);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  backdrop-filter: blur(20px) saturate(150%);
+  background: rgba(255, 255, 255, 0.9);
   border: 2px solid #ffffff;
   border-radius: 26px;
   box-shadow: 0 20px 60px rgba(0, 40, 120, 0.12);
@@ -1780,4 +1785,98 @@ body:has(.profile-page-root) .transition-component {
    behind it so form controls scrolling underneath don't collide with the logo. */
 body:has(.profile-page-root) header {
   background: linear-gradient(180deg, rgba(247, 250, 255, 0.96) 70%, rgba(247, 250, 255, 0));
+}
+
+/* Deregister / delete-profile confirmations */
+.prof-confirm {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid #b00020;
+  border-radius: 14px;
+  background: #fdf3f4;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.prof-confirm p {
+  margin: 0 0 10px;
+}
+
+.prof-confirm .pp-field input {
+  font-size: 14px;
+  padding: 12px 14px;
+}
+
+.prof-confirm-yes {
+  width: auto;
+  padding: 8px 16px;
+}
+
+.prof-confirm-yes:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.prof-confirm-yes:disabled:hover {
+  background: transparent;
+  color: #b00020;
+}
+
+.pp-action.prof-dereg {
+  border-color: #b00020;
+  color: #b00020;
+}
+
+.prof-danger {
+  border-color: rgba(176, 0, 32, 0.25);
+}
+
+.prof-delete-open {
+  width: auto;
+  padding: 10px 18px;
+}
+
+.prof-reg-info .pp-msg {
+  margin: 8px 0 0;
+}
+
+/* Nav profile link is just the avatar: centre it on the text links' line and
+   keep the links' hover "spread" effect off the initials badge. */
+header .header .right-menu a.nav-profile,
+header .header .mobile-menu a.nav-profile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  gap: 0;
+}
+
+header .header .right-menu a.nav-profile .nav-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+header .header .right-menu a.nav-profile:hover span,
+header .header .mobile-menu a.nav-profile:hover span {
+  padding: 0;
+}
+
+header .header .right-menu a.nav-profile:hover .nav-avatar {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3.5px #000000;
+}
+
+header .header .mobile-menu a.nav-profile .nav-avatar {
+  margin-right: 0;
+}
+
+/* Nav links have a 44px tap height; centre their text in it so text links,
+   the avatar and the logo sit on one line. (html body …: default-layout.css
+   loads later with the same specificity and sets inline-block.) */
+html body header .header .right-menu > a {
+  display: inline-flex;
+  align-items: center;
 }

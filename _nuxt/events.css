@@ -1933,3 +1933,48 @@ select.event-reg-input {
 .event-score-row:last-child {
   border-bottom: none;
 }
+
+/* ==========================================================================
+   Performance
+   ========================================================================== */
+/* The cards are near-opaque, so the blur behind them was invisible but forced
+   the browser to re-blur 20 card areas on every scroll frame. */
+.event-card {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+/* Once revealed, drop the permanent GPU layer and let the hover tilt follow
+   the mouse quickly (the 0.6s reveal transition made it trail behind). */
+.event-card.is-revealed {
+  will-change: auto;
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.18s ease-out,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* A fixed background repaints the whole page on every scroll frame. */
+.events-page-root {
+  background-attachment: scroll;
+}
+
+/* The sticky toolbar and scroll counter sit over cards that move on every
+   scroll frame, so their backdrop blur had to be recomputed constantly. */
+.events-toolbar,
+.events-toolbar.is-pinned,
+.events-scroll-hud {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.events-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.events-toolbar.is-pinned,
+.events-scroll-hud {
+  background: rgba(255, 255, 255, 0.97);
+}

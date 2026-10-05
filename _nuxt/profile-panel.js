@@ -22,6 +22,9 @@ import {
   resubmitPaymentUtr,
   verifyStudentId,
   registrationQrPayload,
+  canCancelRegistration,
+  cancelRegistration,
+  deleteMyProfile,
   YEAR_OPTIONS,
 } from "./auth-service.js";
 import { getEventById, googleCalendarLink } from "./events-data.js";
@@ -93,6 +96,9 @@ const page = {
   regsError: "",
   regsLoading: false,
   pendingAnchor: null,
+  confirmDereg: null, // eventId awaiting "Yes, deregister"
+  deregBusy: null,
+  deregError: null, // { eventId, message }
   unsubAuth: null,
   unsubCart: null,
 };
@@ -111,6 +117,7 @@ export async function mountProfilePage() {
   page.root = root;
   page.uid = undefined;
   page.regs = null;
+  page.confirmDereg = page.deregBusy = page.deregError = null;
 
   root.addEventListener("click", onPageClick);
   root.addEventListener("submit", onPageSubmit);
@@ -204,6 +211,17 @@ function renderPage() {
         <h2 class="prof-h2" id="prof-id-title">Your Digital ID</h2>
       </div>
       <div data-prof-id></div>
+    </section>
+
+    <section class="prof-card prof-danger" id="profile-delete" aria-labelledby="prof-delete-title">
+      <div class="prof-section-head">
+        <span class="pp-kicker">04 // DELETE PROFILE</span>
+        <h2 class="prof-h2" id="prof-delete-title">Delete profile</h2>
+        <p class="pp-hint">Cancels all your free registrations, deletes your profile and Chaitanya ID, and signs you out. You can register again afterwards with a fresh profile.</p>
+      </div>
+      <div data-prof-delete>
+        <button type="button" class="pp-logout prof-delete-open" data-prof="delete-open">Delete my profile…</button>
+      </div>
     </section>`;
 
   renderRegistrations();
@@ -365,7 +383,13 @@ function renderRegistrations() {
           <div class="pp-reg-actions">
             ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
             ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
+            ${canCancelRegistration(r) && page.confirmDereg !== r.event_id
+              ? `<button type="button" class="pp-action subtle prof-dereg" data-prof="dereg-ask" data-event-id="${e(r.event_id)}">Deregister</button>`
+              : ""}
           </div>
+          ${!canCancelRegistration(r) ? `<span class="pp-reg-note">Paid registration: contact the fest team to cancel it.</span>` : ""}
+          ${page.confirmDereg === r.event_id ? deregConfirmHtml(r, team) : ""}
+          ${page.deregError?.eventId === r.event_id ? `<p class="pp-msg bad" role="alert">${e(page.deregError.message)}</p>` : ""}
           ${status === "rejected" && payment ? `
             <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
               <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match your UTR.")}</span>
@@ -401,6 +425,47 @@ function renderRegistrations() {
            <p>No registrations yet.</p>
            <a class="pp-primary" href="/events" data-prof="browse">Browse events</a>
          </div>`;
+  refreshScroll();
+}
+
+function deregConfirmHtml(r, team) {
+  const busy = page.deregBusy === r.event_id;
+  const isLeader = team && team.leaderUid === r.user_id;
+  const note = isLeader
+    ? `Your team ${e(team.teamName)} and its code will be removed.`
+    : team
+      ? `You'll be removed from team ${e(team.teamName)}.`
+      : "";
+  return `
+    <div class="prof-confirm" role="group" aria-label="Confirm deregistration">
+      <p><strong>Deregister from ${e(r.event_title)}?</strong> ${["Your entry QR for this event stops working.", note, "You can register again while registration is open."].filter(Boolean).join(" ")}</p>
+      <div class="prof-actions">
+        <button type="button" class="pp-logout prof-confirm-yes" data-prof="dereg-yes" data-event-id="${e(r.event_id)}" ${busy ? "disabled" : ""}>${busy ? "Deregistering…" : `Yes, deregister`}</button>
+        <button type="button" class="pp-action subtle" data-prof="dereg-cancel" ${busy ? "disabled" : ""}>Keep registration</button>
+      </div>
+    </div>`;
+}
+
+function renderDeleteConfirm(open) {
+  const box = page.root?.querySelector("[data-prof-delete]");
+  const user = getCurrentUser();
+  if (!box || !user) return;
+  if (!open) {
+    box.innerHTML = `<button type="button" class="pp-logout prof-delete-open" data-prof="delete-open">Delete my profile…</button>`;
+    return;
+  }
+  box.innerHTML = `
+    <form class="pp-form prof-confirm" data-form="delete-profile" novalidate>
+      <label class="pp-field"><span>Type your email to confirm</span>
+        <input type="email" name="confirmEmail" autocomplete="off" placeholder="${e(user.email)}" />
+      </label>
+      <div class="pp-msg" role="alert" hidden></div>
+      <div class="prof-actions">
+        <button type="submit" class="pp-logout prof-confirm-yes" disabled>Delete profile permanently</button>
+        <button type="button" class="pp-action subtle" data-prof="delete-cancel">Cancel</button>
+      </div>
+    </form>`;
+  box.querySelector("input").focus();
   refreshScroll();
 }
 
@@ -484,11 +549,46 @@ async function onPageClick(evt) {
     evt.preventDefault();
     scrollToSection(btn.dataset.target);
   }
+  if (action === "dereg-ask") {
+    page.confirmDereg = btn.dataset.eventId;
+    page.deregError = null;
+    return renderRegistrations();
+  }
+  if (action === "dereg-cancel") {
+    page.confirmDereg = null;
+    return renderRegistrations();
+  }
+  if (action === "dereg-yes") {
+    const eventId = btn.dataset.eventId;
+    page.deregBusy = eventId;
+    renderRegistrations();
+    try {
+      await cancelRegistration(eventId);
+      page.confirmDereg = null;
+      page.deregError = null;
+      page.deregBusy = null;
+      page.regs = null;
+      renderRegistrations();
+      return loadRegistrations();
+    } catch (err) {
+      page.deregBusy = null;
+      page.deregError = { eventId, message: err.message || "Could not cancel the registration." };
+      return renderRegistrations();
+    }
+  }
+  if (action === "delete-open") return renderDeleteConfirm(true);
+  if (action === "delete-cancel") return renderDeleteConfirm(false);
 }
 
 function onPageInput(evt) {
-  // Clear a field's error as soon as the user edits it.
   const input = evt.target;
+  if (input.name === "confirmEmail") {
+    const user = getCurrentUser();
+    const ok = Boolean(user) && input.value.trim().toLowerCase() === String(user.email).toLowerCase();
+    input.form.querySelector("button[type=submit]").disabled = !ok;
+    return;
+  }
+  // Clear a field's error as soon as the user edits it.
   if (input.getAttribute?.("aria-invalid") === "true") {
     input.removeAttribute("aria-invalid");
     const msg = input.form?.querySelector(".pp-msg");
@@ -526,6 +626,26 @@ async function onPageSubmit(evt) {
     }
     btn.disabled = false;
     btn.textContent = "Save changes";
+  }
+
+  if (form.dataset.form === "delete-profile") {
+    const user = getCurrentUser();
+    const btn = form.querySelector("button[type=submit]");
+    if (!user || form.confirmEmail.value.trim().toLowerCase() !== String(user.email).toLowerCase()) return;
+    btn.disabled = true;
+    btn.textContent = "Deleting…";
+    try {
+      await deleteMyProfile();
+      goTo("/");
+      setTimeout(() => window.openAuthModal?.("register"), 400);
+    } catch (err) {
+      showFormMessage(form, err.message || "Could not delete your profile.", false);
+      btn.disabled = false;
+      btn.textContent = "Delete profile permanently";
+      page.regs = null;
+      loadRegistrations();
+    }
+    return;
   }
 
   if (form.dataset.form === "utr") {
