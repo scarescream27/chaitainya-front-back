@@ -6,6 +6,8 @@
   "scripts": {
     "start": "python server.py",
     "dev": "python server.py",
+    "redis": "python scripts/redis_dev_server.py",
+    "cache:test": "python scripts/test_redis_cache.py",
     "serve": "npx serve . -l 3000",
     "deploy": "firebase deploy",
     "deploy:hosting": "firebase deploy --only hosting",

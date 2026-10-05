@@ -790,3 +790,31 @@ export function filterEvents(category = "all", searchQuery = "") {
 
   return list;
 }
+
+let eventsLoadedFromCache = false;
+
+export async function initCachedEvents() {
+  if (eventsLoadedFromCache || typeof window === "undefined") return;
+  try {
+    const res = await fetch("/api/events");
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.events) && data.events.length > 0) {
+        EVENTS_DATA.length = 0;
+        EVENTS_DATA.push(...data.events);
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          EVENT_CATEGORIES.length = 0;
+          EVENT_CATEGORIES.push(...data.categories);
+        }
+        eventsLoadedFromCache = true;
+      }
+    }
+  } catch (e) {
+    // Non-blocking fallback to static dataset
+  }
+}
+
+// Automatically prefetch in browser environment
+if (typeof window !== "undefined") {
+  initCachedEvents();
+}

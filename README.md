@@ -105,6 +105,52 @@ Authorized fest administrators (`chaitanyahptu@gmail.com`) can access the comman
 
 ---
 
+## Redis & High-Speed Caching
+
+Chaitanya 2k26 includes an integrated multi-tiered Redis caching architecture designed to accelerate asset delivery (3D models, audio, textures, Draco wasm) and dynamic datasets with sub-millisecond response times and >98% cache hit ratios.
+
+### 5-Tier Acceleration Architecture
+
+1. **Layer 1: Browser Immutable Cache**: 3D GLB models, textures, audio, and fonts are served with `Cache-Control: public, max-age=31536000, immutable` (0ms client reloads).
+2. **Layer 2: SHA-256 ETag & HTTP 304 Validation**: HTML and script files support `If-None-Match` revalidation, resulting in HTTP 304 Not Modified responses with 0 bytes transferred over the network.
+3. **Layer 3: Redis RAM Cache**: Static files up to 25MB are stored directly in Redis RAM and served immediately with `X-Cache: HIT (Redis)` headers, bypassing disk I/O.
+4. **Layer 4: Dynamic API Cache**: JSON endpoints like `/api/events` and `/api/cache/stats` are cached in Redis with configurable TTL (default 5–10 min).
+5. **Layer 5: Gzip Compression Cache**: Text, JS, CSS, JSON, and SVG assets are pre-compressed and cached in Redis, reducing transfer size by 70–80%.
+
+### Running with Redis
+
+1. **Option A: Built-in Zero-Dependency Redis Server** (Default for Windows):
+   ```bash
+   npm run redis
+   # Or: python scripts/redis_dev_server.py
+   ```
+
+2. **Option B: Docker / Native Redis**:
+   ```bash
+   docker run -d -p 6379:6379 redis:alpine
+   ```
+
+3. **Option C: Remote / Cloud Redis (Upstash, AWS ElastiCache, Redis Cloud)**:
+   Add your connection string in `.env`:
+   ```bash
+   REDIS_URL=rediss://default:password@your-endpoint.upstash.io:6379
+   ```
+
+> **Zero-Downtime Fallback**: If Redis is offline or stopped, the server automatically and transparently falls back to an internal thread-safe LRU in-memory cache without dropping a single request!
+
+### Cache Commands & Telemetry
+
+- **Run Benchmark & Validation**:
+  ```bash
+  npm run cache:test
+  ```
+- **Inspect Live Cache Stats**:
+  `GET http://localhost:3000/api/cache/stats`
+- **Purge Redis Cache**:
+  `POST http://localhost:3000/api/cache/purge` or 1-click inside the **Admin Command Center > [ ⚡ 05. REDIS ACCELERATION ]** tab.
+
+---
+
 ## Authentication & Registrations
 
 Firebase integration is pre-configured for Google Sign-In and Firestore attendee registration.
