@@ -4,10 +4,9 @@
  * ============================================================================ */
 
 .privacy-page-root {
-  /* CTA hover accent: ink text on it is 9.8:1 (light) / 8.1:1 (dark). */
+  /* CTA hover accent: ink text on it is 9.8:1. */
   --privacy-accent: #e392fe;
-  /* Shared page background (pattern + sky gradient in light, gradient only in
-     dark). The pattern keeps its page-specific 5% tile. The old third layer
+  /* Shared page background (pattern + sky gradient). The pattern keeps its page-specific 5% tile. The old third layer
      (#96bbff/#edf4ff) sat under the opaque sky gradient and never showed. */
   background-color: var(--sky-top);
   background-image: var(--page-bg);
@@ -370,8 +369,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   color: #b6b6b6;
-  /* 71.4% of the on-dark ink over the --ink fill: #b6b6b6 in light (10.4:1),
-     7.1:1 in dark. */
+  /* 71.4% of the on-dark ink over the --ink fill: #b6b6b6 (10.4:1). */
   color: color-mix(in srgb, var(--ink-on-dark) 71.4%, var(--ink));
   max-width: 65ch;
   margin: 0 auto 24px;
@@ -421,7 +419,6 @@ body:has(.privacy-page-root) .transition-component,
   margin-inline: auto;
 }
 
-
 @media (max-width: 767px) {
   /* Druk is already condensed; at phone size any negative tracking collides. */
   .privacy-hero h1 {
@@ -455,38 +452,5 @@ body:has(.privacy-page-root) .transition-component,
     align-items: center;
     justify-content: center;
     min-height: var(--tap);
-  }
-}
-
-/* Dark: opaque token surface (no translucent wash, no backdrop blur) and the
-   black-alpha hairlines become --line. */
-@media (prefers-color-scheme: dark) {
-  .privacy-page-root {
-    --privacy-accent: #6a2a8a;
-  }
-
-  .privacy-back-btn,
-  .privacy-contact-btn,
-  .privacy-quick-nav,
-  .privacy-card {
-    background: var(--surface);
-  }
-
-  .privacy-back-btn:hover,
-  .privacy-contact-btn:hover {
-    background: var(--ink);
-  }
-
-  .privacy-quick-nav {
-    border-color: var(--line);
-  }
-
-  .privacy-card-header {
-    border-bottom-color: var(--line);
-  }
-
-  .privacy-card,
-  .privacy-card:hover {
-    box-shadow: var(--shadow-soft);
   }
 }

@@ -6475,7 +6475,12 @@ let Ws,
                 // only hand the loader a real HDR, otherwise use the fallback.
                 // One GET (was HEAD + GET): validate the response, then hand
                 // the already-downloaded bytes to the loader via a blob URL.
-                const res = await fetch("/hdri/photo_studio_01_1k.hdr");
+                // index.html starts this download at page start on the home
+                // route; use that response once, otherwise fetch it now.
+                const early = window.__homeAssets && window.__homeAssets.hdr;
+                early && (window.__homeAssets.hdr = null);
+                const res =
+                  (early && (await early.catch(() => null))) || (await fetch("/hdri/photo_studio_01_1k.hdr"));
                 const type = res.headers.get("content-type") || "";
                 if (!res.ok || type.includes("text/html")) throw new Error("HDR missing");
                 const blobUrl = URL.createObjectURL(await res.blob());
@@ -6682,7 +6687,13 @@ let Ws,
                 await ka());
             },
             ka = async () => {
-              const N = await s.loadAsync("/models/Scene14.glb"),
+              // Same early download as the HDR (index.html); fall back to a
+              // normal load if it is missing or failed.
+              const early = window.__homeAssets && window.__homeAssets.glb;
+              early && (window.__homeAssets.glb = null);
+              const N = await (early
+                  ? early.then((buf) => s.parseAsync(buf, "/models/")).catch(() => s.loadAsync("/models/Scene14.glb"))
+                  : s.loadAsync("/models/Scene14.glb")),
                 A = N.scene,
                 G = N.animations;
               ((pe = A.children[7]),
@@ -6944,6 +6955,7 @@ let Ws,
                   A.children[6].scale.y * 1.2,
                   A.children[6].scale.z * 1.2,
                 ),
+                await warmGpu(A),
                 Ms.__disposed ||
                   (V.ticker.lagSmoothing(500, 33),
                   // Cap at 60fps: on 120Hz screens this halves GPU work with no visible loss.
@@ -6951,6 +6963,31 @@ let Ws,
                   V.ticker.add(Ms)),
                 i.setPreloaderPercentage(90),
                 La());
+            },
+            // Before the first frame: upload the model's textures one per frame
+            // and compile its shaders in the background (KHR_parallel_shader_compile),
+            // instead of doing it all inside the first render, which froze the
+            // page for seconds on phones.
+            warmGpu = async (root) => {
+              const nextFrame = () =>
+                new Promise((r) => {
+                  requestAnimationFrame(r);
+                  setTimeout(r, 50); // rAF is paused in background tabs
+                });
+              const textures = new Set();
+              root.traverse((o) => {
+                [].concat(o.material || []).forEach((mt) => {
+                  for (const k in mt) mt[k] && mt[k].isTexture && textures.add(mt[k]);
+                });
+              });
+              for (const tx of textures) {
+                if (Ms.__disposed) return;
+                y.initTexture(tx);
+                await nextFrame();
+              }
+              try {
+                Ms.__disposed || (await y.compileAsync(m, f));
+              } catch (e) {}
             },
             qa = () => {
               (f.position.set(pe.position.x, pe.position.y, pe.position.z),
@@ -7454,7 +7491,7 @@ let Ws,
           const isHoldKey = (ev) =>
               (ev.key === " " || ev.key === "Enter") &&
               !s.value &&
-              !ev.target.closest?.("input, textarea, select, a, button:not(.skip-intro), [contenteditable]") &&
+              !ev.target.closest?.("input, textarea, select, a, button, [contenteditable]") &&
               !document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"),
             hk = (ev) => {
               if (!isHoldKey(ev)) return;
@@ -7465,10 +7502,6 @@ let Ws,
               if (!isHoldKey(ev)) return;
               ev.preventDefault();
               t.stopGlass();
-            },
-            skip = () => {
-              // Jump straight to the end; the timeline's onComplete reveals the site.
-              s.value || !n.duration() || (t.startProgress(), n.progress(1));
             };
           const a = () => {
               r.add(() => {
@@ -7489,11 +7522,11 @@ let Ws,
                   onComplete: () => {
                     (
                       t.finishProgress(),
-                      V.to(".click-and-hold, .skip-intro", {
+                      V.to(".click-and-hold", {
                         duration: 0.5,
                         opacity: 0,
                         onComplete: () => {
-                          V.set(".click-and-hold, .skip-intro", { display: "none" });
+                          V.set(".click-and-hold", { display: "none" });
                         },
                       }));
                   },
@@ -7525,11 +7558,6 @@ let Ws,
                     ]),
                   ]),
                 ]),
-                O(
-                  "button",
-                  { type: "button", class: "skip-intro", onClick: skip },
-                  "[ Skip intro ]",
-                ),
                 O(
                   "audio",
                   {
