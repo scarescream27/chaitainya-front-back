@@ -127,6 +127,17 @@ function friendlyError(err, fallback = "Something went wrong. Please try again."
   if (code === "permission-denied") {
     return new Error("This action is not allowed for your account.");
   }
+  // Project-setup problems: tell the organisers exactly what to fix.
+  if (code === "auth/configuration-not-found" || code === "auth/operation-not-allowed") {
+    return new Error("Google sign-in isn't enabled for this site yet. Please try again later (organisers: enable Google in Firebase Console → Authentication → Sign-in method).");
+  }
+  if (code === "auth/unauthorized-domain") {
+    return new Error(`Sign-in isn't allowed on ${window.location.hostname} yet (organisers: add it in Firebase Console → Authentication → Settings → Authorized domains).`);
+  }
+  if (code === "auth/internal-error" || code === "auth/invalid-api-key") {
+    return new Error("The sign-in service is misconfigured. Please contact the fest team.");
+  }
+  if (code) console.warn("Sign-in error:", code, err?.message);
   if (err instanceof Error && err.message && !code) return err;
   return new Error(fallback);
 }
