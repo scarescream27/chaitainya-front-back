@@ -6375,6 +6375,10 @@ let Ws,
                     (N.geometry.dispose(), N.material.dispose());
                 }),
                 V.ticker.remove(Ms));
+              // Leaving while the jelly's "Click and hold" cursor is showing
+              // (or a direct link to another page that briefly mounts home)
+              // must not leave that cursor on the next page.
+              Oe && ((Oe = !1), i.hideCursor("", "none"));
               // Free the GPU: each visit to the home page creates a new WebGL
               // renderer, and browsers drop (and stall on) leaked contexts.
               // Models load asynchronously; if the visitor leaves before they
