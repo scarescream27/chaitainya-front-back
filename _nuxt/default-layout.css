@@ -1,1 +1,167 @@
-header{height:65px;left:0;opacity:0;padding:0 20px;position:fixed;top:0;width:100%;z-index:20}@media (max-width:991px){header{height:58px;padding:0 8px}}header .header{align-content:center;align-items:center;display:flex;height:100%;justify-content:space-between;width:100%}header .header .vr{align-items:center;-webkit-backdrop-filter:blur(3.2257750034px);backdrop-filter:blur(3.2257750034px);background:#fff6;border:2px solid #fff;border-radius:50%;cursor:pointer;display:none;height:47px;justify-content:center;width:47px}@media (max-width:767px){header .header .vr{display:block}}header .header .menu-switch{display:none;height:42px;position:relative;width:42px;z-index:2}header .header .menu-switch .line{background-color:#000;height:1px;left:calc(50% - 18px);position:absolute;top:50%;transition:.3s ease-in-out;width:36px}header .header .menu-switch .line:nth-child(2){transform:rotate(90deg)}header .header .menu-switch .el{font-family:IBM Plex Mono;font-size:10px;position:absolute}header .header .menu-switch .el-1{left:0;top:0}header .header .menu-switch .el-2{right:0;top:0}header .header .menu-switch .el-3{bottom:0;left:0}header .header .menu-switch .el-4{bottom:0;right:0}@media (max-width:767px){header .header .menu-switch{display:block}}header .header .menu-switch.active .line:first-child{transform:rotate(-45deg)}header .header .menu-switch.active .line:nth-child(2){transform:rotate(45deg)}header .header .mobile-menu{-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);background-image:url(../images/footerPatern.png),linear-gradient(180deg,#fff,#ffffff4d 79%);background-repeat:repeat;background-size:30%;display:none;flex-direction:column;height:100vh;justify-content:space-between;left:0;opacity:0;padding:147px 0 27px;pointer-events:none;position:absolute;top:0;width:100%}@media (max-width:767px){header .header .mobile-menu{display:flex}header .header .mobile-menu a{display:block!important}}header .header .mobile-menu .top a{font-size:48px;letter-spacing:.96px;margin-bottom:30px!important}header .header .mobile-menu .bottom a,header .header .mobile-menu .top a{color:#000;font-family:DrukMedium;font-style:normal;font-weight:500;line-height:93%;text-align:center;text-transform:uppercase}header .header .mobile-menu .bottom a{font-size:38px;letter-spacing:.76px}header .header .mobile-menu .bottom a:last-child{margin-top:50px}header .header .header-logo{position:relative;z-index:2}@media (max-width:767px){header .header .header-logo img{height:55px;transform:translateY(5px)}}header .header .right-menu{align-items:center;display:flex;justify-content:space-between;padding:0}@media (max-width:767px){header .header .right-menu{padding:0}}header .header .right-menu a{color:#000;display:inline-block;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:1;text-transform:uppercase}@media (max-width:767px){header .header .right-menu a{display:none}}header .header .right-menu a span{display:inline-block;transition:.3s ease-in-out}header .header .right-menu a:hover span{padding:0 8px}header .header .right-menu{display:flex;align-items:center;gap:16px}header .header .right-menu a{margin:0!important}html{background:linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff),linear-gradient(0deg,#b4cbf5,#fff 111.72%);background-attachment:fixed}
+header{height:65px;left:0;opacity:0;padding:0 20px;position:fixed;top:0;width:100%;z-index:20}@media (max-width:991px){header{height:58px;padding:0 8px}}header .header{align-content:center;align-items:center;display:flex;height:100%;justify-content:space-between;width:100%}header .header .vr{align-items:center;-webkit-backdrop-filter:blur(3.2257750034px);backdrop-filter:blur(3.2257750034px);background:#fff6;border:2px solid #fff;border-radius:50%;cursor:pointer;display:none;height:47px;justify-content:center;width:47px}@media (max-width:767px){header .header .vr{display:block}}header .header .menu-switch{display:none;height:42px;position:relative;width:42px;z-index:2}header .header .menu-switch .line{background-color:#000;height:1px;left:calc(50% - 18px);position:absolute;top:50%;transition:.3s ease-in-out;width:36px}header .header .menu-switch .line:nth-child(2){transform:rotate(90deg)}header .header .menu-switch .el{font-family:IBM Plex Mono;font-size:10px;position:absolute}header .header .menu-switch .el-1{left:0;top:0}header .header .menu-switch .el-2{right:0;top:0}header .header .menu-switch .el-3{bottom:0;left:0}header .header .menu-switch .el-4{bottom:0;right:0}@media (max-width:767px){header .header .menu-switch{display:block}}header .header .menu-switch.active .line:first-child{transform:rotate(-45deg)}header .header .menu-switch.active .line:nth-child(2){transform:rotate(45deg)}header .header .mobile-menu{-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);background-image:url(../images/footerPatern.png),linear-gradient(180deg,#fff,#ffffff4d 79%);background-repeat:repeat;background-size:30%;display:none;flex-direction:column;height:100vh;justify-content:space-between;left:0;opacity:0;padding:147px 0 27px;pointer-events:none;position:absolute;top:0;width:100%}@media (max-width:767px){header .header .mobile-menu{display:flex}header .header .mobile-menu a{display:block!important}}header .header .mobile-menu .top a{font-size:48px;letter-spacing:.96px;margin-bottom:30px!important}header .header .mobile-menu .bottom a,header .header .mobile-menu .top a{color:#000;font-family:DrukMedium;font-style:normal;font-weight:500;line-height:93%;text-align:center;text-transform:uppercase}header .header .mobile-menu .bottom a{font-size:38px;letter-spacing:.76px}header .header .mobile-menu .bottom a:last-child{margin-top:50px}header .header .header-logo{position:relative;z-index:2}@media (max-width:767px){header .header .header-logo img{height:55px;transform:translateY(5px)}}header .header .right-menu{align-items:center;display:flex;justify-content:space-between;padding:0}@media (max-width:767px){header .header .right-menu{padding:0}}header .header .right-menu a{color:#000;display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:1;text-transform:uppercase}@media (max-width:767px){header .header .right-menu a{display:none}}header .header .right-menu a span{display:inline-block;transition:.3s ease-in-out}header .header .right-menu a:hover span{padding:0 8px}header .header .right-menu{display:flex;align-items:center;gap:16px}header .header .right-menu a{margin:0!important}html{background:linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff),linear-gradient(0deg,#b4cbf5,#fff 111.72%);background-attachment:fixed}
+
+
+/* ==========================================================================
+   Accessibility, theming and responsive additions (readable CSS; the
+   minified rules above are the compiled originals).
+   ========================================================================== */
+
+/* Skip link: added to the start of <body> by the default layout
+   (nuxt-router-utils.js, addSkipLink). Off-screen until focused. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10001; /* above the page transition (200) and the site loader (9999) */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: none;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* The skip target is a focusable container, not a control: no ring around
+   the whole page when the skip link moves focus to it. */
+#smooth-content[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Header colours as tokens (identical in light; follow the theme in dark,
+   and stay light on the home/404 bodies, which re-declare the light palette). */
+header .header .right-menu a,
+header .header .mobile-menu .top a,
+header .header .mobile-menu .bottom a,
+header .header .menu-switch .el {
+  color: var(--ink);
+}
+
+header .header .menu-switch .line {
+  background-color: var(--line-strong);
+}
+
+/* (@supports: a var() declaration with unsupported color-mix() would
+   otherwise compute to no background at all.) */
+@supports (color: color-mix(in srgb, red 30%, transparent)) {
+  header .header .mobile-menu {
+    background-image: url(../images/footerPatern.png),
+      linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 30%, transparent) 79%);
+  }
+}
+
+/* Menu button: now keyboard-operable (role="button"); make it a full tap target. */
+header .header .menu-switch {
+  cursor: pointer;
+}
+
+header .header .menu-switch:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Dark pages: the black logo art is inverted to light ink, and the
+     dark-on-light dot pattern is dropped from the mobile menu. */
+  html.not-home:not(:has(.error-page)) header .header .header-logo img {
+    filter: invert(1);
+  }
+
+  html.not-home:not(:has(.error-page)) header .header .mobile-menu {
+    background-image: linear-gradient(180deg, var(--surface), transparent 79%);
+  }
+
+  @supports (color: color-mix(in srgb, red 30%, transparent)) {
+    html.not-home:not(:has(.error-page)) header .header .mobile-menu {
+      background-image: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 30%, transparent) 79%);
+    }
+  }
+
+  /* Page background behind everything (overscroll, short pages). The loader
+     classes and the home/404 pages keep the light gradient above. */
+  html.not-home:not(.ch-preload):not(.site-loading):not(:has(.error-page)) {
+    background: linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
+    background-attachment: fixed;
+  }
+}
+
+/* Tablet widths (768-1100px): six nav links plus the logo overflowed the
+   header around 768-890px. Tighten the spacing, never the text size. */
+@media (min-width: 768px) and (max-width: 1100px) {
+  header .header .right-menu {
+    gap: 4px;
+  }
+
+  header .header .right-menu a {
+    padding: 8px 6px;
+  }
+}
+
+/* Never let the logo be squeezed; if the links still don't fit (e.g. text
+   zoomed to 200%), they wrap onto a second row instead of overflowing. */
+header .header .header-logo {
+  flex-shrink: 0;
+}
+
+header .header .right-menu {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Mobile menu: fill the dynamic viewport and scroll rather than cut off
+   links on short (landscape) screens or with enlarged text. */
+@media (max-width: 767px) {
+  header .header .mobile-menu {
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  header .header .mobile-menu .bottom a {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 600px) {
+  header .header .mobile-menu {
+    padding-top: 88px;
+  }
+
+  header .header .mobile-menu .top a {
+    font-size: 34px;
+    margin-bottom: 16px !important;
+  }
+
+  header .header .mobile-menu .bottom a {
+    font-size: 28px;
+  }
+
+  header .header .mobile-menu .bottom a:last-child {
+    margin-top: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link,
+  header .header .menu-switch .line,
+  header .header .right-menu a span {
+    transition: none;
+  }
+}

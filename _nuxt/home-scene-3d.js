@@ -59,7 +59,6 @@ import {
   a4 as El,
   __tla as Sl,
 } from "./app-main.js";
-import { G as zl } from "./lil-gui-customizer.js";
 import {
   a as et,
   j as Si,
@@ -81,6 +80,101 @@ import {
 } from "./vue-runtime.js";
 import { H as Tl, __tla as Ml } from "./home-footer.js";
 import { __tla as Pl } from "./nuxt-link.js";
+// lil-gui is a debug-only tweak panel (and it was always hidden). Production
+// gets a no-op stand-in with the same chainable API, so lil-gui is never
+// downloaded or built. With ?debug in the URL the real library is imported
+// lazily and every recorded call is replayed into it (and applied directly
+// once it has loaded), so the panel works exactly as before.
+const GUI_DEBUG =
+  typeof location !== "undefined" &&
+  /[?&]debug(?:[=&]|$)/.test(location.search);
+class zl {
+  constructor(parent = null, title = "") {
+    this._title = title;
+    this._ops = [];
+    this._target = null;
+    this._dead = !1;
+    GUI_DEBUG &&
+      !parent &&
+      import("./lil-gui-customizer.js")
+        .then(({ G }) => {
+          this._dead || this._bind(new G());
+        })
+        .catch(() => {});
+  }
+  _bind(target) {
+    this._target = target;
+    this._ops.splice(0).forEach((op) => this._apply(op));
+  }
+  _apply(op) {
+    const t = this._target;
+    if (op.folder) return op.folder._bind(t.addFolder(op.folder._title));
+    if (!t[op.kind]) return;
+    const res = t[op.kind](...op.args);
+    op.ctrl && op.ctrl._bind(res);
+  }
+  _do(op) {
+    this._target ? this._apply(op) : this._ops.push(op);
+  }
+  addFolder(title) {
+    const f = new zl(this, title);
+    return this._do({ folder: f }), f;
+  }
+  _ctrl(kind, args) {
+    if (this._target) return this._target[kind](...args);
+    const ctrl = new zlCtrl();
+    return this._do({ kind, args, ctrl }), ctrl;
+  }
+  add(...args) {
+    return this._ctrl("add", args);
+  }
+  addColor(...args) {
+    return this._ctrl("addColor", args);
+  }
+  open() {
+    return this._do({ kind: "open", args: [] }), this;
+  }
+  close() {
+    return this._do({ kind: "close", args: [] }), this;
+  }
+  // The scene always hid the panel; with ?debug it stays visible on purpose.
+  hide() {
+    return this;
+  }
+  show() {
+    return this;
+  }
+  destroy() {
+    this._dead = !0;
+    this._target && this._target.destroy && this._target.destroy();
+    this._target = null;
+    this._ops.length = 0;
+  }
+}
+// Chainable controller stand-in: name()/onChange()/min()/listen()... all
+// return the stub; calls are replayed onto the real controller in debug mode.
+class zlCtrl {
+  constructor() {
+    this._calls = [];
+    this._target = null;
+    return new Proxy(this, {
+      get: (t, k, proxy) =>
+        k in t
+          ? t[k]
+          : typeof k === "symbol" || k === "then"
+            ? void 0
+            : (...a) => (
+                t._target ? t._target[k]?.(...a) : t._calls.push([k, a]),
+                proxy
+              ),
+    });
+  }
+  _bind(target) {
+    this._target = target;
+    target &&
+      this._calls.splice(0).forEach(([k, a]) => target[k] && target[k](...a));
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Device performance tier. Phones, tablets, low-core/low-memory machines and
@@ -6143,6 +6237,9 @@ let Ws,
                 }),
                 (Kt = !0),
                 c.add(() => {
+                  // The scene can be torn down (deep link to another page)
+                  // before the model has loaded.
+                  if (!ke) return;
                   (V.to(ke.scale, {
                     x: 1,
                     y: 1,
@@ -6268,6 +6365,7 @@ let Ws,
             Si(() => {
               (window.removeEventListener("mousemove", zs),
                 window.removeEventListener("resize", Ss),
+                Ss.__raf && (cancelAnimationFrame(Ss.__raf), (Ss.__raf = 0)),
                 window.removeEventListener("mousedown", Cs),
                 r.destroy(),
                 c.revert(),
@@ -6347,10 +6445,17 @@ let Ws,
                 Ia(),
                 window.addEventListener("resize", Ss, !1));
             },
+            // Coalesce resize bursts to one renderer resize per frame
+            // (setSize reallocates the drawing buffer each call).
             Ss = () => {
-              ((f.aspect = window.innerWidth / window.innerHeight),
-                f.updateProjectionMatrix(),
-                y.setSize(window.innerWidth, window.innerHeight));
+              Ss.__raf ||
+                (Ss.__raf = requestAnimationFrame(() => {
+                  ((Ss.__raf = 0),
+                    Ms.__disposed ||
+                      ((f.aspect = window.innerWidth / window.innerHeight),
+                      f.updateProjectionMatrix(),
+                      y.setSize(window.innerWidth, window.innerHeight)));
+                }));
             },
             zs = (N) => {
               (t &&
@@ -6368,17 +6473,26 @@ let Ws,
               try {
                 // Static hosts may answer a missing file with the HTML page;
                 // only hand the loader a real HDR, otherwise use the fallback.
-                const probe = await fetch("/hdri/photo_studio_01_1k.hdr", { method: "HEAD" });
-                const type = probe.headers.get("content-type") || "";
-                if (!probe.ok || type.includes("text/html")) throw new Error("HDR missing");
-                const N = await o.loadAsync("/hdri/photo_studio_01_1k.hdr");
+                // One GET (was HEAD + GET): validate the response, then hand
+                // the already-downloaded bytes to the loader via a blob URL.
+                const res = await fetch("/hdri/photo_studio_01_1k.hdr");
+                const type = res.headers.get("content-type") || "";
+                if (!res.ok || type.includes("text/html")) throw new Error("HDR missing");
+                const blobUrl = URL.createObjectURL(await res.blob());
+                let N;
+                try {
+                  N = await o.loadAsync(blobUrl);
+                } finally {
+                  URL.revokeObjectURL(blobUrl);
+                }
+                if (Ms.__disposed) return N.dispose();
                 ((N.mapping = Ve),
                   (m.environment = N));
               } catch (e) {
                 // HDR missing: fall back to the bundled light studio texture so
                 // the glass bubbles still get bright reflections instead of black.
                 try {
-                  const F = await new Ye().loadAsync("/hdri/sphere5.png");
+                  const F = await new Ye().loadAsync("/hdri/sphere5.webp");
                   ((F.mapping = Ve), (m.environment = F));
                 } catch (e2) {}
               }
@@ -6860,11 +6974,13 @@ let Ws,
               });
             },
             ja = async () => {
-              const N = await new Ye().loadAsync("/hdri/sphere5.png"),
-                A = await new Ye().loadAsync(
-                  "/textures/paternWhiteBlackBack.jpg",
-                ),
-                G = await new Ye().loadAsync("/textures/whiteTexture.jpg");
+              // Fetched in parallel (were three sequential round trips); WebP
+              // copies of the original PNG/JPG at the same dimensions.
+              const [N, A, G] = await Promise.all([
+                new Ye().loadAsync("/hdri/sphere5.webp"),
+                new Ye().loadAsync("/textures/paternWhiteBlackBack.webp"),
+                new Ye().loadAsync("/textures/whiteTexture.webp"),
+              ]);
               ((N.mapping = Ve),
                 (N.colorSpace = Ei),
                 (A.mapping = Ve),
@@ -7117,7 +7233,7 @@ let Ws,
                 });
               }
             });
-            await new Ye().load("/textures/cross.jpg", (U) => {
+            await new Ye().load("/textures/cross.webp", (U) => {
               for (let W = 0; W < lo; W++) {
                 const Q = Ha();
                 c.add(() => {
@@ -7304,6 +7420,7 @@ let Ws,
           Lt(),
           O("span", null, "Click and hold"),
           O("span", null, "Tap and hold"),
+          O("span", { class: "hold-key-hint" }, "or hold Space"),
         ],
         -1,
       )),
@@ -7326,8 +7443,33 @@ let Ws,
               d === "holdGlass" && c(),
               d === "stopGlass" && u());
           }),
-            we(() => {}),
-            Si(() => {}));
+            // Keyboard path: holding Space/Enter works like click-and-hold
+            // (the intro otherwise locks keyboard users out of the page).
+            we(() => {
+              window.addEventListener("keydown", hk), window.addEventListener("keyup", hu);
+            }),
+            Si(() => {
+              window.removeEventListener("keydown", hk), window.removeEventListener("keyup", hu);
+            }));
+          const isHoldKey = (ev) =>
+              (ev.key === " " || ev.key === "Enter") &&
+              !s.value &&
+              !ev.target.closest?.("input, textarea, select, a, button:not(.skip-intro), [contenteditable]") &&
+              !document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"),
+            hk = (ev) => {
+              if (!isHoldKey(ev)) return;
+              ev.preventDefault();
+              ev.repeat || t.holdGlass();
+            },
+            hu = (ev) => {
+              if (!isHoldKey(ev)) return;
+              ev.preventDefault();
+              t.stopGlass();
+            },
+            skip = () => {
+              // Jump straight to the end; the timeline's onComplete reveals the site.
+              s.value || !n.duration() || (t.startProgress(), n.progress(1));
+            };
           const a = () => {
               r.add(() => {
                 V.to(i.value, { duration: 0.5, opacity: 1 });
@@ -7347,11 +7489,11 @@ let Ws,
                   onComplete: () => {
                     (
                       t.finishProgress(),
-                      V.to(".click-and-hold", {
+                      V.to(".click-and-hold, .skip-intro", {
                         duration: 0.5,
                         opacity: 0,
                         onComplete: () => {
-                          V.set(".click-and-hold", { display: "none" });
+                          V.set(".click-and-hold, .skip-intro", { display: "none" });
                         },
                       }));
                   },
@@ -7383,6 +7525,11 @@ let Ws,
                     ]),
                   ]),
                 ]),
+                O(
+                  "button",
+                  { type: "button", class: "skip-intro", onClick: skip },
+                  "[ Skip intro ]",
+                ),
                 O(
                   "audio",
                   {

@@ -64,6 +64,138 @@ let globalListenersBound = false;
 // Checkout wizard state
 let checkout = null;
 
+// ----------------------------------------------------------------------------
+// DIALOG PLUMBING (details drawer, cart drawer, checkout modal)
+// One dialog is open at a time. Opening one: remember what had focus, make the
+// rest of the page inert, move focus inside. Tab/Shift+Tab wrap inside it
+// (see bindGlobalListeners). Closing: un-inert and give focus back.
+// ----------------------------------------------------------------------------
+const DIALOGS = {
+  dossier: { overlay: "event-dossier-overlay", panel: "event-dossier-panel", title: "#event-dossier-title" },
+  cart: { overlay: "events-cart-overlay", panel: "events-cart-panel", title: "#events-cart-title" },
+  checkout: { overlay: "event-reg-modal", panel: "event-reg-card", title: "#co-title" },
+};
+let activeDialog = null; // key of DIALOGS
+const dialogReturnFocus = {};
+let inertedEls = [];
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusablesIn(el) {
+  return Array.from(el.querySelectorAll(FOCUSABLE)).filter((n) => !n.closest("[hidden]") && n.getClientRects().length > 0);
+}
+
+// Inert every other child of <body> (the page under #__nuxt, the cart button,
+// the HUD, other overlays). The toast stays live so it is still announced.
+function setBackgroundInert(overlay) {
+  inertedEls.forEach((el) => el.removeAttribute("inert"));
+  inertedEls = [];
+  if (!overlay || overlay.parentElement !== document.body) return;
+  Array.from(document.body.children).forEach((el) => {
+    if (el === overlay || el.id === "events-toast" || el.hasAttribute("inert")) return;
+    if (/^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(el.tagName)) return;
+    el.setAttribute("inert", "");
+    inertedEls.push(el);
+  });
+}
+
+function focusInto(panel, preferred) {
+  let target = null;
+  try {
+    target = (preferred && panel.querySelector(preferred)) || null;
+  } catch {}
+  target = target || focusablesIn(panel)[0] || panel;
+  if (target === panel && !panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+  try {
+    target.focus({ preventScroll: true });
+  } catch {
+    target.focus();
+  }
+}
+
+// A selector for the focused control inside `panel`, so it can be refocused
+// after the panel's HTML is re-rendered.
+function focusedSelector(panel) {
+  const a = document.activeElement;
+  if (!a || a === panel || !panel.contains(a)) return null;
+  if (a.id) return `#${CSS.escape(a.id)}`;
+  const d = a.dataset || {};
+  if (!d.action) return null;
+  let sel = `[data-action="${CSS.escape(d.action)}"]`;
+  if (d.eventId) sel += `[data-event-id="${CSS.escape(d.eventId)}"]`;
+  if (d.mode) sel += `[data-mode="${CSS.escape(d.mode)}"]`;
+  if (d.index) sel += `[data-index="${CSS.escape(d.index)}"]`;
+  return sel;
+}
+
+function activateDialog(key, preferredFocus) {
+  const cfg = DIALOGS[key];
+  const overlay = document.getElementById(cfg.overlay);
+  const panel = document.getElementById(cfg.panel);
+  if (!overlay || !panel) return;
+  if (activeDialog !== key) {
+    const prev = document.activeElement;
+    dialogReturnFocus[key] = prev && prev !== document.body && !overlay.contains(prev) ? prev : null;
+    activeDialog = key;
+  }
+  setBackgroundInert(overlay);
+  focusInto(panel, preferredFocus || cfg.title);
+}
+
+function deactivateDialog(key) {
+  if (activeDialog !== key) return;
+  activeDialog = null;
+  setBackgroundInert(null);
+  const back = dialogReturnFocus[key];
+  dialogReturnFocus[key] = null;
+  let target = back && back.isConnected && !back.closest("[inert]") ? back : null;
+  // The opener may have been re-rendered (e.g. a card's ADD TO CART button).
+  if (!target && back?.dataset?.eventId) {
+    target = document.querySelector(
+      `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] [data-action="view-details"]`
+    );
+  }
+  if (!target) target = document.getElementById("events-cart-fab");
+  try {
+    target?.focus({ preventScroll: true });
+  } catch {}
+}
+
+function trapTab(evt) {
+  const panel = document.getElementById(DIALOGS[activeDialog]?.panel);
+  if (!panel) return;
+  const items = focusablesIn(panel);
+  const cur = document.activeElement;
+  if (!items.length) {
+    evt.preventDefault();
+    focusInto(panel);
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (!panel.contains(cur)) {
+    evt.preventDefault();
+    (evt.shiftKey ? last : first).focus();
+  } else if (evt.shiftKey) {
+    if (cur === first || first.compareDocumentPosition(cur) & Node.DOCUMENT_POSITION_PRECEDING) {
+      evt.preventDefault();
+      last.focus();
+    }
+  } else if (cur === last || last.compareDocumentPosition(cur) & Node.DOCUMENT_POSITION_FOLLOWING) {
+    evt.preventDefault();
+    first.focus();
+  }
+}
+
+function isOtherOverlayOpen() {
+  // The profile overlay / auth modal (other modules) handle their own keys.
+  return (
+    document.documentElement.classList.contains("pp-open") ||
+    Boolean(document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"))
+  );
+}
+
 const totalEvents = () => getCategories().find((c) => c.id === "all")?.count || "";
 
 /**
@@ -76,7 +208,7 @@ export function renderEventsPageHtml() {
   const categoriesHtml = categories
     .map(
       (cat) => `
-      <button class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" data-cat="${e(cat.id)}">
+      <button type="button" class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" aria-pressed="${activeCategory === cat.id}" data-cat="${e(cat.id)}">
         ${e(cat.name)}
         <span class="cat-count">(${cat.count})</span>
       </button>
@@ -94,8 +226,8 @@ export function renderEventsPageHtml() {
           <span class="events-hero-tag">CHAITANYA 2K26 // SCHEDULE & COMPETITIONS</span>
           <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
           <p class="events-hero-subtitle">
-            EXPLORE ${e(totalEvents())} EVENTS ACROSS CODING, DESIGN, BUSINESS, ESPORTS & CULTURE.
-            ADD THE ONES YOU LIKE TO YOUR CART AND REGISTER FOR ALL OF THEM IN ONE GO.
+            Explore ${e(totalEvents())} events across coding, design, business, esports &amp; culture.
+            Add the ones you like to your cart and register for all of them in one go.
           </p>
           <div class="events-stats-strip">
             <span class="events-stat-pill highlight">[ ${e(totalEvents())} EVENTS ]</span>
@@ -109,8 +241,8 @@ export function renderEventsPageHtml() {
           <div class="events-categories" id="events-cat-bar">${categoriesHtml}</div>
           <div class="events-search-wrap">
             <input type="text" class="events-search-input" id="events-search-box"
-              placeholder="SEARCH EVENTS, VENUES, STUDENT HEADS..." value="${e(activeSearchQuery)}" aria-label="Search events" />
-            <button class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
+              placeholder="Search events, venues, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
+            <button type="button" class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
           </div>
         </div>
 
@@ -122,7 +254,7 @@ export function renderEventsPageHtml() {
           <span class="pulse-dot"></span>
           <span id="events-scroll-counter">${e(totalEvents())} EVENTS</span>
         </div>
-        <button class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">[ ↑ TOP ]</button>
+        <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">[ ↑ TOP ]</button>
       </div>
 
       <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog">
@@ -131,15 +263,15 @@ export function renderEventsPageHtml() {
       </button>
 
       <div class="event-dossier-overlay" id="event-dossier-overlay">
-        <div class="event-dossier-panel" id="event-dossier-panel" role="dialog" aria-modal="true"></div>
+        <div class="event-dossier-panel" id="event-dossier-panel" role="dialog" aria-modal="true" aria-labelledby="event-dossier-title"></div>
       </div>
 
       <div class="events-cart-overlay" id="events-cart-overlay">
-        <aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-label="Your cart"></aside>
+        <aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-labelledby="events-cart-title"></aside>
       </div>
 
       <div class="event-reg-modal" id="event-reg-modal">
-        <div class="event-reg-card" id="event-reg-card" role="dialog" aria-modal="true"></div>
+        <div class="event-reg-card" id="event-reg-card" role="dialog" aria-modal="true" aria-labelledby="co-title"></div>
       </div>
     </div>
   `;
@@ -176,7 +308,7 @@ function actionButtonHtml(ev, { large = false } = {}) {
 
 function renderEventCardHtml(ev) {
   const catObj = getCategories().find((c) => c.id === ev.category);
-  const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
+  const accentColor = catObj?.accent || "var(--ink)";
 
   return `
     <div class="event-card" data-event-id="${e(ev.id)}">
@@ -201,7 +333,7 @@ function renderEventCardHtml(ev) {
       </div>
 
       <div class="event-card-actions">
-        <button class="event-btn-details" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
+        <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
         ${actionButtonHtml(ev)}
       </div>
     </div>
@@ -220,7 +352,7 @@ export function openEventDossier(eventId) {
   if (!overlay || !panel) return;
 
   const catObj = getCategories().find((c) => c.id === ev.category);
-  const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
+  const accentColor = catObj?.accent || "var(--ink)";
   const rulesHtml = (ev.rules || []).map((r) => `<li>${e(r)}</li>`).join("");
   const typeLabel = { solo: "Solo", team: "Team", both: "Solo or team" }[ev.registrationType] || "Solo";
 
@@ -269,10 +401,10 @@ export function openEventDossier(eventId) {
   const sectionNo = () => String(++sectionCount).padStart(2, "0");
 
   panel.innerHTML = `
-    <button class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
+    <button type="button" class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     <div>
       <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)} // ${e(ev.badge)}</span>
-      <h2 class="event-dossier-title">${e(ev.title)}</h2>
+      <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
       <p class="event-dossier-tagline">${e(ev.tagline)}</p>
     </div>
 
@@ -319,14 +451,19 @@ export function openEventDossier(eventId) {
     </div>
   `;
 
+  const wasOpen = isDossierOpen && activeDialog === "dossier";
+  if (!wasOpen) panel.scrollTop = 0;
   overlay.classList.add("active");
   isDossierOpen = true;
   panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
+  // Fresh open: focus the title. Re-render after ADD TO CART: stay on the action.
+  activateDialog("dossier", wasOpen ? ".event-action-large" : "#event-dossier-title");
 }
 
 export function closeEventDossier() {
   document.getElementById("event-dossier-overlay")?.classList.remove("active");
   isDossierOpen = false;
+  deactivateDialog("dossier");
 }
 
 // ----------------------------------------------------------------------------
@@ -336,6 +473,7 @@ export function closeEventDossier() {
 function renderCartPanel() {
   const panel = document.getElementById("events-cart-panel");
   if (!panel) return;
+  const keepFocus = focusedSelector(panel);
   const items = getCartItems();
   const total = getCartTotal(items);
 
@@ -365,7 +503,7 @@ function renderCartPanel() {
 
   panel.innerHTML = `
     <div class="cart-head">
-      <h3>YOUR CART</h3>
+      <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
       <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart">[ CLOSE ]</button>
     </div>
     ${items.length
@@ -376,6 +514,8 @@ function renderCartPanel() {
          </div>`
       : `<div class="cart-empty"><p>Your cart is empty.</p><p>Open an event and tap <strong>ADD TO CART</strong>.</p></div>`}
   `;
+  // Re-rendered while open (remove / solo-team switch): keep keyboard focus.
+  if (activeDialog === "cart" && !panel.contains(document.activeElement)) focusInto(panel, keepFocus || DIALOGS.cart.title);
 }
 
 function updateCartFab(items = getCartItems()) {
@@ -387,13 +527,17 @@ function updateCartFab(items = getCartItems()) {
 
 export function openCart() {
   renderCartPanel();
-  document.getElementById("events-cart-overlay")?.classList.add("active");
+  const overlay = document.getElementById("events-cart-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
   isCartOpen = true;
+  activateDialog("cart");
 }
 
 export function closeCart() {
   document.getElementById("events-cart-overlay")?.classList.remove("active");
   isCartOpen = false;
+  deactivateDialog("cart");
 }
 
 function handleAddToCart(eventId) {
@@ -409,16 +553,28 @@ function handleAddToCart(eventId) {
   if (isDossierOpen) openEventDossier(ev.id);
 }
 
-function flashToast(message) {
+// The toast is a polite live region. It is created (empty) when the page
+// mounts so screen readers are already watching it before the first message.
+function ensureToast() {
   let toast = document.getElementById("events-toast");
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "events-toast";
     toast.className = "events-toast";
     toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.setAttribute("aria-atomic", "true");
     document.body.appendChild(toast);
   }
-  toast.textContent = message;
+  return toast;
+}
+
+function flashToast(message) {
+  const toast = ensureToast();
+  // Clear first so the same message twice in a row is announced again.
+  toast.textContent = "";
+  clearTimeout(flashToast._a);
+  flashToast._a = setTimeout(() => (toast.textContent = message), 50);
   toast.classList.add("show");
   clearTimeout(flashToast._t);
   flashToast._t = setTimeout(() => toast.classList.remove("show"), 2200);
@@ -465,6 +621,9 @@ function startCheckout() {
 function openJoinTeam(eventId) {
   const user = getCurrentUser();
   if (!user) {
+    // Close the drawer first: it makes the rest of the page (and the sign-in
+    // modal) inert while open.
+    closeEventDossier();
     openAuthModal("login");
     return;
   }
@@ -482,15 +641,19 @@ function openJoinTeam(eventId) {
 }
 
 function openCheckoutModal() {
-  document.getElementById("event-reg-modal")?.classList.add("active");
+  const modal = document.getElementById("event-reg-modal");
+  if (!modal) return;
+  modal.classList.add("active");
   isCheckoutOpen = true;
   renderCheckout();
+  activateDialog("checkout");
 }
 
 export function closeCheckout() {
   document.getElementById("event-reg-modal")?.classList.remove("active");
   isCheckoutOpen = false;
   checkout = null;
+  deactivateDialog("checkout");
 }
 
 function stepList() {
@@ -578,9 +741,11 @@ function validateTeams() {
     });
 }
 
-function renderCheckout() {
+function renderCheckout(focusSel) {
   const card = document.getElementById("event-reg-card");
   if (!card || !checkout) return;
+  const prevStep = card.dataset.step;
+  const keepFocus = focusedSelector(card);
   const user = getCurrentUser();
   const step = checkout.step;
   let body = "";
@@ -589,7 +754,7 @@ function renderCheckout() {
     body = `
       <div class="event-reg-head">
         <span class="event-reg-kicker">STEP 1 // CONFIRM YOUR DETAILS</span>
-        <h3 class="event-reg-title">Your details</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Your details</h3>
         <p class="event-reg-sub">These appear on your registrations and Digital ID.</p>
       </div>
       <form class="event-reg-form" id="co-form" novalidate>
@@ -638,7 +803,7 @@ function renderCheckout() {
     body = `
       <div class="event-reg-head">
         <span class="event-reg-kicker">STEP 2 // TEAMS</span>
-        <h3 class="event-reg-title">Team details</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Team details</h3>
         <p class="event-reg-sub">You'll get a team code to share. Teammates can use it to link their own accounts.</p>
       </div>
       <form class="event-reg-form" id="co-form" novalidate>
@@ -678,7 +843,7 @@ function renderCheckout() {
     body = `
       <div class="event-reg-head">
         <span class="event-reg-kicker">STEP ${stepList().length} // CONFIRM & PAY</span>
-        <h3 class="event-reg-title">Confirm registration</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Confirm registration</h3>
         <p class="event-reg-sub">${e(checkout.details.displayName)} · ${e(checkout.details.college)} · ${e(checkout.details.year)}</p>
       </div>
       <ul class="checkout-summary">${rows}</ul>
@@ -703,7 +868,7 @@ function renderCheckout() {
     body = `
       <div class="event-reg-head">
         <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
-        <h3 class="event-reg-title">You're in!</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">You're in!</h3>
         <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.total > 0 ? " Your bookings will show as confirmed once the fest team verifies your payment." : r.teamPending ? " Your booking is confirmed once the fest team verifies your leader's payment." : ""}</p>
       </div>
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
@@ -717,7 +882,7 @@ function renderCheckout() {
     body = `
       <div class="event-reg-head">
         <span class="event-reg-kicker">JOIN A TEAM</span>
-        <h3 class="event-reg-title">${e(ev.title)}</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">${e(ev.title)}</h3>
         <p class="event-reg-sub">Enter the code your team leader received after registering.</p>
       </div>
       <form class="event-reg-form" id="co-form" novalidate>
@@ -735,10 +900,17 @@ function renderCheckout() {
   }
 
   card.innerHTML = `
-    <button class="event-reg-close" data-action="co-close" aria-label="Close">[ ESC / CLOSE ]</button>
+    <button type="button" class="event-reg-close" data-action="co-close">[ ESC / CLOSE ]</button>
     ${stepperHtml()}
     <div class="checkout-step" key="${step}">${body}</div>
   `;
+  card.dataset.step = step;
+  // New step: focus its title. Same step re-rendered (add/remove member):
+  // keep focus where it was, or on what the caller asked for.
+  if (activeDialog === "checkout") {
+    if (prevStep !== step) card.scrollTop = 0;
+    focusInto(card, focusSel || (prevStep === step ? keepFocus : null) || DIALOGS.checkout.title);
+  }
 
   const form = card.querySelector("#co-form");
   const utr = card.querySelector("#co-utr");
@@ -750,6 +922,7 @@ async function onCheckoutSubmit(evt, card) {
   evt.preventDefault();
   const errBox = card.querySelector("#co-error");
   errBox.hidden = true;
+  errBox.textContent = "";
   const steps = stepList();
   try {
     if (checkout.step === "details") {
@@ -805,8 +978,13 @@ async function onCheckoutSubmit(evt, card) {
       return renderCheckout();
     }
   } catch (err) {
-    errBox.textContent = err.message || "Something went wrong. Please try again.";
-    errBox.hidden = false;
+    // role="alert": show it a beat after hiding so a repeated message is
+    // announced again.
+    const message = err.message || "Something went wrong. Please try again.";
+    setTimeout(() => {
+      errBox.textContent = message;
+      errBox.hidden = false;
+    }, 50);
     const btn = card.querySelector("#co-submit");
     if (btn) {
       btn.disabled = false;
@@ -838,7 +1016,12 @@ function onCheckoutClick(evt) {
     const t = checkout.teams[btn.dataset.eventId];
     if (action === "co-add-member") t.members.push({ name: "", email: "" });
     else t.members.splice(Number(btn.dataset.index), 1);
-    return renderCheckout();
+    // Adding: focus the new member's name field.
+    return renderCheckout(
+      action === "co-add-member"
+        ? `[data-team-event="${CSS.escape(btn.dataset.eventId)}"] .co-member:last-of-type .co-member-name`
+        : `[data-team-event="${CSS.escape(btn.dataset.eventId)}"] .co-team-name`
+    );
   }
   if (action === "co-my-registrations") {
     closeCheckout();
@@ -909,7 +1092,7 @@ export function initScrollMotion() {
 
         // Top edge progress accent
         if (progressBar) {
-          progressBar.style.width = `${progress.toFixed(1)}%`;
+          progressBar.style.transform = `scaleX(${(progress / 100).toFixed(4)})`;
         }
 
         // Pinned sticky toolbar morphing state
@@ -1076,7 +1259,23 @@ export function initScrollMotion() {
 export function refreshEventsGrid() {
   const grid = document.getElementById("events-card-grid");
   if (!grid) return;
+  // Keep keyboard focus on the same card when its buttons are re-rendered
+  // (e.g. ADD TO CART becomes IN CART).
+  const focused = grid.contains(document.activeElement) ? document.activeElement : null;
+  const focusEventId = focused?.dataset?.eventId;
+  const focusAction = focused?.dataset?.action;
   grid.innerHTML = renderGridHtml(filterEvents(activeCategory, activeSearchQuery));
+  if (focusEventId) {
+    const card = grid.querySelector(`.event-card[data-event-id="${CSS.escape(focusEventId)}"]`);
+    const target =
+      card &&
+      ((focusAction && card.querySelector(`[data-action="${CSS.escape(focusAction)}"]`)) ||
+        card.querySelector(".event-btn-register:not([disabled])") ||
+        card.querySelector('[data-action="view-details"]'));
+    try {
+      target?.focus({ preventScroll: true });
+    } catch {}
+  }
   triggerCardsReveal();
 }
 
@@ -1123,10 +1322,14 @@ function bindGlobalListeners() {
   });
 
   document.addEventListener("keydown", (evt) => {
-    if (evt.key !== "Escape" || evt.defaultPrevented) return;
+    if (evt.defaultPrevented) return;
+    if (evt.key === "Tab") {
+      if (activeDialog && !isOtherOverlayOpen()) trapTab(evt);
+      return;
+    }
+    if (evt.key !== "Escape") return;
     // The profile overlay / auth modal handle their own Escape.
-    if (document.documentElement.classList.contains("pp-open")) return;
-    if (document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active")) return;
+    if (isOtherOverlayOpen()) return;
     if (isCheckoutOpen) closeCheckout();
     else if (isCartOpen) closeCart();
     else if (isDossierOpen) closeEventDossier();
@@ -1183,13 +1386,19 @@ export function initEventsPage() {
 
   bindGlobalListeners();
   isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  activeDialog = null;
+  setBackgroundInert(null);
+  ensureToast();
 
   const catBar = document.getElementById("events-cat-bar");
   catBar?.addEventListener("click", (evt) => {
     const btn = evt.target.closest(".events-cat-btn");
     if (!btn?.dataset.cat) return;
     activeCategory = btn.dataset.cat;
-    catBar.querySelectorAll(".events-cat-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    catBar.querySelectorAll(".events-cat-btn").forEach((b) => {
+      b.classList.toggle("active", b === btn);
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
     refreshEventsGrid();
   });
 
@@ -1205,6 +1414,7 @@ export function initEventsPage() {
     activeSearchQuery = "";
     clearBtn.classList.remove("active");
     refreshEventsGrid();
+    searchBox?.focus(); // the clear button hides itself, so don't drop focus
   });
 
   document.getElementById("events-cart-fab")?.addEventListener("click", openCart);
@@ -1263,6 +1473,9 @@ export function destroyEventsPage() {
   }
   isDossierOpen = isCartOpen = isCheckoutOpen = false;
   checkout = null;
+  // Leaving /events with a drawer open must not leave the site inert.
+  activeDialog = null;
+  setBackgroundInert(null);
 }
 
 // Compatibility: older code paths call openEventRegistration(eventId).

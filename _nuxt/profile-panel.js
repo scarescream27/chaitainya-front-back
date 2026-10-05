@@ -672,12 +672,62 @@ let open = false;
 let verifyId = null;
 let lastFocus = null;
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Keep Tab / Shift+Tab cycling inside `container`. */
+function trapTab(evt, container) {
+  const items = [...container.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length > 0);
+  if (!items.length) {
+    evt.preventDefault();
+    container.focus();
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  const active = document.activeElement;
+  if (!container.contains(active)) {
+    evt.preventDefault();
+    (evt.shiftKey ? last : first).focus();
+  } else if (evt.shiftKey && (active === first || active === container)) {
+    evt.preventDefault();
+    last.focus();
+  } else if (!evt.shiftKey && active === last) {
+    evt.preventDefault();
+    first.focus();
+  }
+}
+
+/**
+ * #__nuxt is inert while this overlay or the sign-in dialog is open (same
+ * logic as auth-modal.js). Only an inert set by these dialogs is removed.
+ */
+function syncAppInert() {
+  const app = document.getElementById("__nuxt");
+  if (!app) return;
+  const anyOpen = document.querySelector("#chaitanya-auth-backdrop.active, #profile-overlay.active");
+  if (anyOpen) {
+    // Leave an inert set by someone else (e.g. an events-page drawer) alone.
+    if (!app.inert) {
+      app.inert = true;
+      app.dataset.dialogInert = "1";
+    }
+  } else if (app.dataset.dialogInert) {
+    app.inert = false;
+    delete app.dataset.dialogInert;
+  }
+}
+
+/** The sign-in dialog opened from this overlay sits on top and owns the keyboard. */
+const authDialogOnTop = () => Boolean(document.querySelector("#chaitanya-auth-backdrop.active"));
+
 function ensureRoot() {
   if (root && document.body.contains(root)) return root;
   root = document.createElement("div");
   root.id = "profile-overlay";
   root.className = "pp-overlay";
-  root.innerHTML = `<section class="pp-panel" role="dialog" aria-modal="true" aria-labelledby="pp-title"></section>`;
+  root.innerHTML = `<section class="pp-panel" role="dialog" aria-modal="true" aria-labelledby="pp-title" tabindex="-1"></section>`;
+  root.inert = true; // closed: nothing inside is focusable
   document.body.appendChild(root);
 
   root.addEventListener("mousedown", (evt) => {
@@ -690,9 +740,12 @@ function ensureRoot() {
     if (btn.dataset.pp === "verify-login") window.openAuthModal?.("login");
   });
   document.addEventListener("keydown", (evt) => {
-    if (open && evt.key === "Escape") {
+    if (!open || authDialogOnTop()) return;
+    if (evt.key === "Escape" && !evt.defaultPrevented) {
       evt.preventDefault(); // tells other Escape handlers this press was used
       closeProfilePanel();
+    } else if (evt.key === "Tab") {
+      trapTab(evt, root.querySelector(".pp-panel"));
     }
   });
   return root;
@@ -702,6 +755,8 @@ export function closeProfilePanel() {
   if (!root || !open) return;
   open = false;
   root.classList.remove("active");
+  root.inert = true;
+  syncAppInert();
   document.documentElement.classList.remove("pp-open");
   if (verifyId) {
     verifyId = null;
@@ -709,17 +764,22 @@ export function closeProfilePanel() {
     url.searchParams.delete("verify");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
-  lastFocus?.focus?.({ preventScroll: true });
+  const target = lastFocus;
+  lastFocus = null;
+  if (target?.isConnected) target.focus?.({ preventScroll: true });
 }
 
 function renderVerifyOverlay() {
   const panel = root.querySelector(".pp-panel");
+  // Re-rendering (e.g. after signing in) would drop focus on <body>.
+  const hadFocus = open && panel.contains(document.activeElement);
   panel.innerHTML = `
     <header class="pp-head">
       <div class="pp-head-text"><span class="pp-kicker">CHAITANYA 2K26</span><h2 id="pp-title" class="pp-title">ID VERIFICATION</h2></div>
-      <button type="button" class="pp-close" data-pp="close" aria-label="Close">✕</button>
+      <button type="button" class="pp-close" data-pp="close" aria-label="Close"><span aria-hidden="true">✕</span></button>
     </header>
-    <div class="pp-body" id="pp-body"><div class="pp-loading">Checking ID…</div></div>`;
+    <div class="pp-body" id="pp-body" aria-live="polite"><div class="pp-loading">Checking ID…</div></div>`;
+  if (hadFocus) panel.focus({ preventScroll: true });
   renderVerify(panel.querySelector("#pp-body"));
 }
 
@@ -775,12 +835,19 @@ async function renderVerify(body) {
 
 export function openVerifyView(id) {
   verifyId = String(id || "").trim().toUpperCase();
-  lastFocus = document.activeElement;
+  if (!open) lastFocus = document.activeElement;
   ensureRoot();
   renderVerifyOverlay();
   open = true;
+  root.inert = false;
   document.documentElement.classList.add("pp-open");
-  requestAnimationFrame(() => root.classList.add("active"));
+  requestAnimationFrame(() => {
+    if (!open) return; // closed again before the first frame
+    root.classList.add("active");
+    syncAppInert();
+    // Move focus into the dialog; it is labelled by the visible #pp-title.
+    root.querySelector(".pp-panel")?.focus({ preventScroll: true });
+  });
 }
 
 // ----------------------------------------------------------------------------

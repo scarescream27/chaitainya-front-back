@@ -68,7 +68,7 @@ let a,
             </div>
 
             <!-- Quick Jump Nav -->
-            <nav class="privacy-quick-nav">
+            <nav class="privacy-quick-nav" aria-label="On this page">
               <a href="#sec-overview" class="quick-nav-pill">[ 01. Overview ]</a>
               <a href="#sec-collect" class="quick-nav-pill">[ 02. Data Collected ]</a>
               <a href="#sec-usage" class="quick-nav-pill">[ 03. Usage & Accreditation ]</a>
@@ -79,8 +79,8 @@ let a,
               <a href="#sec-grievance" class="quick-nav-pill">[ 08. Grievance Redressal ]</a>
             </nav>
 
-            <!-- Main Legal Content Sections -->
-            <main class="privacy-sections">
+            <!-- Main Legal Content Sections (div, not <main>: the layout already provides the main landmark) -->
+            <div class="privacy-sections">
               <!-- Section 1 -->
               <article class="privacy-card" id="sec-overview">
                 <div class="privacy-card-header">
@@ -203,12 +203,12 @@ let a,
                   For questions regarding data privacy, grievance redressal, or certificate verification, please reach out directly to the festival tech council:
                 </p>
                 <div class="privacy-callout">
-                  <strong>Official Nodal Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:#000; text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
+                  <strong>Official Nodal Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:var(--ink); text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
                   <strong>Institution:</strong> Himachal Pradesh Technical University (HPTU), Hamirpur, H.P., India<br/>
                   <strong>Festival Secretariat:</strong> Chaitanya 2k26 Organizing Committee
                 </div>
               </article>
-            </main>
+            </div>
 
             <!-- Bottom CTA -->
             <section class="privacy-cta-box">
@@ -218,9 +218,9 @@ let a,
             </section>
 
             <!-- Footer Credits -->
-            <footer class="privacy-footer-credits">
+            <div class="privacy-footer-credits">
               <p>© 2026 Chaitanya 2k26 • Himachal Pradesh Technical University • All rights reserved.</p>
-            </footer>
+            </div>
           </div>
         `;
 

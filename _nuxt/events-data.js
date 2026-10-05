@@ -21,13 +21,16 @@ export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
 
+// Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours),
+// so they switch with light/dark mode; both palettes pass WCAG AA (4.5:1) for
+// 12px labels on the cards. Change the hues in tokens.css, not here.
 export const EVENT_CATEGORIES = [
   { id: "all", name: "ALL EVENTS", shortCode: "ALL", count: 20 },
-  { id: "tech", name: "CODING & TECH", shortCode: "TECH", count: 6, accent: "#0070f3" },
-  { id: "innovation", name: "DESIGN & INNOVATION", shortCode: "BUILD", count: 3, accent: "#ff6b35" },
-  { id: "business", name: "BUSINESS & DEBATE", shortCode: "PITCH", count: 3, accent: "#005a3c" },
-  { id: "esports", name: "ESPORTS", shortCode: "PLAY", count: 3, accent: "#a048fe" },
-  { id: "cultural", name: "CULTURAL & FUN", shortCode: "CULTURE", count: 5, accent: "#e63b7a" },
+  { id: "tech", name: "CODING & TECH", shortCode: "TECH", count: 6, accent: "var(--cat-tech)" },
+  { id: "innovation", name: "DESIGN & INNOVATION", shortCode: "BUILD", count: 3, accent: "var(--cat-innovation)" },
+  { id: "business", name: "BUSINESS & DEBATE", shortCode: "PITCH", count: 3, accent: "var(--cat-business)" },
+  { id: "esports", name: "ESPORTS", shortCode: "PLAY", count: 3, accent: "var(--cat-esports)" },
+  { id: "cultural", name: "CULTURAL & FUN", shortCode: "CULTURE", count: 5, accent: "var(--cat-cultural)" },
 ];
 
 const CATEGORY_NAMES = Object.fromEntries(EVENT_CATEGORIES.map((c) => [c.id, c.name]));

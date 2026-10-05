@@ -10,6 +10,56 @@
  * - Clean pill form inputs with fine borders and bold focus states
  */
 
+/* Local colours for the dialog, profile and admin UI that have no shared
+   token. Light values are the original ones; dark values follow tokens.css.
+   Translucent white/black tints elsewhere in this file are written as
+   color-mix() of --surface / --ink, so light mode renders exactly as before. */
+:root {
+  --am-scrim: rgba(220, 232, 252, 0.45);
+  --am-scrim-solid: rgba(220, 226, 236, 0.8);
+  --am-pp-scrim: rgba(214, 220, 232, 0.35);
+  --am-pattern: url(/images/footerPatern.png);
+  --am-link-hover: #0433ff;
+  --am-hot: #e4001d; /* sign-out hover fill */
+  --am-excel: #107c41;
+  --am-info-bg: #e8f4fd;
+  --am-info-ink: #004085;
+  --am-cart-bg: #e8f0fe;
+  --am-cart-ink: #0b3d91;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --am-scrim: rgba(5, 9, 18, 0.6);
+    --am-scrim-solid: rgba(5, 9, 18, 0.85);
+    --am-pp-scrim: rgba(5, 9, 18, 0.5);
+    --am-pattern: none; /* the dot pattern is dark-on-light art */
+    --am-link-hover: #7cb2ff;
+    --am-hot: var(--danger);
+    --am-excel: #5fd3a0;
+    --am-info-bg: #12233d;
+    --am-info-ink: #9cc4ff;
+    --am-cart-bg: #12233d;
+    --am-cart-ink: #9cc4ff;
+  }
+
+  /* Home and 404 stay light (see tokens.css). */
+  html:not(.not-home),
+  html:has(.error-page) {
+    --am-scrim: rgba(220, 232, 252, 0.45);
+    --am-scrim-solid: rgba(220, 226, 236, 0.8);
+    --am-pp-scrim: rgba(214, 220, 232, 0.35);
+    --am-pattern: url(/images/footerPatern.png);
+    --am-link-hover: #0433ff;
+    --am-hot: #e4001d;
+    --am-excel: #107c41;
+    --am-info-bg: #e8f4fd;
+    --am-info-ink: #004085;
+    --am-cart-bg: #e8f0fe;
+    --am-cart-ink: #0b3d91;
+  }
+}
+
 /* Modal Root Overlay - Frosted luminous blur */
 .chaitanya-modal-backdrop {
   position: fixed;
@@ -21,12 +71,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(220, 232, 252, 0.45);
+  background: var(--am-scrim);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  /* visibility keeps the closed dialog out of the tab order and a11y tree */
+  visibility: hidden;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.35s;
   padding: 20px;
   box-sizing: border-box;
 }
@@ -34,6 +86,20 @@
 .chaitanya-modal-backdrop.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
+}
+
+/* The sign-in dialog can be opened from the organiser verify overlay; keep it on top. */
+html.pp-open .chaitanya-modal-backdrop {
+  z-index: 100002;
+}
+
+/* Dialog containers take programmatic focus on open (tabindex="-1"); the ring
+   belongs on the controls inside, not around the whole card. */
+.chaitanya-modal-card:focus,
+.pp-panel:focus {
+  outline: none;
 }
 
 /* Main Modal Card */
@@ -45,22 +111,22 @@
   overflow-y: auto;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  background-color: rgba(255, 255, 255, 0.88);
-  background-image: url(/images/footerPatern.png);
+  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+  background-image: var(--am-pattern);
   background-repeat: repeat;
   background-size: 80px;
   -webkit-backdrop-filter: blur(28px);
   backdrop-filter: blur(28px);
-  border: 2px solid #ffffff;
+  border: 2px solid var(--surface);
   box-shadow: 
-    0 30px 90px rgba(0, 40, 120, 0.12),
+    0 30px 90px rgba(15, 23, 42, 0.12),
     0 4px 20px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 #ffffff;
+    inset 0 1px 0 var(--surface);
   border-radius: 28px;
   padding: 32px 32px 28px;
-  color: #000000;
+  color: var(--ink);
   transform: translateY(20px) scale(0.97);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
 
@@ -82,7 +148,7 @@
 /* Corner Accents */
 .chaitanya-modal-card .corner {
   position: absolute;
-  color: rgba(0, 0, 0, 0.28);
+  color: color-mix(in srgb, var(--ink) 28%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 600;
@@ -98,11 +164,11 @@
   position: absolute;
   top: 16px;
   right: 20px;
-  background: #ffffff;
-  border: 1.5px solid #000000;
-  color: #000000;
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.5px;
   padding: 5px 12px;
@@ -113,8 +179,8 @@
 }
 
 .chaitanya-modal-close:hover {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -128,11 +194,11 @@
 .chaitanya-modal-tag {
   display: inline-block;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--ink);
   margin-bottom: 6px;
 }
 
@@ -142,7 +208,7 @@
   line-height: 0.88;
   letter-spacing: -0.5px;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--ink);
   margin: 0 0 8px;
 }
 
@@ -150,7 +216,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   letter-spacing: 0.3px;
-  color: #555555;
+  color: var(--ink-muted);
   margin: 0 auto;
   max-width: 420px;
   line-height: 1.45;
@@ -158,8 +224,8 @@
 
 /* Notice / Banner */
 .chaitanya-modal-banner {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 15%, transparent);
   border-radius: 14px;
   padding: 12px 16px;
   margin-bottom: 20px;
@@ -167,8 +233,8 @@
   align-items: center;
   gap: 12px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: #111111;
+  font-size: var(--fs-body);
+  color: color-mix(in srgb, var(--ink) 93.3%, var(--surface)); /* #111 in light */
   line-height: 1.45;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
@@ -183,13 +249,13 @@
 .chaitanya-modal-banner.warning {
   background: rgba(254, 187, 37, 0.14);
   border-color: rgba(254, 187, 37, 0.7);
-  color: #6a4400;
+  color: var(--warn-ink);
 }
 
 .chaitanya-modal-banner.danger {
   background: rgba(228, 0, 29, 0.08);
   border-color: rgba(228, 0, 29, 0.45);
-  color: #8c000e;
+  color: var(--danger-ink);
 }
 
 /* Google Sign-in Button — Iconic OG Black Pill */
@@ -200,9 +266,9 @@
   gap: 12px;
   width: 100%;
   padding: 15px 24px;
-  background: #000000;
-  color: #ffffff;
-  border: 2px solid #000000;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border: 2px solid var(--ink);
   border-radius: 50px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
@@ -216,8 +282,8 @@
 }
 
 .btn-google-auth:hover {
-  background: #ffffff;
-  color: #000000;
+  background: var(--surface);
+  color: var(--ink);
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
 }
@@ -229,7 +295,7 @@
 .btn-google-auth svg {
   width: 20px;
   height: 20px;
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 50%;
   padding: 2px;
   flex-shrink: 0;
@@ -244,38 +310,39 @@
 .chaitanya-form-label {
   display: block;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--ink);
   margin-bottom: 6px;
 }
 
 .chaitanya-form-input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 50px;
   padding: 13px 20px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 500;
-  color: #000000;
+  color: var(--ink);
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .chaitanya-form-input:focus {
   outline: none;
-  border-color: #000000;
-  background: #ffffff;
+  border-color: var(--ink);
+  background: var(--surface);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .chaitanya-form-input::placeholder {
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--ink-muted); /* was 40% black (2.8:1); muted ink passes AA */
+  opacity: 1;
 }
 
 /* Form Divider */
@@ -290,15 +357,15 @@
 .chaitanya-divider::after {
   content: "";
   flex: 1;
-  border-bottom: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1.5px solid color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 .chaitanya-divider span {
   padding: 0 14px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
-  color: #555555;
+  color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -309,13 +376,13 @@
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
-  color: #555555;
+  color: var(--ink-muted);
 }
 
 .chaitanya-link-btn {
   background: transparent;
   border: none;
-  color: #000000;
+  color: var(--ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
@@ -328,7 +395,7 @@
 }
 
 .chaitanya-link-btn:hover {
-  color: #0433ff;
+  color: var(--am-link-hover);
 }
 
 /* Profile Card View */
@@ -344,10 +411,10 @@
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  border: 3px solid #000000;
+  border: 3px solid var(--ink);
   padding: 3px;
   object-fit: cover;
-  background: #ffffff;
+  background: var(--surface);
   margin-bottom: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
@@ -357,7 +424,7 @@
   font-size: 38px;
   line-height: 0.92;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--ink);
   margin: 0 0 4px;
   letter-spacing: -0.3px;
 }
@@ -365,7 +432,7 @@
 .profile-email {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
-  color: #666666;
+  color: var(--ink-muted);
   margin: 0 0 10px;
 }
 
@@ -374,24 +441,24 @@
   padding: 4px 14px;
   border-radius: 30px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  background: #ffffff;
-  color: #000000;
-  border: 1.5px solid #000000;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
 }
 
 .profile-role-badge.admin {
-  background: #000000;
-  color: #ffffff;
-  border-color: #000000;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border-color: var(--ink);
 }
 
 .profile-meta-card {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 18px;
   padding: 16px 20px;
   margin-bottom: 20px;
@@ -404,7 +471,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
 }
@@ -414,13 +481,13 @@
 }
 
 .profile-meta-label {
-  color: #666666;
+  color: var(--ink-muted);
   text-transform: uppercase;
   font-weight: 500;
 }
 
 .profile-meta-val {
-  color: #000000;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -432,14 +499,14 @@
 }
 
 .profile-event-chip {
-  background: #ffffff;
-  border: 1.5px solid #000000;
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
   border-radius: 30px;
   padding: 5px 14px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
-  color: #000000;
+  color: var(--ink);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
@@ -448,9 +515,9 @@
   width: 100%;
   padding: 13px;
   background: transparent;
-  border: 1.5px solid #000000;
+  border: 1.5px solid var(--ink);
   border-radius: 50px;
-  color: #000000;
+  color: var(--ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
@@ -463,9 +530,9 @@
 }
 
 .btn-secondary-action:hover {
-  background: #e4001d;
-  border-color: #e4001d;
-  color: #ffffff;
+  background: var(--am-hot);
+  border-color: var(--am-hot);
+  color: var(--ink-on-dark);
   box-shadow: 0 6px 18px rgba(228, 0, 29, 0.25);
 }
 
@@ -478,8 +545,8 @@
 }
 
 .admin-stat-card {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid #000000;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1.5px solid var(--ink);
   border-radius: 18px;
   padding: 18px 20px;
   text-align: center;
@@ -489,25 +556,25 @@
 .admin-stat-num {
   font-family: "DrukMedium", sans-serif;
   font-size: 46px;
-  color: #000000;
+  color: var(--ink);
   line-height: 0.95;
   margin-bottom: 4px;
 }
 
 .admin-stat-label {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
-  color: #444444;
+  color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .admin-table-wrap {
   overflow-x: auto;
-  border: 1.5px solid #000000;
+  border: 1.5px solid var(--ink);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--surface);
   margin-bottom: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
@@ -521,10 +588,10 @@
 }
 
 .admin-table th {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   padding: 12px 14px;
-  border-bottom: 2px solid #000000;
+  border-bottom: 2px solid var(--ink);
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -532,12 +599,12 @@
 
 .admin-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  color: #000000;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  color: var(--ink);
 }
 
 .admin-table tr:hover td {
-  background: rgba(180, 203, 245, 0.2);
+  background: color-mix(in srgb, var(--sky-bottom) 20%, transparent);
 }
 
 /* Admin Tabs Navigation */
@@ -545,34 +612,34 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  border-bottom: 1.5px solid rgba(0, 0, 0, 0.15);
+  border-bottom: 1.5px solid color-mix(in srgb, var(--ink) 15%, transparent);
   padding-bottom: 8px;
   overflow-x: auto;
 }
 
 .admin-tab-btn {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   padding: 6px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.7);
-  color: #333333;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-muted);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .admin-tab-btn:hover {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
 }
 
 .admin-tab-btn.active {
-  background: #000000;
-  color: #ffffff;
-  border-color: #000000;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border-color: var(--ink);
 }
 
 /* Status Badges */
@@ -580,36 +647,38 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-family: "IBM Plex Mono", monospace;
   font-weight: 600;
   text-transform: uppercase;
 }
 
+/* Status palette from tokens.css so badges read in both themes. */
 .badge-status.verified,
-.badge-status.paid {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+.badge-status.paid,
+.badge-status.team {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
 }
 
 .badge-status.pending,
 .badge-status.pending_verification {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border: 1px solid color-mix(in srgb, var(--warn-ink) 30%, transparent);
 }
 
 .badge-status.rejected {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 .badge-status.free {
-  background: #e2e3e5;
-  color: #383d41;
-  border: 1px solid #d6d8db;
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  border: 1px solid var(--line);
 }
 
 /* Admin Action Buttons */
@@ -620,11 +689,11 @@
 }
 
 .btn-action-approve {
-  background: #155724;
-  color: #ffffff;
+  background: var(--ok);
+  color: var(--ink-on-dark);
   border: none;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
@@ -633,15 +702,15 @@
 }
 
 .btn-action-approve:hover {
-  background: #0b3414;
+  background: color-mix(in srgb, var(--ok) 75%, var(--ink));
 }
 
 .btn-action-reject {
-  background: #721c24;
-  color: #ffffff;
+  background: var(--danger-ink);
+  color: var(--ink-on-dark);
   border: none;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
@@ -650,7 +719,7 @@
 }
 
 .btn-action-reject:hover {
-  background: #491217;
+  background: color-mix(in srgb, var(--danger-ink) 75%, var(--ink));
 }
 
 /* Export Control Bar */
@@ -686,8 +755,8 @@
 .admin-progress,
 .profile-empty {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: #555555;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
 }
 
 .admin-loading {
@@ -701,7 +770,7 @@
 }
 
 .profile-empty a {
-  color: #000000;
+  color: var(--ink);
   text-decoration: underline;
 }
 
@@ -710,21 +779,21 @@
   margin: 4px 0 0 6px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: #fdecee;
-  color: #8a1020;
-  font-size: 9px;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.4px;
 }
 
 .admin-panel-box {
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   border-radius: 8px;
   padding: 18px;
   margin-bottom: 20px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   line-height: 1.5;
 }
 
@@ -737,56 +806,51 @@
 
 .admin-panel-box p {
   margin: 0 0 12px;
-  color: #444444;
+  color: var(--ink-muted);
 }
 
 .admin-inline-btn {
   width: auto !important;
   padding: 8px 14px !important;
-  font-size: 11px !important;
+  font-size: var(--fs-label) !important;
 }
 
 .admin-excel-btn {
-  background: #107c41 !important;
-  border-color: #107c41 !important;
-  color: #ffffff !important;
+  background: var(--am-excel) !important;
+  border-color: var(--am-excel) !important;
+  color: var(--ink-on-dark) !important;
 }
 
 .admin-progress {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #e8f4fd;
+  background: var(--am-info-bg);
   border-radius: 4px;
-  color: #004085;
+  color: var(--am-info-ink);
 }
 
 .btn-action-view {
-  background: #ffffff;
-  border: 1px solid #000000;
+  background: var(--surface);
+  border: 1px solid var(--ink);
   border-radius: 6px;
   padding: 6px 12px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   cursor: pointer;
 }
 
 .admin-table code {
-  font-size: 11px;
-  background: #f0f0f0;
+  font-size: var(--fs-label);
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface)); /* #f0f0f0 in light */
+  color: var(--ink);
   padding: 2px 4px;
   border-radius: 3px;
-}
-
-.badge-status.paid,
-.badge-status.team {
-  background: #d4edda;
-  color: #155724;
 }
 
 .chaitanya-form-input:focus-visible,
 .btn-google-auth:focus-visible,
 .admin-tab-btn:focus-visible {
-  outline: 2px solid #000000;
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -807,10 +871,10 @@ html:not(.is-fest-admin) a[href="/admin"] {
     backdrop-filter: none !important;
   }
   .chaitanya-modal-backdrop {
-    background: rgba(220, 226, 236, 0.8);
+    background: var(--am-scrim-solid);
   }
   .chaitanya-modal-card {
-    background-color: rgba(255, 255, 255, 0.97);
+    background-color: color-mix(in srgb, var(--surface) 97%, transparent);
   }
 }
 
@@ -846,7 +910,7 @@ html:not(.is-fest-admin) a[href="/admin"] {
   height: 26px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid #000000;
+  border: 1.5px solid var(--ink);
   flex-shrink: 0;
 }
 
@@ -854,8 +918,8 @@ html:not(.is-fest-admin) a[href="/admin"] {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0;
@@ -868,7 +932,7 @@ html:not(.is-fest-admin) a[href="/admin"] {
   position: fixed;
   inset: 0;
   z-index: 100001;
-  background: rgba(214, 220, 232, 0.35);
+  background: var(--am-pp-scrim);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   opacity: 0;
@@ -890,16 +954,16 @@ html:not(.is-fest-admin) a[href="/admin"] {
   max-height: calc(100dvh - 100px);
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.78);
-  background-image: url(/images/footerPatern.png);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  background-image: var(--am-pattern);
   background-size: 80px;
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   backdrop-filter: blur(28px) saturate(160%);
-  border: 2px solid #ffffff;
+  border: 2px solid var(--surface);
   border-radius: 26px;
-  box-shadow: 0 30px 80px rgba(0, 40, 120, 0.18);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
   font-family: "IBM Plex Mono", monospace;
-  color: #000000;
+  color: var(--ink);
   overflow: hidden;
   transform: translateY(-10px) scale(0.97);
   transform-origin: top right;
@@ -929,9 +993,9 @@ html.pp-open {
 }
 
 .pp-kicker {
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 700;
-  color: #005a3c;
+  color: var(--ok);
   letter-spacing: 0.6px;
 }
 
@@ -942,17 +1006,14 @@ html.pp-open {
   margin: 2px 0;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Wrap instead of truncating so nothing is lost at 200% zoom / reflow. */
+  overflow-wrap: anywhere;
 }
 
 .pp-sub {
-  font-size: 11px;
-  color: #555555;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
 }
 
 .pp-avatar,
@@ -961,7 +1022,7 @@ html.pp-open {
   height: 46px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #000000;
+  border: 2px solid var(--ink);
   flex-shrink: 0;
 }
 
@@ -969,8 +1030,8 @@ html.pp-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   font-weight: 700;
   font-size: 15px;
 }
@@ -979,8 +1040,9 @@ html.pp-open {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink);
   cursor: pointer;
   font-size: 13px;
   flex-shrink: 0;
@@ -992,7 +1054,7 @@ html.pp-open {
   gap: 4px;
   margin: 0 14px;
   padding: 4px;
-  background: rgba(0, 0, 0, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   border-radius: 14px;
 }
 
@@ -1002,18 +1064,18 @@ html.pp-open {
   border-radius: 10px;
   padding: 9px 4px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: #444444;
+  color: var(--ink-muted);
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .pp-tab.active {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
 }
 
 .pp-body {
@@ -1040,16 +1102,16 @@ html.pp-open {
 
 .pp-foot {
   padding: 12px 18px 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--line);
 }
 
 .pp-logout {
   width: 100%;
   padding: 11px;
   border-radius: 30px;
-  border: 1.5px solid #b00020;
+  border: 1.5px solid var(--danger);
   background: transparent;
-  color: #b00020;
+  color: var(--danger);
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -1058,8 +1120,8 @@ html.pp-open {
 }
 
 .pp-logout:hover {
-  background: #b00020;
-  color: #ffffff;
+  background: var(--danger);
+  color: var(--ink-on-dark);
 }
 
 .pp-form {
@@ -1072,7 +1134,7 @@ html.pp-open {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -1081,13 +1143,13 @@ html.pp-open {
 .pp-field input,
 .pp-field select,
 .pp-utr input {
-  border: 1.5px solid rgba(0, 0, 0, 0.18);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 18%, transparent);
   border-radius: 12px;
   padding: 10px 12px;
   font-family: inherit;
   font-size: 12px;
-  background: #ffffff;
-  color: #000000;
+  background: var(--surface);
+  color: var(--ink);
   text-transform: none;
 }
 
@@ -1098,7 +1160,7 @@ html.pp-open {
 .pp-primary:focus-visible,
 .pp-action:focus-visible,
 .pp-logout:focus-visible {
-  outline: 2px solid #000000;
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -1109,8 +1171,8 @@ html.pp-open {
   padding: 11px 18px;
   border-radius: 30px;
   border: none;
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -1125,8 +1187,8 @@ html.pp-open {
 .pp-hint,
 .pp-loading,
 .pp-empty {
-  font-size: 11px;
-  color: #555555;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
   line-height: 1.5;
 }
 
@@ -1150,15 +1212,15 @@ html.pp-open {
 }
 
 .pp-msg {
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 .pp-msg.ok {
-  color: #005a3c;
+  color: var(--ok);
 }
 
 .pp-msg.bad {
-  color: #b00020;
+  color: var(--danger);
 }
 
 .pp-regs {
@@ -1171,8 +1233,8 @@ html.pp-open {
 }
 
 .pp-reg {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border: 1px solid var(--line);
   border-radius: 16px;
   padding: 12px 14px;
   display: flex;
@@ -1194,8 +1256,8 @@ html.pp-open {
 
 .pp-reg-meta,
 .pp-reg-note {
-  font-size: 10.5px;
-  color: #555555;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
 }
 
 .pp-reg-actions {
@@ -1206,13 +1268,13 @@ html.pp-open {
 }
 
 .pp-action {
-  border: 1.5px solid #000000;
-  background: #000000;
-  color: #ffffff;
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  color: var(--ink-on-dark);
   border-radius: 20px;
   padding: 6px 12px;
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -1220,12 +1282,12 @@ html.pp-open {
 
 .pp-action.subtle {
   background: transparent;
-  color: #000000;
+  color: var(--ink);
 }
 
 .pp-chip {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: var(--fs-label);
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 20px;
@@ -1234,23 +1296,23 @@ html.pp-open {
 }
 
 .pp-chip.ok {
-  background: #eafaf1;
-  color: #005a3c;
+  background: var(--ok-bg);
+  color: var(--ok);
 }
 
 .pp-chip.pending {
-  background: #fff3cd;
-  color: #6b4a00;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
 }
 
 .pp-chip.bad {
-  background: #fdecee;
-  color: #8a1020;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
 }
 
 .pp-chip.cart {
-  background: #e8f0fe;
-  color: #0b3d91;
+  background: var(--am-cart-bg);
+  color: var(--am-cart-ink);
 }
 
 .pp-utr {
@@ -1268,8 +1330,8 @@ html.pp-open {
 
 /* Digital ID card */
 .pp-idcard {
-  background: #ffffff;
-  border: 2px solid #000000;
+  background: var(--surface);
+  border: 2px solid var(--ink);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
@@ -1279,9 +1341,9 @@ html.pp-open {
   display: flex;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #000000;
-  color: #ffffff;
-  font-size: 10px;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 1px;
 }
@@ -1305,14 +1367,14 @@ html.pp-open {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 10px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   min-width: 0;
 }
 
 .pp-idcard-main dt {
-  color: #777777;
+  color: var(--ink-muted);
   font-weight: 600;
-  font-size: 9.5px;
+  font-size: var(--fs-label);
   padding-top: 1px;
 }
 
@@ -1321,9 +1383,11 @@ html.pp-open {
   overflow-wrap: anywhere;
 }
 
+/* QR codes stay black on white in every theme so scanners can read them. */
 .pp-idcard-qr {
   width: 168px;
   margin: 0 auto 12px;
+  background: #ffffff;
 }
 
 .pp-idcard-qr svg {
@@ -1334,25 +1398,25 @@ html.pp-open {
 
 .pp-idcard-status {
   text-align: center;
-  font-size: 10.5px;
+  font-size: var(--fs-label);
   font-weight: 700;
   padding: 10px;
   letter-spacing: 0.4px;
 }
 
 .pp-idcard.verified .pp-idcard-status {
-  background: #eafaf1;
-  color: #005a3c;
+  background: var(--ok-bg);
+  color: var(--ok);
 }
 
 .pp-idcard.pending .pp-idcard-status {
-  background: #fff3cd;
-  color: #6b4a00;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
 }
 
 .pp-idcard.none .pp-idcard-status {
-  background: #f2f2f2;
-  color: #555555;
+  background: color-mix(in srgb, var(--ink) 5%, var(--surface)); /* #f2f2f2 in light */
+  color: var(--ink-muted);
 }
 
 .pp-idcard + .pp-hint {
@@ -1379,24 +1443,24 @@ html.pp-open {
 
 .pp-verify p {
   margin: 4px 0 0;
-  font-size: 11px;
+  font-size: var(--fs-body);
 }
 
 .pp-verify.ok {
-  background: #eafaf1;
-  color: #005a3c;
+  background: var(--ok-bg);
+  color: var(--ok);
 }
 
 .pp-verify.bad {
-  background: #fdecee;
-  color: #8a1020;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
 }
 
 .pp-verify-events {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 .pp-verify-events li {
@@ -1404,7 +1468,7 @@ html.pp-open {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 0;
-  border-top: 1px dashed rgba(0, 0, 0, 0.12);
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 @media (max-width: 600px) {
@@ -1426,7 +1490,7 @@ html.pp-open {
   .pp-panel {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background-color: rgba(255, 255, 255, 0.96);
+    background-color: color-mix(in srgb, var(--surface) 96%, transparent);
   }
 }
 
@@ -1497,12 +1561,12 @@ html.not-home header {
   min-height: 100vh;
   width: 100%;
   padding: 96px 16px 72px;
-  background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff);
+  background-image: var(--page-bg);
   background-repeat: repeat;
-  background-size: 80px, auto;
+  background-size: var(--page-bg-size);
   box-sizing: border-box;
   font-family: "IBM Plex Mono", monospace;
-  color: #000000;
+  color: var(--ink);
 }
 
 .prof-wrap {
@@ -1514,10 +1578,10 @@ html.not-home header {
 }
 
 .prof-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #ffffff;
+  background: var(--surface-raised);
+  border: 2px solid var(--surface);
   border-radius: 26px;
-  box-shadow: 0 20px 60px rgba(0, 40, 120, 0.12);
+  box-shadow: var(--shadow-soft);
   padding: 24px;
   box-sizing: border-box;
   scroll-margin-top: 90px;
@@ -1583,7 +1647,7 @@ html.not-home header {
 }
 
 .prof-form .pp-field {
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 .prof-form .pp-field input,
@@ -1593,8 +1657,8 @@ html.not-home header {
 }
 
 .prof-form .pp-field input[readonly] {
-  background: rgba(0, 0, 0, 0.04);
-  color: #555555;
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
 }
 
 .prof-form .pp-field small {
@@ -1605,7 +1669,7 @@ html.not-home header {
 
 .pp-field input[aria-invalid="true"],
 .pp-field select[aria-invalid="true"] {
-  border-color: #b00020;
+  border-color: var(--danger);
 }
 
 .prof-form .pp-msg {
@@ -1658,14 +1722,14 @@ html.not-home header {
   grid-template-columns: auto 1fr;
   gap: 2px 10px;
   margin: 6px 0 2px;
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 .prof-reg-dl dt {
-  color: #777777;
+  color: var(--ink-muted);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: var(--fs-label);
   padding-top: 1px;
 }
 
@@ -1688,10 +1752,11 @@ html.not-home header {
   width: 132px;
 }
 
+/* Literally white (not --surface) so the QR stays black on white in dark mode. */
 .prof-qr-code {
   width: 100%;
   background: #ffffff;
-  border: 1.5px solid #000000;
+  border: 1.5px solid var(--line-strong);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -1707,7 +1772,7 @@ html.not-home header {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   text-align: center;
 }
 
@@ -1718,8 +1783,8 @@ html.not-home header {
 
 /* Entry QRs on the registration success step */
 .checkout-qrs {
-  background: #ffffff;
-  border: 2px solid #000000;
+  background: var(--surface);
+  border: 2px solid var(--ink);
   border-radius: 16px;
   padding: 12px 14px;
   margin-bottom: 16px;
@@ -1733,6 +1798,10 @@ html.not-home header {
   flex-wrap: wrap;
   gap: 16px;
   justify-content: center;
+}
+
+.checkout-qrs li svg {
+  background: #ffffff; /* keep entry QRs black on white in dark mode */
 }
 
 .checkout-qrs li {
@@ -1784,17 +1853,17 @@ body:has(.profile-page-root) .transition-component {
 /* The site header is transparent; on the profile page fade the page colour in
    behind it so form controls scrolling underneath don't collide with the logo. */
 body:has(.profile-page-root) header {
-  background: linear-gradient(180deg, rgba(247, 250, 255, 0.96) 70%, rgba(247, 250, 255, 0));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sky-top) 96%, transparent) 70%, color-mix(in srgb, var(--sky-top) 0%, transparent));
 }
 
 /* Deregister / delete-profile confirmations */
 .prof-confirm {
   margin-top: 10px;
   padding: 12px 14px;
-  border: 1.5px solid #b00020;
+  border: 1.5px solid var(--danger);
   border-radius: 14px;
-  background: #fdf3f4;
-  font-size: 11.5px;
+  background: var(--danger-bg);
+  font-size: var(--fs-body);
   line-height: 1.5;
 }
 
@@ -1819,16 +1888,16 @@ body:has(.profile-page-root) header {
 
 .prof-confirm-yes:disabled:hover {
   background: transparent;
-  color: #b00020;
+  color: var(--danger);
 }
 
 .pp-action.prof-dereg {
-  border-color: #b00020;
-  color: #b00020;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .prof-danger {
-  border-color: rgba(176, 0, 32, 0.25);
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent);
 }
 
 .prof-delete-open {
@@ -1842,13 +1911,23 @@ body:has(.profile-page-root) header {
 
 /* Nav profile link is just the avatar: centre it on the text links' line and
    keep the links' hover "spread" effect off the initials badge. */
-header .header .right-menu a.nav-profile,
 header .header .mobile-menu a.nav-profile {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 0;
   gap: 0;
+}
+
+@media (min-width: 768px) {
+  /* On phones the top-bar links (avatar included) live in the menu. */
+  header .header .right-menu a.nav-profile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    gap: 0;
+  }
 }
 
 header .header .right-menu a.nav-profile .nav-avatar {
@@ -1866,7 +1945,7 @@ header .header .mobile-menu a.nav-profile:hover span {
 
 header .header .right-menu a.nav-profile:hover .nav-avatar {
   transform: scale(1.08);
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3.5px #000000;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--ink);
 }
 
 header .header .mobile-menu a.nav-profile .nav-avatar {
@@ -1876,7 +1955,44 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
 /* Nav links have a 44px tap height; centre their text in it so text links,
    the avatar and the logo sit on one line. (html body …: default-layout.css
    loads later with the same specificity and sets inline-block.) */
-html body header .header .right-menu > a {
-  display: inline-flex;
-  align-items: center;
+@media (min-width: 768px) {
+  /* Desktop only: below 768px default-layout.css hides these links in favour
+     of the menu button, and that must keep winning. */
+  html body header .header .right-menu > a {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+
+/* Touch screens: dialog, profile and admin controls are at least 44px tall. */
+@media (pointer: coarse), (max-width: 767px) {
+  .chaitanya-modal-close,
+  .chaitanya-link-btn,
+  .pp-action,
+  .pp-primary,
+  .pp-logout,
+  .pp-close,
+  .prof-form .pp-field input,
+  .prof-form .pp-field select,
+  .adm-nav-btn {
+    min-height: var(--tap);
+  }
+
+  .chaitanya-modal-close,
+  .chaitanya-link-btn,
+  .pp-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Header logo link: full-height tap target on touch screens (logo unchanged). */
+@media (pointer: coarse), (max-width: 767px) {
+  header .header .header-logo a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
 }

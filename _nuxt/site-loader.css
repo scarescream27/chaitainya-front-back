@@ -10,8 +10,12 @@ html.ch-preload body {
   visibility: hidden;
 }
 
+/* The loader is a light brand intro shown before the route (and so the
+   page's theme) is known: its colours are literal, not theme tokens, and it
+   stays light in dark mode too. */
 html.ch-preload,
 html.site-loading {
+  color-scheme: light;
   background: #f7faff;
 }
 
@@ -85,10 +89,14 @@ html.site-loading {
 
 .site-loader-tag {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 28px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
   margin: 0;
+  padding: 4px 10px;
+  background-color: #f7faff;
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
@@ -96,8 +104,7 @@ html.site-loading {
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #005a3c;
-  opacity: 0;
-  animation: site-loader-in 1s ease 0.4s forwards;
+  /* Small text: readable at full contrast from the first frame, no fade. */
 }
 
 @keyframes site-loader-in {
@@ -120,8 +127,7 @@ html.site-loading {
     display: none;
   }
 
-  .site-loader-word,
-  .site-loader-tag {
+  .site-loader-word {
     animation: none;
     opacity: 1;
   }

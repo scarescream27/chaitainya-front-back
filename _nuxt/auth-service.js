@@ -35,6 +35,39 @@ let authMod = null;
 let currentUser = null;
 let initPromise = null;
 let authListeners = [];
+let analyticsScheduled = false;
+
+// Analytics is optional and must never compete with first paint or the 3D
+// scene: wait for window load, then an idle slot (timeout fallback), and skip
+// it entirely for visitors who send Do Not Track / Global Privacy Control.
+function scheduleAnalytics(app) {
+  if (analyticsScheduled || typeof window === "undefined") return;
+  analyticsScheduled = true;
+  const nav = window.navigator || {};
+  if (
+    nav.doNotTrack === "1" ||
+    window.doNotTrack === "1" ||
+    nav.globalPrivacyControl === true
+  ) {
+    return;
+  }
+  const load = () => {
+    import(`${SDK_BASE}/firebase-analytics.js`)
+      .then(async ({ getAnalytics, isSupported }) => {
+        if (await isSupported()) firebaseAnalytics = getAnalytics(app);
+      })
+      .catch(() => {});
+  };
+  const whenIdle = () => {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(load, { timeout: 10000 });
+    } else {
+      setTimeout(load, 3000);
+    }
+  };
+  if (document.readyState === "complete") whenIdle();
+  else window.addEventListener("load", whenIdle, { once: true });
+}
 
 const DEMO_DB_KEY = "chaitanya_demo_db";
 const DEMO_USER_KEY = "chaitanya_demo_user";
@@ -190,13 +223,7 @@ async function doInit() {
     firebaseAuth = authMod.getAuth(firebaseApp);
     firebaseFirestore = fsMod.getFirestore(firebaseApp);
 
-    if (config.measurementId) {
-      import(`${SDK_BASE}/firebase-analytics.js`)
-        .then(async ({ getAnalytics, isSupported }) => {
-          if (await isSupported()) firebaseAnalytics = getAnalytics(firebaseApp);
-        })
-        .catch(() => {});
-    }
+    if (config.measurementId) scheduleAnalytics(firebaseApp);
 
     // Completes a redirect sign-in (used when popups are blocked on mobile).
     authMod.getRedirectResult(firebaseAuth).catch((err) => {
@@ -1199,6 +1226,27 @@ export function getAllRegistrations() {
 
 export function getAllQueries() {
   return listCollection("queries");
+}
+
+/**
+ * Admin: mark a contact-form query "open" or "resolved".
+ */
+export async function setQueryStatus(query, status) {
+  const admin = requireAdmin();
+  if (!["open", "resolved"].includes(status)) throw new Error("Unknown status.");
+  const id = query.id || query._docId;
+  const patch = { status, updated_at: nowIso(), resolved_by: status === "resolved" ? admin.email : null };
+  if (isLive()) {
+    const { doc, updateDoc } = fsMod;
+    try {
+      await updateDoc(doc(firebaseFirestore, "queries", id), patch);
+    } catch (err) {
+      throw friendlyError(err, "Could not update the query.");
+    }
+  } else {
+    demoUpdate("queries", id, patch);
+  }
+  return { ...query, ...patch };
 }
 
 /**

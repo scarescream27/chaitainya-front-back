@@ -148,6 +148,22 @@ let st,
             N = nt(null),
             authCurrentUser = nt(getCurrentUser());
 
+          // The menu button is a <div> in the server markup, and Vue only
+          // patches its class, so its button semantics are added in the DOM
+          // after mount. The closed mobile menu is made inert so its links
+          // aren't reachable by Tab while invisible.
+          const syncMenuA11y = (open) => {
+            const sw = document.querySelector("header .header .menu-switch");
+            sw && sw.setAttribute("aria-expanded", open ? "true" : "false");
+            N.value && (N.value.inert = !open);
+          };
+          const onMenuKey = (e) => {
+            if (e.key === "Escape" && n.getMobileMenuOpen) {
+              n.openMobileMenu(!1);
+              document.querySelector("header .header .menu-switch")?.focus();
+            }
+          };
+
           subscribeAuthState((u) => {
             // A fresh object: profile edits mutate the same user in place.
             authCurrentUser.value = u ? { ...u } : null;
@@ -155,6 +171,9 @@ let st,
           });
           return (
             n.$onAction(({ name: m, args: o }) => {
+              // Keep the menu button's state and the hidden menu's
+              // focusability in step with the store (see syncMenuA11y).
+              m === "openMobileMenu" && syncMenuA11y(!!o[0]);
               (m === "openMobileMenu" &&
                 (o[0]
                   ? (f.play(), k.play())
@@ -178,6 +197,22 @@ let st,
               try {
                 document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to) => markRoute(to.path));
               } catch (e) {}
+              const sw = document.querySelector("header .header .menu-switch");
+              if (sw && !sw.hasAttribute("role")) {
+                N.value && (N.value.id = N.value.id || "mobile-menu");
+                sw.setAttribute("role", "button");
+                sw.setAttribute("tabindex", "0");
+                sw.setAttribute("aria-label", "Menu");
+                sw.setAttribute("aria-controls", "mobile-menu");
+                sw.addEventListener("keydown", (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    n.openMobileMenu(!n.getMobileMenuOpen);
+                  }
+                });
+                document.addEventListener("keydown", onMenuKey);
+              }
+              syncMenuA11y(!!n.getMobileMenuOpen);
               initAuthModal();
               initFirebase();
               syncNavbarAuthState(authCurrentUser.value);
@@ -250,6 +285,8 @@ let st,
                           o[9] ||
                           (o[9] = (_) => w(n).blendCursor("difference")),
                         class: "right-menu",
+                        role: "navigation",
+                        "aria-label": "Main",
                       },
                       [
                         Y(
@@ -266,10 +303,10 @@ let st,
                         d(
                           "a",
                           {
-                            href: "#admin",
+                            href: "/admin",
                             onClick: (e) => {
                               e.preventDefault();
-                              openAuthModal("admin");
+                              goTo("/admin");
                             },
                           },
                           [O("["), tabAdmin, O("]")],
@@ -338,11 +375,11 @@ let st,
                               d(
                                 "a",
                                 {
-                                  href: "#admin",
+                                  href: "/admin",
                                   onClick: (e) => {
                                     e.preventDefault();
                                     w(n).openMobileMenu(!1);
-                                    openAuthModal("admin");
+                                    goTo("/admin");
                                   },
                                 },
                                 [O("["), mAdmin, O("]")],
@@ -350,9 +387,12 @@ let st,
                               d(
                                 "span",
                                 {
+                                  // o[10], not o[8]: o[8] is the nav's
+                                  // mouseleave handler, which made this
+                                  // link run that instead of closing the menu.
                                   onClick:
-                                    o[8] ||
-                                    (o[8] = (_) =>
+                                    o[10] ||
+                                    (o[10] = (_) =>
                                       w(n).openMobileMenu(
                                         !w(n).getMobileMenuOpen,
                                       )),
@@ -1264,9 +1304,36 @@ let st,
       (window.ScrollSmoother = J),
       Le() && u.registerPlugin(J));
     let Fe, He, Ie;
+    // "Skip to content" link (WCAG 2.4.1). Added after mount, not in the
+    // server markup: anything before #__nuxt in <body> breaks hydration.
+    // Styled in default-layout.css (.skip-link).
+    const addSkipLink = () => {
+      const main = document.getElementById("smooth-content");
+      main && !main.hasAttribute("tabindex") && main.setAttribute("tabindex", "-1");
+      if (document.querySelector("body > a.skip-link")) return;
+      const a = document.createElement("a");
+      a.className = "skip-link";
+      a.href = "#smooth-content";
+      a.textContent = "Skip to content";
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = document.getElementById("smooth-content");
+        if (!target) return;
+        // ScrollSmoother moves #smooth-content with a transform, so scroll
+        // through it rather than relying on the browser's anchor jump.
+        const smoother = J.get();
+        // (Paused on the home scene, which doesn't scroll: leave it be.)
+        smoother
+          ? smoother.paused() || smoother.scrollTo(0, !1)
+          : window.scrollTo(0, 0);
+        target.hasAttribute("tabindex") || target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: !0 });
+      });
+      document.body.insertBefore(a, document.body.firstChild);
+    };
     ((Fe = { class: "def" }),
       (He = { id: "smooth-wrapper" }),
-      (Ie = { id: "smooth-content" }),
+      (Ie = { id: "smooth-content", role: "main" }),
       (st = {
         __name: "default",
         setup(l) {
@@ -1282,14 +1349,19 @@ let st,
               o === "finishProgress" && m.paused(!1);
             }),
             rt(() => {
+              // Visitors who ask for reduced motion get native, unsmoothed scrolling.
+              const reduceMotion =
+                !!window.matchMedia &&
+                window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              addSkipLink();
               ((k.value = window.innerWidth < 1024 && window.innerWidth > 767),
                 (m = J.create({
                   // How far (seconds) the page trails the scroll input; 0.8 felt sluggish.
-                  smooth: 0.4,
+                  smooth: reduceMotion ? 0 : 0.4,
                   effects: !1,
                   normalizeScroll: g,
                   ignoreMobileResize: !0,
-                  smoothTouch: 0.1,
+                  smoothTouch: reduceMotion ? 0 : 0.1,
                   onUpdate: (o) => {
                     (N.updateScrollVelocity(o.getVelocity()),
                       N.setScrollProgress(o.progress));

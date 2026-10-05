@@ -4156,7 +4156,7 @@ let At,
             Si(
               () =>
                 import("./home-scene-3d.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([19, 3, 4, 5, 20, 13, 21, 22]),
+              __vite__mapDeps([19, 4, 5, 20, 13, 21, 22]), // lil-gui (3) loads only with ?debug
               import.meta.url,
             ).then((t) => t.default || t),
         },
@@ -4205,6 +4205,15 @@ let At,
           redirect: void 0,
           component: () =>
             import("./profile-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
+          name: "admin",
+          path: "/admin",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./admin-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
           name: "work",
