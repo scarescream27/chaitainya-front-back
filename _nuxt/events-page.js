@@ -954,6 +954,9 @@ export function initScrollMotion() {
   onScroll();
 
   // 2. Card In-View Scroll Reveal
+  // Kept so cleanup can kill them: cards never scrolled into view would
+  // otherwise leave a ScrollTrigger behind on every visit to /events.
+  const cardTriggers = [];
   const setupCardAnimations = () => {
     const cards = Array.from(document.querySelectorAll(".event-card"));
     if (!cards.length) return;
@@ -973,7 +976,7 @@ export function initScrollMotion() {
         cards.forEach((card, index) => {
           if (card.classList.contains("is-revealed")) return;
 
-          ScrollTrigger.create({
+          cardTriggers.push(ScrollTrigger.create({
             trigger: card,
             start: "top 88%",
             once: true,
@@ -992,7 +995,7 @@ export function initScrollMotion() {
                 },
               });
             },
-          });
+          }));
         });
         return;
       } catch (e) {
@@ -1059,6 +1062,7 @@ export function initScrollMotion() {
 
   scrollMotionCleanup = () => {
     window.removeEventListener("scroll", onScroll);
+    cardTriggers.forEach((t) => t.kill());
     if (enableTilt) {
       grid.removeEventListener("mousemove", onMouseMove);
       grid.removeEventListener("mouseout", onMouseLeave);

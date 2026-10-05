@@ -7449,6 +7449,11 @@ let Ws,
           }),
             we(() => {
               ((a = V.context(() => {})), u());
+            }),
+            // Without this, every return to Home stacked another set of
+            // scroll triggers on top of the old ones.
+            Si(() => {
+              a && a.revert();
             }));
           const u = () => {
             a.add(() => {
@@ -7486,7 +7491,7 @@ let Ws,
                   .fromTo(
                     o.value,
                     { opacity: 1 },
-                    { opacity: 0, duration: 400, ease: "none" },
+                    { opacity: 0, duration: 400, ease: "none", immediateRender: !1 },
                   ));
               const isLarge = window.innerWidth > 1024;
               V.fromTo(
@@ -7520,7 +7525,7 @@ let Ws,
                   .fromTo(
                     n.value,
                     { opacity: 1 },
-                    { opacity: 0, duration: 500, ease: "none" },
+                    { opacity: 0, duration: 500, ease: "none", immediateRender: !1 },
                   ));
               const cRight = V.timeline({
                 scrollTrigger: {
@@ -7539,7 +7544,7 @@ let Ws,
                 .fromTo(
                   r.value,
                   { opacity: 1 },
-                  { opacity: 0, duration: 400, ease: "none" },
+                  { opacity: 0, duration: 400, ease: "none", immediateRender: !1 },
                 );
             });
           };
