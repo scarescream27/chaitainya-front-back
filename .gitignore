@@ -25,3 +25,6 @@ scratch/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Firebase CLI deploy cache
+.firebase/
