@@ -672,3 +672,145 @@
     padding: 12px 16px;
   }
 }
+
+/* Admin dashboard v2 */
+.admin-loading,
+.admin-note,
+.admin-progress,
+.profile-empty {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #555555;
+}
+
+.admin-loading {
+  text-align: center;
+  padding: 24px;
+}
+
+.admin-note {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.profile-empty a {
+  color: #000000;
+  text-decoration: underline;
+}
+
+.admin-flag {
+  display: inline-block;
+  margin: 4px 0 0 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fdecee;
+  color: #8a1020;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.admin-panel-box {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.admin-panel-box h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-panel-box p {
+  margin: 0 0 12px;
+  color: #444444;
+}
+
+.admin-inline-btn {
+  width: auto !important;
+  padding: 8px 14px !important;
+  font-size: 11px !important;
+}
+
+.admin-excel-btn {
+  background: #107c41 !important;
+  border-color: #107c41 !important;
+  color: #ffffff !important;
+}
+
+.admin-progress {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #e8f4fd;
+  border-radius: 4px;
+  color: #004085;
+}
+
+.btn-action-view {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.admin-table code {
+  font-size: 11px;
+  background: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.badge-status.paid,
+.badge-status.team {
+  background: #d4edda;
+  color: #155724;
+}
+
+.chaitanya-form-input:focus-visible,
+.btn-google-auth:focus-visible,
+.admin-tab-btn:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+#profile-edit-form .chaitanya-form-group {
+  margin-bottom: 10px;
+}
+
+html:not(.is-fest-admin) a[href="#admin"],
+html:not(.is-fest-admin) a[href="/admin"] {
+  display: none !important;
+}
+
+/* Performance: drop heavy blur on touch / small screens */
+@media (hover: none), (max-width: 1024px) {
+  .chaitanya-modal-backdrop,
+  .chaitanya-modal-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .chaitanya-modal-backdrop {
+    background: rgba(220, 226, 236, 0.8);
+  }
+  .chaitanya-modal-card {
+    background-color: rgba(255, 255, 255, 0.97);
+  }
+}
+
+/* Display headings: open up the condensed Druk letterforms for readability */
+.chaitanya-modal-title,
+.profile-name,
+.admin-stat-num {
+  letter-spacing: 0.04em;
+  word-spacing: 0.08em;
+}

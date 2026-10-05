@@ -20,12 +20,41 @@ import gzip
 import time
 import json
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 from redis_cache import cache, REDIS_ENABLED
 
 PORT = int(os.environ.get("PORT", "3000"))
-DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+# Local development server: listen on loopback only unless HOST is set explicitly.
+HOST = os.environ.get("HOST", "127.0.0.1")
+DIRECTORY = os.path.realpath(os.path.dirname(os.path.abspath(__file__)))
+
+# Never serve source, secrets, or tooling files from the project root.
+BLOCKED_TOP_LEVEL = {
+    'server.py', 'redis_cache.py', 'scripts', '__pycache__', 'node_modules',
+    'chaitanya_schema.sql', 'firestore.rules', 'firestore.indexes.json',
+    'firebase.json', 'package.json', 'package-lock.json',
+}
+BLOCKED_EXTS = {'.py', '.pyc', '.sql', '.md', '.pdf', '.env', '.rules'}
+
+
+def resolve_safe_path(url_path):
+    """Map a URL path to a file inside DIRECTORY, or None if it is not allowed."""
+    parts = [p for p in url_path.split('/') if p]
+    if any(p.startswith('.') for p in parts):  # dotfiles, .git, .env, '..'
+        return None
+    if parts and parts[0] in BLOCKED_TOP_LEVEL:
+        return None
+    if parts and os.path.splitext(parts[-1])[1].lower() in BLOCKED_EXTS:
+        return None
+    full = os.path.realpath(os.path.join(DIRECTORY, *parts))
+    if full != DIRECTORY and not full.startswith(DIRECTORY + os.sep):
+        return None
+    return full
+
+
+def is_loopback(address):
+    return address in ('127.0.0.1', '::1', 'localhost')
 
 # Custom MIME types
 CUSTOM_MIMETYPES = {
@@ -92,8 +121,8 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             # Immutable assets can be cached by browser and CDN for 1 year
             return 'public, max-age=31536000, immutable'
         elif ext in ('.js', '.mjs', '.css', '.wasm'):
-            # Scripts & styles cache with revalidation capability
-            return 'public, max-age=86400, stale-while-revalidate=3600'
+            # Unversioned filenames: always revalidate (ETag makes this a cheap 304)
+            return 'no-cache'
         elif ext in ('.html', ''):
             # HTML must revalidate with ETag to ensure instant deployments
             return 'public, max-age=0, must-revalidate'
@@ -137,16 +166,6 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(stats, status=200, cache_ttl=5)
             return True
 
-        # 2. /api/cache/purge
-        if path == '/api/cache/purge':
-            cache.flush()
-            self.send_json_response({
-                "success": True,
-                "message": "Redis cache successfully purged",
-                "timestamp": time.time()
-            }, status=200, cache_ttl=0)
-            return True
-
         # 3. /api/health
         if path == '/api/health':
             self.send_json_response({
@@ -184,6 +203,9 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         if parsed.path.rstrip('/') == '/api/cache/purge':
+            if not is_loopback(self.client_address[0]):
+                self.send_error(403, "Cache purge is only allowed from localhost")
+                return
             cache.flush()
             self.send_json_response({
                 "success": True,
@@ -206,12 +228,15 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if self.handle_api_routes(parsed):
                 return
 
-        clean_path = parsed.path.split('?')[0].split('#')[0]
+        clean_path = unquote(parsed.path.split('?')[0].split('#')[0])
         if clean_path in ('', '/'):
             clean_path = '/index.html'
 
-        # Resolve asset file path on disk
-        full_path = os.path.join(DIRECTORY, clean_path.lstrip('/'))
+        # Resolve asset file path on disk (rejects traversal, dotfiles, sources)
+        full_path = resolve_safe_path(clean_path)
+        if full_path is None:
+            self.send_error(404, "File not found")
+            return
 
         # If path is a directory, look for index.html
         if os.path.isdir(full_path):
@@ -225,8 +250,8 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
         if not os.path.exists(full_path):
             for folder in asset_folders:
                 if clean_path.startswith(folder):
-                    alt_path = os.path.join(DIRECTORY, 'assets' + clean_path)
-                    if os.path.exists(alt_path):
+                    alt_path = resolve_safe_path('/assets' + clean_path)
+                    if alt_path and os.path.exists(alt_path):
                         clean_path = '/assets' + clean_path
                         full_path = alt_path
                         break
@@ -239,7 +264,7 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             is_spa_fallback = True
 
         if not os.path.exists(full_path) or os.path.isdir(full_path):
-            self.send_error(404, f"File not found: {clean_path}")
+            self.send_error(404, "File not found")
             return
 
         # Determine MIME type
@@ -256,7 +281,9 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # ----------------------------------------------------------------------
         # 1. Check Redis Cache for Asset
         # ----------------------------------------------------------------------
-        cached = cache.get_asset(clean_path, want_gzip=supports_gzip)
+        # Key includes mtime so edited files are never served stale.
+        cache_key = f"{clean_path}@{os.stat(full_path).st_mtime_ns}"
+        cached = cache.get_asset(cache_key, want_gzip=supports_gzip)
         x_cache_status = "HIT (Redis)" if cached else "MISS (Redis)"
         file_bytes = None
         etag = None
@@ -281,12 +308,12 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if supports_gzip and len(raw_bytes) > 512:
                 gzipped_bytes = gzip.compress(raw_bytes, compresslevel=6)
                 # Cache both raw and gzipped in Redis
-                cache.cache_asset(clean_path, raw_bytes, mime_type, is_gzip=False)
-                cache.cache_asset(clean_path, gzipped_bytes, mime_type, is_gzip=True)
+                cache.cache_asset(cache_key, raw_bytes, mime_type, is_gzip=False)
+                cache.cache_asset(cache_key, gzipped_bytes, mime_type, is_gzip=True)
                 file_bytes = gzipped_bytes
                 is_gzipped = True
             else:
-                cache.cache_asset(clean_path, raw_bytes, mime_type, is_gzip=False)
+                cache.cache_asset(cache_key, raw_bytes, mime_type, is_gzip=False)
                 file_bytes = raw_bytes
                 is_gzipped = False
 
@@ -356,13 +383,13 @@ def run():
     stats = cache.get_stats()
     print("=" * 70)
     print(f"[*] Chaitanya 2k26 Server with Redis Caching")
-    print(f"    Port:         http://localhost:{PORT}")
+    print(f"    URL:          http://{'localhost' if HOST == '127.0.0.1' else HOST}:{PORT}")
     print(f"    Cache Engine: {stats['engine']} (URL: {stats['redis_url']})")
     print(f"    Max Cache:    {stats['max_cached_file_size_mb']} MB per file")
     print(f"    API Routes:   /api/events | /api/cache/stats | /api/cache/purge")
     print("=" * 70)
 
-    with ThreadedHTTPServer(("", PORT), CachedHTTPHandler) as httpd:
+    with ThreadedHTTPServer((HOST, PORT), CachedHTTPHandler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

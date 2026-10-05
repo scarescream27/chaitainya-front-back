@@ -4,6 +4,8 @@
 *.rar
 unpack file/
 *.hdr
+# ...except the environment map the 3D scene loads at runtime
+!hdri/*.hdr
 
 # Dependencies & system files
 node_modules/
@@ -14,3 +16,12 @@ scratch/
 *.backup.glb
 .vscode/
 .idea/
+
+# Secrets & local config (use .env.example as the template)
+.env
+.env.*
+!.env.example
+
+# Python bytecode
+__pycache__/
+*.pyc

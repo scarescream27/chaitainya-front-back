@@ -2,8 +2,15 @@
  * ============================================================================
  * Chaitanya 2k26 — Firebase Auth & Firestore Service
  * ============================================================================
- * Provides Google Sign-In, Attendee Registration, Cloud Firestore user sync,
- * Admin detection, and reactive auth state management.
+ * Google Sign-In, attendee profiles, event registrations, squads, UPI payment
+ * submissions and admin verification.
+ *
+ * Cloud Firestore is the single source of truth. Every write is awaited and
+ * errors are surfaced to the caller, so the UI never shows a "confirmed"
+ * state for data that was not saved. Access control is enforced server-side
+ * by firestore.rules; the admin checks here only decide what UI to show.
+ *
+ * Demo mode (local-only storage) is used ONLY when Firebase is not configured.
  */
 
 import {
@@ -12,304 +19,303 @@ import {
   isAdminUser,
 } from "./firebase-config.js";
 
-// Global singleton state
+const SDK_VERSION = "10.12.0";
+const SDK_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
+
 let firebaseApp = null;
 let firebaseAuth = null;
 let firebaseFirestore = null;
 let firebaseAnalytics = null;
+let fsMod = null;
+let authMod = null;
+
 let currentUser = null;
-let isInitialized = false;
+let initPromise = null;
 let authListeners = [];
 
-// Local cache key
-const DEMO_USER_STORAGE_KEY = "chaitanya_demo_user";
-const ATTENDEES_STORAGE_KEY = "chaitanya_attendees_list";
+const DEMO_DB_KEY = "chaitanya_demo_db";
+const DEMO_USER_KEY = "chaitanya_demo_user";
 
-/**
- * Initialize Firebase dynamically from official Google CDN ESM modules
- */
-export async function initFirebase() {
-  if (isInitialized) return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore, analytics: firebaseAnalytics };
+// Legacy keys from the previous localStorage-first implementation. They held
+// stale/seeded data and are cleared on startup so nothing reads them again.
+const LEGACY_KEYS = [
+  "chaitanya_attendees_list",
+  "chaitanya_teams_list",
+  "chaitanya_payments_list",
+  "chaitanya_registrations_list",
+  "chaitanya_team_members_list",
+  "chaitanya_queries_list",
+];
 
-  const config = getFirebaseConfig();
+export const PAYMENT_STATUS = {
+  FREE: "free",
+  PENDING: "pending_verification",
+  VERIFIED: "verified",
+  REJECTED: "rejected",
+  TEAM: "team",
+};
 
-  if (isFirebaseConfigured(config)) {
-    try {
-      const { initializeApp, getApps, getApp } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"
-      );
-      const {
-        getAuth,
-        GoogleAuthProvider,
-        signInWithPopup,
-        signOut,
-        onAuthStateChanged,
-      } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"
-      );
-      const {
-        getFirestore,
-        doc,
-        setDoc,
-        getDoc,
-        collection,
-        getDocs,
-        serverTimestamp,
-      } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-      );
+function isLive() {
+  return Boolean(firebaseFirestore && firebaseAuth);
+}
 
-      firebaseApp = getApps().length === 0 ? initializeApp(config) : getApp();
-      firebaseAuth = getAuth(firebaseApp);
-      firebaseFirestore = getFirestore(firebaseApp);
+function nowIso() {
+  return new Date().toISOString();
+}
 
-      // Initialize Firebase Analytics if measurementId is provided and environment is supported
-      if (config.measurementId) {
-        try {
-          const { getAnalytics, isSupported } = await import(
-            "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
-          );
-          if (await isSupported()) {
-            firebaseAnalytics = getAnalytics(firebaseApp);
-          }
-        } catch (analyticsErr) {
-          console.info("Firebase analytics not available in current environment:", analyticsErr);
-        }
-      }
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
-      // Listen to real Firebase Auth State
-      onAuthStateChanged(firebaseAuth, async (fbUser) => {
-        if (fbUser) {
-          // Fetch or populate profile from Firestore
-          const userDocRef = doc(firebaseFirestore, "users", fbUser.uid);
-          let profile = {};
-          try {
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists()) {
-              profile = docSnap.data();
-            }
-          } catch (err) {
-            console.warn("Could not fetch user document from Firestore:", err);
-          }
+function cleanText(value, max = 120) {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+}
 
-          const role = isAdminUser(fbUser.email) ? "admin" : "attendee";
-
-          currentUser = {
-            uid: fbUser.uid,
-            displayName: fbUser.displayName || "Chaitanya Attendee",
-            email: fbUser.email,
-            photoURL: fbUser.photoURL || "/images/icons/textFace.svg",
-            role: role,
-            college: profile.college || "",
-            phone: profile.phone || "",
-            registeredEvents: profile.registeredEvents || [],
-            isDemo: false,
-          };
-        } else {
-          currentUser = null;
-        }
-        notifyListeners();
-      });
-
-      isInitialized = true;
-      return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore, analytics: firebaseAnalytics };
-    } catch (err) {
-      console.error("Failed to load Firebase SDK modules:", err);
-    }
-  }
-
-  // If not configured with live credentials, restore any demo session from localStorage
-  try {
-    const savedDemo = localStorage.getItem(DEMO_USER_STORAGE_KEY);
-    if (savedDemo) {
-      currentUser = JSON.parse(savedDemo);
-    }
-  } catch (e) {}
-
-  isInitialized = true;
-  notifyListeners();
-  return { app: null, auth: null, db: null };
+function cleanPhone(value) {
+  return String(value ?? "").replace(/[^\d+\s-]/g, "").trim().slice(0, 20);
 }
 
 /**
- * Sign in using Google Authentication
+ * Turn Firebase error codes into messages a participant can act on.
+ */
+function friendlyError(err, fallback = "Something went wrong. Please try again.") {
+  const code = err?.code || "";
+  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+    return new Error("Sign-in was cancelled.");
+  }
+  if (code === "auth/popup-blocked") {
+    return new Error("Your browser blocked the Google sign-in popup. Allow popups for this site and try again.");
+  }
+  if (code === "auth/network-request-failed" || code === "unavailable") {
+    return new Error("Network error. Check your internet connection and try again.");
+  }
+  if (code === "permission-denied") {
+    return new Error("This action is not allowed for your account.");
+  }
+  if (err instanceof Error && err.message && !code) return err;
+  return new Error(fallback);
+}
+
+// ----------------------------------------------------------------------------
+// INITIALISATION
+// ----------------------------------------------------------------------------
+
+export function initFirebase() {
+  if (!initPromise) initPromise = doInit();
+  return initPromise;
+}
+
+async function doInit() {
+  if (typeof window !== "undefined") {
+    try {
+      LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
+      sessionStorage.removeItem("chaitanya_active_user");
+    } catch (e) {}
+  }
+
+  const config = getFirebaseConfig();
+  if (!isFirebaseConfigured(config)) {
+    try {
+      const saved = localStorage.getItem(DEMO_USER_KEY);
+      if (saved) currentUser = JSON.parse(saved);
+    } catch (e) {}
+    notifyListeners();
+    return { app: null, auth: null, db: null, analytics: null };
+  }
+
+  try {
+    const appMod = await import(`${SDK_BASE}/firebase-app.js`);
+    authMod = await import(`${SDK_BASE}/firebase-auth.js`);
+    fsMod = await import(`${SDK_BASE}/firebase-firestore.js`);
+
+    firebaseApp = appMod.getApps().length === 0 ? appMod.initializeApp(config) : appMod.getApp();
+    firebaseAuth = authMod.getAuth(firebaseApp);
+    firebaseFirestore = fsMod.getFirestore(firebaseApp);
+
+    if (config.measurementId) {
+      import(`${SDK_BASE}/firebase-analytics.js`)
+        .then(async ({ getAnalytics, isSupported }) => {
+          if (await isSupported()) firebaseAnalytics = getAnalytics(firebaseApp);
+        })
+        .catch(() => {});
+    }
+
+    // Completes a redirect sign-in (used when popups are blocked on mobile).
+    authMod.getRedirectResult(firebaseAuth).catch((err) => {
+      console.warn("Redirect sign-in failed:", err?.code || err);
+    });
+
+    await new Promise((resolve) => {
+      let first = true;
+      authMod.onAuthStateChanged(firebaseAuth, async (fbUser) => {
+        try {
+          currentUser = fbUser ? await loadProfile(fbUser) : null;
+        } catch (err) {
+          console.warn("Could not load profile:", err);
+          currentUser = fbUser ? baseProfile(fbUser) : null;
+        }
+        notifyListeners();
+        if (first) {
+          first = false;
+          resolve();
+        }
+      });
+    });
+  } catch (err) {
+    console.error("Failed to initialise Firebase:", err);
+    firebaseAuth = null;
+    firebaseFirestore = null;
+  }
+
+  return { app: firebaseApp, auth: firebaseAuth, db: firebaseFirestore, analytics: firebaseAnalytics };
+}
+
+function baseProfile(fbUser) {
+  return {
+    uid: fbUser.uid,
+    displayName: fbUser.displayName || "Chaitanya Attendee",
+    email: fbUser.email || "",
+    photoURL: fbUser.photoURL || "/images/icons/textFace.svg",
+    role: isAdminUser(fbUser.email) ? "admin" : "attendee",
+    college: "",
+    phone: "",
+    registeredEvents: [],
+    registeredEventIds: [],
+    isDemo: false,
+  };
+}
+
+/**
+ * Ensure the users/{uid} document exists and merge it with auth details.
+ */
+async function loadProfile(fbUser, extra = {}) {
+  const { doc, getDoc, setDoc, serverTimestamp } = fsMod;
+  const ref = doc(firebaseFirestore, "users", fbUser.uid);
+  const snap = await getDoc(ref);
+  const existing = snap.exists() ? snap.data() : {};
+
+  const profile = {
+    uid: fbUser.uid,
+    name: fbUser.displayName || existing.name || "Fest Attendee",
+    displayName: fbUser.displayName || existing.displayName || "Fest Attendee",
+    email: fbUser.email || "",
+    photoURL: fbUser.photoURL || "",
+    college: cleanText(extra.college || existing.college || ""),
+    phone: cleanPhone(extra.phone || existing.phone || ""),
+    registeredEvents: existing.registeredEvents || [],
+    registeredEventIds: existing.registeredEventIds || [],
+    updatedAt: serverTimestamp(),
+  };
+  if (!snap.exists()) profile.createdAt = serverTimestamp();
+
+  const needsWrite =
+    !snap.exists() ||
+    existing.email !== profile.email ||
+    existing.displayName !== profile.displayName ||
+    existing.photoURL !== profile.photoURL ||
+    (extra.college && extra.college !== existing.college) ||
+    (extra.phone && extra.phone !== existing.phone);
+
+  if (needsWrite) await setDoc(ref, profile, { merge: true });
+
+  return {
+    ...baseProfile(fbUser),
+    college: profile.college,
+    phone: profile.phone,
+    registeredEvents: profile.registeredEvents,
+    registeredEventIds: profile.registeredEventIds,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// AUTH
+// ----------------------------------------------------------------------------
+
+/**
+ * Sign in with Google. `extraDetails` (college, phone) are saved on the
+ * profile when provided by the registration form.
  */
 export async function signInWithGoogle(extraDetails = {}) {
   await initFirebase();
-  const config = getFirebaseConfig();
 
-  if (isFirebaseConfigured(config) && firebaseAuth) {
-    try {
-      const { GoogleAuthProvider, signInWithPopup } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"
-      );
-      const { doc, setDoc, getDoc, serverTimestamp } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-      );
-
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const result = await signInWithPopup(firebaseAuth, provider);
-      const fbUser = result.user;
-
-      // Check existing profile or register new attendee document
-      const userRef = doc(firebaseFirestore, "users", fbUser.uid);
-      const snap = await getDoc(userRef);
-      const isNew = !snap.exists();
-
-      const role = isAdminUser(fbUser.email) ? "admin" : "attendee";
-      const userData = {
-        uid: fbUser.uid,
-        displayName: fbUser.displayName || "Fest Attendee",
-        email: fbUser.email,
-        photoURL: fbUser.photoURL,
-        role: role,
-        college: extraDetails.college || (isNew ? "" : snap.data()?.college || ""),
-        phone: extraDetails.phone || (isNew ? "" : snap.data()?.phone || ""),
-        registeredEvents: isNew ? [] : (snap.data()?.registeredEvents || []),
-        lastLoginAt: serverTimestamp(),
-      };
-
-      if (isNew) {
-        userData.createdAt = serverTimestamp();
-      }
-
-      await setDoc(userRef, userData, { merge: true });
-
-      currentUser = {
-        ...userData,
-        isDemo: false,
-      };
-      if (typeof window !== "undefined") {
-        window.__chaitanyaCurrentUser = currentUser;
-        try { sessionStorage.setItem("chaitanya_active_user", JSON.stringify(currentUser)); } catch (e) {}
-      }
-      notifyListeners();
-      return { success: true, user: currentUser, isNew };
-    } catch (error) {
-      console.warn("Live Google Auth provider notice:", error.message || error);
-      // Fallback gracefully to demo user if Google Auth provider isn't enabled yet on console
-      const demoUser = {
-        uid: "usr_" + Math.random().toString(36).substr(2, 9),
-        displayName: extraDetails.displayName || "Aditya Sharma",
-        email: extraDetails.email || "aditya.fest@chaitanya2k26.org",
-        photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-        role: isAdminUser(extraDetails.email) ? "admin" : "attendee",
-        college: extraDetails.college || "Himachal Pradesh Technical University",
-        phone: extraDetails.phone || "+91 98765 43210",
-        registeredEvents: extraDetails.registeredEvents || [],
-        isDemo: true,
-      };
-      currentUser = demoUser;
-      if (typeof window !== "undefined") {
-        window.__chaitanyaCurrentUser = demoUser;
-        try { sessionStorage.setItem("chaitanya_active_user", JSON.stringify(demoUser)); } catch (e) {}
-      }
-      try {
-        localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(demoUser));
-        saveDemoAttendee(demoUser);
-      } catch (e) {}
-      notifyListeners();
-      return { success: true, user: demoUser, isNew: true, isDemo: true };
+  if (!isLive()) {
+    if (isFirebaseConfigured(getFirebaseConfig())) {
+      throw new Error("Could not connect to the sign-in service. Please refresh the page and try again.");
     }
-  } else {
-    // Demo Mode: Allows immediate full UI testing if user hasn't added Firebase keys yet
-    const demoUser = {
-      uid: "demo_" + Math.random().toString(36).substr(2, 9),
-      displayName: extraDetails.displayName || "Aditya Sharma",
-      email: extraDetails.email || "aditya.fest@chaitanya2k26.org",
-      photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-      role: isAdminUser(extraDetails.email) ? "admin" : "attendee",
-      college: extraDetails.college || "Himachal Pradesh Technical University",
-      phone: extraDetails.phone || "+91 98765 43210",
-      registeredEvents: extraDetails.registeredEvents || [],
-      isDemo: true,
-    };
-
-    currentUser = demoUser;
-    if (typeof window !== "undefined") {
-      window.__chaitanyaCurrentUser = demoUser;
-      try { sessionStorage.setItem("chaitanya_active_user", JSON.stringify(demoUser)); } catch (e) {}
-    }
-    try {
-      localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(demoUser));
-      saveDemoAttendee(demoUser);
-    } catch (e) {}
-
-    notifyListeners();
-    return { success: true, user: demoUser, isNew: true, isDemo: true };
+    return demoSignIn(extraDetails);
   }
+
+  const provider = new authMod.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  let result;
+  try {
+    result = await authMod.signInWithPopup(firebaseAuth, provider);
+  } catch (err) {
+    if (err?.code === "auth/popup-blocked") {
+      await authMod.signInWithRedirect(firebaseAuth, provider);
+      return { success: true, redirect: true };
+    }
+    throw friendlyError(err, "Google sign-in failed. Please try again.");
+  }
+
+  try {
+    currentUser = await loadProfile(result.user, extraDetails);
+  } catch (err) {
+    throw friendlyError(err, "Signed in, but your profile could not be saved. Please try again.");
+  }
+  notifyListeners();
+  return { success: true, user: currentUser };
 }
 
-/**
- * Sign out user
- */
 export async function signOutUser() {
-  if (firebaseAuth && !currentUser?.isDemo) {
+  if (isLive()) {
     try {
-      const { signOut } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"
-      );
-      await signOut(firebaseAuth);
+      await authMod.signOut(firebaseAuth);
     } catch (e) {
-      console.warn("Firebase sign out error:", e);
+      console.warn("Sign out error:", e);
     }
   }
-
   currentUser = null;
-  if (typeof window !== "undefined") {
-    window.__chaitanyaCurrentUser = null;
-    try { sessionStorage.removeItem("chaitanya_active_user"); } catch (e) {}
-  }
   try {
-    localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+    localStorage.removeItem(DEMO_USER_KEY);
   } catch (e) {}
-
   notifyListeners();
   return { success: true };
 }
 
-/**
- * Get active user
- */
 export function getCurrentUser() {
-  if (typeof window !== "undefined" && window.__chaitanyaCurrentUser !== undefined) {
-    return window.__chaitanyaCurrentUser;
-  }
   return currentUser;
 }
 
-export function setSimulatedUser(user) {
-  currentUser = user;
-  if (typeof window !== "undefined") {
-    window.__chaitanyaCurrentUser = user;
-    try {
-      if (user) sessionStorage.setItem("chaitanya_active_user", JSON.stringify(user));
-      else sessionStorage.removeItem("chaitanya_active_user");
-    } catch (e) {}
-  }
-  notifyListeners();
-}
-
-if (typeof window !== "undefined") {
-  window.__setSimulatedUser = setSimulatedUser;
-  window.getCurrentUser = getCurrentUser;
-  try {
-    const saved = sessionStorage.getItem("chaitanya_active_user");
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      window.__chaitanyaCurrentUser = currentUser;
-    }
-  } catch (e) {}
-}
-
 /**
- * Subscribe to Auth State changes (Pub/Sub)
+ * Update the signed-in user's own college / phone.
  */
+export async function updateMyProfile({ college, phone } = {}) {
+  const user = requireUser();
+  const patch = {};
+  if (college !== undefined) patch.college = cleanText(college);
+  if (phone !== undefined) patch.phone = cleanPhone(phone);
+  if (!Object.keys(patch).length) return user;
+
+  if (isLive()) {
+    const { doc, setDoc, serverTimestamp } = fsMod;
+    await setDoc(doc(firebaseFirestore, "users", user.uid), { ...patch, updatedAt: serverTimestamp() }, { merge: true });
+  } else {
+    demoUpdate("users", user.uid, patch);
+  }
+  Object.assign(user, patch);
+  persistDemoUser();
+  notifyListeners();
+  return user;
+}
+
 export function subscribeAuthState(callback) {
   if (typeof callback === "function") {
     authListeners.push(callback);
-    // Immediately invoke with current state
     try {
       callback(currentUser);
     } catch (e) {}
@@ -329,102 +335,15 @@ function notifyListeners() {
   }
 }
 
-/**
- * Fetch all registered attendees (for Admin Panel)
- */
-export async function getRegisteredAttendees() {
-  const activeUser = getCurrentUser();
-  if (!activeUser || !isAdminUser(activeUser.email)) {
-    console.warn("Access Denied: getRegisteredAttendees called without authorized admin privileges.");
-    return [];
-  }
-
-  await initFirebase();
-  const config = getFirebaseConfig();
-
-  if (isFirebaseConfigured(config) && firebaseFirestore && !activeUser.isDemo) {
-    try {
-      const { collection, getDocs } = await import(
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-      );
-      const fetchPromise = getDocs(collection(firebaseFirestore, "users"));
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Firestore timeout")), 2500)
-      );
-      const snap = await Promise.race([fetchPromise, timeoutPromise]);
-      const list = [];
-      snap.forEach((d) => list.push(d.data()));
-      if (list.length > 0) return list;
-    } catch (err) {
-      console.warn("Firestore attendees load note:", err.message || err);
-    }
-  }
-
-  // Fallback demo attendees for previewing the Admin Table
-  return getDemoAttendees();
+function requireUser() {
+  if (!currentUser) throw new Error("Please sign in first.");
+  return currentUser;
 }
 
-export function getDemoAttendees() {
-  try {
-    const raw = localStorage.getItem(ATTENDEES_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-
-  const defaults = [
-    {
-      uid: "usr_101",
-      displayName: "Aditya Sharma",
-      email: "chaitanyahptu@gmail.com",
-      role: "admin",
-      college: "HPTU Hamirpur",
-      phone: "+91 98160 00001",
-      registeredEvents: ["AI Hackathon", "CTF & Coding"],
-    },
-    {
-      uid: "usr_102",
-      displayName: "Rohan Verma",
-      email: "rohan.v@hptu.ac.in",
-      role: "attendee",
-      college: "HPTU Campus",
-      phone: "+91 98162 11223",
-      registeredEvents: ["Robowars & Drones"],
-    },
-    {
-      uid: "usr_103",
-      displayName: "Priya Thakur",
-      email: "priya.thakur@gmail.com",
-      role: "attendee",
-      college: "NIT Hamirpur",
-      phone: "+91 94180 55443",
-      registeredEvents: ["Pitch Competition", "Product Management"],
-    },
-    {
-      uid: "usr_104",
-      displayName: "Amit Kumar",
-      email: "amit.k@uiit.ac.in",
-      role: "attendee",
-      college: "UIIT Shimla",
-      phone: "+91 98050 33221",
-      registeredEvents: ["Esports Battles"],
-    },
-  ];
-
-  try {
-    localStorage.setItem(ATTENDEES_STORAGE_KEY, JSON.stringify(defaults));
-  } catch (e) {}
-
-  return defaults;
-}
-
-function saveDemoAttendee(user) {
-  const list = getDemoAttendees();
-  const exists = list.some((u) => u.email === user.email);
-  if (!exists) {
-    list.unshift(user);
-    try {
-      localStorage.setItem(ATTENDEES_STORAGE_KEY, JSON.stringify(list));
-    } catch (e) {}
-  }
+function requireAdmin() {
+  const user = requireUser();
+  if (!isAdminUser(user.email)) throw new Error("Admin privileges required.");
+  return user;
 }
 
 export function getFirebaseAnalytics() {
@@ -432,815 +351,626 @@ export function getFirebaseAnalytics() {
 }
 
 // ----------------------------------------------------------------------------
-// EVENT REGISTRATIONS, TEAMS & PAYMENTS SERVICE
+// REGISTRATIONS, SQUADS & PAYMENTS
 // ----------------------------------------------------------------------------
 
-const TEAMS_STORAGE_KEY = "chaitanya_teams_list";
-const PAYMENTS_STORAGE_KEY = "chaitanya_payments_list";
+function registrationId(eventId, uid) {
+  return `reg_${eventId}_${uid}`;
+}
+
+function paymentId(eventId, uid) {
+  return `pay_${eventId}_${uid}`;
+}
+
+function passId(eventId, uid) {
+  // Deterministic, so the same pass ID is shown every time it is opened.
+  let hash = 0;
+  for (const ch of `${eventId}:${uid}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return `CH26-${eventId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(hash % 100000).padStart(5, "0")}`;
+}
+
+function assertUtr(utr) {
+  if (!/^\d{12}$/.test(utr || "")) {
+    throw new Error("Enter the 12-digit UPI transaction reference (UTR) exactly as shown in your UPI app.");
+  }
+}
+
+async function addEventToProfile(user, ev) {
+  const titles = new Set(user.registeredEvents || []);
+  const ids = new Set(user.registeredEventIds || []);
+  titles.add(ev.title);
+  ids.add(ev.id);
+  user.registeredEvents = [...titles];
+  user.registeredEventIds = [...ids];
+}
+
+function profileEventPatch(ev) {
+  if (isLive()) {
+    const { arrayUnion, serverTimestamp } = fsMod;
+    return {
+      registeredEvents: arrayUnion(ev.title),
+      registeredEventIds: arrayUnion(ev.id),
+      updatedAt: serverTimestamp(),
+    };
+  }
+  return null;
+}
 
 /**
- * Register current user solo for an event
+ * Solo registration. For paid events a 12-digit UTR is required and the
+ * payment is created as "pending_verification" for the admin to verify.
  */
-export async function registerSoloForEvent(event, paymentDetails = {}) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Please sign in to register for events.");
+export async function registerSoloForEvent(ev, details = {}) {
+  const user = requireUser();
+  if (!ev || typeof ev !== "object") throw new Error("Unknown event.");
 
-  const eventTitle = typeof event === "string" ? event : event.title;
-  const eventId = typeof event === "string" ? event.toLowerCase().replace(/[^a-z0-9]+/g, "-") : event.id;
-  const entryFeeNum = typeof event === "object" ? (event.entryFeeNum || 0) : 0;
+  const fee = Number(ev.entryFeeNum) || 0;
+  const utr = String(details.utr || "").trim();
+  if (fee > 0) assertUtr(utr);
 
-  // Add to registeredEvents if not present
-  const currentEvents = Array.isArray(user.registeredEvents) ? [...user.registeredEvents] : [];
-  if (!currentEvents.includes(eventTitle)) {
-    currentEvents.push(eventTitle);
-  }
+  const phone = cleanPhone(details.phone || user.phone);
+  const college = cleanText(details.college || user.college);
+  if (!phone) throw new Error("Please enter your contact number.");
+  if (!college) throw new Error("Please enter your college / institute.");
 
-  user.registeredEvents = currentEvents;
+  const regId = registrationId(ev.id, user.uid);
+  const payId = fee > 0 ? paymentId(ev.id, user.uid) : null;
 
-  // 1. Create payment record if fee > 0 or if UTR provided
-  let paymentRecord = null;
-  if (entryFeeNum > 0 || paymentDetails.utr) {
-    paymentRecord = {
-      paymentId: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      eventId: eventId,
-      eventTitle: eventTitle,
-      teamId: null,
-      teamName: null,
-      payerUid: user.uid,
-      payerName: user.displayName || "Participant",
-      payerEmail: user.email,
-      payerPhone: user.phone || paymentDetails.phone || "",
-      amount: entryFeeNum,
-      method: "upi_qr",
-      transactionRef: (paymentDetails.utr || "").trim(),
-      screenshotUrl: paymentDetails.screenshotUrl || null,
-      status: entryFeeNum === 0 ? "verified" : "pending_verification",
-      createdAt: new Date().toISOString(),
-      verifiedAt: entryFeeNum === 0 ? new Date().toISOString() : null,
-      verifiedBy: entryFeeNum === 0 ? "system_free" : null,
-    };
-    await savePaymentRecord(paymentRecord);
-  }
-
-  // 2. Create official registration record matching SQL schema: registrations
-  const regId = `reg_${eventId}_${user.uid}`;
-  const qrId = `QR_CHAITANYA_${eventId.toUpperCase()}_${user.uid.slice(0, 8).toUpperCase()}_${Date.now()}`;
-  const registrationRecord = {
+  const registration = {
     id: regId,
     user_id: user.uid,
     user_name: user.displayName || "Participant",
     user_email: user.email,
-    user_phone: user.phone || "",
-    user_college: user.college || user.university || "",
-    event_id: eventId,
-    event_title: eventTitle,
+    user_phone: phone,
+    user_college: college,
+    event_id: ev.id,
+    event_title: ev.title,
     participation_type: "individual",
     team_id: null,
+    team_code: null,
     registration_status: "registered",
-    registration_qr_id: qrId,
-    registered_at: new Date().toISOString(),
+    payment_status: fee > 0 ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.FREE,
+    payment_id: payId,
+    amount_due: fee,
+    registration_qr_id: passId(ev.id, user.uid),
+    registered_at: nowIso(),
   };
-  await saveRegistrationRecord(registrationRecord);
-  await incrementEventAnalytics(eventId, "individual");
 
-  // Update user in Firestore
-  await syncUserProfile(user);
-  notifyListeners();
+  const payment = fee > 0
+    ? {
+        paymentId: payId,
+        eventId: ev.id,
+        eventTitle: ev.title,
+        teamId: null,
+        teamName: null,
+        payerUid: user.uid,
+        payerName: user.displayName || "Participant",
+        payerEmail: user.email,
+        payerPhone: phone,
+        amount: fee,
+        method: "upi",
+        transactionRef: utr,
+        status: PAYMENT_STATUS.PENDING,
+        createdAt: nowIso(),
+        verifiedAt: null,
+        verifiedBy: null,
+      }
+    : null;
 
-  return { success: true, user, payment: paymentRecord, registration: registrationRecord };
+  await writeRegistration({ user, ev, registration, payment, profilePatch: { phone, college } });
+  return { success: true, registration, payment };
 }
 
 /**
- * Create a team and register for an event
+ * Create a squad. The leader pays the team fee; teammates join with the code.
  */
-export async function createTeamForEvent(event, teamData, paymentDetails = {}) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Please sign in to register a team.");
+export async function createTeamForEvent(ev, teamData = {}, details = {}) {
+  const user = requireUser();
+  if (!ev || typeof ev !== "object") throw new Error("Unknown event.");
 
-  const eventTitle = typeof event === "string" ? event : event.title;
-  const eventId = typeof event === "string" ? event.toLowerCase().replace(/[^a-z0-9]+/g, "-") : event.id;
-  const entryFeeNum = typeof event === "object" ? (event.entryFeeNum || 0) : 0;
+  const teamName = cleanText(teamData.teamName, 60);
+  const phone = cleanPhone(teamData.leaderPhone || user.phone);
+  const college = cleanText(teamData.college || user.college);
+  if (!teamName) throw new Error("Please enter your team name.");
+  if (!phone) throw new Error("Please enter the team leader's contact number.");
+  if (!college) throw new Error("Please enter your college / institute.");
 
-  const teamId = `team_${eventId}_${Date.now()}`;
-  const teamCode = generateTeamCode(teamData.teamName || "TEAM");
+  const fee = Number(ev.entryFeeNum) || 0;
+  const utr = String(details.utr || "").trim();
+  if (fee > 0) assertUtr(utr);
 
-  const membersList = [
-    {
-      uid: user.uid,
-      name: user.displayName || "Team Leader",
-      email: user.email,
-      phone: user.phone || teamData.leaderPhone || "",
-      college: user.college || teamData.college || "",
-      role: "Leader",
-    },
-  ];
+  const teamId = `team_${ev.id}_${user.uid}`;
+  const teamCode = await generateUniqueTeamCode(teamName);
+  const payId = fee > 0 ? paymentId(ev.id, user.uid) : null;
 
-  // If additional member names/emails were entered in the form
-  if (Array.isArray(teamData.teammates)) {
-    teamData.teammates.forEach((tm, idx) => {
-      if (tm.name && tm.name.trim()) {
-        membersList.push({
-          uid: tm.uid || `invited_${Date.now()}_${idx}`,
-          name: tm.name.trim(),
-          email: tm.email ? tm.email.trim() : "",
-          phone: tm.phone ? tm.phone.trim() : "",
-          college: tm.college ? tm.college.trim() : (user.college || ""),
-          role: "Member",
-        });
-      }
-    });
-  }
+  // Team docs are readable by any signed-in user (needed to join by code),
+  // so they hold names only; contact details live in private registrations.
+  const leader = {
+    uid: user.uid,
+    name: user.displayName || "Team Leader",
+    college,
+    role: "Leader",
+  };
 
-  // Create payment record
-  let paymentRecord = null;
-  if (entryFeeNum > 0 || paymentDetails.utr) {
-    paymentRecord = {
-      paymentId: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      eventId: eventId,
-      eventTitle: eventTitle,
-      teamId: teamId,
-      teamName: teamData.teamName,
-      payerUid: user.uid,
-      payerName: user.displayName || "Team Leader",
-      payerEmail: user.email,
-      payerPhone: user.phone || teamData.leaderPhone || "",
-      amount: entryFeeNum,
-      method: "upi_qr",
-      transactionRef: (paymentDetails.utr || "").trim(),
-      screenshotUrl: paymentDetails.screenshotUrl || null,
-      status: entryFeeNum === 0 ? "verified" : "pending_verification",
-      createdAt: new Date().toISOString(),
-      verifiedAt: entryFeeNum === 0 ? new Date().toISOString() : null,
-      verifiedBy: entryFeeNum === 0 ? "system_free" : null,
-    };
-    await savePaymentRecord(paymentRecord);
-  }
-
-  // 1. Team Record matching SQL schema: teams
-  const teamRecord = {
+  const team = {
     id: teamId,
     teamId,
-    event_id: eventId,
-    eventId,
-    eventName: eventTitle,
-    team_name: teamData.teamName.trim(),
-    teamName: teamData.teamName.trim(),
+    event_id: ev.id,
+    eventId: ev.id,
+    eventName: ev.title,
+    team_name: teamName,
+    teamName,
     team_code: teamCode,
     teamCode,
     leader_id: user.uid,
     leaderUid: user.uid,
-    leaderName: user.displayName || "Team Leader",
-    leaderEmail: user.email,
-    leaderPhone: user.phone || teamData.leaderPhone || "",
-    college: user.college || teamData.college || "",
-    members: membersList,
-    teamSize: membersList.length,
-    maxTeamSize: typeof event === "object" ? (event.maxTeam || 4) : 4,
-    paymentStatus: entryFeeNum === 0 ? "free" : "pending",
-    paymentId: paymentRecord ? paymentRecord.paymentId : null,
-    created_at: new Date().toISOString(),
-    registeredAt: new Date().toISOString(),
+    leaderName: leader.name,
+    college,
+    members: [leader],
+    memberUids: [user.uid],
+    teamSize: 1,
+    minTeamSize: Number(ev.minTeam) || 1,
+    maxTeamSize: Number(ev.maxTeam) || 4,
+    paymentStatus: fee > 0 ? "pending" : "free",
+    paymentId: payId,
+    created_at: nowIso(),
+    registeredAt: nowIso(),
   };
 
-  await saveTeamRecord(teamRecord);
-
-  // 2. Team Member Record matching SQL schema: team_members
-  await saveTeamMemberRecord({
-    team_id: teamId,
+  const registration = {
+    id: registrationId(ev.id, user.uid),
     user_id: user.uid,
-    role: "leader",
-    joined_at: new Date().toISOString(),
-  });
-
-  // 3. Official Registration record matching SQL schema: registrations
-  const regId = `reg_${eventId}_${user.uid}`;
-  const qrId = `QR_CHAITANYA_${eventId.toUpperCase()}_${teamCode}_${Date.now()}`;
-  const registrationRecord = {
-    id: regId,
-    user_id: user.uid,
-    user_name: user.displayName || "Team Leader",
+    user_name: leader.name,
     user_email: user.email,
-    user_phone: user.phone || teamData.leaderPhone || "",
-    user_college: user.college || teamData.college || "",
-    event_id: eventId,
-    event_title: eventTitle,
+    user_phone: phone,
+    user_college: college,
+    event_id: ev.id,
+    event_title: ev.title,
     participation_type: "team",
     team_id: teamId,
     team_code: teamCode,
+    team_role: "leader",
     registration_status: "registered",
-    registration_qr_id: qrId,
-    registered_at: new Date().toISOString(),
+    payment_status: fee > 0 ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.FREE,
+    payment_id: payId,
+    amount_due: fee,
+    registration_qr_id: passId(ev.id, user.uid),
+    registered_at: nowIso(),
   };
-  await saveRegistrationRecord(registrationRecord);
-  await incrementEventAnalytics(eventId, "team");
 
-  // Add event to leader's profile
-  const currentEvents = Array.isArray(user.registeredEvents) ? [...user.registeredEvents] : [];
-  if (!currentEvents.includes(eventTitle)) {
-    currentEvents.push(eventTitle);
-  }
-  user.registeredEvents = currentEvents;
-  await syncUserProfile(user);
-  notifyListeners();
+  const payment = fee > 0
+    ? {
+        paymentId: payId,
+        eventId: ev.id,
+        eventTitle: ev.title,
+        teamId,
+        teamName,
+        payerUid: user.uid,
+        payerName: leader.name,
+        payerEmail: user.email,
+        payerPhone: phone,
+        amount: fee,
+        method: "upi",
+        transactionRef: utr,
+        status: PAYMENT_STATUS.PENDING,
+        createdAt: nowIso(),
+        verifiedAt: null,
+        verifiedBy: null,
+      }
+    : null;
 
-  return { success: true, team: teamRecord, payment: paymentRecord, registration: registrationRecord };
+  await writeRegistration({ user, ev, registration, payment, team, profilePatch: { phone, college } });
+  return { success: true, team, registration, payment };
 }
 
 /**
- * Join an existing team using a 6-character team code
+ * Join a squad using the leader's team code.
  */
-export async function joinTeamWithCode(teamCode) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Please sign in to join a team.");
-
-  if (!teamCode || !teamCode.trim()) throw new Error("Please enter a valid team code.");
-  const code = teamCode.trim().toUpperCase();
-
-  const allTeams = await getAllTeams();
-  const team = allTeams.find((t) => (t.teamCode || t.team_code || "").toUpperCase() === code);
-
-  if (!team) throw new Error(`No team found with code "${code}". Please check with your team leader.`);
-
-  if (team.members && team.members.length >= (team.maxTeamSize || 4)) {
-    throw new Error(`Team "${team.teamName || team.team_name}" is already full (${team.members.length}/${team.maxTeamSize}).`);
+export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
+  const user = requireUser();
+  const code = String(rawCode || "").trim().toUpperCase();
+  if (!/^[A-Z0-9]{2,6}-[A-Z0-9]{3,6}$/.test(code)) {
+    throw new Error("Enter the team code exactly as your leader shared it (e.g. BYTE-4F8K).");
   }
 
-  // Check if already in team
-  const alreadyMember = team.members && team.members.some((m) => m.uid === user.uid || m.email === user.email);
-  if (alreadyMember) {
-    throw new Error(`You are already a member of team "${team.teamName || team.team_name}".`);
+  const phone = cleanPhone(details.phone || user.phone);
+  const college = cleanText(details.college || user.college);
+
+  const found = await findTeamByCode(code);
+  if (!found) throw new Error(`No team found with code "${code}". Check the code with your team leader.`);
+  if (ev && found.eventId !== ev.id) {
+    throw new Error(`Team ${code} is registered for "${found.eventName}", not this event.`);
   }
 
-  // Add user to team
-  team.members = team.members || [];
-  team.members.push({
+  const member = {
     uid: user.uid,
     name: user.displayName || "Teammate",
-    email: user.email,
-    phone: user.phone || "",
-    college: user.college || team.college || "",
+    college: college || found.college || "",
     role: "Member",
-  });
-  team.teamSize = team.members.length;
-
-  await saveTeamRecord(team);
-
-  // Save in team_members collection
-  await saveTeamMemberRecord({
-    team_id: team.id || team.teamId,
-    user_id: user.uid,
-    role: "member",
-    joined_at: new Date().toISOString(),
-  });
-
-  // Save registration record matching SQL schema: registrations
-  const eventId = team.eventId || team.event_id;
-  const regId = `reg_${eventId}_${user.uid}`;
-  const qrId = `QR_CHAITANYA_${(eventId || "EVENT").toUpperCase()}_${code}_${Date.now()}`;
-  await saveRegistrationRecord({
-    id: regId,
-    user_id: user.uid,
-    user_name: user.displayName || "Teammate",
-    user_email: user.email,
-    user_phone: user.phone || "",
-    user_college: user.college || team.college || "",
-    event_id: eventId,
-    event_title: team.eventName || "",
-    participation_type: "team",
-    team_id: team.id || team.teamId,
-    team_code: code,
-    registration_status: "registered",
-    registration_qr_id: qrId,
-    registered_at: new Date().toISOString(),
-  });
-
-  // Add event to user profile
-  const currentEvents = Array.isArray(user.registeredEvents) ? [...user.registeredEvents] : [];
-  if (team.eventName && !currentEvents.includes(team.eventName)) {
-    currentEvents.push(team.eventName);
-  }
-  user.registeredEvents = currentEvents;
-  await syncUserProfile(user);
-  notifyListeners();
-
-  return { success: true, team };
-}
-
-/**
- * Unregister user from an event
- */
-export async function unregisterFromEvent(eventIdOrTitle) {
-  const user = getCurrentUser();
-  if (!user || !user.registeredEvents) return { success: false };
-
-  const target = eventIdOrTitle.toLowerCase().trim();
-  user.registeredEvents = user.registeredEvents.filter(
-    (ev) => ev.toLowerCase().trim() !== target && !ev.toLowerCase().includes(target)
-  );
-
-  await syncUserProfile(user);
-  notifyListeners();
-  return { success: true, user };
-}
-
-/**
- * Helper to check if active user is registered for an event
- */
-export function isEventRegistered(eventIdOrTitle) {
-  const user = getCurrentUser();
-  if (!user || !Array.isArray(user.registeredEvents)) return false;
-  const target = eventIdOrTitle.toLowerCase().trim();
-  return user.registeredEvents.some(
-    (ev) => ev.toLowerCase().trim() === target
-  );
-}
-
-function withTimeout(promise, ms = 1500) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore operation timeout")), ms)),
-  ]);
-}
-
-const REGISTRATIONS_STORAGE_KEY = "chaitanya_registrations_list";
-const QUERIES_STORAGE_KEY = "chaitanya_queries_list";
-const TEAM_MEMBERS_STORAGE_KEY = "chaitanya_team_members_list";
-
-/**
- * Sync user profile document (Mapped to SQL: users)
- */
-async function syncUserProfile(user) {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(user));
-      sessionStorage.setItem("chaitanya_active_user", JSON.stringify(user));
-      window.__chaitanyaCurrentUser = user;
-    } catch (e) {}
-  }
-
-  // Schema-compliant user profile mapping SQL: users
-  const userProfile = {
-    id: user.uid,
-    uid: user.uid,
-    firebase_uid: user.uid,
-    name: user.displayName || user.name || "Fest Attendee",
-    displayName: user.displayName || user.name || "Fest Attendee",
-    email: user.email || "",
-    phone: user.phone || "",
-    university: user.college || user.university || "HPTU Hamirpur",
-    college: user.college || user.university || "HPTU Hamirpur",
-    category: user.category || (isAdminUser(user.email) ? "Admin" : "Student"),
-    google_provider: true,
-    google_email: user.email || "",
-    student_id: user.student_id || "",
-    role: user.role || (isAdminUser(user.email) ? "admin" : "attendee"),
-    registeredEvents: user.registeredEvents || [],
-    created_at: user.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 
-  const config = getFirebaseConfig();
-  if (isFirebaseConfigured(config) && firebaseFirestore && user.uid && !user.isDemo) {
+  const evInfo = { id: found.eventId, title: found.eventName };
+  const registration = {
+    id: registrationId(found.eventId, user.uid),
+    user_id: user.uid,
+    user_name: member.name,
+    user_email: user.email,
+    user_phone: phone,
+    user_college: member.college,
+    event_id: found.eventId,
+    event_title: found.eventName,
+    participation_type: "team",
+    team_id: found.teamId,
+    team_code: code,
+    team_role: "member",
+    registration_status: "registered",
+    payment_status: PAYMENT_STATUS.TEAM,
+    payment_id: found.paymentId || null,
+    amount_due: 0,
+    registration_qr_id: passId(found.eventId, user.uid),
+    registered_at: nowIso(),
+  };
+
+  if (isLive()) {
+    const { doc, runTransaction, setDoc, serverTimestamp } = fsMod;
+    const teamRef = doc(firebaseFirestore, "teams", found.teamId);
     try {
-      const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      await withTimeout(setDoc(doc(firebaseFirestore, "users", user.uid), userProfile, { merge: true }), 1500);
-    } catch (e) {
-      console.warn("Could not sync user profile to Firestore:", e.message || e);
-    }
-  }
-
-  saveDemoAttendee(userProfile);
-}
-
-/**
- * Save team record (Mapped to SQL: teams)
- */
-async function saveTeamRecord(team) {
-  const teams = await getAllTeams();
-  const index = teams.findIndex((t) => t.teamId === team.teamId);
-  if (index >= 0) {
-    teams[index] = team;
-  } else {
-    teams.unshift(team);
-  }
-
-  try {
-    localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(teams));
-  } catch (e) {}
-
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
-      .then(({ doc, setDoc }) => withTimeout(setDoc(doc(firebaseFirestore, "teams", team.teamId), team, { merge: true }), 1500))
-      .catch((e) => console.warn("Firestore teams save note:", e.message || e));
-  }
-}
-
-/**
- * Save team member record (Mapped to SQL: team_members)
- */
-export async function saveTeamMemberRecord(member) {
-  const docId = `${member.team_id}_${member.user_id}`;
-  try {
-    const raw = localStorage.getItem(TEAM_MEMBERS_STORAGE_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    const idx = list.findIndex((m) => `${m.team_id}_${m.user_id}` === docId);
-    if (idx >= 0) list[idx] = member;
-    else list.push(member);
-    localStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {}
-
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
-      .then(({ doc, setDoc }) => withTimeout(setDoc(doc(firebaseFirestore, "team_members", docId), member, { merge: true }), 1500))
-      .catch((e) => console.warn("Firestore team_members save note:", e.message || e));
-  }
-}
-
-/**
- * Save registration record (Mapped to SQL: registrations)
- */
-export async function saveRegistrationRecord(registration) {
-  try {
-    const raw = localStorage.getItem(REGISTRATIONS_STORAGE_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    const idx = list.findIndex((r) => r.id === registration.id);
-    if (idx >= 0) list[idx] = registration;
-    else list.unshift(registration);
-    localStorage.setItem(REGISTRATIONS_STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {}
-
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
-      .then(({ doc, setDoc }) => withTimeout(setDoc(doc(firebaseFirestore, "registrations", registration.id), registration, { merge: true }), 1500))
-      .catch((e) => console.warn("Firestore registrations save note:", e.message || e));
-  }
-}
-
-/**
- * Increment event analytics counters (Mapped to SQL: event_analytics)
- */
-export async function incrementEventAnalytics(eventId, participationType = "individual") {
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
-      .then(async ({ doc, setDoc, increment }) => {
-        const payload = {
-          event_id: eventId,
-          total_registrations: increment(1),
-          last_updated: new Date().toISOString(),
-        };
-        if (participationType === "individual") {
-          payload.individual_registrations = increment(1);
-        } else {
-          payload.team_registrations = increment(1);
-          payload.total_teams = increment(1);
+      await runTransaction(firebaseFirestore, async (tx) => {
+        const regRef = doc(firebaseFirestore, "registrations", registration.id);
+        const [snap, regSnap] = [await tx.get(teamRef), await tx.get(regRef)];
+        if (regSnap.exists()) throw new Error("You are already registered for this event.");
+        if (!snap.exists()) throw new Error("This team no longer exists.");
+        const t = snap.data();
+        const uids = t.memberUids || [];
+        if (uids.includes(user.uid)) throw new Error(`You are already in team "${t.teamName}".`);
+        if (uids.length >= (t.maxTeamSize || 4)) {
+          throw new Error(`Team "${t.teamName}" is full (${uids.length}/${t.maxTeamSize}).`);
         }
-        await withTimeout(setDoc(doc(firebaseFirestore, "event_analytics", eventId), payload, { merge: true }), 1500);
-      })
-      .catch((e) => console.warn("Event analytics increment note:", e.message || e));
+        tx.update(teamRef, {
+          members: [...(t.members || []), member],
+          memberUids: [...uids, user.uid],
+          teamSize: uids.length + 1,
+        });
+        tx.set(regRef, registration);
+      });
+      await setDoc(
+        doc(firebaseFirestore, "users", user.uid),
+        { ...profileEventPatch(evInfo), ...(phone ? { phone } : {}), ...(college ? { college } : {}), updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    } catch (err) {
+      throw friendlyError(err, "Could not join the team. Please try again.");
+    }
+  } else {
+    if (demoGet("registrations", registration.id)) throw new Error("You are already registered for this event.");
+    const t = demoGet("teams", found.teamId);
+    if (t.memberUids.includes(user.uid)) throw new Error(`You are already in team "${t.teamName}".`);
+    if (t.memberUids.length >= t.maxTeamSize) throw new Error(`Team "${t.teamName}" is full.`);
+    t.members.push(member);
+    t.memberUids.push(user.uid);
+    t.teamSize = t.memberUids.length;
+    demoSet("teams", t.teamId, t);
+    demoSet("registrations", registration.id, registration);
   }
+
+  if (phone) user.phone = phone;
+  if (college) user.college = college;
+  await addEventToProfile(user, evInfo);
+  if (!isLive()) demoSet("users", user.uid, { ...user });
+  persistDemoUser();
+  notifyListeners();
+  return { success: true, team: found, registration };
+}
+
+async function writeRegistration({ user, ev, registration, payment, team, profilePatch }) {
+  if (isLive()) {
+    const { doc, getDoc, writeBatch, serverTimestamp } = fsMod;
+    const regRef = doc(firebaseFirestore, "registrations", registration.id);
+    try {
+      const existing = await getDoc(regRef);
+      if (existing.exists()) {
+        throw new Error("You are already registered for this event.");
+      }
+      const batch = writeBatch(firebaseFirestore);
+      if (payment) batch.set(doc(firebaseFirestore, "payments", payment.paymentId), payment);
+      if (team) batch.set(doc(firebaseFirestore, "teams", team.teamId), team);
+      batch.set(regRef, registration);
+      batch.set(
+        doc(firebaseFirestore, "users", user.uid),
+        { ...profileEventPatch(ev), phone: profilePatch.phone, college: profilePatch.college, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+      await batch.commit();
+    } catch (err) {
+      throw friendlyError(err, "Registration could not be saved. Please try again.");
+    }
+  } else {
+    if (demoGet("registrations", registration.id)) throw new Error("You are already registered for this event.");
+    if (payment) demoSet("payments", payment.paymentId, payment);
+    if (team) demoSet("teams", team.teamId, team);
+    demoSet("registrations", registration.id, registration);
+  }
+
+  user.phone = profilePatch.phone;
+  user.college = profilePatch.college;
+  await addEventToProfile(user, ev);
+  if (!isLive()) demoSet("users", user.uid, { ...user });
+  persistDemoUser();
+  notifyListeners();
+}
+
+async function findTeamByCode(code) {
+  if (isLive()) {
+    const { collection, query, where, limit, getDocs } = fsMod;
+    const snap = await getDocs(
+      query(collection(firebaseFirestore, "teams"), where("teamCode", "==", code), limit(1))
+    );
+    return snap.empty ? null : snap.docs[0].data();
+  }
+  return demoList("teams").find((t) => t.teamCode === code) || null;
+}
+
+async function generateUniqueTeamCode(name) {
+  const prefix = String(name).replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "TEAM";
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const bytes = new Uint8Array(4);
+    crypto.getRandomValues(bytes);
+    const suffix = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+    const code = `${prefix}-${suffix}`;
+    if (!(await findTeamByCode(code))) return code;
+  }
+  throw new Error("Could not generate a team code. Please try again.");
 }
 
 /**
- * Submit contact query ticket (Mapped to SQL: queries)
+ * The signed-in user's registration (and payment, if any) for one event.
  */
-export async function submitQueryTicket(queryData) {
-  const activeUser = getCurrentUser();
-  const queryId = `query_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+export async function getMyRegistration(eventId) {
+  const user = currentUser;
+  if (!user) return null;
+  const regId = registrationId(eventId, user.uid);
+
+  if (isLive()) {
+    const { doc, getDoc } = fsMod;
+    const regSnap = await getDoc(doc(firebaseFirestore, "registrations", regId));
+    if (!regSnap.exists()) return null;
+    const registration = regSnap.data();
+    let payment = null;
+    let team = null;
+    if (registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM) {
+      const paySnap = await getDoc(doc(firebaseFirestore, "payments", registration.payment_id));
+      payment = paySnap.exists() ? paySnap.data() : null;
+    }
+    if (registration.team_id) {
+      const teamSnap = await getDoc(doc(firebaseFirestore, "teams", registration.team_id));
+      team = teamSnap.exists() ? teamSnap.data() : null;
+    }
+    return { registration, payment, team };
+  }
+
+  const registration = demoGet("registrations", regId);
+  if (!registration) return null;
+  return {
+    registration,
+    payment:
+      registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM
+        ? demoGet("payments", registration.payment_id)
+        : null,
+    team: registration.team_id ? demoGet("teams", registration.team_id) : null,
+  };
+}
+
+/**
+ * Re-submit a UTR after a payment was rejected.
+ */
+export async function resubmitPaymentUtr(paymentIdValue, utr) {
+  const user = requireUser();
+  assertUtr(utr);
+  const patch = { transactionRef: utr, status: PAYMENT_STATUS.PENDING, resubmittedAt: nowIso() };
+  if (isLive()) {
+    const { doc, updateDoc } = fsMod;
+    try {
+      await updateDoc(doc(firebaseFirestore, "payments", paymentIdValue), patch);
+    } catch (err) {
+      throw friendlyError(err, "Could not update the UTR. Please try again.");
+    }
+  } else {
+    const p = demoGet("payments", paymentIdValue);
+    if (!p || p.payerUid !== user.uid) throw new Error("Payment not found.");
+    demoSet("payments", paymentIdValue, { ...p, ...patch });
+  }
+  return { success: true };
+}
+
+export function isEventRegistered(eventIdOrTitle) {
+  const user = currentUser;
+  if (!user || !eventIdOrTitle) return false;
+  const target = String(eventIdOrTitle).toLowerCase().trim();
+  const ids = (user.registeredEventIds || []).map((x) => String(x).toLowerCase());
+  const titles = (user.registeredEvents || []).map((x) => String(x).toLowerCase().trim());
+  return ids.includes(target) || titles.includes(target);
+}
+
+// ----------------------------------------------------------------------------
+// CONTACT QUERIES
+// ----------------------------------------------------------------------------
+
+export async function submitQueryTicket(queryData = {}) {
+  const queryId = `query_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const record = {
     id: queryId,
-    user_id: activeUser ? activeUser.uid : null,
-    subject: queryData.subject || `Query from ${queryData.name || "Participant"}`,
-    message: queryData.message || queryData.query || "",
-    name: queryData.name || "",
-    email: queryData.email || "",
-    phone: queryData.phone || queryData.contact_no || "",
-    team_name: queryData.team_name || "",
+    user_id: currentUser ? currentUser.uid : null,
+    subject: cleanText(queryData.subject || `Query from ${queryData.name || "Participant"}`, 200),
+    message: String(queryData.message || queryData.query || "").slice(0, 5000),
+    name: cleanText(queryData.name),
+    email: cleanText(queryData.email),
+    phone: cleanPhone(queryData.phone || queryData.contact_no),
+    team_name: cleanText(queryData.team_name),
     status: "open",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: nowIso(),
+    updated_at: nowIso(),
   };
 
-  try {
-    const raw = localStorage.getItem(QUERIES_STORAGE_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    list.unshift(record);
-    localStorage.setItem(QUERIES_STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {}
-
-  const config = getFirebaseConfig();
-  if (isFirebaseConfigured(config) && firebaseFirestore) {
-    try {
-      const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      await withTimeout(setDoc(doc(firebaseFirestore, "queries", queryId), record, { merge: true }), 2000);
-    } catch (e) {
-      console.warn("Firestore query ticket save note:", e.message || e);
-    }
+  await initFirebase();
+  if (isLive()) {
+    const { doc, setDoc } = fsMod;
+    await setDoc(doc(firebaseFirestore, "queries", queryId), record);
   }
-
   return { success: true, query: record };
 }
 
-/**
- * Fetch all registrations (for Admin passes & analytics)
- */
-export async function getAllRegistrations() {
-  try {
-    const raw = localStorage.getItem(REGISTRATIONS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
+// ----------------------------------------------------------------------------
+// ADMIN
+// ----------------------------------------------------------------------------
 
+async function listCollection(name) {
+  requireAdmin();
   await initFirebase();
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
+  if (isLive()) {
+    const { collection, getDocs } = fsMod;
     try {
-      const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      const snap = await withTimeout(getDocs(collection(firebaseFirestore, "registrations")), 2000);
-      const list = [];
-      snap.forEach((d) => list.push(d.data()));
-      if (list.length > 0) {
-        try { localStorage.setItem(REGISTRATIONS_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
-        return list;
-      }
-    } catch (e) {
-      console.warn("Could not fetch registrations from Firestore:", e.message || e);
+      const snap = await getDocs(collection(firebaseFirestore, name));
+      return snap.docs.map((d) => ({ _docId: d.id, ...d.data() }));
+    } catch (err) {
+      throw friendlyError(err, `Could not load ${name}.`);
     }
   }
-
-  return [];
+  return demoList(name);
 }
 
-/**
- * Save payment record
- */
-async function savePaymentRecord(payment) {
-  const payments = await getAllPayments();
-  const index = payments.findIndex((p) => p.paymentId === payment.paymentId);
-  if (index >= 0) {
-    payments[index] = payment;
+export function getRegisteredAttendees() {
+  return listCollection("users");
+}
+
+export function getAllTeams() {
+  return listCollection("teams");
+}
+
+export function getAllPayments() {
+  return listCollection("payments");
+}
+
+export function getAllRegistrations() {
+  return listCollection("registrations");
+}
+
+export function getAllQueries() {
+  return listCollection("queries");
+}
+
+async function setPaymentStatus(payment, status, extra) {
+  const admin = requireAdmin();
+  const patch = { status, ...extra };
+  const regPatch = { payment_status: status };
+  const teamPatch = payment.teamId ? { paymentStatus: status === PAYMENT_STATUS.VERIFIED ? "paid" : status } : null;
+  const regId = registrationId(payment.eventId, payment.payerUid);
+
+  if (isLive()) {
+    const { doc, writeBatch } = fsMod;
+    const batch = writeBatch(firebaseFirestore);
+    batch.update(doc(firebaseFirestore, "payments", payment.paymentId), patch);
+    batch.set(doc(firebaseFirestore, "registrations", regId), regPatch, { merge: true });
+    if (teamPatch) batch.set(doc(firebaseFirestore, "teams", payment.teamId), teamPatch, { merge: true });
+    try {
+      await batch.commit();
+    } catch (err) {
+      throw friendlyError(err, "Could not update the payment.");
+    }
   } else {
-    payments.unshift(payment);
+    demoUpdate("payments", payment.paymentId, patch);
+    demoUpdate("registrations", regId, regPatch);
+    if (teamPatch) demoUpdate("teams", payment.teamId, teamPatch);
   }
+  return { success: true, payment: { ...payment, ...patch }, admin: admin.email };
+}
 
+export async function approvePayment(payment) {
+  const admin = requireAdmin();
+  return setPaymentStatus(payment, PAYMENT_STATUS.VERIFIED, {
+    verifiedAt: nowIso(),
+    verifiedBy: admin.email,
+    rejectionReason: null,
+  });
+}
+
+export async function rejectPayment(payment, reason = "UTR not found / payment not received") {
+  const admin = requireAdmin();
+  return setPaymentStatus(payment, PAYMENT_STATUS.REJECTED, {
+    rejectionReason: cleanText(reason, 200),
+    rejectedAt: nowIso(),
+    rejectedBy: admin.email,
+  });
+}
+
+// ----------------------------------------------------------------------------
+// DEMO MODE (only when Firebase is not configured)
+// ----------------------------------------------------------------------------
+
+function demoDb() {
   try {
-    localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(payments));
-  } catch (e) {}
-
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
-      .then(({ doc, setDoc }) => withTimeout(setDoc(doc(firebaseFirestore, "payments", payment.paymentId), payment, { merge: true }), 1500))
-      .catch((e) => console.warn("Firestore payments save note:", e.message || e));
+    return JSON.parse(localStorage.getItem(DEMO_DB_KEY)) || {};
+  } catch (e) {
+    return {};
   }
 }
 
-/**
- * Fetch all teams (for Admin & Teammate Lookups)
- */
-export async function getAllTeams() {
+function demoSave(db) {
   try {
-    const raw = localStorage.getItem(TEAMS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
+    localStorage.setItem(DEMO_DB_KEY, JSON.stringify(db));
   } catch (e) {}
-
-  await initFirebase();
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    try {
-      const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      const snap = await withTimeout(getDocs(collection(firebaseFirestore, "teams")), 1500);
-      const list = [];
-      snap.forEach((d) => list.push(d.data()));
-      if (list.length > 0) {
-        try { localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
-        return list;
-      }
-    } catch (e) {
-      console.warn("Could not fetch teams from Firestore, using local cache:", e.message || e);
-    }
-  }
-
-  const demoTeams = getDemoTeams();
-  try { localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(demoTeams)); } catch (e) {}
-  return demoTeams;
 }
 
-/**
- * Fetch all payments (for Admin Payment Verification)
- */
-export async function getAllPayments() {
+function demoGet(col, id) {
+  return (demoDb()[col] || {})[id] || null;
+}
+
+function demoSet(col, id, data) {
+  const db = demoDb();
+  db[col] = db[col] || {};
+  db[col][id] = data;
+  demoSave(db);
+}
+
+function demoUpdate(col, id, patch) {
+  const existing = demoGet(col, id);
+  if (existing) demoSet(col, id, { ...existing, ...patch });
+}
+
+function demoList(col) {
+  return Object.values(demoDb()[col] || {});
+}
+
+function persistDemoUser() {
+  if (isLive() || !currentUser) return;
   try {
-    const raw = localStorage.getItem(PAYMENTS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(currentUser));
   } catch (e) {}
+}
 
-  await initFirebase();
-  const config = getFirebaseConfig();
-  const user = getCurrentUser();
-  if (isFirebaseConfigured(config) && firebaseFirestore && !user?.isDemo) {
-    try {
-      const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      const snap = await withTimeout(getDocs(collection(firebaseFirestore, "payments")), 1500);
-      const list = [];
-      snap.forEach((d) => list.push(d.data()));
-      if (list.length > 0) {
-        try { localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
-        return list;
-      }
-    } catch (e) {
-      console.warn("Could not fetch payments from Firestore, using local cache:", e.message || e);
-    }
+function demoSignIn(extra = {}) {
+  const email = cleanText(extra.email || "demo.attendee@example.com");
+  const existing = demoGet("users", "demo_" + slugify(email));
+  if (existing) {
+    currentUser = { ...existing };
+    persistDemoUser();
+    notifyListeners();
+    return { success: true, user: currentUser, isDemo: true };
   }
-
-  const demoPayments = getDemoPayments();
-  try { localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(demoPayments)); } catch (e) {}
-  return demoPayments;
+  currentUser = {
+    uid: "demo_" + slugify(email),
+    displayName: cleanText(extra.displayName || "Demo Attendee"),
+    email,
+    photoURL: "/images/icons/textFace.svg",
+    role: isAdminUser(email) ? "admin" : "attendee",
+    college: cleanText(extra.college),
+    phone: cleanPhone(extra.phone),
+    registeredEvents: [],
+    registeredEventIds: [],
+    isDemo: true,
+  };
+  demoSet("users", currentUser.uid, { ...currentUser });
+  persistDemoUser();
+  notifyListeners();
+  return { success: true, user: currentUser, isDemo: true };
 }
-
-/**
- * Admin: Approve payment and issue verified pass
- */
-export async function approvePayment(paymentId) {
-  const activeUser = getCurrentUser();
-  if (!activeUser || !isAdminUser(activeUser.email)) {
-    throw new Error("Unauthorized: Admin privileges required.");
-  }
-
-  const payments = await getAllPayments();
-  const payment = payments.find((p) => p.paymentId === paymentId);
-  if (!payment) throw new Error("Payment record not found.");
-
-  payment.status = "verified";
-  payment.verifiedAt = new Date().toISOString();
-  payment.verifiedBy = activeUser.email;
-
-  await savePaymentRecord(payment);
-
-  // If team payment, update team payment status to paid
-  if (payment.teamId) {
-    const teams = await getAllTeams();
-    const team = teams.find((t) => t.teamId === payment.teamId);
-    if (team) {
-      team.paymentStatus = "paid";
-      await saveTeamRecord(team);
-    }
-  }
-
-  return { success: true, payment };
-}
-
-/**
- * Admin: Reject payment
- */
-export async function rejectPayment(paymentId, reason = "Invalid UTR / Payment Not Received") {
-  const activeUser = getCurrentUser();
-  if (!activeUser || !isAdminUser(activeUser.email)) {
-    throw new Error("Unauthorized: Admin privileges required.");
-  }
-
-  const payments = await getAllPayments();
-  const payment = payments.find((p) => p.paymentId === paymentId);
-  if (!payment) throw new Error("Payment record not found.");
-
-  payment.status = "rejected";
-  payment.rejectionReason = reason;
-  payment.rejectedAt = new Date().toISOString();
-  payment.rejectedBy = activeUser.email;
-
-  await savePaymentRecord(payment);
-  return { success: true, payment };
-}
-
-function generateTeamCode(name) {
-  const clean = name.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "FEST";
-  const num = Math.floor(100 + Math.random() * 900);
-  return `${clean}-${num}`;
-}
-
-export function getDemoTeams() {
-  return [
-    {
-      teamId: "team_ai_hack_01",
-      teamCode: "BYTE-408",
-      eventId: "ai-hackathon",
-      eventName: "AI Innovation Hackathon",
-      teamName: "ByteBusters",
-      leaderUid: "usr_101",
-      leaderName: "Aditya Sharma",
-      leaderEmail: "chaitanyahptu@gmail.com",
-      leaderPhone: "+91 98160 00001",
-      college: "HPTU Hamirpur",
-      members: [
-        { uid: "usr_101", name: "Aditya Sharma", email: "chaitanyahptu@gmail.com", phone: "+91 98160 00001", college: "HPTU Hamirpur", role: "Leader" },
-        { uid: "usr_102", name: "Rohan Verma", email: "rohan.v@hptu.ac.in", phone: "+91 98162 11223", college: "HPTU Campus", role: "Member" },
-      ],
-      teamSize: 2,
-      maxTeamSize: 4,
-      paymentStatus: "paid",
-      paymentId: "pay_demo_01",
-      registeredAt: "2026-03-20T10:00:00Z",
-    },
-    {
-      teamId: "team_robo_01",
-      teamCode: "TITN-912",
-      eventId: "robowars-30kg",
-      eventName: "RoboWars: 30kg Metal Clash",
-      teamName: "Steel Titans",
-      leaderUid: "usr_104",
-      leaderName: "Amit Kumar",
-      leaderEmail: "amit.k@uiit.ac.in",
-      leaderPhone: "+91 98050 33221",
-      college: "UIIT Shimla",
-      members: [
-        { uid: "usr_104", name: "Amit Kumar", email: "amit.k@uiit.ac.in", phone: "+91 98050 33221", college: "UIIT Shimla", role: "Leader" },
-        { uid: "usr_105", name: "Vikas Rana", email: "vikas@hptu.ac.in", phone: "+91 98050 44556", college: "HPTU Hamirpur", role: "Member" },
-        { uid: "usr_106", name: "Sahil J.", email: "sahil@hptu.ac.in", phone: "+91 94183 22110", college: "HPTU Hamirpur", role: "Member" },
-      ],
-      teamSize: 3,
-      maxTeamSize: 5,
-      paymentStatus: "pending",
-      paymentId: "pay_demo_02",
-      registeredAt: "2026-03-20T11:45:00Z",
-    },
-  ];
-}
-
-export function getDemoPayments() {
-  return [
-    {
-      paymentId: "pay_demo_01",
-      eventId: "ai-hackathon",
-      eventTitle: "AI Innovation Hackathon",
-      teamId: "team_ai_hack_01",
-      teamName: "ByteBusters",
-      payerUid: "usr_101",
-      payerName: "Aditya Sharma",
-      payerEmail: "chaitanyahptu@gmail.com",
-      payerPhone: "+91 98160 00001",
-      amount: 400,
-      method: "upi_qr",
-      transactionRef: "408192837192",
-      status: "verified",
-      createdAt: "2026-03-20T10:02:00Z",
-      verifiedAt: "2026-03-20T10:15:00Z",
-      verifiedBy: "chaitanyahptu@gmail.com",
-    },
-    {
-      paymentId: "pay_demo_02",
-      eventId: "robowars-30kg",
-      eventTitle: "RoboWars: 30kg Metal Clash",
-      teamId: "team_robo_01",
-      teamName: "Steel Titans",
-      payerUid: "usr_104",
-      payerName: "Amit Kumar",
-      payerEmail: "amit.k@uiit.ac.in",
-      payerPhone: "+91 98050 33221",
-      amount: 500,
-      method: "upi_qr",
-      transactionRef: "408189320114",
-      status: "pending_verification",
-      createdAt: "2026-03-20T11:46:00Z",
-      verifiedAt: null,
-      verifiedBy: null,
-    },
-    {
-      paymentId: "pay_demo_03",
-      eventId: "valorant-5v5",
-      eventTitle: "Valorant 5v5 Campus Warfare",
-      teamId: "team_val_01",
-      teamName: "Phantom Phantoms",
-      payerUid: "usr_103",
-      payerName: "Priya Thakur",
-      payerEmail: "priya.thakur@gmail.com",
-      payerPhone: "+91 94180 55443",
-      amount: 500,
-      method: "upi_qr",
-      transactionRef: "408177492019",
-      status: "pending_verification",
-      createdAt: "2026-03-20T12:20:00Z",
-      verifiedAt: null,
-      verifiedBy: null,
-    },
-  ];
-}
-
-

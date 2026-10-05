@@ -8,16 +8,26 @@ import {
   signInWithGoogle,
   signOutUser,
   getCurrentUser,
+  updateMyProfile,
   getRegisteredAttendees,
-  getDemoAttendees,
   subscribeAuthState,
   getAllTeams,
   getAllPayments,
+  getAllRegistrations,
   approvePayment,
   rejectPayment,
 } from "./auth-service.js";
-import { isFirebaseConfigured, getFirebaseConfig, isAdminUser } from "./firebase-config.js";
+import { isFirebaseConfigured, isAdminUser } from "./firebase-config.js";
 import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
+import { getEventById } from "./events-data.js";
+import { FEST_CONFIG, escapeHtml as e } from "./fest-config.js";
+
+const DEMO_BANNER = `
+  <div class="chaitanya-modal-banner">
+    <span>⚡</span>
+    <div><strong>Demo mode:</strong> Firebase is not configured, so data is stored only in this browser.</div>
+  </div>
+`;
 
 // Google G SVG logo
 const GOOGLE_ICON_SVG = `
@@ -115,6 +125,9 @@ export function initAuthModal() {
 
 export function syncNavbarAuthState(user) {
   if (typeof document === "undefined") return;
+
+  // Admin nav links are hidden by CSS unless the signed-in user is an admin.
+  document.documentElement.classList.toggle("is-fest-admin", Boolean(user && isAdminUser(user.email)));
 
   const registerLinks = document.querySelectorAll('a[href="#register"], a[href="#profile"], a[href="/register"], a[href="/profile"]');
   const loginLinks = document.querySelectorAll('a[href="#login"], a[href="#logout"], a[href="/login"], a[href="/logout"]');
@@ -254,109 +267,72 @@ async function renderModalContent() {
  * 1. Login View
  */
 function renderLoginView(container, isConfigured) {
-  const bannerHtml = isConfigured
-    ? ""
-    : `
-      <div class="chaitanya-modal-banner">
-        <span>⚡</span>
-        <div><strong>Firebase Config Notice:</strong> Running in Demo Mode. Connect your Firebase credentials in <code>_nuxt/firebase-config.js</code> for live Cloud Firestore sync.</div>
-      </div>
-    `;
-
   container.innerHTML = `
     <div class="chaitanya-modal-header">
       <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Portal ]</div>
       <h2 class="chaitanya-modal-title">Sign In</h2>
-      <p class="chaitanya-modal-subtitle">Access your fest pass, registered hackathons, and event schedule.</p>
+      <p class="chaitanya-modal-subtitle">Sign in with Google to register for events and view your entry passes.</p>
     </div>
 
-    ${bannerHtml}
+    ${isConfigured ? "" : DEMO_BANNER}
 
-    <div id="auth-error-box" style="display:none;" class="chaitanya-modal-banner warning"></div>
+    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
 
     <button type="button" class="btn-google-auth" id="btn-do-google-login">
       ${GOOGLE_ICON_SVG}
       <span>[ Continue with Google ]</span>
     </button>
 
-    <div class="chaitanya-divider">
-      <span>New Attendee?</span>
-    </div>
+    <div class="chaitanya-divider"><span>New here?</span></div>
 
     <div class="chaitanya-modal-footer">
-      Need to register for events? 
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Register Here ]</button>
+      First time? Signing in creates your account.
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Add college & phone ]</button>
     </div>
   `;
 
   const btnLogin = container.querySelector("#btn-do-google-login");
-  const btnSwitch = container.querySelector("#btn-switch-to-register");
+  btnLogin.addEventListener("click", async () => {
+    setBusy(btnLogin, true, "Connecting to Google...");
+    try {
+      await signInWithGoogle();
+      closeAuthModal();
+    } catch (err) {
+      showAuthError(err.message || "Google sign-in failed.");
+      setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`);
+    }
+  });
 
-  if (btnLogin) {
-    btnLogin.addEventListener("click", async () => {
-      btnLogin.innerHTML = `<span>Connecting to Google...</span>`;
-      btnLogin.style.pointerEvents = "none";
-      try {
-        await signInWithGoogle();
-        closeAuthModal();
-      } catch (err) {
-        showAuthError(err.message || "Google Authentication failed");
-        btnLogin.innerHTML = `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`;
-        btnLogin.style.pointerEvents = "auto";
-      }
-    });
-  }
-
-  if (btnSwitch) {
-    btnSwitch.addEventListener("click", () => {
-      openAuthModal("register");
-    });
-  }
+  container.querySelector("#btn-switch-to-register").addEventListener("click", () => openAuthModal("register"));
 }
 
 /**
  * 2. Register View
  */
 function renderRegisterView(container, isConfigured) {
-  const bannerHtml = isConfigured
-    ? ""
-    : `
-      <div class="chaitanya-modal-banner">
-        <span>⚡</span>
-        <div><strong>Demo Mode Active:</strong> You can test registration instantly. Attendee records sync directly to Firestore when live keys are configured.</div>
-      </div>
-    `;
-
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Fest Enrollment ]</div>
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Create Account ]</div>
       <h2 class="chaitanya-modal-title">Register</h2>
-      <p class="chaitanya-modal-subtitle">Enroll as a participant for technical, cultural, and esports events.</p>
+      <p class="chaitanya-modal-subtitle">Create your fest account, then pick events on the Events page.</p>
     </div>
 
-    ${bannerHtml}
+    ${isConfigured ? "" : DEMO_BANNER}
 
-    <div id="auth-error-box" style="display:none;" class="chaitanya-modal-banner warning"></div>
+    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
 
-    <form id="attendee-register-form">
+    <form id="attendee-register-form" novalidate>
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">College / University</label>
-        <input type="text" id="reg-college" class="chaitanya-form-input" placeholder="e.g. HPTU Hamirpur / NIT / UIIT" required />
-      </div>
-
-      <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">Contact No</label>
-        <input type="tel" id="reg-phone" class="chaitanya-form-input" placeholder="e.g. +91 98765 43210" required />
+        <label class="chaitanya-form-label" for="reg-college">College / University *</label>
+        <input type="text" id="reg-college" class="chaitanya-form-input" maxlength="120" autocomplete="organization" placeholder="e.g. HPTU Hamirpur" />
       </div>
 
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">Event Category Interest</label>
-        <input type="text" id="reg-events" class="chaitanya-form-input" placeholder="e.g. Technical AI Hackathon, Esports" />
+        <label class="chaitanya-form-label" for="reg-phone">Contact No (WhatsApp) *</label>
+        <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
       </div>
 
-      <div class="chaitanya-divider">
-        <span>Verify & Link Identity</span>
-      </div>
+      <div class="chaitanya-divider"><span>Verify with Google</span></div>
 
       <button type="submit" class="btn-google-auth" id="btn-do-google-register">
         ${GOOGLE_ICON_SVG}
@@ -365,1086 +341,668 @@ function renderRegisterView(container, isConfigured) {
     </form>
 
     <div class="chaitanya-modal-footer">
-      Already registered? 
+      Already registered?
       <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">[ Sign In ]</button>
     </div>
   `;
 
   const form = container.querySelector("#attendee-register-form");
-  const btnSwitch = container.querySelector("#btn-switch-to-login");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const college = container.querySelector("#reg-college").value.trim();
+    const phone = container.querySelector("#reg-phone").value.trim();
+    if (!college) return showAuthError("Please enter your college / university.");
+    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Please enter a valid contact number.");
 
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const college = container.querySelector("#reg-college")?.value || "";
-      const phone = container.querySelector("#reg-phone")?.value || "";
-      const eventsStr = container.querySelector("#reg-events")?.value || "";
-      const registeredEvents = eventsStr ? [eventsStr] : ["Chaitanya Fest General Pass"];
+    const btn = container.querySelector("#btn-do-google-register");
+    setBusy(btn, true, "Registering via Google...");
+    try {
+      await signInWithGoogle({ college, phone });
+      closeAuthModal();
+    } catch (err) {
+      showAuthError(err.message || "Registration failed.");
+      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`);
+    }
+  });
 
-      const btn = container.querySelector("#btn-do-google-register");
-      btn.innerHTML = `<span>Registering via Google...</span>`;
-      btn.style.pointerEvents = "none";
-
-      try {
-        await signInWithGoogle({ college, phone, registeredEvents });
-        closeAuthModal();
-      } catch (err) {
-        showAuthError(err.message || "Registration failed");
-        btn.innerHTML = `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`;
-        btn.style.pointerEvents = "auto";
-      }
-    });
-  }
-
-  if (btnSwitch) {
-    btnSwitch.addEventListener("click", () => {
-      openAuthModal("login");
-    });
-  }
+  container.querySelector("#btn-switch-to-login").addEventListener("click", () => openAuthModal("login"));
 }
 
 /**
  * 3. User Profile View
  */
 function renderProfileView(container, user) {
-  const eventsHtml = (user.registeredEvents && user.registeredEvents.length > 0)
-    ? user.registeredEvents.map((ev) => `<span class="profile-event-chip">${ev}</span>`).join("")
-    : `<span style="font-family:IBM Plex Mono; font-size:11px; color:#888;">No events registered yet</span>`;
-
-  const roleClass = user.role === "admin" ? "admin" : "";
+  const events = user.registeredEvents || [];
+  const eventsHtml = events.length
+    ? events.map((ev) => `<span class="profile-event-chip">${e(ev)}</span>`).join("")
+    : `<span class="profile-empty">No events yet — <a href="/events">browse events</a></span>`;
+  const admin = isAdminUser(user.email);
 
   container.innerHTML = `
     <div class="profile-avatar-row">
-      <img src="${user.photoURL || '/images/icons/textFace.svg'}" alt="Avatar" class="profile-avatar" />
-      <h3 class="profile-name">${user.displayName || "Participant"}</h3>
-      <p class="profile-email">${user.email}</p>
-      <span class="profile-role-badge ${roleClass}">[ ${user.role || 'ATTENDEE'} ]</span>
+      <img src="${e(user.photoURL || "/images/icons/textFace.svg")}" alt="" class="profile-avatar" referrerpolicy="no-referrer" />
+      <h3 class="profile-name">${e(user.displayName || "Participant")}</h3>
+      <p class="profile-email">${e(user.email)}</p>
+      <span class="profile-role-badge ${admin ? "admin" : ""}">[ ${admin ? "ADMIN" : "ATTENDEE"} ]</span>
     </div>
 
-    <div class="profile-meta-card">
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">College</span>
-        <span class="profile-meta-val">${user.college || "Himachal Pradesh Technical University"}</span>
+    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
+
+    <form id="profile-edit-form" class="profile-meta-card" novalidate>
+      <div class="chaitanya-form-group">
+        <label class="chaitanya-form-label" for="profile-college">College</label>
+        <input type="text" id="profile-college" class="chaitanya-form-input" maxlength="120" value="${e(user.college || "")}" placeholder="Add your college" />
       </div>
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">Phone</span>
-        <span class="profile-meta-val">${user.phone || "+91 Contact Verified"}</span>
+      <div class="chaitanya-form-group">
+        <label class="chaitanya-form-label" for="profile-phone">Phone</label>
+        <input type="tel" id="profile-phone" class="chaitanya-form-input" maxlength="20" value="${e(user.phone || "")}" placeholder="Add a contact number" />
       </div>
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">Status</span>
-        <span class="profile-meta-val">✓ Active Fest Pass</span>
-      </div>
-    </div>
+      <button type="submit" class="chaitanya-link-btn" id="btn-save-profile">[ Save details ]</button>
+    </form>
 
     <div class="chaitanya-form-group">
-      <label class="chaitanya-form-label">Registered Fest Events</label>
-      <div class="profile-events-list">
-        ${eventsHtml}
-      </div>
+      <span class="chaitanya-form-label">Registered events</span>
+      <div class="profile-events-list">${eventsHtml}</div>
     </div>
 
-    ${user.role === "admin" ? `
+    ${admin ? `
       <button type="button" class="btn-google-auth" id="btn-open-admin-from-profile" style="margin-top:16px;">
         <span>[ Open Admin Dashboard ]</span>
-      </button>
-    ` : ''}
+      </button>` : ""}
 
-    <button type="button" class="btn-secondary-action" id="btn-do-sign-out">
-      [ Sign Out of Account ]
-    </button>
+    <button type="button" class="btn-secondary-action" id="btn-do-sign-out">[ Sign Out ]</button>
   `;
 
-  const btnSignOut = container.querySelector("#btn-do-sign-out");
-  if (btnSignOut) {
-    btnSignOut.addEventListener("click", async () => {
-      await signOutUser();
-      closeAuthModal();
-    });
-  }
+  container.querySelector("#profile-edit-form").addEventListener("submit", async (evt) => {
+    evt.preventDefault();
+    const btn = container.querySelector("#btn-save-profile");
+    btn.textContent = "[ Saving... ]";
+    try {
+      await updateMyProfile({
+        college: container.querySelector("#profile-college").value,
+        phone: container.querySelector("#profile-phone").value,
+      });
+      btn.textContent = "[ ✓ Saved ]";
+    } catch (err) {
+      showAuthError(err.message || "Could not save your details.");
+      btn.textContent = "[ Save details ]";
+    }
+  });
+
+  container.querySelector("#btn-do-sign-out").addEventListener("click", async () => {
+    await signOutUser();
+    closeAuthModal();
+  });
 
   const btnAdmin = container.querySelector("#btn-open-admin-from-profile");
-  if (btnAdmin) {
-    btnAdmin.addEventListener("click", () => {
-      openAuthModal("admin");
-    });
-  }
+  if (btnAdmin) btnAdmin.addEventListener("click", () => openAuthModal("admin"));
 }
 
 /**
- * 4. Admin Panel View
+ * 4. Admin Dashboard
  */
 async function renderAdminView(container, user) {
   const card = document.getElementById("chaitanya-modal-content");
 
-  // 1. Not signed in: Prompt specifically for chaitanyahptu@gmail.com
   if (!user) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ 401 • Security Verification ]</div>
+        <div class="chaitanya-modal-tag">[ Admin ]</div>
         <h2 class="chaitanya-modal-title">Admin Access</h2>
-        <p class="chaitanya-modal-subtitle">Administrator dashboard is restricted exclusively to chaitanyahptu@gmail.com</p>
+        <p class="chaitanya-modal-subtitle">Sign in with an authorised fest administrator Google account.</p>
       </div>
-      <div class="chaitanya-modal-banner warning">
-        <span>🔒</span>
-        <div>Fest administrative tools require signing in with <strong>chaitanyahptu@gmail.com</strong>.</div>
-      </div>
+      <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
       <button type="button" class="btn-google-auth" id="btn-admin-signin">
-        ${GOOGLE_ICON_SVG}
-        <span>[ Sign In with chaitanyahptu@gmail.com ]</span>
+        ${GOOGLE_ICON_SVG}<span>[ Sign In with Google ]</span>
       </button>
-      <div class="chaitanya-modal-footer">
-        Not an administrator? 
-        <button type="button" class="chaitanya-link-btn" id="btn-admin-to-login">[ Attendee Sign In ]</button>
-      </div>
     `;
-
-    const btn = container.querySelector("#btn-admin-signin");
-    if (btn) {
-      btn.addEventListener("click", async () => {
-        try {
-          await signInWithGoogle({
-            email: "chaitanyahptu@gmail.com",
-            displayName: "Fest Administrator",
-          });
-          renderAdminView(container, getCurrentUser());
-        } catch (e) {
-          showAuthError(e.message);
-        }
-      });
-    }
-
-    const btnLogin = container.querySelector("#btn-admin-to-login");
-    if (btnLogin) {
-      btnLogin.addEventListener("click", () => {
-        openAuthModal("login");
-      });
-    }
+    container.querySelector("#btn-admin-signin").addEventListener("click", async () => {
+      try {
+        await signInWithGoogle();
+        renderAdminView(container, getCurrentUser());
+      } catch (err) {
+        showAuthError(err.message);
+      }
+    });
     return;
   }
 
-  // 2. Signed in, but NOT authorized as chaitanyahptu@gmail.com -> 403 Access Denied
   if (!isAdminUser(user.email)) {
     if (card) card.classList.remove("admin-wide");
     container.innerHTML = `
       <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ 403 • ACCESS RESTRICTED ]</div>
+        <div class="chaitanya-modal-tag">[ 403 • Access Restricted ]</div>
         <h2 class="chaitanya-modal-title">Access Denied</h2>
-        <p class="chaitanya-modal-subtitle">Administrator privileges are restricted exclusively to chaitanyahptu@gmail.com</p>
+        <p class="chaitanya-modal-subtitle">${e(user.email)} is not a fest administrator account.</p>
       </div>
-
-      <div class="chaitanya-modal-banner danger">
-        <span>⛔</span>
-        <div>
-          Currently signed in as <strong>${user.email}</strong>. This account does not possess fest administrator privileges.
-        </div>
-      </div>
-
-      <div class="profile-meta-card" style="margin-bottom:20px;">
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Active Account</span>
-          <span class="profile-meta-val">${user.displayName || "Attendee"}</span>
-        </div>
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Account Role</span>
-          <span class="profile-meta-val">${(user.role || 'ATTENDEE').toUpperCase()}</span>
-        </div>
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Authorized Admin</span>
-          <span class="profile-meta-val">chaitanyahptu@gmail.com</span>
-        </div>
-      </div>
-
-      <button type="button" class="btn-google-auth" id="btn-switch-admin-account">
-        ${GOOGLE_ICON_SVG}
-        <span>[ Switch to chaitanyahptu@gmail.com ]</span>
-      </button>
-
-      <button type="button" class="btn-secondary-action" id="btn-denied-return-profile" style="margin-top:12px;">
-        [ Return to My Profile ]
-      </button>
+      <button type="button" class="btn-secondary-action" id="btn-denied-return-profile">[ Back to My Profile ]</button>
     `;
-
-    const btnSwitch = container.querySelector("#btn-switch-admin-account");
-    if (btnSwitch) {
-      btnSwitch.addEventListener("click", async () => {
-        try {
-          await signOutUser();
-          await signInWithGoogle({
-            email: "chaitanyahptu@gmail.com",
-            displayName: "Fest Administrator",
-          });
-          renderAdminView(container, getCurrentUser());
-        } catch (e) {
-          showAuthError(e.message);
-        }
-      });
-    }
-
-    const btnReturn = container.querySelector("#btn-denied-return-profile");
-    if (btnReturn) {
-      btnReturn.addEventListener("click", () => {
-        openAuthModal("profile");
-      });
-    }
+    container.querySelector("#btn-denied-return-profile").addEventListener("click", () => openAuthModal("profile"));
     return;
   }
 
-  // 3. Authorized Admin: render wide administrative dashboard
   if (card) card.classList.add("admin-wide");
-
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin ]</div>
       <h2 class="chaitanya-modal-title">Fest Command Center</h2>
-      <p class="chaitanya-modal-subtitle">Authorized Admin: ${user.email}</p>
     </div>
-    <div style="text-align:center; padding: 20px; font-family:IBM Plex Mono;">
-      Loading fest database...
-    </div>
+    <div class="admin-loading">Loading fest database...</div>
   `;
 
-  let attendees = [];
-  let teams = [];
-  let payments = [];
+  const state = {
+    tab: "payments",
+    attendees: [],
+    teams: [],
+    payments: [],
+    registrations: [],
+    errors: [],
+    devServer: false,
+  };
 
+  const results = await Promise.allSettled([
+    getRegisteredAttendees(),
+    getAllTeams(),
+    getAllPayments(),
+    getAllRegistrations(),
+  ]);
+  ["attendees", "teams", "payments", "registrations"].forEach((key, idx) => {
+    const r = results[idx];
+    if (r.status === "fulfilled") state[key] = r.value || [];
+    else state.errors.push(`${key}: ${r.reason?.message || r.reason}`);
+  });
+
+  // The Redis tab only makes sense on the local Python dev server.
   try {
-    const [attRes, teamRes, payRes] = await Promise.all([
-      getRegisteredAttendees().catch(() => []),
-      getAllTeams().catch(() => []),
-      getAllPayments().catch(() => []),
-    ]);
-    attendees = attRes && attRes.length ? attRes : getDemoAttendees();
-    teams = teamRes && teamRes.length ? teamRes : [];
-    payments = payRes && payRes.length ? payRes : [];
-  } catch (err) {
-    console.warn("Could not load admin data:", err);
-    attendees = getDemoAttendees();
-  }
+    const res = await fetch("/api/health", { cache: "no-store" });
+    state.devServer = res.ok && (res.headers.get("content-type") || "").includes("json");
+  } catch {}
 
-  let adminActiveTab = "attendees";
-
-  function renderAdminTabContent() {
-    let statsHtml = "";
-    let tableHtml = "";
-    const pendingPayments = payments.filter((p) => (p.status || "").toLowerCase().includes("pending"));
-
-    if (adminActiveTab === "attendees") {
-      const totalUsers = attendees.length;
-      const colleges = new Set(attendees.map((a) => a.college).filter(Boolean)).size;
-      const totalEvents = attendees.reduce(
-        (acc, a) => acc + (a.registeredEvents?.length || 0),
-        0,
-      );
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalUsers}</div>
-            <div class="admin-stat-label">Registered Attendees</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${colleges || 1}</div>
-            <div class="admin-stat-label">Colleges Represented</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalEvents}</div>
-            <div class="admin-stat-label">Event Entries</div>
-          </div>
-        </div>
-      `;
-
-      const rows = attendees
-        .map(
-          (a) => `
-          <tr>
-            <td><strong>${a.displayName || "Unknown"}</strong></td>
-            <td>${a.email || "-"}</td>
-            <td>${a.college || "HPTU"}</td>
-            <td>${a.phone || "-"}</td>
-            <td><span class="profile-role-badge ${a.role === "admin" ? "admin" : ""}" style="font-size:9px; padding:2px 8px;">${a.role || "attendee"}</span></td>
-            <td>${(a.registeredEvents || []).join(", ") || "General Pass"}</td>
-          </tr>
-        `,
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>College</th>
-                <th>Contact</th>
-                <th>Role</th>
-                <th>Events</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No attendees registered yet</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "teams") {
-      const totalTeams = teams.length;
-      const totalMembers = teams.reduce((acc, t) => acc + (t.members ? t.members.length : 1), 0);
-      const eventsCount = new Set(teams.map((t) => t.eventName).filter(Boolean)).size;
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalTeams}</div>
-            <div class="admin-stat-label">Registered Squads</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalMembers}</div>
-            <div class="admin-stat-label">Total Squad Members</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${eventsCount}</div>
-            <div class="admin-stat-label">Active Arenas</div>
-          </div>
-        </div>
-      `;
-
-      const rows = teams
-        .map(
-          (t) => `
-          <tr>
-            <td><strong>${t.teamName || "Squad"}</strong></td>
-            <td><code style="background:#000; color:#fff; padding:2px 6px; border-radius:4px;">${t.teamCode || "-"}</code></td>
-            <td>${t.eventName || "-"}</td>
-            <td>${t.leaderName || "-"} (${t.leaderEmail || "-"})</td>
-            <td>${t.members ? t.members.length : 1} / ${t.maxTeamSize || 4}</td>
-            <td><span class="badge-status ${t.paymentStatus || "free"}">${(t.paymentStatus || "free").toUpperCase()}</span></td>
-          </tr>
-        `,
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Squad Name</th>
-                <th>Team Code</th>
-                <th>Arena / Event</th>
-                <th>Leader (Contact)</th>
-                <th>Size</th>
-                <th>Payment</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No squads registered yet</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "payments") {
-      const totalPay = payments.length;
-      const pendingCount = pendingPayments.length;
-      const totalVolume = payments
-        .filter((p) => (p.status || "").toLowerCase() === "verified")
-        .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">₹${totalVolume.toLocaleString()}</div>
-            <div class="admin-stat-label">Verified Collections</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" style="color:${pendingCount > 0 ? '#b30000' : '#000'}">${pendingCount}</div>
-            <div class="admin-stat-label">Pending Verifications</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalPay}</div>
-            <div class="admin-stat-label">Total Submissions</div>
-          </div>
-        </div>
-      `;
-
-      const rows = payments
-        .map(
-          (p) => {
-            const isPending = (p.status || "").toLowerCase().includes("pending");
-            return `
-          <tr data-payment-row="${p.paymentId}">
-            <td><strong>${p.eventTitle || p.eventName || "Arena Pass"}</strong></td>
-            <td>${p.payerName || p.userName || p.leaderName || "Participant"}<br/><small style="color:#666;">${p.payerEmail || p.userEmail || "-"}</small></td>
-            <td><strong>₹${p.amount || 0}</strong></td>
-            <td><code style="font-size:11px; background:#f0f0f0; padding:2px 4px; border-radius:3px;">${p.transactionRef || p.utrNumber || "N/A"}</code></td>
-            <td><span class="badge-status ${isPending ? "pending" : (p.status || "verified")}" id="status-badge-${p.paymentId}">${(p.status || "pending").toUpperCase()}</span></td>
-            <td id="actions-${p.paymentId}">
-              ${
-                isPending
-                  ? `
-                  <div class="admin-action-btn-group">
-                    <button type="button" class="btn-action-approve" data-id="${p.paymentId}" title="Approve SBI UPI UTR">✓ Approve</button>
-                    <button type="button" class="btn-action-reject" data-id="${p.paymentId}" title="Reject invalid UTR">✕ Reject</button>
-                  </div>
-                `
-                  : `<small style="color:#666;">${p.verifiedBy ? "By " + p.verifiedBy.split("@")[0] : "Completed"}</small>`
-              }
-            </td>
-          </tr>
-        `;
-          },
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Arena</th>
-                <th>Registrant</th>
-                <th>Amount</th>
-                <th>UPI UTR / Ref</th>
-                <th>Status</th>
-                <th>Verification</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No payment records found</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "schema") {
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">9</div>
-            <div class="admin-stat-label">Mapped SQL Tables</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">12</div>
-            <div class="admin-stat-label">Flagship Arenas</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" style="color:#0070f3;">v1.0.0</div>
-            <div class="admin-stat-label">Schema Standard</div>
-          </div>
-        </div>
-      `;
-
-      tableHtml = `
-        <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-family: IBM Plex Mono, monospace;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
-            <div>
-              <h4 style="margin:0 0 4px 0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">SQL to Cloud Firestore Schema Engine</h4>
-              <p style="margin:0; font-size:11px; color:#666;">Source: <code>chaitanya_schema.sql</code> • Project: <code>chaitainya-hptu</code></p>
-            </div>
-            <button type="button" class="btn-google-auth" id="btn-run-schema-seed" style="width:auto; padding:8px 16px; font-size:11px; background:#000; color:#fff; border-color:#000;">
-              <span>[ ⚡ Apply Schema & Seed Events/FAQs to Firebase ]</span>
-            </button>
-          </div>
-          <div id="schema-sync-progress" style="font-size:11px; color:#222; margin-top:8px; display:none; padding:8px 12px; background:#e8f4fd; border-radius:4px;"></div>
-        </div>
-
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>SQL Table</th>
-                <th>Firestore Collection</th>
-                <th>Schema Mapping & Purpose</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>users</code></td>
-                <td><strong><code>/users/{uid}</code></strong></td>
-                <td>Attendee & Admin profiles, university, category, student_id</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>events</code></td>
-                <td><strong><code>/events/{eventId}</code></strong></td>
-                <td>12 Competitions, workshops, timelines, capacity & rules</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>teams</code></td>
-                <td><strong><code>/teams/{teamId}</code></strong></td>
-                <td>Squads with codes (e.g. BYTE-408), leader uid, capacity</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>team_members</code></td>
-                <td><strong><code>/team_members/{id}</code></strong></td>
-                <td>Member mappings with 'leader' or 'member' role</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>registrations</code></td>
-                <td><strong><code>/registrations/{regId}</code></strong></td>
-                <td>Official entry tickets with QR IDs & attendance tracking</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>event_analytics</code></td>
-                <td><strong><code>/event_analytics/{id}</code></strong></td>
-                <td>Real-time registration counters for solo & team events</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>event_daily_analytics</code></td>
-                <td><strong><code>/event_daily_analytics/{id}</code></strong></td>
-                <td>Daily participant registration velocity</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>faqs</code></td>
-                <td><strong><code>/faqs/{faqId}</code></strong></td>
-                <td>Official fest FAQs with publish status and ordering</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>queries</code></td>
-                <td><strong><code>/queries/{queryId}</code></strong></td>
-                <td>Contact form inquiries with status ('open' / 'resolved')</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "redis") {
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-engine" style="color:#00c853; font-size:18px;">Connecting...</div>
-            <div class="admin-stat-label">Cache Engine</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-ratio" style="color:#0070f3;">0.0%</div>
-            <div class="admin-stat-label">Cache Hit Ratio</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-hits">0</div>
-            <div class="admin-stat-label">Total Cache Hits</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-keys">0</div>
-            <div class="admin-stat-label">Cached Keys in RAM</div>
-          </div>
-        </div>
-      `;
-
-      tableHtml = `
-        <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-family: IBM Plex Mono, monospace;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
-            <div>
-              <h4 style="margin:0 0 4px 0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">⚡ Redis High-Speed Asset & API Accelerator</h4>
-              <p style="margin:0; font-size:11px; color:#666;" id="redis-stat-meta">Fetching metrics from /api/cache/stats...</p>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" class="btn-action-view" id="btn-refresh-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ 🔄 Refresh Stats ]
-              </button>
-              <button type="button" class="btn-action-view" id="btn-benchmark-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ 🚀 Test Latency ]
-              </button>
-              <button type="button" class="btn-action-reject" id="btn-purge-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ ⚡ Purge Cache ]
-              </button>
-            </div>
-          </div>
-          <div id="redis-benchmark-result" style="display:none; font-size:11px; padding:10px 14px; background:#111; color:#00ff66; border-radius:4px; font-family:IBM Plex Mono; margin-top:8px;"></div>
-        </div>
-
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Caching Layer</th>
-                <th>Target Assets / Endpoints</th>
-                <th>Header / Mechanism</th>
-                <th>Speed Gain</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Layer 1: Browser Cache</strong></td>
-                <td>3D Models (<code>.glb</code>), Audio, HDRI, Textures</td>
-                <td><code>Cache-Control: public, max-age=31536000, immutable</code></td>
-                <td><span class="badge-status verified">INSTANT (0ms)</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 2: HTTP 304 Validation</strong></td>
-                <td>HTML (<code>/index.html</code>), Scripts, Stylesheets</td>
-                <td><code>ETag: SHA-256</code> + <code>If-None-Match</code> (304 Not Modified)</td>
-                <td><span class="badge-status verified">ZERO BYTES</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 3: Redis RAM Cache</strong></td>
-                <td>Hot Static Assets, Wasm, Draco Decoders</td>
-                <td><code>X-Cache: HIT (Redis)</code> binary memory transfer</td>
-                <td><span class="badge-status verified">&lt; 1ms LATENCY</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 4: Dynamic API Cache</strong></td>
-                <td><code>/api/events</code>, <code>/api/cache/stats</code></td>
-                <td>JSON pre-serialized in Redis with 10m TTL</td>
-                <td><span class="badge-status verified">SUB-MILLISECOND</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 5: Gzip Compression</strong></td>
-                <td>JS bundles, CSS styles, SVG icons, JSON</td>
-                <td><code>Content-Encoding: gzip</code> pre-compressed in Redis</td>
-                <td><span class="badge-status verified">70-80% SMALLER</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    const pendingPaymentsCount = pendingPayments.length;
-
-    return `
-      <div class="admin-tabs-nav">
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "attendees" ? "active" : ""}" data-tab="attendees">
-          [ 01. ATTENDEES (${attendees.length}) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "teams" ? "active" : ""}" data-tab="teams">
-          [ 02. SQUADS & TEAMS (${teams.length}) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "payments" ? "active" : ""}" data-tab="payments">
-          [ 03. UPI PAYMENTS & UTR (${pendingPaymentsCount} PENDING) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "schema" ? "active" : ""}" data-tab="schema">
-          [ 04. SCHEMA & FIREBASE SYNC ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "redis" ? "active" : ""}" data-tab="redis">
-          [ ⚡ 05. REDIS ACCELERATION ]
-        </button>
-      </div>
-      ${statsHtml}
-      ${tableHtml}
-    `;
-  }
-
-  function renderFullAdmin() {
-    container.innerHTML = `
-      <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
-        <h2 class="chaitanya-modal-title">Fest Command Center</h2>
-        <p class="chaitanya-modal-subtitle">Participant database, squad rosters & UPI verification (Admin: ${user.email})</p>
-      </div>
-
-      <div id="admin-tab-container">
-        ${renderAdminTabContent()}
-      </div>
-
-      <div class="admin-export-bar">
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button type="button" class="btn-google-auth" id="btn-export-excel" style="width:auto; padding:8px 16px; font-size:11px; background:#107c41; color:#fff; border-color:#107c41;">
-            <span>[ 📊 Download Master Excel (.xls) ]</span>
-          </button>
-          <button type="button" class="btn-google-auth" id="btn-export-csv" style="width:auto; padding:8px 14px; font-size:11px;">
-            <span>[ 📄 Export CSV ]</span>
-          </button>
-        </div>
-        <button type="button" class="chaitanya-link-btn" id="btn-back-to-profile">
-          [ Return to Profile ]
-        </button>
-      </div>
-    `;
-
-    async function fetchAndRenderRedisStats(rootEl) {
-      if (!rootEl) return;
-      try {
-        const res = await fetch("/api/cache/stats");
-        if (!res.ok) throw new Error("Status " + res.status);
-        const data = await res.json();
-        
-        const elEngine = rootEl.querySelector("#redis-stat-engine");
-        const elRatio = rootEl.querySelector("#redis-stat-ratio");
-        const elHits = rootEl.querySelector("#redis-stat-hits");
-        const elKeys = rootEl.querySelector("#redis-stat-keys");
-        const elMeta = rootEl.querySelector("#redis-stat-meta");
-
-        if (elEngine) {
-          elEngine.textContent = data.redis_connected ? "Redis Server" : "In-Memory";
-          elEngine.style.color = data.redis_connected ? "#00c853" : "#f59e0b";
-        }
-        if (elRatio) elRatio.textContent = (data.hit_ratio_percent || 0) + "%";
-        if (elHits) elHits.textContent = `${data.hits || 0} / ${data.total_requests || 0}`;
-        if (elKeys) elKeys.textContent = data.cached_keys || 0;
-        if (elMeta) {
-          elMeta.innerHTML = `<strong>Engine:</strong> ${data.engine} (${data.redis_connected ? "Connected: " + data.redis_url : "Local Memory Fallback"}) • <strong>Hits:</strong> ${data.hits || 0} • <strong>304 Not-Modified:</strong> ${data.revalidations_304 || 0}`;
-        }
-      } catch (err) {
-        const elMeta = rootEl.querySelector("#redis-stat-meta");
-        if (elMeta) elMeta.textContent = "Could not fetch /api/cache/stats (" + err.message + ")";
-      }
-    }
-
-    // Attach Tab switching listener
-    const tabContainer = container.querySelector("#admin-tab-container");
-    if (tabContainer) {
-      tabContainer.addEventListener("click", async (e) => {
-        const tabBtn = e.target.closest(".admin-tab-btn");
-        if (tabBtn) {
-          const tab = tabBtn.getAttribute("data-tab");
-          if (tab && tab !== adminActiveTab) {
-            adminActiveTab = tab;
-            tabContainer.innerHTML = renderAdminTabContent();
-            if (tab === "redis") {
-              fetchAndRenderRedisStats(tabContainer);
-            }
-          }
-          return;
-        }
-
-        const refreshRedisBtn = e.target.closest("#btn-refresh-redis");
-        if (refreshRedisBtn) {
-          fetchAndRenderRedisStats(tabContainer);
-          return;
-        }
-
-        const purgeRedisBtn = e.target.closest("#btn-purge-redis");
-        if (purgeRedisBtn) {
-          if (!confirm("Are you sure you want to purge all Redis cached assets and API datasets?")) return;
-          purgeRedisBtn.disabled = true;
-          purgeRedisBtn.textContent = "[ ⏳ Purging... ]";
-          try {
-            await fetch("/api/cache/purge", { method: "POST" });
-            await fetchAndRenderRedisStats(tabContainer);
-            alert("✓ Redis cache successfully cleared!");
-          } catch (err) {
-            alert("Cache purge notice: " + err.message);
-          } finally {
-            purgeRedisBtn.disabled = false;
-            purgeRedisBtn.textContent = "[ ⚡ Purge Cache ]";
-          }
-          return;
-        }
-
-        const benchRedisBtn = e.target.closest("#btn-benchmark-redis");
-        if (benchRedisBtn) {
-          const resBox = tabContainer.querySelector("#redis-benchmark-result");
-          if (resBox) {
-            resBox.style.display = "block";
-            resBox.textContent = "⚡ Running 5 concurrent requests against /api/events and static assets...";
-            try {
-              const times = [];
-              for (let i = 0; i < 5; i++) {
-                const t0 = performance.now();
-                await fetch("/api/events?bench=" + Date.now());
-                const t1 = performance.now();
-                times.push(t1 - t0);
-              }
-              const avg = (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1);
-              resBox.innerHTML = `<strong>✓ Cache Speed Benchmark:</strong> 5 requests averaged <strong>${avg}ms</strong>.<br/><small>Cache layer served payload directly with zero database/disk overhead!</small>`;
-              fetchAndRenderRedisStats(tabContainer);
-            } catch (err) {
-              resBox.textContent = "Benchmark error: " + err.message;
-            }
-          }
-          return;
-        }
-
-        const approveBtn = e.target.closest(".btn-action-approve");
-        if (approveBtn) {
-          const id = approveBtn.getAttribute("data-id");
-          approveBtn.disabled = true;
-          approveBtn.textContent = "Verifying...";
-          try {
-            await approvePayment(id);
-            const badge = tabContainer.querySelector(`#status-badge-${id}`);
-            if (badge) {
-              badge.className = "badge-status verified";
-              badge.textContent = "VERIFIED";
-            }
-            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
-            if (actionsCell) {
-              actionsCell.innerHTML = `<span style="color:#155724; font-weight:600; font-size:11px;">✓ Verified</span>`;
-            }
-          } catch (err) {
-            alert("Approval failed: " + err.message);
-            approveBtn.disabled = false;
-            approveBtn.textContent = "✓ Approve";
-          }
-          return;
-        }
-
-        const rejectBtn = e.target.closest(".btn-action-reject");
-        if (rejectBtn) {
-          const id = rejectBtn.getAttribute("data-id");
-          const reason = prompt("Enter rejection reason (or leave default):", "Invalid UTR / Payment Not Received");
-          if (reason === null) return;
-          rejectBtn.disabled = true;
-          rejectBtn.textContent = "Rejecting...";
-          try {
-            await rejectPayment(id, reason);
-            const badge = tabContainer.querySelector(`#status-badge-${id}`);
-            if (badge) {
-              badge.className = "badge-status rejected";
-              badge.textContent = "REJECTED";
-            }
-            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
-            if (actionsCell) {
-              actionsCell.innerHTML = `<span style="color:#721c24; font-weight:600; font-size:11px;">✕ Rejected</span>`;
-            }
-          } catch (err) {
-            alert("Rejection failed: " + err.message);
-            rejectBtn.disabled = false;
-            rejectBtn.textContent = "✕ Reject";
-          }
-          return;
-        }
-
-        const seedBtn = e.target.closest("#btn-run-schema-seed");
-        if (seedBtn) {
-          const progressEl = tabContainer.querySelector("#schema-sync-progress");
-          seedBtn.disabled = true;
-          seedBtn.innerHTML = `<span>[ ⏳ Applying Schema... ]</span>`;
-          if (progressEl) {
-            progressEl.style.display = "block";
-            progressEl.style.background = "#e8f4fd";
-            progressEl.style.color = "#004085";
-            progressEl.textContent = "Connecting to Firebase Cloud Firestore...";
-          }
-          try {
-            const res = await applySchemaToFirestore((p) => {
-              if (progressEl) progressEl.textContent = p.message;
-            });
-            if (progressEl) {
-              progressEl.style.background = "#e6f4ea";
-              progressEl.style.color = "#137333";
-              progressEl.innerHTML = `<strong>✓ Schema Applied Successfully!</strong> Synced ${res.eventsCreated} events, ${res.faqsCreated} FAQs, ${res.analyticsCreated} analytics counters.`;
-            }
-            seedBtn.innerHTML = `<span>[ ✓ Schema Applied ]</span>`;
-          } catch (err) {
-            console.error("Schema sync notice:", err);
-            if (progressEl) {
-              progressEl.style.background = "#fce8e6";
-              progressEl.style.color = "#c5221f";
-              progressEl.innerHTML = `<strong>Notice:</strong> ${err.message}<br/><small style="display:inline-block; margin-top:4px;">If Cloud Firestore is not enabled yet in your Firebase console, visit <a href="https://console.firebase.google.com/project/chaitainya-hptu/firestore" target="_blank" style="color:#000; text-decoration:underline;">Firebase Console > Firestore Database > Create Database</a>.</small>`;
-            }
-            seedBtn.disabled = false;
-            seedBtn.innerHTML = `<span>[ ⚠️ Retry Schema Apply ]</span>`;
-          }
-          return;
-        }
-      });
-    }
-
-    // Export Excel button
-    const btnExcel = container.querySelector("#btn-export-excel");
-    if (btnExcel) {
-      btnExcel.addEventListener("click", () => {
-        exportMasterExcel(attendees, teams, payments);
-      });
-    }
-
-    // Export CSV button
-    const btnCsv = container.querySelector("#btn-export-csv");
-    if (btnCsv) {
-      btnCsv.addEventListener("click", () => {
-        if (adminActiveTab === "teams") exportTeamsCSV(teams);
-        else if (adminActiveTab === "payments") exportPaymentsCSV(payments);
-        else exportAttendeesCSV(attendees);
-      });
-    }
-
-    // Return to Profile button
-    const btnBack = container.querySelector("#btn-back-to-profile");
-    if (btnBack) {
-      btnBack.addEventListener("click", () => {
-        openAuthModal("profile");
-      });
-    }
-  }
-
-  renderFullAdmin();
+  renderAdminShell(container, user, state);
 }
 
-function exportMasterExcel(attendees, teams, payments) {
-  const escapeXml = (str) =>
-    String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
+function eventFee(eventId) {
+  const ev = getEventById(eventId);
+  return ev ? Number(ev.entryFeeNum) || 0 : 0;
+}
 
-  const buildSheet = (name, headers, rows) => `
-    <Worksheet ss:Name="${escapeXml(name)}">
-      <Table>
-        <Row>
-          ${headers.map((h) => `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("")}
-        </Row>
-        ${rows
-          .map(
-            (r) => `
-          <Row>
-            ${r.map((cell) => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("")}
-          </Row>`
-          )
-          .join("")}
-      </Table>
-    </Worksheet>
+function computeAdminData(state) {
+  const paymentsById = new Map(state.payments.map((p) => [p.paymentId, p]));
+  const utrCounts = new Map();
+  state.payments.forEach((p) => {
+    if (p.transactionRef) utrCounts.set(p.transactionRef, (utrCounts.get(p.transactionRef) || 0) + 1);
+  });
+  const teamsById = new Map(state.teams.map((t) => [t.teamId, t]));
+
+  // A registration is valid if: free event, verified payment, or member of a
+  // team whose leader's payment is verified.
+  const regRows = state.registrations.map((r) => {
+    const fee = eventFee(r.event_id);
+    let payStatus;
+    if (r.participation_type === "team" && r.team_role === "member") {
+      const team = teamsById.get(r.team_id);
+      const leaderPay = team?.paymentId ? paymentsById.get(team.paymentId) : null;
+      payStatus = fee === 0 ? "free" : leaderPay?.status || "unpaid";
+    } else if (fee === 0) {
+      payStatus = "free";
+    } else {
+      payStatus = paymentsById.get(r.payment_id)?.status || "unpaid";
+    }
+    return { ...r, fee, payStatus };
+  });
+
+  const leaderContact = new Map(
+    state.registrations
+      .filter((r) => r.team_role === "leader")
+      .map((r) => [r.team_id, { email: r.user_email, phone: r.user_phone }])
+  );
+
+  return { utrCounts, regRows, leaderContact };
+}
+
+const STATUS_LABEL = {
+  pending_verification: "PENDING",
+  verified: "VERIFIED",
+  rejected: "REJECTED",
+  free: "FREE",
+  team: "TEAM",
+  unpaid: "UNPAID",
+  paid: "PAID",
+  pending: "PENDING",
+};
+
+function statusBadge(status, id = "") {
+  const s = status || "pending_verification";
+  const cls = s.includes("pending") ? "pending" : s === "unpaid" ? "rejected" : s;
+  return `<span class="badge-status ${e(cls)}"${id ? ` id="${e(id)}"` : ""}>${e(STATUS_LABEL[s] || s.toUpperCase())}</span>`;
+}
+
+function renderAdminTab(state) {
+  const { utrCounts, regRows, leaderContact } = computeAdminData(state);
+  const pending = state.payments.filter((p) => p.status === "pending_verification");
+  const unpaid = regRows.filter((r) => r.payStatus === "unpaid" || r.payStatus === "rejected");
+  let stats = "";
+  let table = "";
+
+  const statCard = (num, label, alert = false) => `
+    <div class="admin-stat-card">
+      <div class="admin-stat-num"${alert ? ' style="color:#b30000"' : ""}>${e(num)}</div>
+      <div class="admin-stat-label">${e(label)}</div>
+    </div>`;
+
+  if (state.tab === "payments") {
+    const verifiedTotal = state.payments
+      .filter((p) => p.status === "verified")
+      .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+    stats = `<div class="admin-stats-grid">
+      ${statCard(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Verified collections")}
+      ${statCard(pending.length, "Pending verification", pending.length > 0)}
+      ${statCard(state.payments.length, "Total submissions")}
+    </div>`;
+
+    const sorted = [...state.payments].sort((a, b) => {
+      const pa = a.status === "pending_verification" ? 0 : 1;
+      const pb = b.status === "pending_verification" ? 0 : 1;
+      return pa - pb || String(b.createdAt).localeCompare(String(a.createdAt));
+    });
+
+    const rows = sorted.map((p) => {
+      const isPending = p.status === "pending_verification";
+      const dup = utrCounts.get(p.transactionRef) > 1;
+      const expected = eventFee(p.eventId);
+      const wrongAmount = expected > 0 && Number(p.amount) !== expected;
+      const flags = [
+        dup ? `<span class="admin-flag">DUPLICATE UTR</span>` : "",
+        wrongAmount ? `<span class="admin-flag">FEE IS ₹${e(expected)}</span>` : "",
+      ].join("");
+      return `
+        <tr>
+          <td><strong>${e(p.eventTitle || p.eventId)}</strong>${p.teamName ? `<br/><small>Team: ${e(p.teamName)}</small>` : ""}</td>
+          <td>${e(p.payerName)}<br/><small>${e(p.payerEmail)} · ${e(p.payerPhone)}</small></td>
+          <td><strong>₹${e(p.amount)}</strong></td>
+          <td><code>${e(p.transactionRef || "—")}</code>${flags}</td>
+          <td>${e(formatDate(p.createdAt))}</td>
+          <td>${statusBadge(p.status)}</td>
+          <td>
+            ${isPending ? `
+              <div class="admin-action-btn-group">
+                <button type="button" class="btn-action-approve" data-id="${e(p.paymentId)}">✓ Approve</button>
+                <button type="button" class="btn-action-reject" data-id="${e(p.paymentId)}">✕ Reject</button>
+              </div>` : `<small>${e(p.status === "verified" ? `By ${(p.verifiedBy || "").split("@")[0]}` : p.rejectionReason || "")}</small>`}
+          </td>
+        </tr>`;
+    }).join("");
+
+    table = adminTable(
+      ["Event", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"],
+      rows,
+      "No payment submissions yet",
+      `Match each UTR against the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before approving.`
+    );
+  } else if (state.tab === "registrations") {
+    stats = `<div class="admin-stats-grid">
+      ${statCard(regRows.length, "Registrations")}
+      ${statCard(new Set(regRows.map((r) => r.event_id)).size, "Events with entries")}
+      ${statCard(unpaid.length, "Unpaid / rejected", unpaid.length > 0)}
+    </div>`;
+
+    const rows = [...regRows]
+      .sort((a, b) => String(a.event_title).localeCompare(String(b.event_title)))
+      .map((r) => `
+        <tr>
+          <td><strong>${e(r.event_title)}</strong></td>
+          <td>${e(r.user_name)}<br/><small>${e(r.user_email)}</small></td>
+          <td>${e(r.user_phone)}</td>
+          <td>${e(r.user_college)}</td>
+          <td>${r.participation_type === "team" ? `${e(r.team_role || "team")} · <code>${e(r.team_code)}</code>` : "Solo"}</td>
+          <td><code>${e(r.registration_qr_id)}</code></td>
+          <td>${statusBadge(r.payStatus)}</td>
+        </tr>`)
+      .join("");
+
+    table = adminTable(
+      ["Event", "Participant", "Phone", "College", "Type", "Pass ID", "Payment"],
+      rows,
+      "No registrations yet",
+      "UNPAID means a paid event has no verified payment for this entry. Do not admit until it is verified."
+    );
+  } else if (state.tab === "teams") {
+    stats = `<div class="admin-stats-grid">
+      ${statCard(state.teams.length, "Teams")}
+      ${statCard(state.teams.reduce((acc, t) => acc + (t.teamSize || 1), 0), "Team members")}
+      ${statCard(state.teams.filter((t) => (t.teamSize || 1) < (t.minTeamSize || 1)).length, "Below minimum size")}
+    </div>`;
+
+    const rows = state.teams.map((t) => {
+      const contact = leaderContact.get(t.teamId) || {};
+      const members = (t.members || []).map((m) => e(m.name)).join(", ");
+      const small = (t.teamSize || 1) < (t.minTeamSize || 1);
+      return `
+        <tr>
+          <td><strong>${e(t.teamName)}</strong><br/><small>${members}</small></td>
+          <td><code>${e(t.teamCode)}</code></td>
+          <td>${e(t.eventName)}</td>
+          <td>${e(t.leaderName)}<br/><small>${e(contact.email || "")} · ${e(contact.phone || "")}</small></td>
+          <td>${e(t.teamSize || 1)} / ${e(t.maxTeamSize || "?")}${small ? `<span class="admin-flag">MIN ${e(t.minTeamSize)}</span>` : ""}</td>
+          <td>${statusBadge(t.paymentStatus || "free")}</td>
+        </tr>`;
+    }).join("");
+
+    table = adminTable(["Team", "Code", "Event", "Leader", "Size", "Payment"], rows, "No teams yet");
+  } else if (state.tab === "attendees") {
+    stats = `<div class="admin-stats-grid">
+      ${statCard(state.attendees.length, "Accounts")}
+      ${statCard(new Set(state.attendees.map((a) => (a.college || "").toLowerCase()).filter(Boolean)).size, "Colleges")}
+      ${statCard(state.attendees.filter((a) => (a.registeredEventIds || a.registeredEvents || []).length).length, "With registrations")}
+    </div>`;
+
+    const rows = state.attendees.map((a) => `
+      <tr>
+        <td><strong>${e(a.displayName || a.name || "—")}</strong></td>
+        <td>${e(a.email)}</td>
+        <td>${e(a.college)}</td>
+        <td>${e(a.phone)}</td>
+        <td>${e((a.registeredEvents || []).join(", "))}</td>
+      </tr>`).join("");
+
+    table = adminTable(["Name", "Email", "College", "Phone", "Events"], rows, "No accounts yet");
+  } else if (state.tab === "setup") {
+    table = `
+      <div class="admin-panel-box">
+        <h4>Sync event catalog to Firestore</h4>
+        <p>Writes the event catalog (with entry fees) to the <code>events</code> collection. The security rules use these
+        fees to stop paid events being registered as free. Run it again after editing <code>_nuxt/events-data.js</code>.</p>
+        <button type="button" class="btn-google-auth admin-inline-btn" id="btn-run-schema-seed">
+          <span>[ Sync events & FAQs to Firestore ]</span>
+        </button>
+        <div id="schema-sync-progress" class="admin-progress" hidden></div>
+      </div>`;
+  } else if (state.tab === "redis") {
+    table = `
+      <div class="admin-panel-box">
+        <h4>Local dev server cache</h4>
+        <p id="redis-stat-meta">Loading /api/cache/stats...</p>
+        <div class="admin-action-btn-group">
+          <button type="button" class="btn-action-view" id="btn-refresh-redis">Refresh</button>
+          <button type="button" class="btn-action-reject" id="btn-purge-redis">Purge cache</button>
+        </div>
+      </div>`;
+  }
+
+  const tabs = [
+    ["payments", `Payments (${pending.length} pending)`],
+    ["registrations", `Registrations (${regRows.length})`],
+    ["teams", `Teams (${state.teams.length})`],
+    ["attendees", `Accounts (${state.attendees.length})`],
+    ["setup", "Setup"],
+    ...(state.devServer ? [["redis", "Dev cache"]] : []),
+  ];
+
+  return `
+    <div class="admin-tabs-nav" role="tablist">
+      ${tabs.map(([id, label], i) => `
+        <button type="button" role="tab" aria-selected="${state.tab === id}" class="admin-tab-btn ${state.tab === id ? "active" : ""}" data-tab="${id}">
+          [ ${String(i + 1).padStart(2, "0")}. ${e(label.toUpperCase())} ]
+        </button>`).join("")}
+    </div>
+    ${state.errors.length ? `<div class="chaitanya-modal-banner danger" role="alert"><div><strong>Some data failed to load:</strong> ${e(state.errors.join(" · "))}</div></div>` : ""}
+    ${stats}
+    ${table}
+  `;
+}
+
+function adminTable(headers, rows, emptyText, note = "") {
+  return `
+    ${note ? `<p class="admin-note">${note}</p>` : ""}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>${headers.map((h) => `<th>${e(h)}</th>`).join("")}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="${headers.length}" style="text-align:center;">${e(emptyText)}</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function renderAdminShell(container, user, state) {
+  container.innerHTML = `
+    <div class="chaitanya-modal-header">
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin ]</div>
+      <h2 class="chaitanya-modal-title">Fest Command Center</h2>
+      <p class="chaitanya-modal-subtitle">Signed in as ${e(user.email)}</p>
+    </div>
+
+    <div id="admin-tab-container">${renderAdminTab(state)}</div>
+
+    <div class="admin-export-bar">
+      <div class="admin-action-btn-group">
+        <button type="button" class="btn-google-auth admin-inline-btn admin-excel-btn" id="btn-export-excel">
+          <span>[ Download Excel (.xls) ]</span>
+        </button>
+        <button type="button" class="btn-google-auth admin-inline-btn" id="btn-export-csv">
+          <span>[ Export current tab (.csv) ]</span>
+        </button>
+        <button type="button" class="btn-google-auth admin-inline-btn" id="btn-admin-reload">
+          <span>[ Reload data ]</span>
+        </button>
+      </div>
+      <button type="button" class="chaitanya-link-btn" id="btn-back-to-profile">[ Back to Profile ]</button>
+    </div>
   `;
 
-  const attendeeHeaders = ["Name", "Email", "College", "Phone", "Role", "Registered Events"];
-  const attendeeRows = attendees.map((a) => [
-    a.displayName || "Unknown",
-    a.email || "-",
-    a.college || "HPTU",
-    a.phone || "-",
-    a.role || "attendee",
-    (a.registeredEvents || []).join("; "),
-  ]);
+  const tabContainer = container.querySelector("#admin-tab-container");
+  const rerender = () => {
+    tabContainer.innerHTML = renderAdminTab(state);
+    if (state.tab === "redis") loadRedisStats(tabContainer);
+  };
 
-  const teamHeaders = ["Team Name", "Team Code", "Arena / Event", "Leader Name", "Leader Email", "Leader Phone", "College", "Members Count", "Payment Status", "Registered At"];
-  const teamRows = teams.map((t) => [
-    t.teamName || "-",
-    t.teamCode || "-",
-    t.eventName || "-",
-    t.leaderName || "-",
-    t.leaderEmail || "-",
-    t.leaderPhone || "-",
-    t.college || "-",
-    t.teamSize || (t.members ? t.members.length : 1),
-    (t.paymentStatus || "free").toUpperCase(),
-    t.registeredAt ? new Date(t.registeredAt).toLocaleString() : "-",
-  ]);
+  tabContainer.addEventListener("click", async (evt) => {
+    const tabBtn = evt.target.closest(".admin-tab-btn");
+    if (tabBtn) {
+      state.tab = tabBtn.dataset.tab;
+      rerender();
+      return;
+    }
 
-  const paymentHeaders = ["Payment ID", "Arena / Event", "Registrant", "Email", "Phone", "Amount (INR)", "12-Digit UTR", "Status", "Verified By", "Timestamp"];
-  const paymentRows = payments.map((p) => [
-    p.paymentId || "-",
-    p.eventName || "-",
-    p.userName || p.leaderName || "-",
-    p.userEmail || "-",
-    p.userPhone || "-",
-    p.amount || 0,
-    p.utrNumber || "-",
-    (p.status || "pending").toUpperCase(),
-    p.verifiedBy || "-",
-    p.submittedAt ? new Date(p.submittedAt).toLocaleString() : "-",
-  ]);
+    const approveBtn = evt.target.closest(".btn-action-approve");
+    const rejectBtn = evt.target.closest(".btn-action-reject[data-id]");
+    if (approveBtn || rejectBtn) {
+      const btn = approveBtn || rejectBtn;
+      const payment = state.payments.find((p) => p.paymentId === btn.dataset.id);
+      if (!payment) return;
+      let reason = null;
+      if (rejectBtn) {
+        reason = prompt("Reason shown to the participant:", "UTR not found in bank statement");
+        if (reason === null) return;
+      }
+      btn.disabled = true;
+      btn.textContent = approveBtn ? "Approving..." : "Rejecting...";
+      try {
+        const res = approveBtn ? await approvePayment(payment) : await rejectPayment(payment, reason);
+        Object.assign(payment, res.payment);
+        const reg = state.registrations.find((r) => r.payment_id === payment.paymentId);
+        if (reg) reg.payment_status = payment.status;
+        const team = state.teams.find((t) => t.teamId === payment.teamId);
+        if (team) team.paymentStatus = payment.status === "verified" ? "paid" : payment.status;
+        rerender();
+      } catch (err) {
+        alert(`Could not update payment: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = approveBtn ? "✓ Approve" : "✕ Reject";
+      }
+      return;
+    }
 
-  const xmlContent = `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Styles>
-  <Style ss:ID="HeaderStyle">
-   <Font ss:Bold="1" ss:Color="#FFFFFF"/>
-   <Interior ss:Color="#000000" ss:Pattern="Solid"/>
-  </Style>
- </Styles>
- ${buildSheet("Attendees", attendeeHeaders, attendeeRows)}
- ${buildSheet("Teams & Squads", teamHeaders, teamRows)}
- ${buildSheet("Payments & UTRs", paymentHeaders, paymentRows)}
-</Workbook>`;
+    if (evt.target.closest("#btn-refresh-redis")) {
+      loadRedisStats(tabContainer);
+      return;
+    }
 
-  const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const purgeBtn = evt.target.closest("#btn-purge-redis");
+    if (purgeBtn) {
+      if (!confirm("Purge the local dev server cache?")) return;
+      await fetch("/api/cache/purge", { method: "POST" }).catch(() => {});
+      loadRedisStats(tabContainer);
+      return;
+    }
+
+    const seedBtn = evt.target.closest("#btn-run-schema-seed");
+    if (seedBtn) {
+      const progressEl = tabContainer.querySelector("#schema-sync-progress");
+      seedBtn.disabled = true;
+      progressEl.hidden = false;
+      progressEl.textContent = "Connecting to Firestore...";
+      try {
+        const res = await applySchemaToFirestore((p) => (progressEl.textContent = p.message));
+        progressEl.textContent = `✓ Synced ${res.eventsCreated} events and ${res.faqsCreated} FAQs.${res.errors?.length ? ` Errors: ${res.errors.join("; ")}` : ""}`;
+      } catch (err) {
+        progressEl.textContent = `Sync failed: ${err.message}`;
+      } finally {
+        seedBtn.disabled = false;
+      }
+    }
+  });
+
+  container.querySelector("#btn-export-excel").addEventListener("click", () => exportMasterExcel(state));
+  container.querySelector("#btn-export-csv").addEventListener("click", () => exportTabCsv(state));
+  container.querySelector("#btn-admin-reload").addEventListener("click", () => renderAdminView(container, getCurrentUser()));
+  container.querySelector("#btn-back-to-profile").addEventListener("click", () => openAuthModal("profile"));
+}
+
+async function loadRedisStats(root) {
+  const el = root.querySelector("#redis-stat-meta");
+  if (!el) return;
+  try {
+    const res = await fetch("/api/cache/stats", { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    el.textContent = `Engine: ${d.engine} · hit ratio ${d.hit_ratio_percent || 0}% · hits ${d.hits || 0}/${d.total_requests || 0} · keys ${d.cached_keys || 0}`;
+  } catch (err) {
+    el.textContent = `Could not load cache stats (${err.message}).`;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// EXPORTS
+// ----------------------------------------------------------------------------
+
+function exportRows(state) {
+  const { regRows, leaderContact } = computeAdminData(state);
+  return {
+    payments: {
+      name: "Payments",
+      headers: ["Payment ID", "Event", "Team", "Payer", "Email", "Phone", "Amount (INR)", "UTR", "Status", "Submitted", "Verified/Rejected By", "Reason"],
+      rows: state.payments.map((p) => [
+        p.paymentId, p.eventTitle, p.teamName, p.payerName, p.payerEmail, p.payerPhone, p.amount,
+        p.transactionRef, STATUS_LABEL[p.status] || p.status, formatDate(p.createdAt),
+        p.verifiedBy || p.rejectedBy, p.rejectionReason,
+      ]),
+    },
+    registrations: {
+      name: "Registrations",
+      headers: ["Event", "Name", "Email", "Phone", "College", "Type", "Team Code", "Pass ID", "Payment", "Registered"],
+      rows: regRows.map((r) => [
+        r.event_title, r.user_name, r.user_email, r.user_phone, r.user_college,
+        r.participation_type === "team" ? `team ${r.team_role || ""}`.trim() : "solo",
+        r.team_code, r.registration_qr_id, STATUS_LABEL[r.payStatus] || r.payStatus, formatDate(r.registered_at),
+      ]),
+    },
+    teams: {
+      name: "Teams",
+      headers: ["Team", "Code", "Event", "Leader", "Leader Email", "Leader Phone", "Members", "Size", "Max", "Payment"],
+      rows: state.teams.map((t) => {
+        const c = leaderContact.get(t.teamId) || {};
+        return [
+          t.teamName, t.teamCode, t.eventName, t.leaderName, c.email, c.phone,
+          (t.members || []).map((m) => m.name).join("; "), t.teamSize, t.maxTeamSize, t.paymentStatus,
+        ];
+      }),
+    },
+    attendees: {
+      name: "Accounts",
+      headers: ["Name", "Email", "College", "Phone", "Registered Events"],
+      rows: state.attendees.map((a) => [
+        a.displayName || a.name, a.email, a.college, a.phone, (a.registeredEvents || []).join("; "),
+      ]),
+    },
+  };
+}
+
+// Prevent spreadsheet formula injection from participant-entered text.
+function safeCell(value) {
+  const s = value === null || value === undefined ? "" : String(value);
+  return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+}
+
+function downloadBlob(content, type, filename) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `chaitanya_2k26_master_database_${Date.now()}.xls`;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function exportTeamsCSV(teams) {
-  const headers = ["TeamName,TeamCode,EventName,LeaderName,LeaderEmail,LeaderPhone,College,TeamSize,PaymentStatus,RegisteredAt"];
-  const rows = teams.map((t) =>
-    [
-      `"${t.teamName || ""}"`,
-      `"${t.teamCode || ""}"`,
-      `"${t.eventName || ""}"`,
-      `"${t.leaderName || ""}"`,
-      `"${t.leaderEmail || ""}"`,
-      `"${t.leaderPhone || ""}"`,
-      `"${t.college || ""}"`,
-      `"${t.teamSize || (t.members ? t.members.length : 1)}"`,
-      `"${t.paymentStatus || "free"}"`,
-      `"${t.registeredAt || ""}"`,
-    ].join(","),
-  );
-
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_squads_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function stamp() {
+  return new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
 }
 
-function exportPaymentsCSV(payments) {
-  const headers = ["PaymentId,EventName,UserName,UserEmail,UserPhone,Amount,UTRNumber,Status,VerifiedBy,SubmittedAt"];
-  const rows = payments.map((p) =>
-    [
-      `"${p.paymentId || ""}"`,
-      `"${p.eventName || ""}"`,
-      `"${p.userName || p.leaderName || ""}"`,
-      `"${p.userEmail || ""}"`,
-      `"${p.userPhone || ""}"`,
-      `"${p.amount || 0}"`,
-      `"${p.utrNumber || ""}"`,
-      `"${p.status || "pending"}"`,
-      `"${p.verifiedBy || ""}"`,
-      `"${p.submittedAt || ""}"`,
-    ].join(","),
-  );
-
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_payments_utr_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function exportTabCsv(state) {
+  const sheets = exportRows(state);
+  const sheet = sheets[state.tab] || sheets.registrations;
+  const csvCell = (v) => `"${safeCell(v).replace(/"/g, '""')}"`;
+  const csv = [sheet.headers, ...sheet.rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  downloadBlob("﻿" + csv, "text/csv;charset=utf-8", `chaitanya_2k26_${sheet.name.toLowerCase()}_${stamp()}.csv`);
 }
 
-function exportAttendeesCSV(attendees) {
-  const headers = ["Name,Email,College,Phone,Role,RegisteredEvents"];
-  const rows = attendees.map((a) =>
-    [
-      `"${a.displayName || ""}"`,
-      `"${a.email || ""}"`,
-      `"${a.college || ""}"`,
-      `"${a.phone || ""}"`,
-      `"${a.role || "attendee"}"`,
-      `"${(a.registeredEvents || []).join("; ")}"`,
-    ].join(","),
-  );
+function exportMasterExcel(state) {
+  const xml = (v) =>
+    safeCell(v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const sheets = exportRows(state);
+  const sheetXml = ({ name, headers, rows }) => `
+  <Worksheet ss:Name="${xml(name)}">
+    <Table>
+      <Row>${headers.map((h) => `<Cell ss:StyleID="H"><Data ss:Type="String">${xml(h)}</Data></Cell>`).join("")}</Row>
+      ${rows.map((r) => `<Row>${r.map((c) => `<Cell><Data ss:Type="String">${xml(c)}</Data></Cell>`).join("")}</Row>`).join("\n      ")}
+    </Table>
+  </Worksheet>`;
 
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_registrations_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const content = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles><Style ss:ID="H"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#000000" ss:Pattern="Solid"/></Style></Styles>
+  ${[sheets.registrations, sheets.payments, sheets.teams, sheets.attendees].map(sheetXml).join("")}
+</Workbook>`;
+
+  downloadBlob(content, "application/vnd.ms-excel;charset=utf-8", `chaitanya_2k26_master_${stamp()}.xls`);
+}
+
+// ----------------------------------------------------------------------------
+// HELPERS
+// ----------------------------------------------------------------------------
+
+function setBusy(btn, busy, html) {
+  btn.innerHTML = busy ? `<span>${e(html)}</span>` : html;
+  btn.disabled = busy;
 }
 
 function showAuthError(msg) {
   const box = document.getElementById("auth-error-box");
   if (box) {
-    box.style.display = "block";
+    box.hidden = false;
+    box.style.display = "";
     box.textContent = msg;
   }
 }

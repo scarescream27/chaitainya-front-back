@@ -6,7 +6,7 @@
  * - Dedicated /events page layout with brutalist hero & sticky toolbar
  * - Real-time category filtering & live search
  * - Interactive Rules & Regulations Dossier Drawer
- * - Solo & Team Registration Modal with University SBI UPI QR & UTR submission
+ * - Solo & Team Registration Modal with UPI payment + UTR submission
  * - Reactive button state synchronization with Firebase Auth
  */
 
@@ -15,6 +15,7 @@ import {
   getEventById,
   getCategories,
   filterEvents,
+  isRegistrationOpen,
 } from "./events-data.js";
 
 import {
@@ -24,10 +25,21 @@ import {
   createTeamForEvent,
   joinTeamWithCode,
   isEventRegistered,
-  unregisterFromEvent,
+  getMyRegistration,
+  resubmitPaymentUtr,
 } from "./auth-service.js";
 
 import { openAuthModal } from "./auth-modal.js";
+
+import {
+  FEST_CONFIG,
+  getFestDatesLabel,
+  isPaymentConfigured,
+  buildUpiLink,
+  escapeHtml as e,
+} from "./fest-config.js";
+
+const UTR_PATTERN = /^\d{12}$/;
 
 let activeCategory = "all";
 let activeSearchQuery = "";
@@ -35,6 +47,8 @@ let isDossierOpen = false;
 let activeDossierEvent = null;
 let isRegModalOpen = false;
 let activeRegEvent = null;
+let pendingRegistrationEventId = null;
+let pendingAuthUnsubscribe = null;
 
 /**
  * Generate HTML for the complete Events Page
@@ -46,8 +60,8 @@ export function renderEventsPageHtml() {
   const categoriesHtml = categories
     .map(
       (cat) => `
-      <button class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" data-cat="${cat.id}">
-        ${cat.name}
+      <button class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" data-cat="${e(cat.id)}">
+        ${e(cat.name)}
         <span class="cat-count">(${cat.count})</span>
       </button>
     `
@@ -73,17 +87,17 @@ export function renderEventsPageHtml() {
         <div class="events-hero">
           <span class="events-hero-coords">[ 31.7088° N, 76.5273° E // HPTU HAMIRPUR ]</span>
           <span class="events-hero-tag">CHAITANYA 2K26 // SCHEDULE & COMPETITIONS</span>
-          <h1 class="events-hero-title">ARENAS & SHOWCASE</h1>
+          <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
           <p class="events-hero-subtitle">
-            EXPLORE 12 HIGH-OCTANE COMPETITIONS ACROSS CODING, ROBOTICS, ESPORTS & PERFORMING ARTS.
-            REGISTER YOUR SQUAD, CLAIM CASH PRIZES & DOMINATE THE ARENA.
+            EXPLORE ${e(getCategories().find((c) => c.id === "all")?.count || "")} EVENTS ACROSS CODING, DESIGN, BUSINESS, ESPORTS & CULTURE.
+            FIND YOUR EVENT, MEET THE STUDENT HEADS & GET READY FOR THE FEST.
           </p>
           <div class="events-stats-strip">
-            <span class="events-stat-pill highlight">[ 12 ARENAS ]</span>
-            <span class="events-stat-pill">[ ₹3,00,000+ CASH POOL ]</span>
-            <span class="events-stat-pill">[ 2 DAYS // MARCH 26-27 ]</span>
-            <span class="events-stat-pill">[ SBI UPI QR // 0% FEE ]</span>
+            <span class="events-stat-pill highlight">[ ${e(getCategories().find((c) => c.id === "all")?.count || "")} EVENTS ]</span>
+            <span class="events-stat-pill">[ ${e(FEST_CONFIG.festDays || 2)} DAYS // ${e(getFestDatesLabel())} ]</span>
+            <span class="events-stat-pill">[ HPTU HAMIRPUR ]</span>
           </div>
+          <p class="events-hero-note">Entry fees, prizes and registration details will be notified soon. Timings and venues may change.</p>
         </div>
 
         <!-- 2. Sticky Category Toolbar & Search -->
@@ -97,7 +111,7 @@ export function renderEventsPageHtml() {
               class="events-search-input" 
               id="events-search-box" 
               placeholder="SEARCH COMPETITIONS, VENUES, PRIZES..." 
-              value="${activeSearchQuery}"
+              value="${e(activeSearchQuery)}"
             />
             <button class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn">✕</button>
           </div>
@@ -113,7 +127,7 @@ export function renderEventsPageHtml() {
       <div class="events-scroll-hud" id="events-scroll-hud">
         <div class="events-scroll-metric">
           <span class="pulse-dot"></span>
-          <span id="events-scroll-counter">12 ARENAS</span>
+          <span id="events-scroll-counter">${e(getCategories().find((c) => c.id === "all")?.count || "")} EVENTS</span>
         </div>
         <button class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">
           [ ↑ TOP ]
@@ -146,7 +160,7 @@ function renderEventCardHtml(ev) {
   const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
 
   return `
-    <div class="event-card" data-event-id="${ev.id}">
+    <div class="event-card" data-event-id="${e(ev.id)}">
       <span class="corner corner-tl">+</span>
       <span class="corner corner-tr">+</span>
       <span class="corner corner-bl">+</span>
@@ -154,40 +168,42 @@ function renderEventCardHtml(ev) {
 
       <div class="event-card-header">
         <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">
-          ${ev.categoryName}
+          ${e(ev.categoryName)}
         </span>
-        <span class="event-badge-format">${ev.format}</span>
+        <span class="event-badge-format">${e(ev.format)}</span>
       </div>
 
-      <h2 class="event-card-title">${ev.title}</h2>
-      <p class="event-card-tagline">${ev.tagline}</p>
+      <h2 class="event-card-title">${e(ev.title)}</h2>
+      <p class="event-card-tagline">${e(ev.tagline)}</p>
 
       <div class="event-card-meta">
         <div class="event-meta-row">
           <span class="event-meta-label">SCHEDULE:</span>
-          <span class="event-meta-val">${ev.date} | ${ev.time}</span>
+          <span class="event-meta-val">${e(ev.date)} | ${e(ev.time)}</span>
         </div>
         <div class="event-meta-row">
           <span class="event-meta-label">VENUE:</span>
-          <span class="event-meta-val">${ev.venue}</span>
+          <span class="event-meta-val">${e(ev.venue)}</span>
         </div>
         <div class="event-meta-row">
           <span class="event-meta-label">PRIZE POOL:</span>
-          <span class="event-meta-val prize">${ev.prizePool}</span>
+          <span class="event-meta-val prize">${e(ev.prizePool)}</span>
         </div>
         <div class="event-meta-row">
           <span class="event-meta-label">ENTRY FEE:</span>
-          <span class="event-meta-val">${ev.entryFee}</span>
+          <span class="event-meta-val">${e(ev.entryFee)}</span>
         </div>
       </div>
 
       <div class="event-card-actions">
-        <button class="event-btn-details" data-action="view-details" data-event-id="${ev.id}">
+        <button class="event-btn-details" data-action="view-details" data-event-id="${e(ev.id)}">
           [ VIEW DETAILS ]
         </button>
-        <button class="event-btn-register ${isRegistered ? "registered" : ""}" data-action="register-event" data-event-id="${ev.id}">
-          ${isRegistered ? "[ ✓ REGISTERED ]" : "[ REGISTER NOW ]"}
-        </button>
+        ${isRegistered
+          ? `<button class="event-btn-register registered" data-action="register-event" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`
+          : isRegistrationOpen(ev)
+            ? `<button class="event-btn-register" data-action="register-event" data-event-id="${e(ev.id)}">[ REGISTER NOW ]</button>`
+            : `<button class="event-btn-register is-closed" disabled aria-disabled="true">[ REGISTRATION SOON ]</button>`}
       </div>
     </div>
   `;
@@ -209,15 +225,15 @@ export function openEventDossier(eventId) {
   const catObj = getCategories().find((c) => c.id === ev.category);
   const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
 
-  const rulesHtml = ev.rules.map((r) => `<li>${r}</li>`).join("");
+  const rulesHtml = (ev.rules || []).map((r) => `<li>${e(r)}</li>`).join("");
 
   const roundsHtml = (ev.rounds || [])
     .map(
       (rnd) => `
       <div style="background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#000;">${rnd.name}</div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#666; margin-bottom:4px;">${rnd.time}</div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#333;">${rnd.description}</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#000;">${e(rnd.name)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#666; margin-bottom:4px;">${e(rnd.time)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#333;">${e(rnd.description)}</div>
       </div>
     `
     )
@@ -227,73 +243,87 @@ export function openEventDossier(eventId) {
     .map(
       (jc) => `
       <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 0; border-bottom:1px dashed rgba(0,0,0,0.1);">
-        <span>${jc.name}</span>
-        <span style="font-weight:700;">${jc.weight}</span>
+        <span>${e(jc.name)}</span>
+        <span style="font-weight:700;">${e(jc.weight)}</span>
       </div>
     `
     )
     .join("");
 
-  const coordinatorsHtml = (ev.coordinators || [])
-    .map(
-      (c) => `
+  const coordinators = ev.coordinators || [];
+  const coordinatorsHtml = coordinators.length
+    ? coordinators
+        .map(
+          (c) => `
       <div class="event-coordinator-card">
         <div class="event-coord-info">
-          <span class="event-coord-name">${c.name}</span>
-          <span class="event-coord-role">${c.role}</span>
+          <span class="event-coord-name">${e(c.name)}</span>
+          <span class="event-coord-role">${e(c.role)}</span>
         </div>
         <div class="event-coord-actions">
-          <a href="tel:${c.phone}" class="event-coord-btn">📞 CALL</a>
-          ${c.whatsapp ? `<a href="${c.whatsapp}" target="_blank" class="event-coord-btn" style="background:#25D366; color:#fff; border-color:#25D366;">💬 WHATSAPP</a>` : ""}
+          ${c.phone ? `<a href="tel:${e(c.phone.replace(/[^+\d]/g, ""))}" class="event-coord-btn">📞 CALL</a>` : ""}
+          ${c.whatsapp ? `<a href="${e(c.whatsapp)}" target="_blank" rel="noopener noreferrer" class="event-coord-btn" style="background:#25D366; color:#fff; border-color:#25D366;">💬 WHATSAPP</a>` : ""}
+          ${!c.phone && !c.whatsapp ? `<a href="mailto:${e(FEST_CONFIG.contactEmail)}?subject=${encodeURIComponent(`${ev.title} (attn: ${c.name})`)}" class="event-coord-btn">✉ EMAIL</a>` : ""}
         </div>
       </div>
     `
-    )
-    .join("");
+        )
+        .join("")
+    : `
+      <div class="event-coordinator-card">
+        <div class="event-coord-info">
+          <span class="event-coord-name">Chaitanya 2k26 Organising Committee</span>
+          <span class="event-coord-role">Student heads will be announced soon</span>
+        </div>
+        <div class="event-coord-actions">
+          <a href="mailto:${e(FEST_CONFIG.contactEmail)}?subject=${encodeURIComponent(`Query: ${ev.title}`)}" class="event-coord-btn">✉ EMAIL</a>
+        </div>
+      </div>
+    `;
 
   panel.innerHTML = `
     <button class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     
     <div>
       <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">
-        ${ev.categoryName} // ${ev.badge}
+        ${e(ev.categoryName)} // ${e(ev.badge)}
       </span>
-      <h2 class="event-dossier-title">${ev.title}</h2>
-      <p class="event-dossier-tagline">${ev.tagline}</p>
+      <h2 class="event-dossier-title">${e(ev.title)}</h2>
+      <p class="event-dossier-tagline">${e(ev.tagline)}</p>
     </div>
 
     <!-- Key Specs -->
     <div class="event-dossier-specs">
       <div class="event-spec-item">
         <span class="event-spec-k">PRIZE POOL</span>
-        <span class="event-spec-v" style="color:#005a3c; font-weight:700;">${ev.prizePool}</span>
+        <span class="event-spec-v" style="color:#005a3c; font-weight:700;">${e(ev.prizePool)}</span>
       </div>
       <div class="event-spec-item">
         <span class="event-spec-k">ENTRY FEE</span>
-        <span class="event-spec-v">${ev.entryFee}</span>
+        <span class="event-spec-v">${e(ev.entryFee)}</span>
       </div>
       <div class="event-spec-item">
         <span class="event-spec-k">SCHEDULE</span>
-        <span class="event-spec-v">${ev.date} | ${ev.time}</span>
+        <span class="event-spec-v">${e(ev.date)} · ${e(ev.time)}</span>
       </div>
       <div class="event-spec-item">
         <span class="event-spec-k">VENUE</span>
-        <span class="event-spec-v">${ev.venue}</span>
+        <span class="event-spec-v">${e(ev.venue)}</span>
       </div>
       <div class="event-spec-item">
         <span class="event-spec-k">TEAM FORMAT</span>
-        <span class="event-spec-v">${ev.format}</span>
+        <span class="event-spec-v">${e(ev.format)}</span>
       </div>
       <div class="event-spec-item">
         <span class="event-spec-k">STATUS</span>
-        <span class="event-spec-v" style="color:#005a3c;">${ev.status}</span>
+        <span class="event-spec-v" style="color:#005a3c;">${e(ev.status)}</span>
       </div>
     </div>
 
     <!-- Section: Overview -->
     <div class="event-dossier-section">
       <h4 class="event-dossier-heading">[ 01. OVERVIEW & OBJECTIVE ]</h4>
-      <p class="event-dossier-text">${ev.overview}</p>
+      <p class="event-dossier-text">${e(ev.overview)}</p>
     </div>
 
     <!-- Section: Rules -->
@@ -324,14 +354,18 @@ export function openEventDossier(eventId) {
 
     <!-- Section: Coordinators -->
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 05. EVENT COORDINATORS & CONTACT ]</h4>
+      <h4 class="event-dossier-heading">[ 05. STUDENT HEADS & CONTACT ]</h4>
       <div>${coordinatorsHtml}</div>
     </div>
 
     <!-- Direct CTA -->
-    <button class="event-submit-btn" id="dossier-action-btn" data-event-id="${ev.id}" style="width:100%; margin-top:20px;">
-      ${isRegistered ? "[ ✓ ALREADY REGISTERED // VIEW TICKET ]" : `[ REGISTER FOR ${ev.title} ]`}
-    </button>
+    ${isRegistered || isRegistrationOpen(ev) ? `
+    <button class="event-submit-btn" id="dossier-action-btn" data-event-id="${e(ev.id)}" style="width:100%; margin-top:20px;">
+      ${isRegistered ? "[ ✓ ALREADY REGISTERED // VIEW TICKET ]" : `[ REGISTER FOR ${e(ev.title)} ]`}
+    </button>` : `
+    <button class="event-submit-btn" disabled style="width:100%; margin-top:20px;">
+      [ REGISTRATION: TO BE NOTIFIED ]
+    </button>`}
   `;
 
   overlay.classList.add("active");
@@ -364,10 +398,25 @@ export function openEventRegistration(eventId) {
   const user = getCurrentUser();
   const ev = getEventById(eventId);
   if (!ev) return;
+  if (!isRegistrationOpen(ev) && !isEventRegistered(ev.id)) return;
 
-  // If not logged in, prompt Google Sign-In with event pre-selected
+  // Not signed in: ask for Google sign-in, then continue to this event's form.
   if (!user) {
-    openAuthModal("register", { pendingEvent: ev.title });
+    pendingRegistrationEventId = ev.id;
+    if (!pendingAuthUnsubscribe) {
+      pendingAuthUnsubscribe = subscribeAuthState((u) => {
+        if (!u || !pendingRegistrationEventId) return;
+        const nextId = pendingRegistrationEventId;
+        pendingRegistrationEventId = null;
+        setTimeout(() => {
+          if (document.getElementById("event-reg-modal")) {
+            refreshEventsGrid();
+            openEventRegistration(nextId);
+          }
+        }, 300);
+      });
+    }
+    openAuthModal("login");
     return;
   }
 
@@ -390,116 +439,102 @@ export function openEventRegistration(eventId) {
   if (!modal || !card) return;
 
   const isTeam = ev.maxTeam > 1;
+  const fee = Number(ev.entryFeeNum) || 0;
+  const paymentReady = isPaymentConfigured();
+  const upiLink = fee > 0 ? buildUpiLink(fee, `${FEST_CONFIG.name} ${ev.title}`) : null;
+
+  const paymentHtml = fee <= 0
+    ? `
+      <div class="event-reg-free-note">✓ FREE EVENT — NO ENTRY FEE</div>
+    `
+    : paymentReady
+      ? `
+      <div class="event-upi-payment-box" id="reg-payment-box">
+        <div class="event-upi-amount">ENTRY FEE: ₹${e(fee)}${isTeam ? " PER TEAM (PAID BY LEADER)" : ""}</div>
+        ${FEST_CONFIG.upiQrImage ? `
+          <div class="event-qr-display">
+            <img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code for ${e(FEST_CONFIG.upiId)}" />
+          </div>` : ""}
+        ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">[ PAY ₹${e(fee)} WITH A UPI APP ]</a>` : ""}
+        <div class="event-upi-id-copy">
+          <span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span>
+          <button type="button" class="event-upi-copy-btn" id="copy-upi-btn">[ COPY ]</button>
+        </div>
+        <p class="event-upi-help">
+          Pay exactly ₹${e(fee)} using GPay, PhonePe, Paytm or any UPI app, then enter the 12-digit
+          UTR / UPI reference number from the payment receipt. The fest team checks every UTR
+          against the bank statement before your pass is marked verified.
+        </p>
+        <div class="event-reg-group">
+          <label class="event-reg-label" for="reg-utr-number">12-digit UPI transaction ID (UTR) *</label>
+          <input type="text" class="event-reg-input event-reg-utr" id="reg-utr-number"
+            inputmode="numeric" autocomplete="off" pattern="\\d{12}" maxlength="12"
+            placeholder="e.g. 412345678901" />
+        </div>
+      </div>
+    `
+      : `
+      <div class="event-reg-closed-note" id="reg-payment-box">
+        <strong>ENTRY FEE: ₹${e(fee)}${isTeam ? " PER TEAM" : ""}</strong>
+        <span>Online payment opens soon. Paid registrations will be enabled once the official
+        UPI details are published. Questions? <a href="mailto:${e(FEST_CONFIG.contactEmail)}">${e(FEST_CONFIG.contactEmail)}</a></span>
+      </div>
+    `;
 
   card.innerHTML = `
-    <button class="event-reg-close" id="reg-modal-close-btn">[ ESC / CLOSE ]</button>
-    <div style="text-align:center; margin-bottom:16px;">
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; color:#005a3c; text-transform:uppercase;">
-        CHAITANYA 2K26 // EVENT ENROLLMENT
-      </span>
-      <h3 style="font-family:'DrukMedium',sans-serif; font-size:32px; margin:4px 0 6px; text-transform:uppercase;">
-        ${ev.title}
-      </h3>
-      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#555;">
-        ${isTeam ? `Format: ${ev.format} | Max ${ev.maxTeam} Members` : "Individual Solo Registration"}
+    <button class="event-reg-close" id="reg-modal-close-btn" aria-label="Close">[ ESC / CLOSE ]</button>
+    <div class="event-reg-head">
+      <span class="event-reg-kicker">CHAITANYA 2K26 // EVENT REGISTRATION</span>
+      <h3 class="event-reg-title">${e(ev.title)}</h3>
+      <p class="event-reg-sub">
+        ${isTeam ? `Team event · ${e(ev.format)} · up to ${e(ev.maxTeam)} members` : "Individual registration"}
       </p>
     </div>
 
     <form class="event-reg-form" id="event-reg-form" novalidate>
       ${isTeam ? `
-        <div class="event-reg-group">
-          <label class="event-reg-label">Registration Mode</label>
-          <div style="display:flex; gap:10px;">
-            <label style="font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="radio" name="team_mode" value="create" checked /> Create New Team
-            </label>
-            <label style="font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="radio" name="team_mode" value="join" /> Join with Team Code
-            </label>
-          </div>
-        </div>
+        <fieldset class="event-reg-group event-reg-mode">
+          <legend class="event-reg-label">How are you registering?</legend>
+          <label><input type="radio" name="team_mode" value="create" checked /> I'm the team leader — create a team</label>
+          <label><input type="radio" name="team_mode" value="join" /> Join my team with a code</label>
+        </fieldset>
+      ` : ""}
 
-        <div id="create-team-fields">
+      <div id="create-team-fields">
+        ${isTeam ? `
           <div class="event-reg-group">
-            <label class="event-reg-label">Team Name *</label>
-            <input type="text" class="event-reg-input" id="reg-team-name" placeholder="e.g. ByteBusters" required />
-          </div>
-          <div class="event-reg-group" style="margin-top:10px;">
-            <label class="event-reg-label">Team Leader WhatsApp / Phone *</label>
-            <input type="tel" class="event-reg-input" id="reg-leader-phone" value="${user.phone || ""}" placeholder="+91 98160 XXXXX" required />
-          </div>
-          <div class="event-reg-group" style="margin-top:10px;">
-            <label class="event-reg-label">College / Institute *</label>
-            <input type="text" class="event-reg-input" id="reg-college" value="${user.college || ""}" placeholder="e.g. HPTU Hamirpur" required />
-          </div>
-        </div>
+            <label class="event-reg-label" for="reg-team-name">Team name *</label>
+            <input type="text" class="event-reg-input" id="reg-team-name" maxlength="60" placeholder="e.g. ByteBusters" />
+          </div>` : ""}
+      </div>
 
-        <div id="join-team-fields" style="display:none;">
-          <div class="event-reg-group">
-            <label class="event-reg-label">Enter 6-Digit Team Code *</label>
-            <input type="text" class="event-reg-input" id="reg-team-code" placeholder="e.g. BYTE-408" style="text-transform:uppercase; letter-spacing:1.5px; font-weight:700;" />
-            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#777; margin-top:4px;">
-              Ask your team leader for the unique team code generated upon team creation.
-            </span>
-          </div>
-        </div>
-      ` : `
+      <div id="join-team-fields" hidden>
         <div class="event-reg-group">
-          <label class="event-reg-label">Participant Name</label>
-          <input type="text" class="event-reg-input" value="${user.displayName || ""}" readonly style="background:#f9f9f9;" />
+          <label class="event-reg-label" for="reg-team-code">Team code *</label>
+          <input type="text" class="event-reg-input event-reg-code" id="reg-team-code" maxlength="11" autocomplete="off" placeholder="e.g. BYTE-4F8K" />
+          <span class="event-reg-hint">Your team leader sees this code after creating the team.</span>
         </div>
-        <div class="event-reg-group">
-          <label class="event-reg-label">WhatsApp Contact Number *</label>
-          <input type="tel" class="event-reg-input" id="reg-solo-phone" value="${user.phone || ""}" placeholder="+91 98160 XXXXX" required />
-        </div>
-        <div class="event-reg-group">
-          <label class="event-reg-label">College / Institute *</label>
-          <input type="text" class="event-reg-input" id="reg-solo-college" value="${user.college || ""}" placeholder="e.g. HPTU Hamirpur" required />
-        </div>
-      `}
+      </div>
 
-      <!-- Payment Section -->
-      ${ev.entryFeeNum > 0 ? `
-        <div class="event-upi-payment-box">
-          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#000;">
-            ENTRY FEE DUE: ₹${ev.entryFeeNum}
-          </div>
-          <div class="event-qr-display">
-            <!-- Simulated High-Res SBI UPI QR Code -->
-            <img src="/images/icons/Logo.svg" alt="SBI UPI QR Code" style="filter:none;" />
-          </div>
-          <div class="event-upi-id-copy">
-            <span>UPI ID: <strong>chaitanyahptu@sbi</strong></span>
-            <button type="button" class="event-upi-copy-btn" id="copy-upi-btn">[ COPY ]</button>
-          </div>
-          <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#555; line-height:1.4;">
-            Scan via GPay, PhonePe or Paytm. Submit the 12-digit UPI UTR reference number below for instant verification.
-          </p>
-          <div class="event-reg-group" style="width:100%; text-align:left;">
-            <label class="event-reg-label">12-Digit UPI Transaction / UTR Number *</label>
-            <input 
-              type="text" 
-              class="event-reg-input" 
-              id="reg-utr-number" 
-              placeholder="e.g. 408192837192" 
-              maxlength="16" 
-              required 
-              style="letter-spacing:1px; font-weight:600;"
-            />
-          </div>
-        </div>
-      ` : `
-        <div style="background:#eafaf1; border:1.5px solid #2ecc71; border-radius:12px; padding:12px; text-align:center;">
-          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; color:#27ae60;">
-            ✓ FREE REGISTRATION FOR CHAITANYA 2K26 ATTENDEES
-          </span>
-        </div>
-      `}
+      <div class="event-reg-group">
+        <label class="event-reg-label" for="reg-name">Name</label>
+        <input type="text" class="event-reg-input" id="reg-name" value="${e(user.displayName || "")}" readonly />
+      </div>
+      <div class="event-reg-group">
+        <label class="event-reg-label" for="reg-phone">WhatsApp / contact number *</label>
+        <input type="tel" class="event-reg-input" id="reg-phone" value="${e(user.phone || "")}" autocomplete="tel" maxlength="20" placeholder="+91 9XXXX XXXXX" />
+      </div>
+      <div class="event-reg-group">
+        <label class="event-reg-label" for="reg-college">College / institute *</label>
+        <input type="text" class="event-reg-input" id="reg-college" value="${e(user.college || "")}" maxlength="120" placeholder="e.g. HPTU Hamirpur" />
+      </div>
 
-      <div id="reg-error-msg" style="color:red; font-family:'IBM Plex Mono',monospace; font-size:11px; display:none;"></div>
+      <div id="reg-payment-section">${paymentHtml}</div>
+
+      <div id="reg-error-msg" class="event-reg-error" role="alert" hidden></div>
 
       <button type="submit" class="event-submit-btn" id="reg-submit-btn">
-        [ COMPLETE REGISTRATION & CONFIRM ]
+        [ CONFIRM REGISTRATION ]
       </button>
     </form>
   `;
@@ -507,132 +542,231 @@ export function openEventRegistration(eventId) {
   modal.classList.add("active");
   isRegModalOpen = true;
 
-  // Bind close
   const closeBtn = card.querySelector("#reg-modal-close-btn");
   if (closeBtn) closeBtn.onclick = closeEventRegistration;
 
-  // Bind Team Mode toggle
   const createFields = card.querySelector("#create-team-fields");
   const joinFields = card.querySelector("#join-team-fields");
-  const teamRadios = card.querySelectorAll('input[name="team_mode"]');
-  teamRadios.forEach((r) => {
-    r.onchange = () => {
-      if (r.value === "join") {
-        if (createFields) createFields.style.display = "none";
-        if (joinFields) joinFields.style.display = "block";
-      } else {
-        if (createFields) createFields.style.display = "block";
-        if (joinFields) joinFields.style.display = "none";
-      }
-    };
-  });
+  const paymentSection = card.querySelector("#reg-payment-section");
+  const submitBtn = card.querySelector("#reg-submit-btn");
+  const errBox = card.querySelector("#reg-error-msg");
 
-  // Bind Copy UPI ID
+  const isJoinMode = () => card.querySelector('input[name="team_mode"]:checked')?.value === "join";
+  // Paid registrations stay closed until the UPI account is configured,
+  // except joining an existing team (the leader already paid).
+  const syncMode = () => {
+    const join = isJoinMode();
+    if (createFields) createFields.hidden = join;
+    if (joinFields) joinFields.hidden = !join;
+    if (paymentSection) paymentSection.hidden = join;
+    if (submitBtn) submitBtn.disabled = !join && fee > 0 && !paymentReady;
+  };
+  card.querySelectorAll('input[name="team_mode"]').forEach((r) => (r.onchange = syncMode));
+  syncMode();
+
   const copyBtn = card.querySelector("#copy-upi-btn");
   if (copyBtn) {
-    copyBtn.onclick = () => {
-      navigator.clipboard.writeText("chaitanyahptu@sbi");
-      copyBtn.textContent = "[ COPIED! ]";
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(FEST_CONFIG.upiId);
+        copyBtn.textContent = "[ COPIED ]";
+      } catch {
+        copyBtn.textContent = "[ COPY FAILED ]";
+      }
       setTimeout(() => (copyBtn.textContent = "[ COPY ]"), 2000);
     };
   }
 
-  // Handle Form Submit
-  const form = card.querySelector("#event-reg-form");
-  if (form) {
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const submitBtn = card.querySelector("#reg-submit-btn");
-      const errBox = card.querySelector("#reg-error-msg");
-      if (errBox) errBox.style.display = "none";
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "[ PROCESSING ENROLLMENT... ]";
-      }
-
-      try {
-        const utr = (card.querySelector("#reg-utr-number")?.value || "").trim();
-        const isJoinMode = card.querySelector('input[name="team_mode"]:checked')?.value === "join";
-
-        if (isTeam && isJoinMode) {
-          const teamCode = (card.querySelector("#reg-team-code")?.value || "").trim();
-          if (!teamCode) throw new Error("Please enter your team code.");
-          await joinTeamWithCode(teamCode);
-        } else if (isTeam) {
-          const teamName = (card.querySelector("#reg-team-name")?.value || "").trim();
-          const leaderPhone = (card.querySelector("#reg-leader-phone")?.value || "").trim();
-          const college = (card.querySelector("#reg-college")?.value || "").trim();
-          if (!teamName) throw new Error("Please enter your team name.");
-          if (!leaderPhone) throw new Error("Please enter team leader phone number.");
-          if (ev.entryFeeNum > 0 && !utr) throw new Error("Please provide your 12-digit UPI UTR number.");
-          await createTeamForEvent(ev, { teamName, leaderPhone, college }, { utr });
-        } else {
-          const phone = (card.querySelector("#reg-solo-phone")?.value || "").trim();
-          const college = (card.querySelector("#reg-solo-college")?.value || "").trim();
-          if (!phone) throw new Error("Please enter contact phone number.");
-          if (ev.entryFeeNum > 0 && !utr) throw new Error("Please provide your 12-digit UPI UTR number.");
-          user.phone = phone;
-          user.college = college;
-          await registerSoloForEvent(ev, { utr, phone });
-        }
-
-        // Show Success Pass Card
-        renderRegistrationPass(card, ev);
-        refreshEventsGrid();
-      } catch (err) {
-        if (errBox) {
-          errBox.textContent = err.message || "Failed to complete registration.";
-          errBox.style.display = "block";
-        }
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "[ COMPLETE REGISTRATION & CONFIRM ]";
-        }
-      }
+  const utrInput = card.querySelector("#reg-utr-number");
+  if (utrInput) {
+    utrInput.oninput = () => {
+      utrInput.value = utrInput.value.replace(/\D/g, "").slice(0, 12);
     };
   }
+
+  const form = card.querySelector("#event-reg-form");
+  form.onsubmit = async (evt) => {
+    evt.preventDefault();
+    errBox.hidden = true;
+
+    const phone = card.querySelector("#reg-phone").value.trim();
+    const college = card.querySelector("#reg-college").value.trim();
+    const utr = (utrInput?.value || "").trim();
+    const join = isTeam && isJoinMode();
+
+    try {
+      if (!phone || phone.replace(/\D/g, "").length < 10) throw new Error("Please enter a valid contact number.");
+      if (!college) throw new Error("Please enter your college / institute.");
+      if (!join && fee > 0) {
+        if (!paymentReady) throw new Error("Online payment for this event is not open yet.");
+        if (!UTR_PATTERN.test(utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "[ SAVING REGISTRATION... ]";
+
+      if (join) {
+        const teamCode = card.querySelector("#reg-team-code").value.trim();
+        if (!teamCode) throw new Error("Please enter your team code.");
+        await joinTeamWithCode(teamCode, ev, { phone, college });
+      } else if (isTeam) {
+        const teamName = card.querySelector("#reg-team-name").value.trim();
+        if (!teamName) throw new Error("Please enter your team name.");
+        await createTeamForEvent(ev, { teamName, leaderPhone: phone, college }, { utr });
+      } else {
+        await registerSoloForEvent(ev, { utr, phone, college });
+      }
+
+      await renderRegistrationPass(card, ev);
+      refreshEventsGrid();
+    } catch (err) {
+      errBox.textContent = err.message || "Registration failed. Please try again.";
+      errBox.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "[ CONFIRM REGISTRATION ]";
+    }
+  };
 }
 
-function renderRegistrationPass(card, ev) {
-  card.innerHTML = `
-    <button class="event-reg-close" id="pass-close-btn">[ ESC / CLOSE ]</button>
-    <div style="text-align:center; padding:10px 0;">
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#005a3c; background:#eafaf1; padding:4px 12px; border-radius:20px;">
-        ✓ REGISTRATION CONFIRMED
-      </span>
-      <h3 style="font-family:'DrukMedium',sans-serif; font-size:36px; margin:12px 0 6px; text-transform:uppercase;">
-        ${ev.title}
-      </h3>
-      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#666; margin-bottom:18px;">
-        CHAITANYA 2K26 OFFICIAL ENTRY PASS
-      </p>
+const PAYMENT_BADGES = {
+  free: { label: "✓ REGISTERED", tone: "ok", note: "Free event — show this pass at the venue." },
+  team: { label: "✓ REGISTERED WITH TEAM", tone: "ok", note: "Your team leader's payment covers you." },
+  verified: { label: "✓ PAYMENT VERIFIED", tone: "ok", note: "You're all set. Show this pass at the venue." },
+  pending_verification: {
+    label: "⏳ PAYMENT VERIFICATION PENDING",
+    tone: "pending",
+    note: "Your registration is saved. The fest team will verify your UTR; check back here for the status.",
+  },
+  team_pending_verification: {
+    label: "⏳ TEAM PAYMENT PENDING",
+    tone: "pending",
+    note: "You're on the team. Your leader's payment is waiting for verification by the fest team.",
+  },
+  team_rejected: {
+    label: "✕ TEAM PAYMENT NOT VERIFIED",
+    tone: "bad",
+    note: "Your team leader's UTR could not be verified. Ask your leader to open their pass and resubmit it.",
+  },
+  rejected: {
+    label: "✕ PAYMENT NOT VERIFIED",
+    tone: "bad",
+    note: "We could not match your UTR. Re-enter the correct 12-digit UTR below.",
+  },
+};
 
-      <div style="background:#ffffff; border:2px dashed #000000; border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;">
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; color:#000; margin-bottom:4px;">
-          VENUE: ${ev.venue}
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#555; margin-bottom:12px;">
-          DATE & TIME: ${ev.date} // ${ev.time}
-        </div>
-        <div style="width:120px; height:120px; margin:0 auto 12px; border:1px solid #000; padding:6px; border-radius:8px;">
-          <img src="/images/icons/Logo.svg" alt="Pass QR Code" style="width:100%; height:100%; object-fit:contain;" />
-        </div>
-        <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#888; letter-spacing:1px;">
-          PASS ID: CH26-${ev.id.toUpperCase().slice(0, 4)}-${Math.floor(1000 + Math.random() * 9000)}
-        </span>
+async function renderRegistrationPass(card, ev) {
+  card.innerHTML = `
+    <button class="event-reg-close" id="pass-close-btn" aria-label="Close">[ ESC / CLOSE ]</button>
+    <div class="event-pass-loading">Loading your pass...</div>
+  `;
+  card.querySelector("#pass-close-btn").onclick = closeEventRegistration;
+
+  let record = null;
+  try {
+    record = await getMyRegistration(ev.id);
+  } catch (err) {
+    console.warn("Could not load registration:", err);
+  }
+
+  if (!record) {
+    card.innerHTML = `
+      <button class="event-reg-close" id="pass-close-btn" aria-label="Close">[ ESC / CLOSE ]</button>
+      <div class="event-reg-head">
+        <h3 class="event-reg-title">${e(ev.title)}</h3>
+        <p class="event-reg-sub">We couldn't load your registration right now. Check your connection and try again,
+        or email <a href="mailto:${e(FEST_CONFIG.contactEmail)}">${e(FEST_CONFIG.contactEmail)}</a>.</p>
+      </div>
+    `;
+    card.querySelector("#pass-close-btn").onclick = closeEventRegistration;
+    return;
+  }
+
+  const { registration, payment, team } = record;
+  // Teammates can't read the leader's payment; use the team's payment status.
+  const teamStatus = { paid: "verified", pending: "pending_verification", rejected: "rejected", free: "free" };
+  let status = payment?.status || registration.payment_status || "free";
+  if (status === "team" && team) {
+    status = team.paymentStatus === "paid" || team.paymentStatus === "verified" || team.paymentStatus === "free"
+      ? "team"
+      : `team_${teamStatus[team.paymentStatus] || "pending_verification"}`;
+  }
+  const badge = PAYMENT_BADGES[status] || PAYMENT_BADGES.pending_verification;
+  const isLeader = team && team.leaderUid === registration.user_id;
+
+  card.innerHTML = `
+    <button class="event-reg-close" id="pass-close-btn" aria-label="Close">[ ESC / CLOSE ]</button>
+    <div class="event-pass">
+      <span class="event-pass-status ${badge.tone}">${badge.label}</span>
+      <h3 class="event-reg-title">${e(ev.title)}</h3>
+      <p class="event-reg-sub">CHAITANYA 2K26 · ENTRY PASS</p>
+
+      <div class="event-pass-ticket">
+        <dl>
+          <div><dt>NAME</dt><dd>${e(registration.user_name)}</dd></div>
+          <div><dt>PASS ID</dt><dd class="mono">${e(registration.registration_qr_id)}</dd></div>
+          <div><dt>WHEN</dt><dd>${e(ev.date)} · ${e(ev.time)}</dd></div>
+          <div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>
+          ${team ? `<div><dt>TEAM</dt><dd>${e(team.teamName)} · ${e(team.teamSize)}/${e(team.maxTeamSize)} members</dd></div>` : ""}
+          ${payment ? `<div><dt>UTR</dt><dd class="mono">${e(payment.transactionRef)}</dd></div>` : ""}
+        </dl>
+        ${isLeader ? `
+          <div class="event-pass-code">
+            <span>SHARE THIS TEAM CODE WITH YOUR TEAMMATES</span>
+            <strong id="pass-team-code">${e(team.teamCode)}</strong>
+            <button type="button" class="event-upi-copy-btn" id="copy-team-code-btn">[ COPY CODE ]</button>
+          </div>` : ""}
       </div>
 
-      <button class="event-submit-btn" id="pass-done-btn" style="width:100%;">
-        [ RETURN TO ARENAS ]
-      </button>
+      <p class="event-pass-note">${e(badge.note)}${status === "rejected" && payment?.rejectionReason ? ` Reason: ${e(payment.rejectionReason)}` : ""}</p>
+
+      ${status === "rejected" && payment ? `
+        <form id="utr-resubmit-form" class="event-reg-form">
+          <div class="event-reg-group">
+            <label class="event-reg-label" for="resubmit-utr">Correct 12-digit UTR *</label>
+            <input type="text" class="event-reg-input event-reg-utr" id="resubmit-utr" inputmode="numeric" maxlength="12" autocomplete="off" />
+          </div>
+          <div id="resubmit-error" class="event-reg-error" role="alert" hidden></div>
+          <button type="submit" class="event-submit-btn">[ RESUBMIT UTR ]</button>
+        </form>` : ""}
+
+      <button class="event-submit-btn secondary" id="pass-done-btn">[ BACK TO EVENTS ]</button>
     </div>
   `;
 
-  const closeBtn = card.querySelector("#pass-close-btn");
-  if (closeBtn) closeBtn.onclick = closeEventRegistration;
-  const doneBtn = card.querySelector("#pass-done-btn");
-  if (doneBtn) doneBtn.onclick = closeEventRegistration;
+  card.querySelector("#pass-close-btn").onclick = closeEventRegistration;
+  card.querySelector("#pass-done-btn").onclick = closeEventRegistration;
+
+  const copyCodeBtn = card.querySelector("#copy-team-code-btn");
+  if (copyCodeBtn) {
+    copyCodeBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(team.teamCode);
+        copyCodeBtn.textContent = "[ COPIED ]";
+      } catch {
+        copyCodeBtn.textContent = "[ COPY FAILED ]";
+      }
+      setTimeout(() => (copyCodeBtn.textContent = "[ COPY CODE ]"), 2000);
+    };
+  }
+
+  const resubmitForm = card.querySelector("#utr-resubmit-form");
+  if (resubmitForm) {
+    const input = resubmitForm.querySelector("#resubmit-utr");
+    input.oninput = () => (input.value = input.value.replace(/\D/g, "").slice(0, 12));
+    resubmitForm.onsubmit = async (evt) => {
+      evt.preventDefault();
+      const errEl = resubmitForm.querySelector("#resubmit-error");
+      errEl.hidden = true;
+      try {
+        if (!UTR_PATTERN.test(input.value)) throw new Error("Enter the 12-digit UTR from your UPI receipt.");
+        await resubmitPaymentUtr(payment.paymentId, input.value);
+        await renderRegistrationPass(card, ev);
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.hidden = false;
+      }
+    };
+  }
 }
 
 export function closeEventRegistration() {
@@ -683,11 +817,14 @@ export function initScrollMotion() {
   const heroTitle = document.querySelector(".events-hero-title");
   const grid = document.getElementById("events-card-grid");
 
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
   // Smooth Scroll-to-Top Button
   if (scrollTopBtn) {
     scrollTopBtn.onclick = (e) => {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
     };
   }
 
@@ -727,10 +864,10 @@ export function initScrollMotion() {
         }
 
         // Hero Ambient Parallax (fade & subtle vertical shift)
-        if (heroCoords && scrollTop < 600) {
+        if (!reduceMotion && heroCoords && scrollTop < 600) {
           heroCoords.style.transform = `translate3d(0, ${scrollTop * 0.15}px, 0)`;
         }
-        if (heroTitle && scrollTop < 600) {
+        if (!reduceMotion && heroTitle && scrollTop < 600) {
           const scale = Math.max(1 - scrollTop / 1200, 0.9);
           const opacity = Math.max(1 - scrollTop / 500, 0.4);
           heroTitle.style.transform = `scale(${scale})`;
@@ -751,6 +888,11 @@ export function initScrollMotion() {
     const cards = Array.from(document.querySelectorAll(".event-card"));
     if (!cards.length) return;
 
+    if (reduceMotion) {
+      cards.forEach((c) => c.classList.add("is-revealed"));
+      return;
+    }
+
     // Check for GSAP + ScrollTrigger
     const gsap = window.gsap;
     const ScrollTrigger = gsap?.core?.globals()?.ScrollTrigger || window.ScrollTrigger;
@@ -766,12 +908,12 @@ export function initScrollMotion() {
             start: "top 88%",
             once: true,
             onEnter: () => {
-              const delay = (index % 3) * 0.08;
+              const delay = (index % 3) * 0.06;
               gsap.to(card, {
                 opacity: 1,
                 y: 0,
                 scale: 1,
-                duration: 0.55,
+                duration: finePointer ? 0.5 : 0.35,
                 delay: delay,
                 ease: "power2.out",
                 onComplete: () => {
@@ -838,14 +980,16 @@ export function initScrollMotion() {
     }
   };
 
-  if (grid) {
+  // Tilt only for mouse users: on touch it never resets and just costs repaints.
+  const enableTilt = grid && finePointer && !reduceMotion;
+  if (enableTilt) {
     grid.addEventListener("mousemove", onMouseMove, { passive: true });
     grid.addEventListener("mouseout", onMouseLeave, { passive: true });
   }
 
   scrollMotionCleanup = () => {
     window.removeEventListener("scroll", onScroll);
-    if (grid) {
+    if (enableTilt) {
       grid.removeEventListener("mousemove", onMouseMove);
       grid.removeEventListener("mouseout", onMouseLeave);
     }

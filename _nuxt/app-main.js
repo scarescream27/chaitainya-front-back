@@ -4039,7 +4039,7 @@ let At,
           path: "/cases/:id()",
           meta: {},
           alias: [],
-          redirect: Qh == null ? void 0 : Qh.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4053,7 +4053,7 @@ let At,
           path: "/cases/3d-configurator",
           meta: {},
           alias: [],
-          redirect: ed == null ? void 0 : ed.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4067,7 +4067,7 @@ let At,
           path: "/cases/intel-ai-io",
           meta: {},
           alias: [],
-          redirect: td == null ? void 0 : td.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4081,7 +4081,7 @@ let At,
           path: "/cases/noomo-beat",
           meta: {},
           alias: [],
-          redirect: id == null ? void 0 : id.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4095,7 +4095,7 @@ let At,
           path: "/cases/the-silly-bunny",
           meta: {},
           alias: [],
-          redirect: nd == null ? void 0 : nd.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4109,7 +4109,7 @@ let At,
           path: (qi == null ? void 0 : qi.path) ?? "/configurator",
           meta: qi || {},
           alias: (qi == null ? void 0 : qi.alias) || [],
-          redirect: qi == null ? void 0 : qi.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4137,7 +4137,7 @@ let At,
           path: "/fwa",
           meta: {},
           alias: [],
-          redirect: sd == null ? void 0 : sd.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4202,7 +4202,7 @@ let At,
           path: "/work",
           meta: {},
           alias: [],
-          redirect: ld == null ? void 0 : ld.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>

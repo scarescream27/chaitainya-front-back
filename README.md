@@ -9,23 +9,23 @@ An immersive, futuristic digital experience combining cutting-edge WebGL 3D grap
 ## Key Highlights
 
 - **Immersive 3D Experience**: Powered by Three.js and Cannon-es with real-time physics, glass shattering animations, and scroll-driven interactive 3D camera choreography.
-- **Dedicated Events Arena (`/events`)**: 12 flagship competitions across Coding & AI, Robotics & IoT, Esports, Workshops, and Cultural Arts with real-time category filtering and instant fuzzy search.
+- **Dedicated Events Arena (`/events`)**: 20 events across Coding & Tech, Design & Innovation, Business & Debate, Esports, and Cultural & Fun with real-time category filtering and instant fuzzy search.
 - **Fluid Scroll Motion UI**:
   - Top edge gradient scroll progress bar (`0%` to `100%`).
   - Sticky category toolbar with frosted glass morphing dock.
   - Floating brutalist scroll HUD with dynamic progress metric and 1-click smooth return to top.
   - GPU-accelerated staggered card reveals on scroll and interactive 3D perspective tilt on hover.
 - **Interactive Rules Dossier Drawer**: Slides out from the right displaying official competition rules, multi-round schedules, weighted judging rubrics, and direct Call & WhatsApp student/faculty coordinators.
-- **Team & Solo Registration with SBI UPI QR**:
-  - Dual registration modes ("Create Squad" with auto-generated team codes e.g. `CYBE-668` or "Join Squad").
-  - Dynamic fee calculation with University SBI UPI QR (`chaitanyahptu@sbi`) and 12-digit transaction UTR submission.
-  - Confirmed official digital Entry Ticket Pass with QR code, venue details, and unique Pass ID.
-- **Multi-Tab Admin Command Center**:
-  - `[ 01. ATTENDEES ]`: Comprehensive participant registry with contact numbers, colleges, and registered events.
-  - `[ 02. SQUADS & TEAMS ]`: Squad roster with unique team codes, leader details, and roster capacity.
-  - `[ 03. UPI PAYMENTS & UTR ]`: Real-time verification queue with total revenue metrics and **1-click `[ ✓ Approve ]` / `[ ✕ Reject ]` actions**.
-  - **Master Multi-Tab Excel Export (`.xls`)**: One-click download of a clean XML SpreadsheetML workbook containing separate sheets for Attendees, Squads, and Payment Audits.
-  - **CSV Export (`.csv`)**: Instant spreadsheet download of the active tab.
+- **Team & Solo Registration with UPI payments**:
+  - Team leaders create a team (and pay the team fee) and get a team code (e.g. `BYTE-4F8K`); teammates join with the code.
+  - Paid events take a 12-digit UPI UTR. Payments stay **pending** until an admin verifies the UTR against the bank statement.
+  - Entry pass with a stable Pass ID and live payment status (pending / verified / rejected, with UTR resubmission).
+  - Paid registrations stay closed until a verified UPI ID is set in `_nuxt/fest-config.js`.
+- **Admin Command Center** (live Firestore data only):
+  - **Payments**: verification queue with approve / reject, duplicate-UTR and wrong-amount flags.
+  - **Registrations**: every entry with its effective payment state; paid events without a verified payment show **UNPAID**.
+  - **Teams** and **Accounts** tabs, plus **Setup** to sync the event catalog (with fees) to Firestore.
+  - Excel (`.xls`) export of all sheets and CSV export of the current tab (formula-injection safe).
 - **Google Firebase Integration**: Dual-tier Google Sign-In, profile management, and attendee event registration with local caching and Cloud Firestore sync.
 - **Brutalist Glassmorphism UI**: High-contrast, minimalist daytime design language featuring `DrukMedium` display headers and `IBM Plex Mono` monospace typography.
 
@@ -69,6 +69,28 @@ chaitanya-2k26/
 
 ---
 
+## Fest configuration (edit before launch)
+
+All fest-wide values live in [`_nuxt/fest-config.js`](_nuxt/fest-config.js):
+
+| Setting | Meaning |
+| --- | --- |
+| `datesLabel` | Official dates, e.g. `"10 – 11 OCTOBER 2026"`. `null` shows "DATES TBA". |
+| `upiId` | Verified UPI ID for collecting fees. `null` keeps paid registrations closed. |
+| `upiQrImage` | Optional path to the bank-issued QR image. |
+| `contactEmail` | Shown wherever no coordinator is listed. |
+
+Event details (venues, times, fees, prizes, coordinators) are in [`_nuxt/events-data.js`](_nuxt/events-data.js); they are provisional placeholders until the committee confirms them. After editing, regenerate `events_catalog.json` and re-run **Admin → Setup → Sync** so the security rules see the new fees.
+
+### Launch checklist
+
+1. Set `datesLabel`, `upiId` (and optionally `upiQrImage`) in `fest-config.js`.
+2. Replace placeholder event details and add real coordinators in `events-data.js`.
+3. Deploy the security rules: `npm run deploy:rules`.
+4. Sign in as an admin and run **Admin → Setup → Sync events & FAQs**.
+5. Add `hdri/photo_studio_01_1k.hdr` (Poly Haven, CC0); the 3D scene requests it.
+6. Keep the admin list in `firebase-config.js` and `firestore.rules` identical.
+
 ## Getting Started
 
 ### Prerequisites
@@ -97,11 +119,11 @@ chaitanya-2k26/
 
 ## Admin Command Center
 
-Authorized fest administrators (`chaitanyahptu@gmail.com`) can access the command center at any time:
-1. Open the user profile modal in the top navigation bar, or run `openAuthModal('admin')` in the browser console.
-2. Review attendees, squads, and submitted 12-digit UPI UTRs.
-3. Click **`[ ✓ Approve ]`** to verify payments and confirm ticket issuance.
-4. Click **`[ Export to Excel (.xls) ]`** to download the complete master fest database.
+Admins are the Google accounts listed in `isAdmin()` in `firestore.rules` (the UI list in `_nuxt/firebase-config.js` must match). The **Admin** nav link appears only for those accounts.
+1. Sign in, then open **Admin** from the navigation or your profile.
+2. In **Payments**, check each UTR against the bank statement, then **Approve** or **Reject** (with a reason the participant sees).
+3. Use **Registrations** at the gate: anything marked **UNPAID** has no verified payment.
+4. **Download Excel** for the full database.
 
 ---
 
@@ -135,6 +157,8 @@ Chaitanya 2k26 includes an integrated multi-tiered Redis caching architecture de
    ```bash
    REDIS_URL=rediss://default:password@your-endpoint.upstash.io:6379
    ```
+
+> The Python server is for **local development only**. It listens on `127.0.0.1` by default (set `HOST=0.0.0.0` to expose it on your LAN), refuses dotfiles and source files, and only accepts cache purges from localhost. Production is static hosting (Firebase), where none of the `/api/*` endpoints exist.
 
 > **Zero-Downtime Fallback**: If Redis is offline or stopped, the server automatically and transparently falls back to an internal thread-safe LRU in-memory cache without dropping a single request!
 

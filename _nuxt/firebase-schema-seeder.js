@@ -11,7 +11,7 @@ import { getFirebaseConfig, isFirebaseConfigured } from "./firebase-config.js";
 
 export const SCHEMA_COLLECTIONS = [
   { name: "users", sqlTable: "users", description: "Attendee and admin identity profiles" },
-  { name: "events", sqlTable: "events", description: "12 Competitions & workshops with timestamps" },
+  { name: "events", sqlTable: "events", description: "Fest events with schedule, venue and fees" },
   { name: "teams", sqlTable: "teams", description: "Squad registry with team codes & leader IDs" },
   { name: "team_members", sqlTable: "team_members", description: "Mapping between teams and participant users" },
   { name: "registrations", sqlTable: "registrations", description: "Official participation passes & QR tracking" },
@@ -32,14 +32,14 @@ export const DEFAULT_FAQS = [
   {
     id: "faq_team_creation",
     question: "How do team registrations and codes work?",
-    answer: "The team leader registers the squad, selecting an event and receiving an auto-generated unique team code (e.g. BYTE-408). Teammates can instantly join the squad by entering this code.",
+    answer: "The team leader registers the team (and pays the team fee) and receives a unique team code (e.g. BYTE-4F8K). Teammates sign in and join the team by entering this code on the same event.",
     display_order: 2,
     published: true,
   },
   {
     id: "faq_payments",
     question: "How do I pay the registration fee via UPI?",
-    answer: "Scan the official University SBI UPI QR code (chaitanyahptu@sbi) displayed in the registration modal and submit the 12-digit transaction UTR number. Fest coordinators verify submissions within 2-4 hours.",
+    answer: "Pay the entry fee to the official fest UPI ID shown in the registration form, then enter the 12-digit UTR from your payment receipt. The fest team verifies every UTR against the bank statement; your pass shows the verification status.",
     display_order: 3,
     published: true,
   },
@@ -60,7 +60,7 @@ export const DEFAULT_FAQS = [
   {
     id: "faq_prizes",
     question: "When and how will prize pools and certificates be disbursed?",
-    answer: "Official certificates of excellence and cash awards will be distributed during the Grand Valedictory Ceremony on 27 March 2026. Digital verifiable certificates will also be issued to all registered attendees.",
+    answer: "Official certificates of excellence and cash awards will be distributed during the closing ceremony on the final day of the fest. Digital verifiable certificates will also be issued to all registered attendees.",
     display_order: 6,
     published: true,
   },
@@ -94,7 +94,7 @@ export async function applySchemaToFirestore(onProgress = () => {}) {
   };
 
   // 1. Seed Events matching 'events' table
-  onProgress({ stage: "events", message: "Seeding 12 flagship events to 'events' collection..." });
+  onProgress({ stage: "events", message: `Seeding ${EVENTS_DATA.length} events to the events collection...` });
   for (const ev of EVENTS_DATA) {
     try {
       const eventDoc = {
@@ -103,9 +103,12 @@ export async function applySchemaToFirestore(onProgress = () => {}) {
         type: ev.category === "workshops" ? "workshop" : "competition",
         description: ev.overview || ev.tagline || "",
         venue: ev.venue || "HPTU Hamirpur",
-        start_time: "2026-03-26T10:00:00Z",
-        end_time: "2026-03-27T18:00:00Z",
-        registration_deadline: "2026-03-25T23:59:59Z",
+        // Filled in once the official schedule is announced.
+        day: ev.date || null,
+        time: ev.time || null,
+        start_time: null,
+        end_time: null,
+        registration_deadline: null,
         capacity: 100,
         status: "published",
         created_by: "system_admin",

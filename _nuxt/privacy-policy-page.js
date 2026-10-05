@@ -59,9 +59,9 @@ let a,
               <h1>Privacy Policy</h1>
               <p class="subtitle">Chaitanya 2k26 — Himachal Pradesh Technical University (HPTU)</p>
               <div class="privacy-meta-row">
-                <span>Effective: March 2026</span>
+                <span>Effective: October 2026</span>
                 <span>•</span>
-                <span>Revision: 2.6 (Fest Edition)</span>
+                <span>Revision: 3.0 (Fest Edition)</span>
                 <span>•</span>
                 <span>Custodian: Organizing Committee & Tech Council</span>
               </div>
@@ -108,11 +108,12 @@ let a,
                 </div>
                 <p>To coordinate competitive tracks and security clearance, we collect the following categories of data:</p>
                 <ul>
-                  <li><strong>Account & Identification:</strong> Full Name, Email Address, College/University affiliation, Department, Year of Study, and Student Roll Number.</li>
-                  <li><strong>Team Information:</strong> Team Name, Team Lead identity, member lists, and GitHub/GitLab repository links submitted for hackathon evaluations.</li>
-                  <li><strong>Contact Details:</strong> Verified Contact/Mobile Number and academic email address for emergency coordination, schedule dispatches, and pass delivery.</li>
+                  <li><strong>Account & Identification:</strong> Your name, email address and profile photo from your Google account, plus the college/institute you enter.</li>
+                  <li><strong>Event Registrations & Teams:</strong> The events you register for, your team name, team code and the names of your team members.</li>
+                  <li><strong>Contact Details:</strong> The mobile/WhatsApp number you enter, used for schedule updates and coordination.</li>
+<li><strong>Payment Details:</strong> For paid events, the amount and the 12-digit UPI transaction reference (UTR) you submit, so the organising committee can match it with the bank statement. We never ask for or store your UPI PIN, bank account or card details.</li>
                   <li><strong>Direct Queries:</strong> Name, Team Name, Email, Contact Number, and specific message text transmitted through our Web3Forms-integrated contact system.</li>
-                  <li><strong>Device & Interaction Telemetry:</strong> Anonymized client metadata including browser type, viewport dimensions, and local preferences (audio on/off setting).</li>
+                  <li><strong>Usage Analytics:</strong> Google Analytics for Firebase collects standard usage data (pages viewed, device and browser type, approximate location) to help us improve the site. Your audio on/off preference is stored only in your browser.</li>
                 </ul>
               </article>
 
@@ -142,9 +143,9 @@ let a,
                 </p>
                 <ul>
                   <li><strong>Firebase Authentication:</strong> Identity sessions and authentication tokens are safeguarded via Google Firebase Infrastructure adhering to ISO/IEC 27001 and SOC standards.</li>
-                  <li><strong>Restricted Root Admin Access:</strong> Privileged access to the festival administrative backend is cryptographically isolated and restricted solely to the verified coordinator email: <code>chaitanyahptu@gmail.com</code>.</li>
+                  <li><strong>Restricted Admin Access:</strong> Registration and payment records can be viewed only by you and by authorised organising-committee accounts, enforced by Cloud Firestore security rules.</li>
                   <li><strong>HTTPS & Transport Security:</strong> All client-server communications are conducted over end-to-end encrypted TLS/HTTPS channels.</li>
-                  <li><strong>No Plaintext Passwords:</strong> User credentials are protected using salted cryptographic hashes handled entirely by Firebase identity services.</li>
+                  <li><strong>No Passwords Stored:</strong> Sign-in uses Google; we never see or store your Google password.</li>
                 </ul>
               </article>
 
@@ -156,7 +157,7 @@ let a,
                 </div>
                 <p>We utilize carefully audited external services to power portal capabilities:</p>
                 <ul>
-                  <li><strong>Google Firebase:</strong> User authentication, secure token exchange, and persistent application state.</li>
+                  <li><strong>Google Firebase:</strong> Sign-in (Firebase Authentication), storage of registrations and payment submissions (Cloud Firestore), and usage analytics (Google Analytics for Firebase).</li>
                   <li><strong>Web3Forms:</strong> Serverless contact form submission dispatching inquiries directly to <code>chaitanyahptu@gmail.com</code> with SSL encryption.</li>
                   <li><strong>Interactive 3D Engine:</strong> Client-side Three.js and WebGL animations render entirely on your local GPU without exporting biometric or device profiling data.</li>
                 </ul>
@@ -212,7 +213,7 @@ let a,
             <!-- Bottom CTA -->
             <section class="privacy-cta-box">
               <h3>HAVE QUESTIONS OR NEED ASSISTANCE?</h3>
-              <p>Our festival coordination and technical desk is available around the clock to support your teams and submissions.</p>
+              <p>Our festival coordination and technical desk will respond to your questions by email as soon as possible.</p>
               <a href="/contact" class="privacy-cta-btn" id="btn-privacy-cta-contact">[ OPEN CONTACT US DESK ]</a>
             </section>
 

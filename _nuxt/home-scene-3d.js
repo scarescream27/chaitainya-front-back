@@ -81,6 +81,24 @@ import {
 } from "./vue-runtime.js";
 import { H as Tl, __tla as Ml } from "./home-footer.js";
 import { __tla as Pl } from "./nuxt-link.js";
+
+// ---------------------------------------------------------------------------
+// Device performance tier. Phones, tablets, low-core/low-memory machines and
+// users who prefer reduced motion get a lighter render path so the scene stays
+// smooth instead of dropping frames.
+// ---------------------------------------------------------------------------
+const PERF_LOW = (() => {
+  if (typeof window === "undefined") return false;
+  const mq = (q) => window.matchMedia && window.matchMedia(q).matches;
+  return (
+    mq("(pointer: coarse)") ||
+    mq("(prefers-reduced-motion: reduce)") ||
+    (navigator.hardwareConcurrency || 8) <= 4 ||
+    (navigator.deviceMemory || 8) <= 4 ||
+    window.innerWidth < 900
+  );
+})();
+let perfFrame = 0;
 let Ws,
   Bl = Promise.all([
     (() => {
@@ -6289,13 +6307,14 @@ let Ws,
                 (v = document.getElementById("home-scene")),
                 (m = new rl()),
                 (y = new al({
-                  powerPreference: "high-performance",
-                  antialias: !0,
+                  powerPreference: PERF_LOW ? "default" : "high-performance",
+                  // High-DPI phones don't need MSAA; it is the costliest pass there.
+                  antialias: !PERF_LOW,
                   stencil: !1,
                   depth: !0,
                   alpha: !0,
                 })));
-              let N = Math.min(window.devicePixelRatio || 1, 1.5);
+              let N = Math.min(window.devicePixelRatio || 1, PERF_LOW ? 1.25 : 1.5);
               (window.innerWidth > 1920 && (N = Math.min(N, 1.25)),
                 y.setPixelRatio(N),
                 (y.toneMapping = ll),
@@ -6352,14 +6371,21 @@ let Ws,
                 const N = await o.loadAsync("/hdri/photo_studio_01_1k.hdr");
                 ((N.mapping = Ve),
                   (m.environment = N));
-              } catch (e) {}
+              } catch (e) {
+                // HDR missing: fall back to the bundled light studio texture so
+                // the glass bubbles still get bright reflections instead of black.
+                try {
+                  const F = await new Ye().loadAsync("/hdri/sphere5.png");
+                  ((F.mapping = Ve), (m.environment = F));
+                } catch (e2) {}
+              }
               i.setPreloaderPercentage(12);
             },
             Na = () => {
               const N = t && window.innerWidth > 1024 ? 1 : 0.5;
               (new ul().load("/fonts/Druk_Regular.json", function (A) {
                 const G = new Zt({
-                    color: 0,
+                    color: 0, // black title
                     transparent: !0,
                     opacity: 1,
                     side: He,
@@ -6802,6 +6828,8 @@ let Ws,
                   A.children[6].scale.z * 1.2,
                 ),
                 V.ticker.lagSmoothing(500, 33),
+                // Cap at 60fps: on 120Hz screens this halves GPU work with no visible loss.
+                V.ticker.fps(60),
                 V.ticker.add(Ms),
                 i.setPreloaderPercentage(90),
                 La());
@@ -7225,8 +7253,10 @@ let Ws,
                 Kt && Ka(N),
                 ms && !Kt && $a(),
                 p._actions && p.update(N),
-                Oa(),
-                ws ? As() : Wa(),
+                // The glass refraction buffers re-render the whole scene; on
+                // low-power devices refresh them every other frame.
+                (perfFrame = (perfFrame + 1) % 2),
+                (!PERF_LOW || perfFrame === 0) && (Oa(), ws ? As() : Wa()),
                 g.update(),
                 y.render(m, f));
             };
@@ -7378,14 +7408,14 @@ let Ws,
       (Ao = O(
         "p",
         null,
-        " Each project at Chaitanya 2k26 serves as a testament to our commitment to innovation and excellence ",
+        " Twenty events across coding, design, business, esports and culture ",
         -1,
       )),
       (To = [Ao]),
       (Mo = O(
         "p",
         null,
-        " Browse our portfolio to see the magic we create with cutting-edge technologies including XR, AR, AI and 3D. ",
+        " Browse the events, build your team and register online before seats fill up. ",
         -1,
       )),
       (Po = [Mo]),
@@ -7528,7 +7558,7 @@ let Ws,
                       [
                         So,
                         Lt(
-                          " Welcome to a Creative space showcasing groundbreaking projects that blend creativity and technology ",
+                          " Welcome to Chaitanya 2k26, the annual technical and cultural fest of HPTU Hamirpur ",
                         ),
                       ],
                       512,
@@ -7543,7 +7573,7 @@ let Ws,
                       [
                         zo,
                         Lt(
-                          " Follow us into the future of interactive and immersive digital experiences ",
+                          " Three days of hackathons, CTF, esports, debates, design challenges and cultural events ",
                         ),
                       ],
                       512,
@@ -7558,7 +7588,7 @@ let Ws,
                       [
                         Co,
                         Lt(
-                          " Engage with us at Chaitanya 2k26, where technology meets creativity, and every interaction is an opportunity for innovation ",
+                          " Compete, learn and perform alongside students from colleges across Himachal and beyond ",
                         ),
                       ],
                       512,

@@ -53,6 +53,7 @@ let st,
     const lt = Nt("/images/icons/Logo.svg?v=2k26"),
       ct = { class: "header" },
       ut = d("img", { src: lt, alt: "Logo" }, null, -1),
+      tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
       tabRegister = d("span", null, "Register", -1),
       tabLogin = d("span", null, "Login", -1),
@@ -64,6 +65,7 @@ let st,
       ),
       ht = [gt],
       mt = { class: "top" },
+      mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
       mRegister = d("span", null, "Register", -1),
       mLogin = d("span", null, "Login", -1),
@@ -180,6 +182,11 @@ let st,
                       [
                         Y(
                           z,
+                          { to: "/" },
+                          { default: Z(() => [O("["), tabHome, O("]")]), _: 1 },
+                        ),
+                        Y(
+                          z,
                           { to: "/events" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
@@ -198,7 +205,7 @@ let st,
                               "span",
                               null,
                               authCurrentUser.value
-                                ? authCurrentUser.value.displayName.split(" ")[0].toUpperCase()
+                                ? (authCurrentUser.value.displayName || "Profile").split(" ")[0].toUpperCase()
                                 : "Register",
                             ),
                             O("]"),
@@ -272,6 +279,14 @@ let st,
                                 [
                                   Y(
                                     z,
+                                    { to: "/" },
+                                    {
+                                      default: Z(() => [O("["), mHome, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  Y(
+                                    z,
                                     { to: "/events" },
                                     {
                                       default: Z(() => [O("["), mEvents, O("]")]),
@@ -296,7 +311,7 @@ let st,
                                     "span",
                                     null,
                                     authCurrentUser.value
-                                      ? authCurrentUser.value.displayName.split(" ")[0].toUpperCase()
+                                      ? (authCurrentUser.value.displayName || "Profile").split(" ")[0].toUpperCase()
                                       : "Register",
                                   ),
                                   O("]"),

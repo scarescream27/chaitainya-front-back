@@ -20,7 +20,17 @@
       "FIREBASE_SCHEMA_MAPPING.md",
       "FIREBASE_SETUP.md",
       "README.md",
-      "package-lock.json"
+      "package-lock.json",
+      "redis_cache.py",
+      "scripts/**",
+      "scratch/**",
+      "*.pdf",
+      "*.sql",
+      "*.md",
+      "package.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "events_catalog.json"
     ],
     "rewrites": [
       {
@@ -43,6 +53,18 @@
           {
             "key": "X-Content-Type-Options",
             "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
           }
         ]
       },
