@@ -41,6 +41,7 @@ import {
 } from "./cart.js";
 
 import { openAuthModal } from "./auth-modal.js";
+import { registrationQrHtml } from "./profile-panel.js";
 
 import {
   FEST_CONFIG,
@@ -696,6 +697,9 @@ function renderCheckout() {
     const codes = Object.entries(r.teamCodes || {})
       .map(([id, code]) => `<li><span>${e(getEventById(id)?.title || id)}</span><strong class="mono">${e(code)}</strong></li>`)
       .join("");
+    const qrs = (r.registrations || [])
+      .map((reg) => `<li><strong>${e(reg.event_title)}</strong>${registrationQrHtml(reg, { size: "small" })}</li>`)
+      .join("");
     body = `
       <div class="event-reg-head">
         <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
@@ -703,6 +707,7 @@ function renderCheckout() {
         <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.total > 0 ? " Your bookings will show as confirmed once the fest team verifies your payment." : r.teamPending ? " Your booking is confirmed once the fest team verifies your leader's payment." : ""}</p>
       </div>
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
+      ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
       <div class="checkout-nav">
         <button type="button" class="event-submit-btn secondary" data-action="co-close">[ BACK TO EVENTS ]</button>
         <button type="button" class="event-submit-btn" data-action="co-my-registrations">[ MY REGISTRATIONS ]</button>
@@ -787,7 +792,14 @@ async function onCheckoutSubmit(evt, card) {
       const joined = await joinTeamWithCode(code, getEventById(checkout.joinEventId), checkout.details);
       removeFromCart(checkout.joinEventId);
       const teamPaid = ["free", "paid", "verified"].includes(joined.team?.paymentStatus || "free");
-      checkout.result = { total: 0, eventIds: [checkout.joinEventId], teamCodes: {}, joinedTeam: joined.team?.teamName, teamPending: !teamPaid };
+      checkout.result = {
+        total: 0,
+        eventIds: [checkout.joinEventId],
+        teamCodes: {},
+        joinedTeam: joined.team?.teamName,
+        teamPending: !teamPaid,
+        registrations: joined.registration ? [joined.registration] : [],
+      };
       checkout.step = "done";
       refreshEventsGrid();
       return renderCheckout();

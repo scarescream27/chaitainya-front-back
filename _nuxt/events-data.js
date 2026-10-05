@@ -16,7 +16,7 @@
  */
 
 // Master switch: true opens every event that doesn't set registrationOpen itself.
-export const FEST_REGISTRATION_OPEN = false;
+export const FEST_REGISTRATION_OPEN = true;
 export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";

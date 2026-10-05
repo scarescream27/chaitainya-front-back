@@ -20,39 +20,6 @@ if (typeof window !== "undefined") {
   window.__submitToWeb3Forms = submitToWeb3Forms;
 }
 
-let audioCtx = null;
-
-function playKeystrokeSound() {
-  try {
-    const soundStatus = document.querySelector(".social-links-global .volume .status p, .home-preloader .bottom .volume .status p");
-    const isSoundOn = !soundStatus || soundStatus.textContent.trim().toLowerCase() === "on";
-    if (!isSoundOn) return;
-
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
-
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(500 + Math.random() * 220, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.04);
-
-    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
-  } catch (e) {}
-}
-
 function enhanceBubble(wrapper, labelText = "FIELD") {
   if (!wrapper || wrapper.querySelector(".bubble-progress-svg")) return;
 
@@ -186,7 +153,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(nameWrap);
-      playKeystrokeSound();
 
       if (heroH1) {
         if (val.length > 0) {
@@ -211,7 +177,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(teamWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -229,7 +194,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(emailWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -247,7 +211,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(contactWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -264,7 +227,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(queryWrap);
-      playKeystrokeSound();
     });
   }
 

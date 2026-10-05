@@ -37,15 +37,64 @@ import {
 } from "./vue-runtime.js";
 import { initAuthModal, openAuthModal, syncNavbarAuthState } from "./auth-modal.js";
 import { initFirebase, subscribeAuthState, signOutUser, getCurrentUser } from "./auth-service.js";
-// Profile icon in the nav: avatar + first name when signed in, [Register] otherwise.
-function navProfileChildren(user, h, text) {
-  if (!user) return [text("["), h("span", null, "Register"), text("]")];
-  const first = (user.displayName || "Profile").split(" ")[0].toUpperCase();
+function goTo(path) {
+  const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+  if (router) router.push(path);
+  else window.location.href = path;
+}
+
+async function logOutAndLeave() {
+  await signOutUser();
+  if (window.location.pathname.replace(/\/$/, "") === "/profile") goTo("/");
+}
+
+/**
+ * The two auth slots of the nav: [Login] [Register] when signed out,
+ * [Profile] [Logout] when signed in.
+ *
+ * Each link is its own keyed block (openBlock + createElementBlock): the
+ * surrounding compiled template is static, and Vue only re-renders the
+ * dynamic blocks of a static tree, so plain vnodes here would never update
+ * after sign-in.
+ */
+function authNavLinks(user, { openBlock, block, h, text, before }) {
+  const link = (key, href, label, onClick, extra = {}, children = null) => (
+    openBlock(),
+    block(
+      "a",
+      {
+        key,
+        href,
+        ...extra,
+        onClick: (e) => {
+          e.preventDefault();
+          before?.();
+          onClick();
+        },
+      },
+      children || [text("["), h("span", null, label), text("]")],
+    )
+  );
+  if (!user) {
+    return [
+      link("nav-login", "#login", "Login", () => openAuthModal("login")),
+      link("nav-register", "#register", "Register", () => openAuthModal("register")),
+    ];
+  }
   const initials = (user.displayName || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
   const avatar = user.photoURL
     ? h("img", { class: "nav-avatar", src: user.photoURL, alt: "", referrerpolicy: "no-referrer" })
     : h("span", { class: "nav-avatar nav-avatar-initials", "aria-hidden": "true" }, initials);
-  return [avatar, h("span", { class: "nav-profile-name" }, first)];
+  return [
+    // Keyed on the avatar so a name/photo change re-mounts the link.
+    link(`nav-profile:${initials}:${user.photoURL || ""}`, "/profile", "Profile", () => goTo("/profile"), { class: "nav-profile", "aria-label": "Open your profile" }, [
+      avatar,
+      text("["),
+      h("span", null, "Profile"),
+      text("]"),
+    ]),
+    link("nav-logout", "#logout", "Logout", logOutAndLeave),
+  ];
 }
 
 let st,
@@ -97,7 +146,8 @@ let st,
             authCurrentUser = nt(getCurrentUser());
 
           subscribeAuthState((u) => {
-            authCurrentUser.value = u;
+            // A fresh object: profile edits mutate the same user in place.
+            authCurrentUser.value = u ? { ...u } : null;
             syncNavbarAuthState(u);
           });
           return (
@@ -209,38 +259,7 @@ let st,
                           { to: "/events" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
-                        d(
-                          "a",
-                          {
-                            href: authCurrentUser.value ? "#profile" : "#register",
-                            class: authCurrentUser.value ? "nav-profile" : null,
-                            "aria-label": authCurrentUser.value ? "Open your profile" : null,
-                            onClick: (e) => {
-                              e.preventDefault();
-                              openAuthModal(authCurrentUser.value ? "profile" : "register");
-                            },
-                          },
-                          navProfileChildren(authCurrentUser.value, d, O),
-                        ),
-                        d(
-                          "a",
-                          {
-                            href: authCurrentUser.value ? "#logout" : "#login",
-                            onClick: (e) => {
-                              e.preventDefault();
-                              if (authCurrentUser.value) {
-                                signOutUser();
-                              } else {
-                                openAuthModal("login");
-                              }
-                            },
-                          },
-                          [
-                            O("["),
-                            d("span", null, authCurrentUser.value ? "LOGOUT" : "Login"),
-                            O("]"),
-                          ],
-                        ),
+                        ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),
                         d(
                           "a",
                           {
@@ -306,40 +325,13 @@ let st,
                                   ),
                                 ],
                               ),
-                              d(
-                                "a",
-                                {
-                                  href: authCurrentUser.value ? "#profile" : "#register",
-                            class: authCurrentUser.value ? "nav-profile" : null,
-                            "aria-label": authCurrentUser.value ? "Open your profile" : null,
-                                  onClick: (e) => {
-                                    e.preventDefault();
-                                    w(n).openMobileMenu(!1);
-                                    openAuthModal(authCurrentUser.value ? "profile" : "register");
-                                  },
-                                },
-                                navProfileChildren(authCurrentUser.value, d, O),
-                              ),
-                              d(
-                                "a",
-                                {
-                                  href: authCurrentUser.value ? "#logout" : "#login",
-                                  onClick: (e) => {
-                                    e.preventDefault();
-                                    w(n).openMobileMenu(!1);
-                                    if (authCurrentUser.value) {
-                                      signOutUser();
-                                    } else {
-                                      openAuthModal("login");
-                                    }
-                                  },
-                                },
-                                [
-                                  O("["),
-                                  d("span", null, authCurrentUser.value ? "LOGOUT" : "Login"),
-                                  O("]"),
-                                ],
-                              ),
+                              ...authNavLinks(authCurrentUser.value, {
+                                openBlock: we,
+                                block: ot,
+                                h: d,
+                                text: O,
+                                before: () => w(n).openMobileMenu(!1),
+                              }),
                               d(
                                 "a",
                                 {

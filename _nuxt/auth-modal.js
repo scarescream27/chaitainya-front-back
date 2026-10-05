@@ -43,6 +43,7 @@ const GOOGLE_ICON_SVG = `
 
 let modalBackdrop = null;
 let currentMode = "login"; // "login" | "register" | "profile" | "admin"
+let afterSignIn = null; // e.g. open the profile once a signed-out visitor signs in
 
 /**
  * Initialize DOM nodes and attach global listeners
@@ -112,7 +113,9 @@ export function initAuthModal() {
         openAuthModal("profile");
       } else if (href === "#logout") {
         e.preventDefault();
-        signOutUser();
+        signOutUser().then(() => {
+          if (window.location.pathname.replace(/\/$/, "") === "/profile") goToPage("/");
+        });
       }
     });
 
@@ -142,7 +145,7 @@ function checkUrlRoute() {
     openAuthModal("register");
   } else if (hash === "#admin" || path === "/admin") {
     openAuthModal("admin");
-  } else if (hash === "#profile" || path === "/profile") {
+  } else if (hash === "#profile") {
     openAuthModal("profile");
   }
 }
@@ -151,11 +154,19 @@ function checkUrlRoute() {
  * Open modal in specific mode
  */
 export function openAuthModal(mode = "login", options = {}) {
-  // The profile lives in its own floating overlay (no page navigation).
-  if (mode === "profile" && getCurrentUser()) {
+  const user = getCurrentUser();
+  // Signed-in users never see Login/Register: send them to their profile.
+  if (user && (mode === "profile" || mode === "login" || mode === "register")) {
     closeAuthModal();
     openProfilePanel(options.section || "profile");
     return;
+  }
+  // Profile requested while signed out: sign in first, then open it.
+  if (mode === "profile") {
+    afterSignIn = () => openProfilePanel(options.section || "profile");
+    mode = "login";
+  } else if (mode !== "admin" && !options.keepAfterSignIn) {
+    afterSignIn = options.afterSignIn || null;
   }
   initAuthModal();
   currentMode = mode;
@@ -266,15 +277,16 @@ function renderLoginView(container, isConfigured) {
   btnLogin.addEventListener("click", async () => {
     setBusy(btnLogin, true, "Connecting to Google...");
     try {
-      await signInWithGoogle();
+      const res = await signInWithGoogle();
       closeAuthModal();
+      if (!res?.redirect) runAfterSignIn();
     } catch (err) {
       showAuthError(err.message || "Google sign-in failed.");
       setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`);
     }
   });
 
-  container.querySelector("#btn-switch-to-register").addEventListener("click", () => openAuthModal("register"));
+  container.querySelector("#btn-switch-to-register").addEventListener("click", () => openAuthModal("register", { keepAfterSignIn: true }));
 }
 
 /**
@@ -338,15 +350,16 @@ function renderRegisterView(container, isConfigured) {
     const btn = container.querySelector("#btn-do-google-register");
     setBusy(btn, true, "Registering via Google...");
     try {
-      await signInWithGoogle({ college, phone, year });
+      const res = await signInWithGoogle({ college, phone, year });
       closeAuthModal();
+      if (!res?.redirect) runAfterSignIn();
     } catch (err) {
       showAuthError(err.message || "Registration failed.");
       setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`);
     }
   });
 
-  container.querySelector("#btn-switch-to-login").addEventListener("click", () => openAuthModal("login"));
+  container.querySelector("#btn-switch-to-login").addEventListener("click", () => openAuthModal("login", { keepAfterSignIn: true }));
 }
 
 /**
@@ -910,6 +923,18 @@ function exportMasterExcel(state) {
 // ----------------------------------------------------------------------------
 // HELPERS
 // ----------------------------------------------------------------------------
+
+function runAfterSignIn() {
+  const next = afterSignIn;
+  afterSignIn = null;
+  if (typeof next === "function") next();
+}
+
+function goToPage(path) {
+  const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+  if (router) router.push(path);
+  else window.location.href = path;
+}
 
 function setBusy(btn, busy, html) {
   btn.innerHTML = busy ? `<span>${e(html)}</span>` : html;

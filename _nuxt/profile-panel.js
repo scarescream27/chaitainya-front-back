@@ -1,15 +1,19 @@
 /**
  * ============================================================================
- * Chaitanya 2k26 — Profile overlay
+ * Chaitanya 2k26 — Profile page (/profile) and organiser verify overlay
  * ============================================================================
- * A small floating glass panel opened from the profile icon. The current page
- * stays visible (blurred) underneath; nothing navigates. Sections:
- *   Profile · Registrations · Digital ID     (+ Logout at the bottom)
- * Also hosts the organiser "verify" view opened by scanning a Digital ID QR
- * (URL: /?verify=CH26-XXXXXXXX).
+ * The profile is a full page, laid out top to bottom:
+ *   Account header · Your details (editable) · My registrations (with entry
+ *   QR codes) · Digital ID
+ * openProfilePanel(section) navigates to /profile#section (kept under its old
+ * name because the events page and auth modal call it).
+ *
+ * The organiser "verify" view opened by scanning a Digital ID QR
+ * (URL: /?verify=CH26-XXXXXXXX) is still a small overlay.
  */
 
 import {
+  initFirebase,
   getCurrentUser,
   subscribeAuthState,
   updateMyProfile,
@@ -17,6 +21,7 @@ import {
   getMyRegistrations,
   resubmitPaymentUtr,
   verifyStudentId,
+  registrationQrPayload,
   YEAR_OPTIONS,
 } from "./auth-service.js";
 import { getEventById, googleCalendarLink } from "./events-data.js";
@@ -25,18 +30,12 @@ import { isAdminUser } from "./firebase-config.js";
 import { qrSvg } from "./qr.js";
 import { escapeHtml as e } from "./fest-config.js";
 
-const SECTIONS = [
-  { id: "profile", label: "Profile" },
-  { id: "registrations", label: "Registrations" },
-  { id: "id", label: "Digital ID" },
-];
-
-let root = null;
-let section = "profile";
-let open = false;
-let verifyId = null;
-let regsCache = null;
-let lastFocus = null;
+const SECTION_ANCHORS = {
+  profile: "profile-details",
+  details: "profile-details",
+  registrations: "profile-registrations",
+  id: "profile-id",
+};
 
 function initials(name) {
   return String(name || "?")
@@ -53,144 +52,236 @@ export function avatarHtml(user, cls = "pp-avatar") {
     : `<span class="${cls} pp-avatar-initials" aria-hidden="true">${e(initials(user?.displayName))}</span>`;
 }
 
-function ensureRoot() {
-  if (root && document.body.contains(root)) return root;
-  root = document.createElement("div");
-  root.id = "profile-overlay";
-  root.className = "pp-overlay";
-  root.innerHTML = `<section class="pp-panel" role="dialog" aria-modal="true" aria-labelledby="pp-title"></section>`;
-  document.body.appendChild(root);
-
-  // Click outside the panel closes it.
-  root.addEventListener("mousedown", (evt) => {
-    if (evt.target === root) closeProfilePanel();
-  });
-  root.addEventListener("click", onClick);
-  root.addEventListener("submit", onSubmit);
-  document.addEventListener("keydown", (evt) => {
-    if (open && evt.key === "Escape") {
-      evt.preventDefault(); // tells other Escape handlers this press was used
-      closeProfilePanel();
-    }
-  });
-  return root;
+function goTo(path) {
+  const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+  if (router) router.push(path);
+  else window.location.href = path;
 }
 
 /**
- * Open the overlay on a section ("profile" | "registrations" | "id").
+ * Open the profile page, scrolled to a section ("profile" | "registrations" | "id").
  */
 export function openProfilePanel(target = "profile") {
-  const user = getCurrentUser();
-  if (!user && !verifyId) {
-    window.openAuthModal?.("login");
+  const anchor = SECTION_ANCHORS[target] || SECTION_ANCHORS.profile;
+  const onProfile = window.location.pathname.replace(/\/$/, "") === "/profile";
+  if (onProfile && page.root?.isConnected) {
+    if (target === "registrations") loadRegistrations();
+    scrollToSection(anchor);
     return;
   }
-  ensureRoot();
-  section = SECTIONS.some((s) => s.id === target) ? target : "profile";
-  if (target === "registrations") regsCache = null;
-  lastFocus = document.activeElement;
-  render();
-  open = true;
-  document.documentElement.classList.add("pp-open");
-  requestAnimationFrame(() => {
-    root.classList.add("active");
-    root.querySelector(".pp-close")?.focus({ preventScroll: true });
+  page.pendingAnchor = target === "profile" ? null : anchor;
+  goTo("/profile");
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - 90;
+  const smoother = window.ScrollSmoother?.get?.();
+  if (smoother) smoother.scrollTo(top, true);
+  else window.scrollTo({ top, behavior: "smooth" });
+}
+
+// ----------------------------------------------------------------------------
+// PROFILE PAGE
+// ----------------------------------------------------------------------------
+
+const page = {
+  root: null,
+  uid: undefined,
+  regs: null,
+  regsError: "",
+  regsLoading: false,
+  pendingAnchor: null,
+  unsubAuth: null,
+  unsubCart: null,
+};
+
+export function renderProfilePageHtml() {
+  return `<div class="profile-page-root" id="chaitanya-profile-page"><div class="prof-wrap"><div class="pp-loading">Loading your profile…</div></div></div>`;
+}
+
+/**
+ * Mount the /profile page into #chaitanya-profile-page. Safe to call twice.
+ */
+export async function mountProfilePage() {
+  const root = document.getElementById("chaitanya-profile-page");
+  if (!root || root.dataset.bound === "1") return;
+  root.dataset.bound = "1";
+  page.root = root;
+  page.uid = undefined;
+  page.regs = null;
+
+  root.addEventListener("click", onPageClick);
+  root.addEventListener("submit", onPageSubmit);
+  root.addEventListener("input", onPageInput);
+
+  // Wait for the auth state to be known before deciding what to show.
+  await initFirebase();
+  if (!root.isConnected) return;
+
+  page.unsubAuth?.();
+  page.unsubAuth = subscribeAuthState((user) => {
+    if (!root.isConnected) return cleanupPage();
+    const uid = user?.uid || null;
+    if (uid !== page.uid) {
+      page.uid = uid;
+      page.regs = null;
+      renderPage();
+      if (uid) loadRegistrations();
+    } else if (user) {
+      updateHeader(user);
+    }
+  });
+  page.unsubCart?.();
+  page.unsubCart = subscribeCart(() => {
+    if (!root.isConnected) return cleanupPage();
+    if (page.uid) renderRegistrations();
   });
 }
 
-export function closeProfilePanel() {
-  if (!root || !open) return;
-  open = false;
-  root.classList.remove("active");
-  document.documentElement.classList.remove("pp-open");
-  if (verifyId) {
-    verifyId = null;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("verify");
-    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
-  }
-  lastFocus?.focus?.({ preventScroll: true });
+function cleanupPage() {
+  page.unsubAuth?.();
+  page.unsubCart?.();
+  page.unsubAuth = page.unsubCart = null;
+  page.root = null;
 }
 
-function render() {
-  const panel = root.querySelector(".pp-panel");
+function renderPage() {
+  const root = page.root;
+  if (!root) return;
   const user = getCurrentUser();
+  const wrap = root.querySelector(".prof-wrap");
 
-  if (verifyId) {
-    panel.innerHTML = `
-      <header class="pp-head">
-        <div class="pp-head-text"><span class="pp-kicker">CHAITANYA 2K26</span><h2 id="pp-title" class="pp-title">ID VERIFICATION</h2></div>
-        <button type="button" class="pp-close" data-pp="close" aria-label="Close">✕</button>
-      </header>
-      <div class="pp-body" id="pp-body"><div class="pp-loading">Checking ID…</div></div>`;
-    renderVerify(panel.querySelector("#pp-body"));
+  if (!user) {
+    wrap.innerHTML = `
+      <section class="prof-card prof-signed-out">
+        <span class="pp-kicker">CHAITANYA 2K26 • PROFILE</span>
+        <h1 class="prof-title">Sign in to view your profile</h1>
+        <p class="pp-hint">Your profile, event registrations and entry QR codes are available after you sign in.</p>
+        <div class="prof-actions">
+          <button type="button" class="pp-primary" data-prof="login">[ Login ]</button>
+          <button type="button" class="pp-action subtle" data-prof="register">[ Register ]</button>
+        </div>
+      </section>`;
+    refreshScroll();
     return;
   }
 
-  panel.innerHTML = `
-    <header class="pp-head">
-      ${avatarHtml(user)}
-      <div class="pp-head-text">
-        <h2 id="pp-title" class="pp-title">${e(user.displayName)}</h2>
+  wrap.innerHTML = `
+    <div class="prof-card prof-head">
+      ${avatarHtml(user, "pp-avatar prof-avatar")}
+      <div class="prof-head-text">
+        <span class="pp-kicker">CHAITANYA 2K26 • PROFILE</span>
+        <h1 class="prof-title" data-prof-name>${e(user.displayName)}</h1>
         <span class="pp-sub">${e(user.email)}</span>
+        ${user.studentId ? `<span class="pp-sub">Chaitanya ID <b class="mono">${e(user.studentId)}</b></span>` : ""}
       </div>
-      <button type="button" class="pp-close" data-pp="close" aria-label="Close">✕</button>
-    </header>
-    <nav class="pp-tabs" role="tablist">
-      ${SECTIONS.map(
-        (s) => `<button type="button" role="tab" aria-selected="${s.id === section}" class="pp-tab ${s.id === section ? "active" : ""}" data-pp="tab" data-section="${s.id}">${s.label}</button>`
-      ).join("")}
-    </nav>
-    <div class="pp-body" id="pp-body" role="tabpanel"></div>
-    <footer class="pp-foot">
-      <button type="button" class="pp-logout" data-pp="logout">Log out</button>
-    </footer>`;
-  renderSection();
+      <button type="button" class="pp-logout prof-logout" data-prof="logout">[ Log out ]</button>
+    </div>
+
+    <section class="prof-card" id="profile-details" aria-labelledby="prof-details-title">
+      <div class="prof-section-head">
+        <span class="pp-kicker">01 // YOUR DETAILS</span>
+        <h2 class="prof-h2" id="prof-details-title">Profile information</h2>
+        <p class="pp-hint">These details are used for your event registrations and entry QR codes.</p>
+      </div>
+      ${detailsFormHtml(user)}
+    </section>
+
+    <section class="prof-card" id="profile-registrations" aria-labelledby="prof-regs-title">
+      <div class="prof-section-head">
+        <span class="pp-kicker">02 // MY REGISTRATIONS</span>
+        <h2 class="prof-h2" id="prof-regs-title">Events &amp; entry QR codes</h2>
+        <p class="pp-hint">Each registration has its own QR code with your name, college and event. Show it at the venue.</p>
+      </div>
+      <div data-prof-regs><div class="pp-loading">Loading your registrations…</div></div>
+    </section>
+
+    <section class="prof-card" id="profile-id" aria-labelledby="prof-id-title">
+      <div class="prof-section-head">
+        <span class="pp-kicker">03 // DIGITAL ID</span>
+        <h2 class="prof-h2" id="prof-id-title">Your Digital ID</h2>
+      </div>
+      <div data-prof-id></div>
+    </section>`;
+
+  renderRegistrations();
+  renderDigitalId();
+  refreshScroll();
+  if (page.pendingAnchor) {
+    const anchor = page.pendingAnchor;
+    page.pendingAnchor = null;
+    setTimeout(() => scrollToSection(anchor), 350);
+  }
 }
 
-function renderSection() {
-  const body = root.querySelector("#pp-body");
-  if (!body) return;
-  body.classList.remove("pp-enter");
-  void body.offsetWidth; // restart the enter transition
-  body.classList.add("pp-enter");
-  if (section === "profile") renderProfile(body);
-  else if (section === "registrations") renderRegistrations(body);
-  else renderDigitalId(body);
+function updateHeader(user) {
+  const name = page.root?.querySelector("[data-prof-name]");
+  if (name) name.textContent = user.displayName;
+  renderDigitalId();
 }
 
-// ----------------------------------------------------------------------------
-// PROFILE
-// ----------------------------------------------------------------------------
+function refreshScroll() {
+  // ScrollSmoother caches the content height; recompute it after renders.
+  requestAnimationFrame(() => {
+    try {
+      window.ScrollTrigger?.refresh?.();
+    } catch (err) {}
+  });
+}
 
-function renderProfile(body) {
-  const user = getCurrentUser();
-  body.innerHTML = `
-    <form class="pp-form" data-form="profile" novalidate>
-      <label class="pp-field"><span>Name</span>
+// ---- Details form -----------------------------------------------------------
+
+function detailsFormHtml(user) {
+  return `
+    <form class="pp-form prof-form" data-form="profile" novalidate>
+      <label class="pp-field"><span>Full name *</span>
         <input type="text" name="displayName" maxlength="120" value="${e(user.displayName)}" autocomplete="name" required />
       </label>
-      <label class="pp-field"><span>College</span>
-        <input type="text" name="college" maxlength="120" value="${e(user.college)}" placeholder="e.g. HPTU Hamirpur" autocomplete="organization" />
+      <label class="pp-field"><span>Email</span>
+        <input type="email" name="email" value="${e(user.email)}" readonly aria-readonly="true" />
+        <small class="pp-hint">Comes from your Google account and can't be changed here.</small>
       </label>
-      <label class="pp-field"><span>Year</span>
-        <select name="year">
+      <label class="pp-field"><span>College / University *</span>
+        <input type="text" name="college" maxlength="120" value="${e(user.college)}" placeholder="e.g. HPTU Hamirpur" autocomplete="organization" required />
+      </label>
+      <label class="pp-field"><span>Year *</span>
+        <select name="year" required>
           <option value="">Select year</option>
           ${YEAR_OPTIONS.map((y) => `<option ${y === user.year ? "selected" : ""}>${e(y)}</option>`).join("")}
         </select>
       </label>
-      <label class="pp-field"><span>Phone</span>
-        <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" placeholder="+91 9XXXX XXXXX" autocomplete="tel" />
+      <label class="pp-field"><span>Contact no (WhatsApp) *</span>
+        <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" placeholder="+91 9XXXX XXXXX" autocomplete="tel" required />
       </label>
-      <p class="pp-hint">Your profile picture comes from your Google account.</p>
-      <div class="pp-msg" role="status" hidden></div>
-      <button type="submit" class="pp-primary">Save profile</button>
+      <div class="pp-msg" role="status" aria-live="polite" hidden></div>
+      <div class="prof-actions">
+        <button type="submit" class="pp-primary">Save changes</button>
+      </div>
     </form>`;
 }
 
-// ----------------------------------------------------------------------------
-// REGISTRATIONS
-// ----------------------------------------------------------------------------
+function validateDetails(form) {
+  const name = form.displayName.value.trim();
+  const college = form.college.value.trim();
+  const year = form.year.value;
+  const digits = form.phone.value.replace(/\D/g, "").length;
+  if (!name) return ["displayName", "Please enter your name."];
+  if (!college) return ["college", "Please enter your college / university."];
+  if (!year) return ["year", "Please select your year."];
+  if (digits < 10 || digits > 15) return ["phone", "Enter a valid phone number (10 digits, optional country code)."];
+  return null;
+}
+
+function showFormMessage(form, text, ok) {
+  const msg = form.querySelector(".pp-msg");
+  msg.textContent = text;
+  msg.className = `pp-msg ${ok ? "ok" : "bad"}`;
+  msg.hidden = false;
+}
+
+// ---- Registrations ----------------------------------------------------------
 
 const STATUS_CHIP = {
   booked: { label: "BOOKED", cls: "ok" },
@@ -199,92 +290,131 @@ const STATUS_CHIP = {
   cart: { label: "IN CART", cls: "cart" },
 };
 
-async function renderRegistrations(body) {
-  body.innerHTML = `<div class="pp-loading">Loading your registrations…</div>`;
-  let regs = regsCache;
-  if (!regs) {
-    try {
-      regs = regsCache = await getMyRegistrations();
-    } catch (err) {
-      body.innerHTML = `<div class="pp-empty">${e(err.message)}</div>`;
-      return;
-    }
+async function loadRegistrations() {
+  if (!getCurrentUser() || page.regsLoading) return;
+  page.regsLoading = true;
+  page.regsError = "";
+  try {
+    page.regs = await getMyRegistrations();
+  } catch (err) {
+    page.regsError = err.message || "Could not load your registrations.";
+    page.regs = [];
   }
-  if (section !== "registrations" || !open) return;
+  page.regsLoading = false;
+  renderRegistrations();
+  renderDigitalId();
+}
 
+/**
+ * Entry QR for one registration (structured JSON: name, college, event, pass).
+ */
+export function registrationQrHtml(registration, { size = "" } = {}) {
+  const payload = registrationQrPayload(registration);
+  if (!payload) return "";
+  let svg = "";
+  try {
+    svg = qrSvg(payload, { label: `Entry QR for ${registration.event_title}` });
+  } catch (err) {
+    return "";
+  }
+  const file = `${registration.registration_qr_id || "chaitanya-entry"}.svg`;
+  const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return `
+    <figure class="prof-qr ${size}">
+      <div class="prof-qr-code">${svg}</div>
+      <figcaption>
+        <span class="mono">${e(registration.registration_qr_id || "")}</span>
+        <a class="pp-action subtle" href="${href}" download="${e(file)}">Download QR</a>
+      </figcaption>
+    </figure>`;
+}
+
+function renderRegistrations() {
+  const box = page.root?.querySelector("[data-prof-regs]");
+  if (!box) return;
+  if (page.regs === null) {
+    box.innerHTML = `<div class="pp-loading">Loading your registrations…</div>`;
+    return;
+  }
+  if (page.regsError) {
+    box.innerHTML = `<div class="pp-empty"><p>${e(page.regsError)}</p><button type="button" class="pp-action" data-prof="reload-regs">Try again</button></div>`;
+    return;
+  }
+
+  const regs = page.regs;
   const cart = getCartItems().filter((c) => !regs.some((r) => r.registration.event_id === c.eventId));
   const rows = regs.map(({ registration: r, payment, team, status }) => {
     const ev = getEventById(r.event_id);
-    const chip = STATUS_CHIP[status];
+    const chip = STATUS_CHIP[status] || STATUS_CHIP.pending;
     const cal = status === "booked" ? googleCalendarLink(ev) : null;
     const isLeader = team && team.leaderUid === r.user_id;
     return `
-      <li class="pp-reg">
-        <div class="pp-reg-top">
-          <strong>${e(r.event_title)}</strong>
-          <span class="pp-chip ${chip.cls}">${chip.label}</span>
+      <li class="pp-reg prof-reg">
+        <div class="prof-reg-info">
+          <div class="pp-reg-top">
+            <strong>${e(r.event_title)}</strong>
+            <span class="pp-chip ${chip.cls}">${chip.label}</span>
+          </div>
+          ${ev ? `<span class="pp-reg-meta">${e(`${ev.date} · ${ev.time}`)}</span>` : ""}
+          <dl class="prof-reg-dl">
+            <dt>Name</dt><dd>${e(r.user_name)}</dd>
+            <dt>College</dt><dd>${e(r.user_college || "—")}</dd>
+            <dt>Type</dt><dd>${r.participation_type === "team" ? "Team" : "Solo"}</dd>
+          </dl>
+          ${team ? `<span class="pp-reg-meta">Team ${e(team.teamName)}${isLeader ? ` · code <b class="mono">${e(team.teamCode)}</b>` : ""}</span>` : ""}
+          <div class="pp-reg-actions">
+            ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
+            ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
+          </div>
+          ${status === "rejected" && payment ? `
+            <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
+              <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match your UTR.")}</span>
+              <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit UTR" aria-label="Correct 12-digit UTR" />
+              <button type="submit" class="pp-action">Resubmit</button>
+            </form>` : ""}
         </div>
-        <span class="pp-reg-meta">${e(ev ? `${ev.date} · ${ev.time}` : "")}</span>
-        ${team ? `<span class="pp-reg-meta">Team ${e(team.teamName)}${isLeader ? ` · code <b class="mono">${e(team.teamCode)}</b>` : ""}</span>` : ""}
-        <div class="pp-reg-actions">
-          ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
-          ${status === "booked" && !cal ? `<span class="pp-reg-note">Calendar link once timings are announced</span>` : ""}
-          ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
-        </div>
-        ${status === "rejected" && payment ? `
-          <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
-            <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match your UTR.")}</span>
-            <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit UTR" aria-label="Correct 12-digit UTR" />
-            <button type="submit" class="pp-action">Resubmit</button>
-          </form>` : ""}
+        ${registrationQrHtml(r)}
       </li>`;
   });
 
   const cartRows = cart.map(
     (c) => `
-      <li class="pp-reg">
-        <div class="pp-reg-top">
-          <strong>${e(c.event.title)}</strong>
-          <span class="pp-chip cart">${STATUS_CHIP.cart.label}</span>
-        </div>
-        <span class="pp-reg-meta">${e(`${c.event.date} · ${c.event.time}`)}</span>
-        <div class="pp-reg-actions">
-          <button type="button" class="pp-action" data-pp="checkout">Complete registration →</button>
-          <button type="button" class="pp-action subtle" data-pp="cart-remove" data-event-id="${e(c.eventId)}">Remove</button>
+      <li class="pp-reg prof-reg">
+        <div class="prof-reg-info">
+          <div class="pp-reg-top">
+            <strong>${e(c.event.title)}</strong>
+            <span class="pp-chip cart">${STATUS_CHIP.cart.label}</span>
+          </div>
+          <span class="pp-reg-meta">${e(`${c.event.date} · ${c.event.time}`)}</span>
+          <div class="pp-reg-actions">
+            <button type="button" class="pp-action" data-prof="checkout">Complete registration →</button>
+            <button type="button" class="pp-action subtle" data-prof="cart-remove" data-event-id="${e(c.eventId)}">Remove</button>
+          </div>
         </div>
       </li>`
   );
 
-  body.innerHTML =
+  box.innerHTML =
     rows.length || cartRows.length
-      ? `<ul class="pp-regs">${rows.join("")}${cartRows.join("")}</ul>`
+      ? `<ul class="pp-regs prof-regs">${rows.join("")}${cartRows.join("")}</ul>`
       : `<div class="pp-empty">
            <p>No registrations yet.</p>
-           <a class="pp-primary" href="/events" data-pp="browse">Browse events</a>
+           <a class="pp-primary" href="/events" data-prof="browse">Browse events</a>
          </div>`;
+  refreshScroll();
 }
 
-// ----------------------------------------------------------------------------
-// DIGITAL ID
-// ----------------------------------------------------------------------------
+// ---- Digital ID -------------------------------------------------------------
 
 function verifyUrl(studentId) {
   return `${window.location.origin}/?verify=${encodeURIComponent(studentId)}`;
 }
 
-async function renderDigitalId(body) {
+function renderDigitalId() {
+  const box = page.root?.querySelector("[data-prof-id]");
   const user = getCurrentUser();
-  body.innerHTML = `<div class="pp-loading">Preparing your ID…</div>`;
-  let regs = regsCache;
-  if (!regs) {
-    try {
-      regs = regsCache = await getMyRegistrations();
-    } catch {
-      regs = [];
-    }
-  }
-  if (section !== "id" || !open) return;
-
+  if (!box || !user) return;
+  const regs = page.regs || [];
   const booked = regs.filter((r) => r.status === "booked").length;
   const pending = regs.filter((r) => r.status === "pending").length;
   const state = booked ? "verified" : pending ? "pending" : "none";
@@ -295,8 +425,8 @@ async function renderDigitalId(body) {
   }[state];
   const incomplete = !user.college || !user.year;
 
-  body.innerHTML = `
-    <article class="pp-idcard ${state}">
+  box.innerHTML = `
+    <article class="pp-idcard prof-idcard ${state}">
       <div class="pp-idcard-head">
         <span>CHAITANYA 2K26</span>
         <span>DIGITAL ID</span>
@@ -313,13 +443,165 @@ async function renderDigitalId(body) {
       <div class="pp-idcard-qr">${user.studentId ? qrSvg(verifyUrl(user.studentId), { label: `Verification QR for ${user.studentId}` }) : ""}</div>
       <div class="pp-idcard-status">${stateLabel}</div>
     </article>
-    ${incomplete ? `<p class="pp-hint">Add your college and year in <button type="button" class="pp-inline" data-pp="tab" data-section="profile">Profile</button> so they appear on your ID.</p>` : ""}
-    <p class="pp-hint">Show this at the venue. Organisers scan the QR to confirm your registrations live.</p>`;
+    ${incomplete ? `<p class="pp-hint">Add your college and year in <a class="pp-inline" href="#profile-details" data-prof="goto" data-target="profile-details">Profile information</a> so they appear on your ID.</p>` : ""}
+    <p class="pp-hint">Organisers scan this QR to see all your registrations at once.</p>`;
+}
+
+// ---- Page events ------------------------------------------------------------
+
+async function onPageClick(evt) {
+  const btn = evt.target.closest("[data-prof]");
+  if (!btn) return;
+  const action = btn.dataset.prof;
+  if (action === "login" || action === "register") {
+    return window.openAuthModal?.(action);
+  }
+  if (action === "logout") {
+    btn.disabled = true;
+    await signOutUser();
+    goTo("/");
+    return;
+  }
+  if (action === "reload-regs") {
+    page.regs = null;
+    renderRegistrations();
+    return loadRegistrations();
+  }
+  if (action === "checkout") {
+    goTo("/events?cart=1");
+    return;
+  }
+  if (action === "cart-remove") {
+    removeFromCart(btn.dataset.eventId);
+    return renderRegistrations();
+  }
+  if (action === "browse") {
+    evt.preventDefault();
+    goTo("/events");
+    return;
+  }
+  if (action === "goto") {
+    evt.preventDefault();
+    scrollToSection(btn.dataset.target);
+  }
+}
+
+function onPageInput(evt) {
+  // Clear a field's error as soon as the user edits it.
+  const input = evt.target;
+  if (input.getAttribute?.("aria-invalid") === "true") {
+    input.removeAttribute("aria-invalid");
+    const msg = input.form?.querySelector(".pp-msg");
+    if (msg && msg.classList.contains("bad")) msg.hidden = true;
+  }
+}
+
+async function onPageSubmit(evt) {
+  const form = evt.target.closest("form[data-form]");
+  if (!form) return;
+  evt.preventDefault();
+
+  if (form.dataset.form === "profile") {
+    form.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
+    const invalid = validateDetails(form);
+    if (invalid) {
+      const [field, text] = invalid;
+      form[field].setAttribute("aria-invalid", "true");
+      form[field].focus();
+      return showFormMessage(form, text, false);
+    }
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    try {
+      await updateMyProfile({
+        displayName: form.displayName.value,
+        college: form.college.value,
+        year: form.year.value,
+        phone: form.phone.value,
+      });
+      showFormMessage(form, "✓ Profile saved.", true);
+    } catch (err) {
+      showFormMessage(form, err.message || "Could not save your profile.", false);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save changes";
+  }
+
+  if (form.dataset.form === "utr") {
+    const input = form.utr;
+    try {
+      await resubmitPaymentUtr(form.dataset.payment, input.value.replace(/\D/g, ""));
+      page.regs = null;
+      renderRegistrations();
+      loadRegistrations();
+    } catch (err) {
+      input.setCustomValidity(err.message);
+      input.reportValidity();
+      setTimeout(() => input.setCustomValidity(""), 3000);
+    }
+  }
 }
 
 // ----------------------------------------------------------------------------
-// ORGANISER VERIFY VIEW
+// ORGANISER VERIFY OVERLAY (/?verify=CH26-XXXXXXXX)
 // ----------------------------------------------------------------------------
+
+let root = null;
+let open = false;
+let verifyId = null;
+let lastFocus = null;
+
+function ensureRoot() {
+  if (root && document.body.contains(root)) return root;
+  root = document.createElement("div");
+  root.id = "profile-overlay";
+  root.className = "pp-overlay";
+  root.innerHTML = `<section class="pp-panel" role="dialog" aria-modal="true" aria-labelledby="pp-title"></section>`;
+  document.body.appendChild(root);
+
+  root.addEventListener("mousedown", (evt) => {
+    if (evt.target === root) closeProfilePanel();
+  });
+  root.addEventListener("click", (evt) => {
+    const btn = evt.target.closest("[data-pp]");
+    if (!btn) return;
+    if (btn.dataset.pp === "close") closeProfilePanel();
+    if (btn.dataset.pp === "verify-login") window.openAuthModal?.("login");
+  });
+  document.addEventListener("keydown", (evt) => {
+    if (open && evt.key === "Escape") {
+      evt.preventDefault(); // tells other Escape handlers this press was used
+      closeProfilePanel();
+    }
+  });
+  return root;
+}
+
+export function closeProfilePanel() {
+  if (!root || !open) return;
+  open = false;
+  root.classList.remove("active");
+  document.documentElement.classList.remove("pp-open");
+  if (verifyId) {
+    verifyId = null;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("verify");
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  }
+  lastFocus?.focus?.({ preventScroll: true });
+}
+
+function renderVerifyOverlay() {
+  const panel = root.querySelector(".pp-panel");
+  panel.innerHTML = `
+    <header class="pp-head">
+      <div class="pp-head-text"><span class="pp-kicker">CHAITANYA 2K26</span><h2 id="pp-title" class="pp-title">ID VERIFICATION</h2></div>
+      <button type="button" class="pp-close" data-pp="close" aria-label="Close">✕</button>
+    </header>
+    <div class="pp-body" id="pp-body"><div class="pp-loading">Checking ID…</div></div>`;
+  renderVerify(panel.querySelector("#pp-body"));
+}
 
 async function renderVerify(body) {
   const user = getCurrentUser();
@@ -373,99 +655,12 @@ async function renderVerify(body) {
 
 export function openVerifyView(id) {
   verifyId = String(id || "").trim().toUpperCase();
+  lastFocus = document.activeElement;
   ensureRoot();
-  render();
+  renderVerifyOverlay();
   open = true;
   document.documentElement.classList.add("pp-open");
   requestAnimationFrame(() => root.classList.add("active"));
-}
-
-// ----------------------------------------------------------------------------
-// EVENTS
-// ----------------------------------------------------------------------------
-
-async function onClick(evt) {
-  const btn = evt.target.closest("[data-pp]");
-  if (!btn) return;
-  const action = btn.dataset.pp;
-  if (action === "close") return closeProfilePanel();
-  if (action === "tab") {
-    section = btn.dataset.section;
-    root.querySelectorAll(".pp-tab").forEach((t) => {
-      const on = t.dataset.section === section;
-      t.classList.toggle("active", on);
-      t.setAttribute("aria-selected", String(on));
-    });
-    return renderSection();
-  }
-  if (action === "logout") {
-    btn.disabled = true;
-    await signOutUser();
-    closeProfilePanel();
-    window.openAuthModal?.("login");
-    return;
-  }
-  if (action === "checkout") {
-    closeProfilePanel();
-    if (typeof window.openEventsCart === "function" && document.getElementById("events-cart-overlay")) {
-      window.openEventsCart();
-    } else {
-      window.location.href = "/events?cart=1";
-    }
-    return;
-  }
-  if (action === "cart-remove") {
-    removeFromCart(btn.dataset.eventId);
-    return renderSection();
-  }
-  if (action === "browse") {
-    closeProfilePanel();
-    return;
-  }
-  if (action === "verify-login") {
-    window.openAuthModal?.("login");
-  }
-}
-
-async function onSubmit(evt) {
-  const form = evt.target.closest("form[data-form]");
-  if (!form) return;
-  evt.preventDefault();
-
-  if (form.dataset.form === "profile") {
-    const msg = form.querySelector(".pp-msg");
-    const btn = form.querySelector("button[type=submit]");
-    btn.disabled = true;
-    try {
-      await updateMyProfile({
-        displayName: form.displayName.value,
-        college: form.college.value,
-        year: form.year.value,
-        phone: form.phone.value,
-      });
-      msg.textContent = "✓ Saved";
-      msg.className = "pp-msg ok";
-      root.querySelector(".pp-title").textContent = getCurrentUser().displayName;
-    } catch (err) {
-      msg.textContent = err.message;
-      msg.className = "pp-msg bad";
-    }
-    msg.hidden = false;
-    btn.disabled = false;
-  }
-
-  if (form.dataset.form === "utr") {
-    const input = form.utr;
-    try {
-      await resubmitPaymentUtr(form.dataset.payment, input.value.replace(/\D/g, ""));
-      regsCache = null;
-      renderSection();
-    } catch (err) {
-      input.setCustomValidity(err.message);
-      input.reportValidity();
-      setTimeout(() => input.setCustomValidity(""), 3000);
-    }
-  }
 }
 
 // ----------------------------------------------------------------------------
@@ -475,16 +670,10 @@ async function onSubmit(evt) {
 if (typeof window !== "undefined") {
   window.openProfilePanel = openProfilePanel;
   window.closeProfilePanel = closeProfilePanel;
+  window.mountProfilePage = mountProfilePage;
 
-  subscribeAuthState((user) => {
-    regsCache = null;
-    if (!open) return;
-    if (verifyId) render();
-    else if (!user) closeProfilePanel();
-    else render();
-  });
-  subscribeCart(() => {
-    if (open && section === "registrations") renderSection();
+  subscribeAuthState(() => {
+    if (open && verifyId) renderVerifyOverlay();
   });
 
   const params = new URLSearchParams(window.location.search);

@@ -6279,29 +6279,12 @@ let Ws,
                 V.ticker.remove(Ms));
             }),
             we(() => {
-              (Bt.value.addEventListener(
-                "ended",
-                () => {
-                  ((Bt.value.currentTime = 0), Bt.value.play());
-                },
-                !1,
-              ),
-                Fa());
+              Fa();
             }));
           const Es = (N) => {
-              (N ? (Bt.value.volume = 0) : (Bt.value.volume = 1),
-                c.add(() => {
-                  V.to(Bt.value, {
-                    volume: N ? 1 : 0,
-                    duration: 0.5,
-                    ease: "none",
-                  });
-                }),
-                N ? Bt.value.play() : Bt.value.pause());
+              Bt.value && Bt.value.pause();
             },
-            Ba = (N) => {
-              i.getSoundOn && (N ? pi.value.play() : pi.value.pause());
-            },
+            Ba = (N) => {},
             Fa = () => {
               (r.hide(),
                 (v = document.getElementById("home-scene")),
@@ -7279,14 +7262,13 @@ let Ws,
                 {
                   ref_key: "audioGlass",
                   ref: pi,
-                  src: "/audio/Sphere-collision.mp3",
                 },
                 null,
                 512,
               ),
               O(
                 "audio",
-                { ref_key: "audioBg", ref: Bt, src: "/audio/BG5.mp3" },
+                { ref_key: "audioBg", ref: Bt },
                 null,
                 512,
               ),
@@ -7346,7 +7328,7 @@ let Ws,
                     t.updateProgress(this.progress());
                   },
                   onComplete: () => {
-                    (t.getSoundOn && o.value.play(),
+                    (
                       t.finishProgress(),
                       V.to(".click-and-hold", {
                         duration: 0.5,
@@ -7389,7 +7371,6 @@ let Ws,
                   {
                     ref_key: "audio",
                     ref: o,
-                    src: "/audio/ParticleScattering.mp3",
                   },
                   null,
                   512,

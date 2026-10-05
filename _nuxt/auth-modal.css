@@ -173,6 +173,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
+/* display:flex above would otherwise override the hidden attribute and show
+   the empty #auth-error-box as a blank yellow bar. */
+.chaitanya-modal-banner[hidden],
+.chaitanya-modal-banner:empty {
+  display: none;
+}
+
 .chaitanya-modal-banner.warning {
   background: rgba(254, 187, 37, 0.14);
   border-color: rgba(254, 187, 37, 0.7);
@@ -1427,6 +1434,33 @@ html.pp-open {
    cursor), otherwise the pointer disappears inside modals and panels. */
 #cursor {
   z-index: 2147483000 !important;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* The system cursor is hidden only while the custom cursor is actually on
+   screen (html.custom-cursor-active is set by the cursor component on mouse
+   movement and cleared when the pointer leaves the page or enters an iframe).
+   Without the component (tablet widths, touch devices) the system cursor stays. */
+html.custom-cursor-active #cursor {
+  opacity: 1;
+}
+
+html.custom-cursor-active .error-page .go-home {
+  cursor: none !important;
+}
+
+/* Music and sound effects are removed, so the sound on/off toggle goes too.
+   visibility (not display) keeps the space so the bottom bar doesn't shift. */
+.social-links-global .volume,
+.home-preloader .volume {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* A thin dark ring keeps the white cursor visible on white/light sections. */
+#cursor:not(.dif) .wrapper {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
 header .header .mobile-menu .nav-avatar {
@@ -1446,4 +1480,304 @@ header .header .mobile-menu .nav-avatar {
    (including direct links) it must be visible straight away. */
 html.not-home header {
   opacity: 1 !important;
+}
+
+/* ==========================================================================
+   Profile page (/profile) — full page, sections stacked top to bottom
+   ========================================================================== */
+.profile-page-root {
+  min-height: 100vh;
+  width: 100%;
+  padding: 96px 16px 72px;
+  background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff);
+  background-repeat: repeat;
+  background-size: 80px, auto;
+  background-attachment: fixed;
+  box-sizing: border-box;
+  font-family: "IBM Plex Mono", monospace;
+  color: #000000;
+}
+
+.prof-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prof-card {
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 2px solid #ffffff;
+  border-radius: 26px;
+  box-shadow: 0 20px 60px rgba(0, 40, 120, 0.12);
+  padding: 24px;
+  box-sizing: border-box;
+  scroll-margin-top: 90px;
+}
+
+.prof-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.prof-head .prof-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+}
+
+.prof-head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prof-title {
+  font-family: "DrukMedium", sans-serif;
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 500;
+  line-height: 1;
+  margin: 2px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+
+.prof-h2 {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.05;
+  margin: 4px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.prof-section-head {
+  margin-bottom: 18px;
+}
+
+.prof-section-head .pp-hint {
+  margin: 0;
+}
+
+.prof-logout {
+  width: auto;
+  padding: 10px 18px;
+  flex-shrink: 0;
+}
+
+.prof-form {
+  gap: 16px;
+}
+
+.prof-form .pp-field {
+  font-size: 11px;
+}
+
+.prof-form .pp-field input,
+.prof-form .pp-field select {
+  font-size: 14px;
+  padding: 12px 14px;
+}
+
+.prof-form .pp-field input[readonly] {
+  background: rgba(0, 0, 0, 0.04);
+  color: #555555;
+}
+
+.prof-form .pp-field small {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.pp-field input[aria-invalid="true"],
+.pp-field select[aria-invalid="true"] {
+  border-color: #b00020;
+}
+
+.prof-form .pp-msg {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prof-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.prof-signed-out {
+  text-align: center;
+}
+
+.prof-signed-out .prof-actions {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Registrations: details on the left, entry QR on the right */
+.prof-regs {
+  gap: 14px;
+}
+
+.prof-reg {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+
+.prof-reg-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prof-reg-info .pp-reg-top strong {
+  font-size: 14px;
+}
+
+.prof-reg-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 6px 0 2px;
+  font-size: 11px;
+}
+
+.prof-reg-dl dt {
+  color: #777777;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding-top: 1px;
+}
+
+.prof-reg-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.prof-qr {
+  margin: 0;
+  width: 150px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.prof-qr.small {
+  width: 132px;
+}
+
+.prof-qr-code {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.prof-qr-code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.prof-qr figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  text-align: center;
+}
+
+.prof-idcard {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Entry QRs on the registration success step */
+.checkout-qrs {
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.checkout-qrs ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.checkout-qrs li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .profile-page-root {
+    padding: 80px 12px 56px;
+  }
+
+  .prof-card {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  .prof-head {
+    flex-wrap: wrap;
+  }
+
+  .prof-logout {
+    width: 100%;
+  }
+
+  .prof-reg {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prof-qr {
+    align-self: center;
+    width: 180px;
+  }
+}
+
+/* Like the events page, the profile page skips the site's page-transition wipe. */
+body:has(.profile-page-root) .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* The site header is transparent; on the profile page fade the page colour in
+   behind it so form controls scrolling underneath don't collide with the logo. */
+body:has(.profile-page-root) header {
+  background: linear-gradient(180deg, rgba(247, 250, 255, 0.96) 70%, rgba(247, 250, 255, 0));
 }

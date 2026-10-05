@@ -38,6 +38,18 @@ let authListeners = [];
 
 const DEMO_DB_KEY = "chaitanya_demo_db";
 const DEMO_USER_KEY = "chaitanya_demo_user";
+const PENDING_DETAILS_KEY = "chaitanya_pending_profile";
+
+// Registration details saved before a redirect sign-in (read once).
+function takePendingDetails() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_DETAILS_KEY);
+    sessionStorage.removeItem(PENDING_DETAILS_KEY);
+    return raw ? JSON.parse(raw) || {} : {};
+  } catch (e) {
+    return {};
+  }
+}
 
 // Legacy keys from the previous localStorage-first implementation.
 const LEGACY_KEYS = [
@@ -195,7 +207,7 @@ async function doInit() {
       let first = true;
       authMod.onAuthStateChanged(firebaseAuth, async (fbUser) => {
         try {
-          currentUser = fbUser ? await loadProfile(fbUser) : null;
+          currentUser = fbUser ? await loadProfile(fbUser, takePendingDetails()) : null;
         } catch (err) {
           console.warn("Could not load profile:", err);
           currentUser = fbUser ? baseProfile(fbUser) : null;
@@ -308,6 +320,11 @@ export async function signInWithGoogle(extraDetails = {}) {
     result = await authMod.signInWithPopup(firebaseAuth, provider);
   } catch (err) {
     if (err?.code === "auth/popup-blocked") {
+      // The page reloads after a redirect sign-in; keep the registration
+      // form's details so they are saved once the user comes back.
+      try {
+        sessionStorage.setItem(PENDING_DETAILS_KEY, JSON.stringify(extraDetails || {}));
+      } catch (e) {}
       await authMod.signInWithRedirect(firebaseAuth, provider);
       return { success: true, redirect: true };
     }
@@ -356,8 +373,15 @@ export async function updateMyProfile({ displayName, college, year, phone } = {}
     patch.name = name;
   }
   if (college !== undefined) patch.college = cleanText(college);
-  if (year !== undefined) patch.year = cleanYear(year);
-  if (phone !== undefined) patch.phone = cleanPhone(phone);
+  if (year !== undefined) {
+    patch.year = cleanYear(year);
+    if (cleanText(year) && !patch.year) throw new Error("Please pick your year from the list.");
+  }
+  if (phone !== undefined) {
+    patch.phone = cleanPhone(phone);
+    const digits = patch.phone.replace(/\D/g, "").length;
+    if (digits && (digits < 10 || digits > 15)) throw new Error("Enter a valid phone number (10 digits, optional country code).");
+  }
   if (!Object.keys(patch).length) return user;
 
   if (isLive()) {
@@ -426,6 +450,36 @@ function passId(eventId, uid) {
   let hash = 0;
   for (const ch of `${eventId}:${uid}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return `CH26-${eventId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(hash % 100000).padStart(5, "0")}`;
+}
+
+/**
+ * Structured data encoded in a registration's entry QR: who (name, college),
+ * which event, and the pass/registration IDs organisers can look up.
+ * Kept under the QR generator's 213-byte limit by trimming long text fields.
+ */
+const QR_MAX_BYTES = 200;
+
+export function registrationQrPayload(reg) {
+  if (!reg) return "";
+  if (reg.qr_payload) return reg.qr_payload;
+  const data = {
+    type: "CH26-REG",
+    pass: reg.registration_qr_id || "",
+    name: cleanText(reg.user_name, 60),
+    college: cleanText(reg.user_college, 60),
+    event: cleanText(reg.event_title, 60),
+    eventId: reg.event_id || "",
+  };
+  const size = () => new TextEncoder().encode(JSON.stringify(data)).length;
+  // Shorten the longest free-text field a little at a time until it fits.
+  const fields = ["name", "college", "event"];
+  while (size() > QR_MAX_BYTES) {
+    const key = fields.reduce((a, b) => (data[b].length > data[a].length ? b : a));
+    if (data[key].length <= 8) break;
+    data[key] = data[key].slice(0, -2).trim();
+  }
+  if (size() > QR_MAX_BYTES) delete data.eventId;
+  return JSON.stringify(data);
 }
 
 function assertUtr(utr) {
@@ -569,6 +623,8 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
         registered_at: nowIso(),
       },
     ]);
+    const reg = writes[writes.length - 1][2];
+    reg.qr_payload = registrationQrPayload(reg);
   }
 
   if (payId) {
@@ -645,7 +701,8 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
   if (!isLive()) demoSet("users", user.uid, { ...user });
   persistDemoUser();
   notifyListeners();
-  return { success: true, total, paymentId: payId, teamCodes, eventIds: evs.map((e) => e.id) };
+  const registrations = writes.filter(([col]) => col === "registrations").map(([, , data]) => data);
+  return { success: true, total, paymentId: payId, teamCodes, eventIds: evs.map((e) => e.id), registrations };
 }
 
 /**
@@ -692,6 +749,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
     registration_qr_id: passId(found.eventId, user.uid),
     registered_at: nowIso(),
   };
+  registration.qr_payload = registrationQrPayload(registration);
 
   if (isLive()) {
     const { doc, runTransaction, setDoc, arrayUnion, serverTimestamp } = fsMod;

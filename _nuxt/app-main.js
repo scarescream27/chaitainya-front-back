@@ -4198,6 +4198,15 @@ let At,
             import("./events-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
+          name: "profile",
+          path: "/profile",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./profile-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
           name: "work",
           path: "/work",
           meta: {},
@@ -5693,7 +5702,7 @@ let At,
           cursorBlendMode: "none",
           mobileMenuOpen: !1,
           positionSceneStart: !1,
-          soundOn: !0,
+          soundOn: !1,
           jelColor: "#e392fe",
           jelColor2: "#d357fe",
           jelMaterialOpacity: 1,
@@ -5758,7 +5767,8 @@ let At,
             this.jelColor2 = t;
           },
           toggleSound(t) {
-            this.soundOn = t;
+            // Music and sound effects are removed; sound always stays off.
+            this.soundOn = !1;
           },
           setSceneStartingPosition() {
             this.positionSceneStart = !0;
@@ -45148,15 +45158,7 @@ void main() {
           H;
         const z = vt(null),
           W = (U) => {
-            (U ? (z.value.volume = 0) : (z.value.volume = 1),
-              l.add(() => {
-                pt.to(z.value, {
-                  volume: U ? 1 : 0,
-                  duration: 0.5,
-                  ease: "none",
-                });
-              }),
-              U ? z.value.play() : z.value.pause());
+            z.value && z.value.pause();
           };
         (e.$onAction(({ name: U, args: X }) => {
           (U === "setJelMaterialOpacity" &&
@@ -45420,7 +45422,6 @@ void main() {
                   loop: "",
                   ref_key: "audioBg",
                   ref: z,
-                  src: "/audio/BG-music.mp3",
                 },
                 null,
                 512,
@@ -46048,10 +46049,27 @@ void main() {
                   duration: 0.1,
                   ease: "power1.out",
                 })),
-                window.addEventListener("mousemove", a, !1));
+                window.addEventListener("mousemove", a, !1),
+                window.__customCursorBound ||
+                  ((window.__customCursorBound = !0),
+                  document.addEventListener("mouseleave", m),
+                  document.addEventListener("mouseover", (d) => {
+                    d.target && d.target.tagName === "IFRAME" && m();
+                  })));
             }));
-          const a = (d) => {
-              (n(d.clientY), i(d.clientX));
+          const m = () =>
+              document.documentElement.classList.remove("custom-cursor-active"),
+            a = (d) => {
+              const h = document.documentElement;
+              if (!r.value || !r.value.isConnected) {
+                m();
+                return;
+              }
+              (h.classList.contains("custom-cursor-active") ||
+                (pt.set(r.value, { x: d.clientX, y: d.clientY }),
+                h.classList.add("custom-cursor-active")),
+                n(d.clientY),
+                i(d.clientX));
             },
             o = (d) => {
               (pt.to(r.value, {
