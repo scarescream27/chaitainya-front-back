@@ -5,10 +5,19 @@
  * Source: "Event Student Heads" list from the organising committee.
  * Fest days: Day 1 = 30 Oct, Day 2 = 31 Oct, Day 3 = 1 Nov 2026.
  *
- * Fields the committee has not confirmed yet (entry fee, prizes, team size,
- * rules) are marked "To be notified". To open registration for an event, set
- * `entryFeeNum`, `minTeam`/`maxTeam` and `registrationOpen: true` on it.
+ * Fields the committee has not confirmed yet (entry fee, prizes, rules) are
+ * marked "To be notified". Team limits below are PROVISIONAL.
+ *
+ * To open registration for an event: set `entryFeeNum` (0 = free) and
+ * `registrationOpen: true`. Set FEST_REGISTRATION_OPEN below to open all.
+ *
+ * registrationType: "solo" | "team" | "both" (solo or team).
+ * startsAt / endsAt: ISO times in IST, used for "Add to Google Calendar".
  */
+
+// Master switch: true opens every event that doesn't set registrationOpen itself.
+export const FEST_REGISTRATION_OPEN = false;
+export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
 
@@ -27,14 +36,28 @@ function heads(...names) {
   return names.map((name) => ({ name, role: "Student Head" }));
 }
 
+function formatLabel(type, min, max) {
+  const size = min === max ? `${max}` : `${min}–${max}`;
+  if (type === "solo") return "Solo";
+  if (type === "team") return `Team (${size} members)`;
+  return `Solo or team (up to ${max})`;
+}
+
 function event(e) {
+  const type = e.registrationType || "solo";
+  const minTeam = e.minTeam || 1;
+  const maxTeam = type === "solo" ? 1 : e.maxTeam || 4;
   return {
     badge: CATEGORY_NAMES[e.category],
     categoryName: CATEGORY_NAMES[e.category],
-    format: TBN,
-    teamSize: TBN,
-    minTeam: 1,
-    maxTeam: 1,
+    registrationType: type,
+    minTeam,
+    maxTeam,
+    format: formatLabel(type, minTeam, maxTeam),
+    teamSize: type === "solo" ? "1" : `${minTeam}–${maxTeam}`,
+    deadline: REGISTRATION_DEADLINE,
+    startsAt: null,
+    endsAt: null,
     entryFee: TBN,
     entryFeeNum: 0,
     prizePool: TBN,
@@ -42,12 +65,15 @@ function event(e) {
     date: "Day TBA",
     time: TBN,
     status: "REGISTRATION: TO BE NOTIFIED",
-    registrationOpen: false,
     rules: ["Detailed rules and eligibility will be announced soon."],
     rounds: [],
     judgingCriteria: [],
     coordinators: [],
     ...e,
+    registrationType: type,
+    minTeam,
+    maxTeam,
+    registrationOpen: e.registrationOpen ?? FEST_REGISTRATION_OPEN,
   };
 }
 
@@ -57,6 +83,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "codeforge-reforged",
+    registrationType: "team", minTeam: 2, maxTeam: 4, startsAt: "2026-10-30T18:00:00+05:30", endsAt: "2026-10-31T18:00:00+05:30",
     title: "CODEFORGE: REFORGED 2.0",
     tagline: "24-hour hackathon: build something real from scratch",
     category: "tech",
@@ -70,6 +97,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-flag",
+    registrationType: "both", maxTeam: 3, startsAt: "2026-11-01T08:00:00+05:30", endsAt: "2026-11-01T16:00:00+05:30",
     title: "CTF: CAPTURE THE FLAG",
     tagline: "Cybersecurity challenges: find the flags, climb the scoreboard",
     category: "tech",
@@ -82,6 +110,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "competitive-programming",
+    registrationType: "solo", startsAt: "2026-10-30T10:00:00+05:30", endsAt: "2026-10-30T13:00:00+05:30",
     title: "COMPETITIVE PROGRAMMING",
     tagline: "Algorithms against the clock",
     category: "tech",
@@ -94,6 +123,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "error-404",
+    registrationType: "both", maxTeam: 2,
     title: "ERROR 404",
     tagline: "Find the bugs before they find you",
     category: "tech",
@@ -103,6 +133,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "prompt-engineering",
+    registrationType: "solo",
     title: "PROMPT ENGINEERING",
     tagline: "Get the best out of AI with the right prompt",
     category: "tech",
@@ -112,6 +143,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "ui-ux-designathon",
+    registrationType: "both", maxTeam: 2,
     title: "UI/UX DESIGNATHON",
     tagline: "Design the interface, own the experience",
     category: "tech",
@@ -123,6 +155,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "cadcraft",
+    registrationType: "solo", startsAt: "2026-10-30T13:00:00+05:30", endsAt: "2026-10-30T17:00:00+05:30",
     title: "CADCRAFT",
     tagline: "Model it, engineer it, nail the design",
     category: "innovation",
@@ -134,6 +167,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cube-conquest",
+    registrationType: "solo", startsAt: "2026-10-31T09:00:00+05:30", endsAt: "2026-10-31T10:00:00+05:30",
     title: "CUBE CONQUEST",
     tagline: "Speedcubing showdown",
     category: "innovation",
@@ -145,6 +179,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "innovation-fair",
+    registrationType: "team", minTeam: 1, maxTeam: 4,
     title: "INNOVATION FAIR",
     tagline: "Showcase your projects and prototypes",
     category: "innovation",
@@ -157,6 +192,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "pitch-sansad",
+    registrationType: "team", minTeam: 1, maxTeam: 4,
     title: "PITCH SANSAD",
     tagline: "Pitch your startup idea to the house",
     category: "business",
@@ -165,6 +201,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "marketmind",
+    registrationType: "team", minTeam: 1, maxTeam: 3,
     title: "MARKETMIND: THE PRODUCT CASE CHALLENGE",
     tagline: "Crack the product case, present the strategy",
     category: "business",
@@ -174,6 +211,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "model-lok-sabha",
+    registrationType: "solo", allDay: ["2026-10-30", "2026-10-31"],
     title: "MODEL LOK SABHA",
     tagline: "Debate, legislate and represent",
     category: "business",
@@ -189,6 +227,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "esports-cs2",
+    registrationType: "team", minTeam: 5, maxTeam: 6,
     title: "ESPORTS: COUNTER-STRIKE 2",
     tagline: "Tactical 5v5 on campus",
     category: "esports",
@@ -197,6 +236,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-bgmi",
+    registrationType: "team", minTeam: 4, maxTeam: 5, allDay: ["2026-10-31", "2026-10-31"],
     title: "ESPORTS: BGMI",
     tagline: "Battle royale squads, last one standing",
     category: "esports",
@@ -207,6 +247,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-free-fire",
+    registrationType: "team", minTeam: 4, maxTeam: 5, allDay: ["2026-10-30", "2026-10-30"],
     title: "ESPORTS: FREE FIRE",
     tagline: "Fast-paced battle royale",
     category: "esports",
@@ -221,6 +262,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "nerd-wars",
+    registrationType: "team", minTeam: 2, maxTeam: 3, allDay: ["2026-10-31", "2026-10-31"],
     title: "NERD WARS",
     tagline: "Quizzes, puzzles and pure nerd power",
     category: "cultural",
@@ -232,6 +274,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "treasure-hunt",
+    registrationType: "team", minTeam: 3, maxTeam: 4,
     title: "TREASURE HUNT",
     tagline: "Follow the clues across campus",
     category: "cultural",
@@ -241,6 +284,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-moment",
+    registrationType: "solo",
     title: "CAPTURE THE MOMENT",
     tagline: "Photography: tell the fest's story in a frame",
     category: "cultural",
@@ -250,6 +294,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cultural-walk",
+    registrationType: "both", maxTeam: 10,
     title: "CULTURAL WALK",
     tagline: "A walk through the cultures of India",
     category: "cultural",
@@ -258,6 +303,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "dance-competition",
+    registrationType: "both", maxTeam: 12,
     title: "DANCE COMPETITION",
     tagline: "Own the stage",
     category: "cultural",
@@ -279,8 +325,58 @@ export function getCategories() {
   return EVENT_CATEGORIES;
 }
 
+export function isPastDeadline(ev, now = Date.now()) {
+  return Boolean(ev?.deadline && now > Date.parse(ev.deadline));
+}
+
 export function isRegistrationOpen(ev) {
-  return Boolean(ev && ev.registrationOpen);
+  return Boolean(ev && ev.registrationOpen && !isPastDeadline(ev));
+}
+
+export function formatDeadline(ev) {
+  if (!ev?.deadline) return "To be notified";
+  return new Date(ev.deadline).toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
+}
+
+export function feeLabel(ev) {
+  if (!ev) return "";
+  if (!ev.registrationOpen && !ev.entryFeeNum) return ev.entryFee || "To be notified";
+  if (!ev.entryFeeNum) return "Free";
+  return `₹${ev.entryFeeNum}${ev.registrationType === "solo" ? "" : " per entry"}`;
+}
+
+/**
+ * Google Calendar "add event" link, or null when the time isn't known yet.
+ */
+export function googleCalendarLink(ev) {
+  if (!ev) return null;
+  const fmt = (iso) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  let dates = null;
+  if (ev.startsAt && ev.endsAt) {
+    dates = `${fmt(ev.startsAt)}/${fmt(ev.endsAt)}`;
+  } else if (Array.isArray(ev.allDay)) {
+    const [start, end] = ev.allDay;
+    const endDate = new Date(`${end}T00:00:00Z`);
+    endDate.setUTCDate(endDate.getUTCDate() + 1); // end date is exclusive
+    dates = `${start.replace(/-/g, "")}/${endDate.toISOString().slice(0, 10).replace(/-/g, "")}`;
+  }
+  if (!dates) return null;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${ev.title} — Chaitanya 2k26`,
+    dates,
+    details: `${ev.tagline}\n\n${ev.time}\nhttps://chaitanya2k26.hptu.ac.in/events`,
+    location: `${ev.venue !== "To be notified" ? ev.venue + ", " : ""}HPTU Hamirpur, Himachal Pradesh`,
+    ctz: "Asia/Kolkata",
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 export function filterEvents(category = "all", searchQuery = "") {

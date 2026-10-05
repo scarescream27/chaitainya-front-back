@@ -37,6 +37,10 @@ service cloud.firestore {
       return value is string && value.size() <= max;
     }
 
+    function isStudentId(value) {
+      return value is string && value.matches('^CH26-[A-Z2-9]{8}$');
+    }
+
     function isUtr(value) {
       return value is string && value.matches('^[0-9]{12}$');
     }
@@ -53,24 +57,33 @@ service cloud.firestore {
     // USERS — profile is private to its owner and admins
     // =========================================================================
     match /users/{userId} {
-      allow read: if isUser(userId) || isAdmin();
+      allow get: if isUser(userId) || isAdmin();
+      // Only organisers query profiles (e.g. Digital ID lookup by studentId).
+      allow list: if isAdmin();
 
       allow create: if isUser(userId) &&
         data().uid == userId &&
         data().email == request.auth.token.email &&
         isShortString(data().displayName, 120) &&
         isShortString(data().get('college', ''), 120) &&
+        isShortString(data().get('year', ''), 40) &&
         isShortString(data().get('phone', ''), 20) &&
+        isStudentId(data().studentId) &&
         !('role' in data());
 
       allow update: if isAdmin() || (
         isUser(userId) &&
         data().email == request.auth.token.email &&
         data().get('role', null) == resource.data.get('role', null) &&
+        isShortString(data().displayName, 120) &&
         isShortString(data().get('college', ''), 120) &&
+        isShortString(data().get('year', ''), 40) &&
         isShortString(data().get('phone', ''), 20) &&
-        changedKeys().hasOnly(['displayName', 'name', 'email', 'photoURL', 'college', 'phone',
-                               'registeredEvents', 'registeredEventIds', 'updatedAt'])
+        // Chaitanya ID: set once (for older profiles), never changed afterwards.
+        (resource.data.get('studentId', null) == data().get('studentId', null) ||
+          (resource.data.get('studentId', null) == null && isStudentId(data().studentId))) &&
+        changedKeys().hasOnly(['displayName', 'name', 'email', 'photoURL', 'college', 'year', 'phone',
+                               'studentId', 'registeredEvents', 'registeredEventIds', 'updatedAt'])
       );
 
       allow delete: if isAdmin();
@@ -91,30 +104,34 @@ service cloud.firestore {
     // TEAMS — readable by signed-in users (needed to join by code)
     // =========================================================================
     match /teams/{teamId} {
-      allow read: if isAuthenticated();
+      allow get: if isAuthenticated();
+      // Participants may only look a team up by code (limit 1), not list them all.
+      allow list: if isAdmin() || (isAuthenticated() && request.query.limit <= 1);
 
-      // Leader creates the team with only themself as a member.
+      // Leader creates the team: roster of names, only their own account linked.
       allow create: if isAuthenticated() &&
         teamId == 'team_' + data().eventId + '_' + request.auth.uid &&
         data().leaderUid == request.auth.uid &&
         data().leader_id == request.auth.uid &&
         data().memberUids == [request.auth.uid] &&
-        data().members.size() == 1 &&
-        data().teamSize == 1 &&
+        data().linkedMembers.size() == 1 &&
+        data().members.size() >= 1 &&
+        data().members.size() <= data().maxTeamSize &&
+        data().maxTeamSize <= 20 &&
+        data().teamSize == data().members.size() &&
         isShortString(data().teamName, 60) &&
         data().teamCode is string &&
         data().paymentStatus in ['free', 'pending'] &&
         (data().paymentStatus == 'pending' || eventIsFree(data().eventId));
 
-      // A participant joins: they may only append themself while there is room.
+      // A teammate links their account: they may only append themself.
       allow update: if isAdmin() || (
         isAuthenticated() &&
         !(request.auth.uid in resource.data.memberUids) &&
-        changedKeys().hasOnly(['members', 'memberUids', 'teamSize']) &&
+        changedKeys().hasOnly(['memberUids', 'linkedMembers']) &&
         data().memberUids == resource.data.memberUids.concat([request.auth.uid]) &&
-        data().members.size() == resource.data.members.size() + 1 &&
-        data().members[data().members.size() - 1].uid == request.auth.uid &&
-        data().teamSize == data().memberUids.size() &&
+        data().linkedMembers.size() == resource.data.linkedMembers.size() + 1 &&
+        data().linkedMembers[data().linkedMembers.size() - 1].uid == request.auth.uid &&
         data().memberUids.size() <= resource.data.maxTeamSize
       );
 
@@ -134,11 +151,13 @@ service cloud.firestore {
     // =========================================================================
     match /registrations/{regId} {
       // resource == null: lets a user check whether their own reg_* doc exists yet.
-      allow read: if isAuthenticated() && (
+      allow get: if isAuthenticated() && (
         isAdmin() ||
         (resource == null && regId.matches('^reg_.*_' + request.auth.uid + '$')) ||
         (resource != null && resource.data.user_id == request.auth.uid)
       );
+      // "My registrations" query must filter on user_id == own uid.
+      allow list: if isAuthenticated() && (isAdmin() || resource.data.user_id == request.auth.uid);
 
       allow create: if isAuthenticated() &&
         regId == 'reg_' + data().event_id + '_' + request.auth.uid &&
@@ -170,13 +189,16 @@ service cloud.firestore {
     // PAYMENTS — UPI UTR submissions, verified only by admins
     // =========================================================================
     match /payments/{paymentId} {
-      allow read: if isAuthenticated() && (
+      allow get: if isAuthenticated() && (
         isAdmin() ||
         (resource != null && resource.data.payerUid == request.auth.uid)
       );
+      allow list: if isAdmin();
 
+      // One payment per checkout: pay_{uid}_{timestamp}, covering `items`.
       allow create: if isAuthenticated() &&
-        paymentId == 'pay_' + data().eventId + '_' + request.auth.uid &&
+        paymentId.matches('^pay_' + request.auth.uid + '_[0-9]+$') &&
+        data().items is list && data().items.size() >= 1 && data().items.size() <= 25 &&
         data().payerUid == request.auth.uid &&
         data().status == 'pending_verification' &&
         data().verifiedAt == null &&

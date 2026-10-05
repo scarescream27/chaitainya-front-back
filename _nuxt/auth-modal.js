@@ -8,12 +8,13 @@ import {
   signInWithGoogle,
   signOutUser,
   getCurrentUser,
-  updateMyProfile,
+  YEAR_OPTIONS,
   getRegisteredAttendees,
   subscribeAuthState,
   getAllTeams,
   getAllPayments,
   getAllRegistrations,
+  paymentItems,
   approvePayment,
   rejectPayment,
 } from "./auth-service.js";
@@ -21,6 +22,7 @@ import { isFirebaseConfigured, isAdminUser } from "./firebase-config.js";
 import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
 import { getEventById } from "./events-data.js";
 import { FEST_CONFIG, escapeHtml as e } from "./fest-config.js";
+import { openProfilePanel } from "./profile-panel.js";
 
 const DEMO_BANNER = `
   <div class="chaitanya-modal-banner">
@@ -85,6 +87,7 @@ export function initAuthModal() {
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && modalBackdrop.classList.contains("active")) {
+        e.preventDefault(); // tells other Escape handlers this press was used
         closeAuthModal();
       }
     });
@@ -125,43 +128,9 @@ export function initAuthModal() {
 
 export function syncNavbarAuthState(user) {
   if (typeof document === "undefined") return;
-
-  // Admin nav links are hidden by CSS unless the signed-in user is an admin.
+  // Nav labels/avatars are rendered by the header component; here we only
+  // reveal admin links for admins (hidden by CSS otherwise).
   document.documentElement.classList.toggle("is-fest-admin", Boolean(user && isAdminUser(user.email)));
-
-  const registerLinks = document.querySelectorAll('a[href="#register"], a[href="#profile"], a[href="/register"], a[href="/profile"]');
-  const loginLinks = document.querySelectorAll('a[href="#login"], a[href="#logout"], a[href="/login"], a[href="/logout"]');
-
-  if (user) {
-    const firstName = user.displayName ? user.displayName.split(" ")[0].toUpperCase() : "PROFILE";
-    registerLinks.forEach((link) => {
-      link.setAttribute("href", "#profile");
-      const span = link.querySelector("span");
-      if (span) span.textContent = firstName;
-      else link.textContent = `[${firstName}]`;
-    });
-
-    loginLinks.forEach((link) => {
-      link.setAttribute("href", "#logout");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "LOGOUT";
-      else link.textContent = "[LOGOUT]";
-    });
-  } else {
-    registerLinks.forEach((link) => {
-      link.setAttribute("href", "#register");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "Register";
-      else link.textContent = "[Register]";
-    });
-
-    loginLinks.forEach((link) => {
-      link.setAttribute("href", "#login");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "Login";
-      else link.textContent = "[Login]";
-    });
-  }
 }
 
 function checkUrlRoute() {
@@ -182,6 +151,12 @@ function checkUrlRoute() {
  * Open modal in specific mode
  */
 export function openAuthModal(mode = "login", options = {}) {
+  // The profile lives in its own floating overlay (no page navigation).
+  if (mode === "profile" && getCurrentUser()) {
+    closeAuthModal();
+    openProfilePanel(options.section || "profile");
+    return;
+  }
   initAuthModal();
   currentMode = mode;
   if (typeof window !== "undefined") {
@@ -244,10 +219,6 @@ async function renderModalContent() {
   const user = getCurrentUser();
   const isConfigured = isFirebaseConfigured();
 
-  if (currentMode === "profile" && user) {
-    renderProfileView(body, user);
-    return;
-  }
 
   if (currentMode === "admin") {
     await renderAdminView(body, user);
@@ -328,6 +299,14 @@ function renderRegisterView(container, isConfigured) {
       </div>
 
       <div class="chaitanya-form-group">
+        <label class="chaitanya-form-label" for="reg-year">Year *</label>
+        <select id="reg-year" class="chaitanya-form-input">
+          <option value="">Select year</option>
+          ${YEAR_OPTIONS.map((y) => `<option>${e(y)}</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="chaitanya-form-group">
         <label class="chaitanya-form-label" for="reg-phone">Contact No (WhatsApp) *</label>
         <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
       </div>
@@ -351,13 +330,15 @@ function renderRegisterView(container, isConfigured) {
     e.preventDefault();
     const college = container.querySelector("#reg-college").value.trim();
     const phone = container.querySelector("#reg-phone").value.trim();
+    const year = container.querySelector("#reg-year").value;
     if (!college) return showAuthError("Please enter your college / university.");
+    if (!year) return showAuthError("Please select your year.");
     if (phone.replace(/\D/g, "").length < 10) return showAuthError("Please enter a valid contact number.");
 
     const btn = container.querySelector("#btn-do-google-register");
     setBusy(btn, true, "Registering via Google...");
     try {
-      await signInWithGoogle({ college, phone });
+      await signInWithGoogle({ college, phone, year });
       closeAuthModal();
     } catch (err) {
       showAuthError(err.message || "Registration failed.");
@@ -366,76 +347,6 @@ function renderRegisterView(container, isConfigured) {
   });
 
   container.querySelector("#btn-switch-to-login").addEventListener("click", () => openAuthModal("login"));
-}
-
-/**
- * 3. User Profile View
- */
-function renderProfileView(container, user) {
-  const events = user.registeredEvents || [];
-  const eventsHtml = events.length
-    ? events.map((ev) => `<span class="profile-event-chip">${e(ev)}</span>`).join("")
-    : `<span class="profile-empty">No events yet — <a href="/events">browse events</a></span>`;
-  const admin = isAdminUser(user.email);
-
-  container.innerHTML = `
-    <div class="profile-avatar-row">
-      <img src="${e(user.photoURL || "/images/icons/textFace.svg")}" alt="" class="profile-avatar" referrerpolicy="no-referrer" />
-      <h3 class="profile-name">${e(user.displayName || "Participant")}</h3>
-      <p class="profile-email">${e(user.email)}</p>
-      <span class="profile-role-badge ${admin ? "admin" : ""}">[ ${admin ? "ADMIN" : "ATTENDEE"} ]</span>
-    </div>
-
-    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
-
-    <form id="profile-edit-form" class="profile-meta-card" novalidate>
-      <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label" for="profile-college">College</label>
-        <input type="text" id="profile-college" class="chaitanya-form-input" maxlength="120" value="${e(user.college || "")}" placeholder="Add your college" />
-      </div>
-      <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label" for="profile-phone">Phone</label>
-        <input type="tel" id="profile-phone" class="chaitanya-form-input" maxlength="20" value="${e(user.phone || "")}" placeholder="Add a contact number" />
-      </div>
-      <button type="submit" class="chaitanya-link-btn" id="btn-save-profile">[ Save details ]</button>
-    </form>
-
-    <div class="chaitanya-form-group">
-      <span class="chaitanya-form-label">Registered events</span>
-      <div class="profile-events-list">${eventsHtml}</div>
-    </div>
-
-    ${admin ? `
-      <button type="button" class="btn-google-auth" id="btn-open-admin-from-profile" style="margin-top:16px;">
-        <span>[ Open Admin Dashboard ]</span>
-      </button>` : ""}
-
-    <button type="button" class="btn-secondary-action" id="btn-do-sign-out">[ Sign Out ]</button>
-  `;
-
-  container.querySelector("#profile-edit-form").addEventListener("submit", async (evt) => {
-    evt.preventDefault();
-    const btn = container.querySelector("#btn-save-profile");
-    btn.textContent = "[ Saving... ]";
-    try {
-      await updateMyProfile({
-        college: container.querySelector("#profile-college").value,
-        phone: container.querySelector("#profile-phone").value,
-      });
-      btn.textContent = "[ ✓ Saved ]";
-    } catch (err) {
-      showAuthError(err.message || "Could not save your details.");
-      btn.textContent = "[ Save details ]";
-    }
-  });
-
-  container.querySelector("#btn-do-sign-out").addEventListener("click", async () => {
-    await signOutUser();
-    closeAuthModal();
-  });
-
-  const btnAdmin = container.querySelector("#btn-open-admin-from-profile");
-  if (btnAdmin) btnAdmin.addEventListener("click", () => openAuthModal("admin"));
 }
 
 /**
@@ -610,7 +521,8 @@ function renderAdminTab(state) {
     const rows = sorted.map((p) => {
       const isPending = p.status === "pending_verification";
       const dup = utrCounts.get(p.transactionRef) > 1;
-      const expected = eventFee(p.eventId);
+      const items = paymentItems(p);
+      const expected = items.reduce((sum, it) => sum + eventFee(it.eventId), 0);
       const wrongAmount = expected > 0 && Number(p.amount) !== expected;
       const flags = [
         dup ? `<span class="admin-flag">DUPLICATE UTR</span>` : "",
@@ -618,7 +530,7 @@ function renderAdminTab(state) {
       ].join("");
       return `
         <tr>
-          <td><strong>${e(p.eventTitle || p.eventId)}</strong>${p.teamName ? `<br/><small>Team: ${e(p.teamName)}</small>` : ""}</td>
+          <td>${items.map((it) => `<strong>${e(it.eventTitle || it.eventId)}</strong>${it.teamName ? ` <small>· Team ${e(it.teamName)}</small>` : ""}`).join("<br/>")}</td>
           <td>${e(p.payerName)}<br/><small>${e(p.payerEmail)} · ${e(p.payerPhone)}</small></td>
           <td><strong>₹${e(p.amount)}</strong></td>
           <td><code>${e(p.transactionRef || "—")}</code>${flags}</td>
@@ -635,7 +547,7 @@ function renderAdminTab(state) {
     }).join("");
 
     table = adminTable(
-      ["Event", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"],
+      ["Events", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"],
       rows,
       "No payment submissions yet",
       `Match each UTR against the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before approving.`
@@ -702,11 +614,13 @@ function renderAdminTab(state) {
         <td><strong>${e(a.displayName || a.name || "—")}</strong></td>
         <td>${e(a.email)}</td>
         <td>${e(a.college)}</td>
+        <td>${e(a.year)}</td>
         <td>${e(a.phone)}</td>
+        <td><code>${e(a.studentId)}</code></td>
         <td>${e((a.registeredEvents || []).join(", "))}</td>
       </tr>`).join("");
 
-    table = adminTable(["Name", "Email", "College", "Phone", "Events"], rows, "No accounts yet");
+    table = adminTable(["Name", "Email", "College", "Year", "Phone", "ID", "Events"], rows, "No accounts yet");
   } else if (state.tab === "setup") {
     table = `
       <div class="admin-panel-box">
@@ -896,20 +810,24 @@ function exportRows(state) {
   return {
     payments: {
       name: "Payments",
-      headers: ["Payment ID", "Event", "Team", "Payer", "Email", "Phone", "Amount (INR)", "UTR", "Status", "Submitted", "Verified/Rejected By", "Reason"],
+      headers: ["Payment ID", "Events", "Teams", "Payer", "Email", "Phone", "Amount (INR)", "UTR", "Status", "Submitted", "Verified/Rejected By", "Reason"],
       rows: state.payments.map((p) => [
-        p.paymentId, p.eventTitle, p.teamName, p.payerName, p.payerEmail, p.payerPhone, p.amount,
+        p.paymentId,
+        paymentItems(p).map((it) => it.eventTitle).join("; "),
+        paymentItems(p).map((it) => it.teamName).filter(Boolean).join("; "),
+        p.payerName, p.payerEmail, p.payerPhone, p.amount,
         p.transactionRef, STATUS_LABEL[p.status] || p.status, formatDate(p.createdAt),
         p.verifiedBy || p.rejectedBy, p.rejectionReason,
       ]),
     },
     registrations: {
       name: "Registrations",
-      headers: ["Event", "Name", "Email", "Phone", "College", "Type", "Team Code", "Pass ID", "Payment", "Registered"],
+      headers: ["Event", "Name", "Email", "Phone", "College", "Year", "Chaitanya ID", "Type", "Team Code", "Team Members", "Pass ID", "Payment", "Registered"],
       rows: regRows.map((r) => [
-        r.event_title, r.user_name, r.user_email, r.user_phone, r.user_college,
+        r.event_title, r.user_name, r.user_email, r.user_phone, r.user_college, r.user_year, r.student_id,
         r.participation_type === "team" ? `team ${r.team_role || ""}`.trim() : "solo",
-        r.team_code, r.registration_qr_id, STATUS_LABEL[r.payStatus] || r.payStatus, formatDate(r.registered_at),
+        r.team_code, (r.team_members || []).map((m) => m.name).join("; "),
+        r.registration_qr_id, STATUS_LABEL[r.payStatus] || r.payStatus, formatDate(r.registered_at),
       ]),
     },
     teams: {
@@ -925,9 +843,9 @@ function exportRows(state) {
     },
     attendees: {
       name: "Accounts",
-      headers: ["Name", "Email", "College", "Phone", "Registered Events"],
+      headers: ["Name", "Email", "College", "Year", "Phone", "Chaitanya ID", "Registered Events"],
       rows: state.attendees.map((a) => [
-        a.displayName || a.name, a.email, a.college, a.phone, (a.registeredEvents || []).join("; "),
+        a.displayName || a.name, a.email, a.college, a.year, a.phone, a.studentId, (a.registeredEvents || []).join("; "),
       ]),
     },
   };

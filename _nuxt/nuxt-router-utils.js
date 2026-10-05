@@ -37,6 +37,17 @@ import {
 } from "./vue-runtime.js";
 import { initAuthModal, openAuthModal, syncNavbarAuthState } from "./auth-modal.js";
 import { initFirebase, subscribeAuthState, signOutUser, getCurrentUser } from "./auth-service.js";
+// Profile icon in the nav: avatar + first name when signed in, [Register] otherwise.
+function navProfileChildren(user, h, text) {
+  if (!user) return [text("["), h("span", null, "Register"), text("]")];
+  const first = (user.displayName || "Profile").split(" ")[0].toUpperCase();
+  const initials = (user.displayName || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
+  const avatar = user.photoURL
+    ? h("img", { class: "nav-avatar", src: user.photoURL, alt: "", referrerpolicy: "no-referrer" })
+    : h("span", { class: "nav-avatar nav-avatar-initials", "aria-hidden": "true" }, initials);
+  return [avatar, h("span", { class: "nav-profile-name" }, first)];
+}
+
 let st,
   Jt = Promise.all([
     (() => {
@@ -194,22 +205,14 @@ let st,
                           "a",
                           {
                             href: authCurrentUser.value ? "#profile" : "#register",
+                            class: authCurrentUser.value ? "nav-profile" : null,
+                            "aria-label": authCurrentUser.value ? "Open your profile" : null,
                             onClick: (e) => {
                               e.preventDefault();
                               openAuthModal(authCurrentUser.value ? "profile" : "register");
                             },
                           },
-                          [
-                            O("["),
-                            d(
-                              "span",
-                              null,
-                              authCurrentUser.value
-                                ? (authCurrentUser.value.displayName || "Profile").split(" ")[0].toUpperCase()
-                                : "Register",
-                            ),
-                            O("]"),
-                          ],
+                          navProfileChildren(authCurrentUser.value, d, O),
                         ),
                         d(
                           "a",
@@ -299,23 +302,15 @@ let st,
                                 "a",
                                 {
                                   href: authCurrentUser.value ? "#profile" : "#register",
+                            class: authCurrentUser.value ? "nav-profile" : null,
+                            "aria-label": authCurrentUser.value ? "Open your profile" : null,
                                   onClick: (e) => {
                                     e.preventDefault();
                                     w(n).openMobileMenu(!1);
                                     openAuthModal(authCurrentUser.value ? "profile" : "register");
                                   },
                                 },
-                                [
-                                  O("["),
-                                  d(
-                                    "span",
-                                    null,
-                                    authCurrentUser.value
-                                      ? (authCurrentUser.value.displayName || "Profile").split(" ")[0].toUpperCase()
-                                      : "Register",
-                                  ),
-                                  O("]"),
-                                ],
+                                navProfileChildren(authCurrentUser.value, d, O),
                               ),
                               d(
                                 "a",

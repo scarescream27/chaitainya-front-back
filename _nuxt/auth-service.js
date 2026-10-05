@@ -2,13 +2,14 @@
  * ============================================================================
  * Chaitanya 2k26 — Firebase Auth & Firestore Service
  * ============================================================================
- * Google Sign-In, attendee profiles, event registrations, squads, UPI payment
- * submissions and admin verification.
+ * Google Sign-In, attendee profiles (college, year, Chaitanya ID), cart
+ * checkout into event registrations, teams, UPI payment submissions, admin
+ * verification and Digital ID lookups.
  *
  * Cloud Firestore is the single source of truth. Every write is awaited and
  * errors are surfaced to the caller, so the UI never shows a "confirmed"
  * state for data that was not saved. Access control is enforced server-side
- * by firestore.rules; the admin checks here only decide what UI to show.
+ * by firestore.rules; admin checks here only decide what UI to show.
  *
  * Demo mode (local-only storage) is used ONLY when Firebase is not configured.
  */
@@ -18,6 +19,8 @@ import {
   isFirebaseConfigured,
   isAdminUser,
 } from "./firebase-config.js";
+import { getEventById, isRegistrationOpen } from "./events-data.js";
+import { isPaymentConfigured } from "./fest-config.js";
 
 const SDK_VERSION = "10.12.0";
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
@@ -36,8 +39,7 @@ let authListeners = [];
 const DEMO_DB_KEY = "chaitanya_demo_db";
 const DEMO_USER_KEY = "chaitanya_demo_user";
 
-// Legacy keys from the previous localStorage-first implementation. They held
-// stale/seeded data and are cleared on startup so nothing reads them again.
+// Legacy keys from the previous localStorage-first implementation.
 const LEGACY_KEYS = [
   "chaitanya_attendees_list",
   "chaitanya_teams_list",
@@ -54,6 +56,21 @@ export const PAYMENT_STATUS = {
   REJECTED: "rejected",
   TEAM: "team",
 };
+
+export const YEAR_OPTIONS = [
+  "1st Year",
+  "2nd Year",
+  "3rd Year",
+  "4th Year",
+  "5th Year",
+  "Postgraduate",
+  "PhD",
+  "Faculty / Staff",
+  "Other",
+];
+
+const ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export const STUDENT_ID_PATTERN = /^CH26-[A-Z2-9]{8}$/;
 
 function isLive() {
   return Boolean(firebaseFirestore && firebaseAuth);
@@ -76,6 +93,21 @@ function cleanText(value, max = 120) {
 
 function cleanPhone(value) {
   return String(value ?? "").replace(/[^\d+\s-]/g, "").trim().slice(0, 20);
+}
+
+function cleanYear(value) {
+  const v = cleanText(value, 40);
+  return YEAR_OPTIONS.includes(v) ? v : "";
+}
+
+function randomCode(length) {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => ID_ALPHABET[b % ID_ALPHABET.length]).join("");
+}
+
+function newStudentId() {
+  return `CH26-${randomCode(8)}`;
 }
 
 /**
@@ -178,10 +210,12 @@ function baseProfile(fbUser) {
     uid: fbUser.uid,
     displayName: fbUser.displayName || "Chaitanya Attendee",
     email: fbUser.email || "",
-    photoURL: fbUser.photoURL || "/images/icons/textFace.svg",
+    photoURL: fbUser.photoURL || "",
     role: isAdminUser(fbUser.email) ? "admin" : "attendee",
     college: "",
+    year: "",
     phone: "",
+    studentId: "",
     registeredEvents: [],
     registeredEventIds: [],
     isDemo: false,
@@ -197,14 +231,17 @@ async function loadProfile(fbUser, extra = {}) {
   const snap = await getDoc(ref);
   const existing = snap.exists() ? snap.data() : {};
 
+  const displayName = cleanText(existing.displayName || fbUser.displayName || "Fest Attendee");
   const profile = {
     uid: fbUser.uid,
-    name: fbUser.displayName || existing.name || "Fest Attendee",
-    displayName: fbUser.displayName || existing.displayName || "Fest Attendee",
+    name: displayName,
+    displayName,
     email: fbUser.email || "",
     photoURL: fbUser.photoURL || "",
     college: cleanText(extra.college || existing.college || ""),
+    year: cleanYear(extra.year || existing.year || ""),
     phone: cleanPhone(extra.phone || existing.phone || ""),
+    studentId: STUDENT_ID_PATTERN.test(existing.studentId || "") ? existing.studentId : newStudentId(),
     registeredEvents: existing.registeredEvents || [],
     registeredEventIds: existing.registeredEventIds || [],
     updatedAt: serverTimestamp(),
@@ -213,18 +250,22 @@ async function loadProfile(fbUser, extra = {}) {
 
   const needsWrite =
     !snap.exists() ||
+    existing.studentId !== profile.studentId ||
     existing.email !== profile.email ||
-    existing.displayName !== profile.displayName ||
     existing.photoURL !== profile.photoURL ||
     (extra.college && extra.college !== existing.college) ||
+    (extra.year && extra.year !== existing.year) ||
     (extra.phone && extra.phone !== existing.phone);
 
   if (needsWrite) await setDoc(ref, profile, { merge: true });
 
   return {
     ...baseProfile(fbUser),
+    displayName,
     college: profile.college,
+    year: profile.year,
     phone: profile.phone,
+    studentId: profile.studentId,
     registeredEvents: profile.registeredEvents,
     registeredEventIds: profile.registeredEventIds,
   };
@@ -235,7 +276,7 @@ async function loadProfile(fbUser, extra = {}) {
 // ----------------------------------------------------------------------------
 
 /**
- * Sign in with Google. `extraDetails` (college, phone) are saved on the
+ * Sign in with Google. `extraDetails` (college, year, phone) are saved on the
  * profile when provided by the registration form.
  */
 export async function signInWithGoogle(extraDetails = {}) {
@@ -292,18 +333,29 @@ export function getCurrentUser() {
 }
 
 /**
- * Update the signed-in user's own college / phone.
+ * Update the signed-in user's own name / college / year / phone.
  */
-export async function updateMyProfile({ college, phone } = {}) {
+export async function updateMyProfile({ displayName, college, year, phone } = {}) {
   const user = requireUser();
   const patch = {};
+  if (displayName !== undefined) {
+    const name = cleanText(displayName);
+    if (!name) throw new Error("Name can't be empty.");
+    patch.displayName = name;
+    patch.name = name;
+  }
   if (college !== undefined) patch.college = cleanText(college);
+  if (year !== undefined) patch.year = cleanYear(year);
   if (phone !== undefined) patch.phone = cleanPhone(phone);
   if (!Object.keys(patch).length) return user;
 
   if (isLive()) {
     const { doc, setDoc, serverTimestamp } = fsMod;
-    await setDoc(doc(firebaseFirestore, "users", user.uid), { ...patch, updatedAt: serverTimestamp() }, { merge: true });
+    try {
+      await setDoc(doc(firebaseFirestore, "users", user.uid), { ...patch, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      throw friendlyError(err, "Could not save your profile.");
+    }
   } else {
     demoUpdate("users", user.uid, patch);
   }
@@ -351,15 +403,11 @@ export function getFirebaseAnalytics() {
 }
 
 // ----------------------------------------------------------------------------
-// REGISTRATIONS, SQUADS & PAYMENTS
+// REGISTRATIONS, TEAMS & PAYMENTS
 // ----------------------------------------------------------------------------
 
 function registrationId(eventId, uid) {
   return `reg_${eventId}_${uid}`;
-}
-
-function paymentId(eventId, uid) {
-  return `pay_${eventId}_${uid}`;
 }
 
 function passId(eventId, uid) {
@@ -375,196 +423,222 @@ function assertUtr(utr) {
   }
 }
 
-async function addEventToProfile(user, ev) {
+function addEventsToProfile(user, events) {
   const titles = new Set(user.registeredEvents || []);
   const ids = new Set(user.registeredEventIds || []);
-  titles.add(ev.title);
-  ids.add(ev.id);
+  events.forEach((ev) => {
+    titles.add(ev.title);
+    ids.add(ev.id);
+  });
   user.registeredEvents = [...titles];
   user.registeredEventIds = [...ids];
 }
 
-function profileEventPatch(ev) {
-  if (isLive()) {
-    const { arrayUnion, serverTimestamp } = fsMod;
-    return {
-      registeredEvents: arrayUnion(ev.title),
-      registeredEventIds: arrayUnion(ev.id),
-      updatedAt: serverTimestamp(),
-    };
-  }
-  return null;
-}
-
 /**
- * Solo registration. For paid events a 12-digit UTR is required and the
- * payment is created as "pending_verification" for the admin to verify.
+ * Register for every event in the cart in one atomic write.
+ *
+ * @param items   [{ eventId, mode: "solo" | "team" }]
+ * @param details { displayName, college, year, phone }
+ * @param teams   { [eventId]: { teamName, members: [{ name, email }] } }
+ * @param utr     12-digit UTR when the total is above zero
  */
-export async function registerSoloForEvent(ev, details = {}) {
+export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
   const user = requireUser();
-  if (!ev || typeof ev !== "object") throw new Error("Unknown event.");
-
-  const fee = Number(ev.entryFeeNum) || 0;
-  const utr = String(details.utr || "").trim();
-  if (fee > 0) assertUtr(utr);
+  if (!Array.isArray(items) || !items.length) throw new Error("Your cart is empty.");
 
   const phone = cleanPhone(details.phone || user.phone);
   const college = cleanText(details.college || user.college);
-  if (!phone) throw new Error("Please enter your contact number.");
+  const year = cleanYear(details.year || user.year);
+  const name = cleanText(details.displayName || user.displayName);
+  if (!name) throw new Error("Please enter your name.");
+  if (phone.replace(/\D/g, "").length < 10) throw new Error("Please enter a valid contact number.");
   if (!college) throw new Error("Please enter your college / institute.");
+  if (!year) throw new Error("Please select your year.");
 
-  const regId = registrationId(ev.id, user.uid);
-  const payId = fee > 0 ? paymentId(ev.id, user.uid) : null;
+  // Validate every item before writing anything.
+  const lines = items.map(({ eventId, mode }) => {
+    const ev = getEventById(eventId);
+    if (!ev) throw new Error("One of the events in your cart no longer exists.");
+    if (!isRegistrationOpen(ev)) throw new Error(`Registration for ${ev.title} is closed.`);
+    if (isEventRegistered(ev.id)) throw new Error(`You're already registered for ${ev.title}.`);
+    const isTeam = ev.registrationType === "team" || (ev.registrationType === "both" && mode === "team");
 
-  const registration = {
-    id: regId,
-    user_id: user.uid,
-    user_name: user.displayName || "Participant",
-    user_email: user.email,
-    user_phone: phone,
-    user_college: college,
-    event_id: ev.id,
-    event_title: ev.title,
-    participation_type: "individual",
-    team_id: null,
-    team_code: null,
-    registration_status: "registered",
-    payment_status: fee > 0 ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.FREE,
-    payment_id: payId,
-    amount_due: fee,
-    registration_qr_id: passId(ev.id, user.uid),
-    registered_at: nowIso(),
-  };
+    let team = null;
+    if (isTeam) {
+      const t = teams[eventId] || {};
+      const teamName = cleanText(t.teamName, 60);
+      const members = (t.members || [])
+        .map((m) => ({ name: cleanText(m.name), email: cleanText(m.email, 120).toLowerCase() }))
+        .filter((m) => m.name);
+      const size = members.length + 1;
+      if (!teamName) throw new Error(`Enter a team name for ${ev.title}.`);
+      if (size < ev.minTeam) throw new Error(`${ev.title} needs at least ${ev.minTeam} members including you.`);
+      if (size > ev.maxTeam) throw new Error(`${ev.title} allows at most ${ev.maxTeam} members including you.`);
+      team = { teamName, members };
+    }
+    return { ev, isTeam, team, amount: Number(ev.entryFeeNum) || 0 };
+  });
 
-  const payment = fee > 0
-    ? {
-        paymentId: payId,
-        eventId: ev.id,
-        eventTitle: ev.title,
-        teamId: null,
-        teamName: null,
-        payerUid: user.uid,
-        payerName: user.displayName || "Participant",
-        payerEmail: user.email,
-        payerPhone: phone,
-        amount: fee,
-        method: "upi",
-        transactionRef: utr,
-        status: PAYMENT_STATUS.PENDING,
-        createdAt: nowIso(),
-        verifiedAt: null,
-        verifiedBy: null,
-      }
-    : null;
+  const total = lines.reduce((sum, l) => sum + l.amount, 0);
+  const payId = total > 0 ? `pay_${user.uid}_${Date.now()}` : null;
+  if (total > 0) {
+    if (!isPaymentConfigured()) throw new Error("Online payment isn't open yet.");
+    assertUtr(String(utr).trim());
+  }
 
-  await writeRegistration({ user, ev, registration, payment, profilePatch: { phone, college } });
-  return { success: true, registration, payment };
-}
+  const writes = []; // [collection, id, data]
+  const teamCodes = {};
+  for (const line of lines) {
+    const { ev, isTeam, team, amount } = line;
+    const status = amount > 0 ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.FREE;
+    let teamId = null;
+    let teamCode = null;
 
-/**
- * Create a squad. The leader pays the team fee; teammates join with the code.
- */
-export async function createTeamForEvent(ev, teamData = {}, details = {}) {
-  const user = requireUser();
-  if (!ev || typeof ev !== "object") throw new Error("Unknown event.");
-
-  const teamName = cleanText(teamData.teamName, 60);
-  const phone = cleanPhone(teamData.leaderPhone || user.phone);
-  const college = cleanText(teamData.college || user.college);
-  if (!teamName) throw new Error("Please enter your team name.");
-  if (!phone) throw new Error("Please enter the team leader's contact number.");
-  if (!college) throw new Error("Please enter your college / institute.");
-
-  const fee = Number(ev.entryFeeNum) || 0;
-  const utr = String(details.utr || "").trim();
-  if (fee > 0) assertUtr(utr);
-
-  const teamId = `team_${ev.id}_${user.uid}`;
-  const teamCode = await generateUniqueTeamCode(teamName);
-  const payId = fee > 0 ? paymentId(ev.id, user.uid) : null;
-
-  // Team docs are readable by any signed-in user (needed to join by code),
-  // so they hold names only; contact details live in private registrations.
-  const leader = {
-    uid: user.uid,
-    name: user.displayName || "Team Leader",
-    college,
-    role: "Leader",
-  };
-
-  const team = {
-    id: teamId,
-    teamId,
-    event_id: ev.id,
-    eventId: ev.id,
-    eventName: ev.title,
-    team_name: teamName,
-    teamName,
-    team_code: teamCode,
-    teamCode,
-    leader_id: user.uid,
-    leaderUid: user.uid,
-    leaderName: leader.name,
-    college,
-    members: [leader],
-    memberUids: [user.uid],
-    teamSize: 1,
-    minTeamSize: Number(ev.minTeam) || 1,
-    maxTeamSize: Number(ev.maxTeam) || 4,
-    paymentStatus: fee > 0 ? "pending" : "free",
-    paymentId: payId,
-    created_at: nowIso(),
-    registeredAt: nowIso(),
-  };
-
-  const registration = {
-    id: registrationId(ev.id, user.uid),
-    user_id: user.uid,
-    user_name: leader.name,
-    user_email: user.email,
-    user_phone: phone,
-    user_college: college,
-    event_id: ev.id,
-    event_title: ev.title,
-    participation_type: "team",
-    team_id: teamId,
-    team_code: teamCode,
-    team_role: "leader",
-    registration_status: "registered",
-    payment_status: fee > 0 ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.FREE,
-    payment_id: payId,
-    amount_due: fee,
-    registration_qr_id: passId(ev.id, user.uid),
-    registered_at: nowIso(),
-  };
-
-  const payment = fee > 0
-    ? {
-        paymentId: payId,
-        eventId: ev.id,
-        eventTitle: ev.title,
+    if (isTeam) {
+      teamId = `team_${ev.id}_${user.uid}`;
+      teamCode = await generateUniqueTeamCode(team.teamName);
+      teamCodes[ev.id] = teamCode;
+      // Team docs are readable by any signed-in user (needed to join by code),
+      // so they hold names only; contact details live in private registrations.
+      writes.push([
+        "teams",
         teamId,
-        teamName,
+        {
+          id: teamId,
+          teamId,
+          event_id: ev.id,
+          eventId: ev.id,
+          eventName: ev.title,
+          team_name: team.teamName,
+          teamName: team.teamName,
+          team_code: teamCode,
+          teamCode,
+          leader_id: user.uid,
+          leaderUid: user.uid,
+          leaderName: name,
+          college,
+          members: [{ name, role: "Leader" }, ...team.members.map((m) => ({ name: m.name, role: "Member" }))],
+          memberUids: [user.uid],
+          linkedMembers: [{ uid: user.uid, name }],
+          teamSize: team.members.length + 1,
+          minTeamSize: ev.minTeam,
+          maxTeamSize: ev.maxTeam,
+          paymentStatus: amount > 0 ? "pending" : "free",
+          paymentId: amount > 0 ? payId : null,
+          created_at: nowIso(),
+          registeredAt: nowIso(),
+        },
+      ]);
+    }
+
+    writes.push([
+      "registrations",
+      registrationId(ev.id, user.uid),
+      {
+        id: registrationId(ev.id, user.uid),
+        user_id: user.uid,
+        user_name: name,
+        user_email: user.email,
+        user_phone: phone,
+        user_college: college,
+        user_year: year,
+        student_id: user.studentId || null,
+        event_id: ev.id,
+        event_title: ev.title,
+        participation_type: isTeam ? "team" : "individual",
+        team_id: teamId,
+        team_code: teamCode,
+        team_role: isTeam ? "leader" : null,
+        team_members: isTeam ? team.members : [],
+        registration_status: "registered",
+        payment_status: status,
+        payment_id: amount > 0 ? payId : null,
+        amount_due: amount,
+        registration_qr_id: passId(ev.id, user.uid),
+        registered_at: nowIso(),
+      },
+    ]);
+  }
+
+  if (payId) {
+    writes.unshift([
+      "payments",
+      payId,
+      {
+        paymentId: payId,
         payerUid: user.uid,
-        payerName: leader.name,
+        payerName: name,
         payerEmail: user.email,
         payerPhone: phone,
-        amount: fee,
+        items: lines
+          .filter((l) => l.amount > 0)
+          .map((l) => ({
+            eventId: l.ev.id,
+            eventTitle: l.ev.title,
+            amount: l.amount,
+            type: l.isTeam ? "team" : "solo",
+            teamId: l.isTeam ? `team_${l.ev.id}_${user.uid}` : null,
+            teamName: l.isTeam ? l.team.teamName : null,
+          })),
+        amount: total,
         method: "upi",
-        transactionRef: utr,
+        transactionRef: String(utr).trim(),
         status: PAYMENT_STATUS.PENDING,
         createdAt: nowIso(),
         verifiedAt: null,
         verifiedBy: null,
-      }
-    : null;
+      },
+    ]);
+  }
 
-  await writeRegistration({ user, ev, registration, payment, team, profilePatch: { phone, college } });
-  return { success: true, team, registration, payment };
+  const evs = lines.map((l) => l.ev);
+  if (isLive()) {
+    const { doc, getDoc, writeBatch, arrayUnion, serverTimestamp } = fsMod;
+    try {
+      // Server-side duplicate check (another device may have registered).
+      for (const ev of evs) {
+        const snap = await getDoc(doc(firebaseFirestore, "registrations", registrationId(ev.id, user.uid)));
+        if (snap.exists()) throw new Error(`You're already registered for ${ev.title}.`);
+      }
+      const batch = writeBatch(firebaseFirestore);
+      writes.forEach(([col, id, data]) => batch.set(doc(firebaseFirestore, col, id), data));
+      batch.set(
+        doc(firebaseFirestore, "users", user.uid),
+        {
+          displayName: name,
+          name,
+          phone,
+          college,
+          year,
+          registeredEvents: arrayUnion(...evs.map((e) => e.title)),
+          registeredEventIds: arrayUnion(...evs.map((e) => e.id)),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      await batch.commit();
+    } catch (err) {
+      throw friendlyError(err, "Registration could not be saved. Please try again.");
+    }
+  } else {
+    for (const ev of evs) {
+      if (demoGet("registrations", registrationId(ev.id, user.uid))) {
+        throw new Error(`You're already registered for ${ev.title}.`);
+      }
+    }
+    writes.forEach(([col, id, data]) => demoSet(col, id, data));
+  }
+
+  Object.assign(user, { displayName: name, phone, college, year });
+  addEventsToProfile(user, evs);
+  if (!isLive()) demoSet("users", user.uid, { ...user });
+  persistDemoUser();
+  notifyListeners();
+  return { success: true, total, paymentId: payId, teamCodes, eventIds: evs.map((e) => e.id) };
 }
 
 /**
- * Join a squad using the leader's team code.
+ * Join a team using the leader's team code (links your account to the team).
  */
 export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
   const user = requireUser();
@@ -575,6 +649,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
 
   const phone = cleanPhone(details.phone || user.phone);
   const college = cleanText(details.college || user.college);
+  const year = cleanYear(details.year || user.year);
 
   const found = await findTeamByCode(code);
   if (!found) throw new Error(`No team found with code "${code}". Check the code with your team leader.`);
@@ -582,21 +657,17 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
     throw new Error(`Team ${code} is registered for "${found.eventName}", not this event.`);
   }
 
-  const member = {
-    uid: user.uid,
-    name: user.displayName || "Teammate",
-    college: college || found.college || "",
-    role: "Member",
-  };
-
   const evInfo = { id: found.eventId, title: found.eventName };
+  const link = { uid: user.uid, name: user.displayName || "Teammate" };
   const registration = {
     id: registrationId(found.eventId, user.uid),
     user_id: user.uid,
-    user_name: member.name,
+    user_name: link.name,
     user_email: user.email,
     user_phone: phone,
-    user_college: member.college,
+    user_college: college || found.college || "",
+    user_year: year,
+    student_id: user.studentId || null,
     event_id: found.eventId,
     event_title: found.eventName,
     participation_type: "team",
@@ -612,7 +683,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
   };
 
   if (isLive()) {
-    const { doc, runTransaction, setDoc, serverTimestamp } = fsMod;
+    const { doc, runTransaction, setDoc, arrayUnion, serverTimestamp } = fsMod;
     const teamRef = doc(firebaseFirestore, "teams", found.teamId);
     try {
       await runTransaction(firebaseFirestore, async (tx) => {
@@ -624,18 +695,24 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
         const uids = t.memberUids || [];
         if (uids.includes(user.uid)) throw new Error(`You are already in team "${t.teamName}".`);
         if (uids.length >= (t.maxTeamSize || 4)) {
-          throw new Error(`Team "${t.teamName}" is full (${uids.length}/${t.maxTeamSize}).`);
+          throw new Error(`Team "${t.teamName}" already has ${uids.length}/${t.maxTeamSize} linked accounts.`);
         }
         tx.update(teamRef, {
-          members: [...(t.members || []), member],
           memberUids: [...uids, user.uid],
-          teamSize: uids.length + 1,
+          linkedMembers: [...(t.linkedMembers || []), link],
         });
         tx.set(regRef, registration);
       });
       await setDoc(
         doc(firebaseFirestore, "users", user.uid),
-        { ...profileEventPatch(evInfo), ...(phone ? { phone } : {}), ...(college ? { college } : {}), updatedAt: serverTimestamp() },
+        {
+          registeredEvents: arrayUnion(evInfo.title),
+          registeredEventIds: arrayUnion(evInfo.id),
+          ...(phone ? { phone } : {}),
+          ...(college ? { college } : {}),
+          ...(year ? { year } : {}),
+          updatedAt: serverTimestamp(),
+        },
         { merge: true }
       );
     } catch (err) {
@@ -646,57 +723,20 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
     const t = demoGet("teams", found.teamId);
     if (t.memberUids.includes(user.uid)) throw new Error(`You are already in team "${t.teamName}".`);
     if (t.memberUids.length >= t.maxTeamSize) throw new Error(`Team "${t.teamName}" is full.`);
-    t.members.push(member);
     t.memberUids.push(user.uid);
-    t.teamSize = t.memberUids.length;
+    t.linkedMembers = [...(t.linkedMembers || []), link];
     demoSet("teams", t.teamId, t);
     demoSet("registrations", registration.id, registration);
   }
 
   if (phone) user.phone = phone;
   if (college) user.college = college;
-  await addEventToProfile(user, evInfo);
+  if (year) user.year = year;
+  addEventsToProfile(user, [evInfo]);
   if (!isLive()) demoSet("users", user.uid, { ...user });
   persistDemoUser();
   notifyListeners();
   return { success: true, team: found, registration };
-}
-
-async function writeRegistration({ user, ev, registration, payment, team, profilePatch }) {
-  if (isLive()) {
-    const { doc, getDoc, writeBatch, serverTimestamp } = fsMod;
-    const regRef = doc(firebaseFirestore, "registrations", registration.id);
-    try {
-      const existing = await getDoc(regRef);
-      if (existing.exists()) {
-        throw new Error("You are already registered for this event.");
-      }
-      const batch = writeBatch(firebaseFirestore);
-      if (payment) batch.set(doc(firebaseFirestore, "payments", payment.paymentId), payment);
-      if (team) batch.set(doc(firebaseFirestore, "teams", team.teamId), team);
-      batch.set(regRef, registration);
-      batch.set(
-        doc(firebaseFirestore, "users", user.uid),
-        { ...profileEventPatch(ev), phone: profilePatch.phone, college: profilePatch.college, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
-      await batch.commit();
-    } catch (err) {
-      throw friendlyError(err, "Registration could not be saved. Please try again.");
-    }
-  } else {
-    if (demoGet("registrations", registration.id)) throw new Error("You are already registered for this event.");
-    if (payment) demoSet("payments", payment.paymentId, payment);
-    if (team) demoSet("teams", team.teamId, team);
-    demoSet("registrations", registration.id, registration);
-  }
-
-  user.phone = profilePatch.phone;
-  user.college = profilePatch.college;
-  await addEventToProfile(user, ev);
-  if (!isLive()) demoSet("users", user.uid, { ...user });
-  persistDemoUser();
-  notifyListeners();
 }
 
 async function findTeamByCode(code) {
@@ -712,53 +752,94 @@ async function findTeamByCode(code) {
 
 async function generateUniqueTeamCode(name) {
   const prefix = String(name).replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "TEAM";
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   for (let attempt = 0; attempt < 5; attempt++) {
-    const bytes = new Uint8Array(4);
-    crypto.getRandomValues(bytes);
-    const suffix = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-    const code = `${prefix}-${suffix}`;
+    const code = `${prefix}-${randomCode(4)}`;
     if (!(await findTeamByCode(code))) return code;
   }
   throw new Error("Could not generate a team code. Please try again.");
 }
 
 /**
- * The signed-in user's registration (and payment, if any) for one event.
+ * Effective booking status for a registration.
+ * booked | pending | rejected
+ */
+export function bookingStatus(registration, payment, team) {
+  const s = registration?.payment_status;
+  if (s === PAYMENT_STATUS.FREE) return "booked";
+  if (s === PAYMENT_STATUS.TEAM) {
+    const ts = team?.paymentStatus;
+    if (!ts || ts === "free" || ts === "paid" || ts === "verified") return "booked";
+    return ts === "rejected" ? "rejected" : "pending";
+  }
+  const ps = payment?.status || s;
+  if (ps === PAYMENT_STATUS.VERIFIED) return "booked";
+  if (ps === PAYMENT_STATUS.REJECTED) return "rejected";
+  return "pending";
+}
+
+async function getDocData(col, id) {
+  if (!id) return null;
+  if (isLive()) {
+    const { doc, getDoc } = fsMod;
+    try {
+      const snap = await getDoc(doc(firebaseFirestore, col, id));
+      return snap.exists() ? snap.data() : null;
+    } catch {
+      return null;
+    }
+  }
+  return demoGet(col, id);
+}
+
+/**
+ * The signed-in user's registration (with payment and team) for one event.
  */
 export async function getMyRegistration(eventId) {
   const user = currentUser;
   if (!user) return null;
-  const regId = registrationId(eventId, user.uid);
+  const registration = await getDocData("registrations", registrationId(eventId, user.uid));
+  if (!registration) return null;
+  const team = await getDocData("teams", registration.team_id);
+  const payment =
+    registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM
+      ? await getDocData("payments", registration.payment_id)
+      : null;
+  return { registration, payment, team, status: bookingStatus(registration, payment, team) };
+}
 
+/**
+ * All of the signed-in user's registrations, newest first.
+ */
+export async function getMyRegistrations() {
+  const user = currentUser;
+  if (!user) return [];
+  let regs = [];
   if (isLive()) {
-    const { doc, getDoc } = fsMod;
-    const regSnap = await getDoc(doc(firebaseFirestore, "registrations", regId));
-    if (!regSnap.exists()) return null;
-    const registration = regSnap.data();
-    let payment = null;
-    let team = null;
-    if (registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM) {
-      const paySnap = await getDoc(doc(firebaseFirestore, "payments", registration.payment_id));
-      payment = paySnap.exists() ? paySnap.data() : null;
+    const { collection, query, where, getDocs } = fsMod;
+    try {
+      const snap = await getDocs(query(collection(firebaseFirestore, "registrations"), where("user_id", "==", user.uid)));
+      regs = snap.docs.map((d) => d.data());
+    } catch (err) {
+      throw friendlyError(err, "Could not load your registrations.");
     }
-    if (registration.team_id) {
-      const teamSnap = await getDoc(doc(firebaseFirestore, "teams", registration.team_id));
-      team = teamSnap.exists() ? teamSnap.data() : null;
-    }
-    return { registration, payment, team };
+  } else {
+    regs = demoList("registrations").filter((r) => r.user_id === user.uid);
   }
 
-  const registration = demoGet("registrations", regId);
-  if (!registration) return null;
-  return {
-    registration,
-    payment:
-      registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM
-        ? demoGet("payments", registration.payment_id)
-        : null,
-    team: registration.team_id ? demoGet("teams", registration.team_id) : null,
-  };
+  const paymentCache = new Map();
+  const out = [];
+  for (const registration of regs) {
+    const team = await getDocData("teams", registration.team_id);
+    let payment = null;
+    if (registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM) {
+      if (!paymentCache.has(registration.payment_id)) {
+        paymentCache.set(registration.payment_id, await getDocData("payments", registration.payment_id));
+      }
+      payment = paymentCache.get(registration.payment_id);
+    }
+    out.push({ registration, payment, team, status: bookingStatus(registration, payment, team) });
+  }
+  return out.sort((a, b) => String(b.registration.registered_at).localeCompare(String(a.registration.registered_at)));
 }
 
 /**
@@ -790,6 +871,50 @@ export function isEventRegistered(eventIdOrTitle) {
   const ids = (user.registeredEventIds || []).map((x) => String(x).toLowerCase());
   const titles = (user.registeredEvents || []).map((x) => String(x).toLowerCase().trim());
   return ids.includes(target) || titles.includes(target);
+}
+
+// ----------------------------------------------------------------------------
+// DIGITAL ID VERIFICATION (organisers)
+// ----------------------------------------------------------------------------
+
+/**
+ * Look up a Chaitanya ID from a scanned QR code. Admin only: participant data
+ * is private, so only organiser accounts can confirm a card is genuine.
+ */
+export async function verifyStudentId(studentId) {
+  requireAdmin();
+  const id = String(studentId || "").trim().toUpperCase();
+  if (!STUDENT_ID_PATTERN.test(id)) return { found: false, reason: "invalid" };
+
+  let profile = null;
+  let regs = [];
+  if (isLive()) {
+    const { collection, query, where, limit, getDocs } = fsMod;
+    try {
+      const users = await getDocs(query(collection(firebaseFirestore, "users"), where("studentId", "==", id), limit(1)));
+      if (users.empty) return { found: false, reason: "unknown" };
+      profile = users.docs[0].data();
+      const snap = await getDocs(query(collection(firebaseFirestore, "registrations"), where("user_id", "==", profile.uid)));
+      regs = snap.docs.map((d) => d.data());
+    } catch (err) {
+      throw friendlyError(err, "Could not verify this ID.");
+    }
+  } else {
+    profile = demoList("users").find((u) => u.studentId === id) || null;
+    if (!profile) return { found: false, reason: "unknown" };
+    regs = demoList("registrations").filter((r) => r.user_id === profile.uid);
+  }
+
+  const events = [];
+  for (const registration of regs) {
+    const team = await getDocData("teams", registration.team_id);
+    const payment =
+      registration.payment_id && registration.payment_status !== PAYMENT_STATUS.TEAM
+        ? await getDocData("payments", registration.payment_id)
+        : null;
+    events.push({ title: registration.event_title, status: bookingStatus(registration, payment, team), passId: registration.registration_qr_id });
+  }
+  return { found: true, profile, events, verified: events.some((e) => e.status === "booked") };
 }
 
 // ----------------------------------------------------------------------------
@@ -859,19 +984,31 @@ export function getAllQueries() {
   return listCollection("queries");
 }
 
+/**
+ * Items covered by a payment (supports legacy single-event payments).
+ */
+export function paymentItems(payment) {
+  if (Array.isArray(payment?.items) && payment.items.length) return payment.items;
+  if (payment?.eventId) {
+    return [{ eventId: payment.eventId, eventTitle: payment.eventTitle, amount: payment.amount, teamId: payment.teamId, teamName: payment.teamName }];
+  }
+  return [];
+}
+
 async function setPaymentStatus(payment, status, extra) {
   const admin = requireAdmin();
   const patch = { status, ...extra };
-  const regPatch = { payment_status: status };
-  const teamPatch = payment.teamId ? { paymentStatus: status === PAYMENT_STATUS.VERIFIED ? "paid" : status } : null;
-  const regId = registrationId(payment.eventId, payment.payerUid);
+  const teamStatus = status === PAYMENT_STATUS.VERIFIED ? "paid" : status;
+  const items = paymentItems(payment);
 
   if (isLive()) {
     const { doc, writeBatch } = fsMod;
     const batch = writeBatch(firebaseFirestore);
     batch.update(doc(firebaseFirestore, "payments", payment.paymentId), patch);
-    batch.set(doc(firebaseFirestore, "registrations", regId), regPatch, { merge: true });
-    if (teamPatch) batch.set(doc(firebaseFirestore, "teams", payment.teamId), teamPatch, { merge: true });
+    items.forEach((item) => {
+      batch.set(doc(firebaseFirestore, "registrations", registrationId(item.eventId, payment.payerUid)), { payment_status: status }, { merge: true });
+      if (item.teamId) batch.set(doc(firebaseFirestore, "teams", item.teamId), { paymentStatus: teamStatus }, { merge: true });
+    });
     try {
       await batch.commit();
     } catch (err) {
@@ -879,8 +1016,10 @@ async function setPaymentStatus(payment, status, extra) {
     }
   } else {
     demoUpdate("payments", payment.paymentId, patch);
-    demoUpdate("registrations", regId, regPatch);
-    if (teamPatch) demoUpdate("teams", payment.teamId, teamPatch);
+    items.forEach((item) => {
+      demoUpdate("registrations", registrationId(item.eventId, payment.payerUid), { payment_status: status });
+      if (item.teamId) demoUpdate("teams", item.teamId, { paymentStatus: teamStatus });
+    });
   }
   return { success: true, payment: { ...payment, ...patch }, admin: admin.email };
 }
@@ -961,10 +1100,12 @@ function demoSignIn(extra = {}) {
     uid: "demo_" + slugify(email),
     displayName: cleanText(extra.displayName || "Demo Attendee"),
     email,
-    photoURL: "/images/icons/textFace.svg",
+    photoURL: "",
     role: isAdminUser(email) ? "admin" : "attendee",
     college: cleanText(extra.college),
+    year: cleanYear(extra.year),
     phone: cleanPhone(extra.phone),
+    studentId: newStudentId(),
     registeredEvents: [],
     registeredEventIds: [],
     isDemo: true,
