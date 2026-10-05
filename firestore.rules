@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email.lower() == "chaitanyahptu@gmail.com" ||
+         request.auth.token.email.lower() == "adityaverma200911@gmail.com" ||
+         request.auth.token.email.lower() == "admin@chaitanya2k26.org");
+    }
+
+    // =========================================================================
+    // 1. USERS COLLECTION (Table: users)
+    // =========================================================================
+    match /users/{userId} {
+      // Authenticated users can view user profiles; admins can read all
+      allow read: if isAuthenticated();
+
+      // Users can only create or update their own profile document
+      allow create: if isUser(userId) &&
+        request.resource.data.email is string &&
+        request.resource.data.name is string;
+
+      allow update: if (isUser(userId) || isAdmin());
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 2. EVENTS COLLECTION (Table: events)
+    // =========================================================================
+    match /events/{eventId} {
+      // Events are public for viewing
+      allow read: if true;
+
+      // Only fest administrators can create, modify, or delete events
+      allow create, update: if isAdmin() &&
+        request.resource.data.type in ['workshop', 'competition'] &&
+        request.resource.data.status in ['draft', 'published', 'completed', 'cancelled'];
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 3. TEAMS COLLECTION (Table: teams)
+    // =========================================================================
+    match /teams/{teamId} {
+      // Anyone authenticated can read teams
+      allow read: if isAuthenticated();
+
+      // Authenticated users can create a team if they are designated as leader
+      allow create: if isAuthenticated() &&
+        request.resource.data.leader_id == request.auth.uid &&
+        request.resource.data.team_name is string &&
+        request.resource.data.team_code is string;
+
+      // Only team leader or admin can update team details
+      allow update: if isAuthenticated() &&
+        (resource.data.leader_id == request.auth.uid || isAdmin());
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 4. TEAM MEMBERS COLLECTION (Table: team_members)
+    // =========================================================================
+    match /team_members/{memberDocId} {
+      allow read: if isAuthenticated();
+
+      // Users can join as member or leader can assign members
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.role in ['leader', 'member'];
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.user_id == request.auth.uid || isAdmin());
+    }
+
+    // Subcollection alternative for team members
+    match /teams/{teamId}/members/{memberId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // =========================================================================
+    // 5. REGISTRATIONS COLLECTION (Table: registrations)
+    // =========================================================================
+    match /registrations/{regId} {
+      // Users can read their own registrations; admins can read all
+      allow read: if isAuthenticated() &&
+        (resource.data.user_id == request.auth.uid || isAdmin());
+
+      // Users can register themselves
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        request.resource.data.participation_type in ['individual', 'team'] &&
+        request.resource.data.registration_status in ['registered', 'cancelled', 'attended'] &&
+        request.resource.data.registration_qr_id is string;
+
+      // Users can cancel their registration, or admins can update status
+      allow update: if isAuthenticated() &&
+        (resource.data.user_id == request.auth.uid || isAdmin());
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 6. EVENT ANALYTICS & DAILY STATS (Tables: event_analytics, event_daily_analytics)
+    // =========================================================================
+    match /event_analytics/{eventId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /event_daily_analytics/{dailyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // =========================================================================
+    // 7. FAQS COLLECTION (Table: faqs)
+    // =========================================================================
+    match /faqs/{faqId} {
+      // Public can read published FAQs; admins can read all
+      allow read: if resource.data.published == true || isAdmin();
+
+      // Only admins can manage FAQs
+      allow write: if isAdmin();
+    }
+
+    // =========================================================================
+    // 8. QUERIES COLLECTION (Table: queries - Contact Form)
+    // =========================================================================
+    match /queries/{queryId} {
+      // Anyone can submit a query / contact support
+      allow create: if request.resource.data.subject is string &&
+        request.resource.data.message is string &&
+        request.resource.data.status in ['open', 'in_progress', 'resolved', 'closed'];
+
+      // Only the submitting user (if authenticated) or admins can view
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.user_id == request.auth.uid);
+
+      // Only admins can update query status
+      allow update, delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 9. PAYMENTS & AUDIT TRAIL
+    // =========================================================================
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.payerUid == request.auth.uid || isAdmin());
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.payerUid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // Schema versioning & metadata
+    match /_schema_metadata/{metaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

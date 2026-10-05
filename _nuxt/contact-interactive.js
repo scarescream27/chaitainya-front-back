@@ -12,6 +12,7 @@
  */
 
 import { submitToWeb3Forms, isWeb3FormsLive } from "./web3forms-config.js";
+import { submitQueryTicket } from "./auth-service.js";
 import { h as gsap } from "./app-main.js";
 
 if (typeof window !== "undefined") {
@@ -406,6 +407,16 @@ export function initContactForm5Fields() {
           contact_no: contactVal,
           query: queryVal,
         });
+
+        // Sync query ticket to Firestore 'queries' collection matching chaitanya_schema.sql
+        submitQueryTicket({
+          name: nameVal,
+          team_name: teamVal,
+          email: emailVal,
+          phone: contactVal,
+          message: queryVal,
+          subject: `[Support Query] ${teamVal ? teamVal + " • " : ""}${nameVal}`
+        }).catch((e) => console.warn("Firestore queries sync note:", e));
 
         const activeGsap = window.gsap || gsap;
         const bubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];

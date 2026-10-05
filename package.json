@@ -7,6 +7,11 @@
     "start": "python server.py",
     "dev": "python server.py",
     "serve": "npx serve . -l 3000",
+    "deploy": "firebase deploy",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "deploy:backend": "firebase deploy --only firestore",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "seed:firebase": "node scripts/apply-schema-firebase.mjs",
     "build": "echo 'Static web assets ready'"
   },
   "keywords": [

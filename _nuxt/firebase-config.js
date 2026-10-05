@@ -62,12 +62,15 @@ export function isFirebaseConfigured(config = getFirebaseConfig()) {
   );
 }
 
-// Admin email with exclusive privileges to access fest registrant dashboards
+// Admin emails with exclusive privileges to access fest registrant dashboards
 export const ADMIN_EMAILS = [
-  "chaitanyahptu@gmail.com"
+  "chaitanyahptu@gmail.com",
+  "adityaverma200911@gmail.com",
+  "admin@chaitanya2k26.org",
 ];
 
 export function isAdminUser(email) {
   if (!email) return false;
-  return email.trim().toLowerCase() === "chaitanyahptu@gmail.com";
+  const clean = email.trim().toLowerCase();
+  return ADMIN_EMAILS.some((admin) => admin.toLowerCase() === clean);
 }

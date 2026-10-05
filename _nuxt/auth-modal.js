@@ -17,6 +17,7 @@ import {
   rejectPayment,
 } from "./auth-service.js";
 import { isFirebaseConfigured, getFirebaseConfig, isAdminUser } from "./firebase-config.js";
+import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
 
 // Google G SVG logo
 const GOOGLE_ICON_SVG = `
@@ -815,6 +816,107 @@ async function renderAdminView(container, user) {
           </table>
         </div>
       `;
+    } else if (adminActiveTab === "schema") {
+      statsHtml = `
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">9</div>
+            <div class="admin-stat-label">Mapped SQL Tables</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num">12</div>
+            <div class="admin-stat-label">Flagship Arenas</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num" style="color:#0070f3;">v1.0.0</div>
+            <div class="admin-stat-label">Schema Standard</div>
+          </div>
+        </div>
+      `;
+
+      tableHtml = `
+        <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-family: IBM Plex Mono, monospace;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+            <div>
+              <h4 style="margin:0 0 4px 0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">SQL to Cloud Firestore Schema Engine</h4>
+              <p style="margin:0; font-size:11px; color:#666;">Source: <code>chaitanya_schema.sql</code> • Project: <code>chaitainya-hptu</code></p>
+            </div>
+            <button type="button" class="btn-google-auth" id="btn-run-schema-seed" style="width:auto; padding:8px 16px; font-size:11px; background:#000; color:#fff; border-color:#000;">
+              <span>[ ⚡ Apply Schema & Seed Events/FAQs to Firebase ]</span>
+            </button>
+          </div>
+          <div id="schema-sync-progress" style="font-size:11px; color:#222; margin-top:8px; display:none; padding:8px 12px; background:#e8f4fd; border-radius:4px;"></div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>SQL Table</th>
+                <th>Firestore Collection</th>
+                <th>Schema Mapping & Purpose</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>users</code></td>
+                <td><strong><code>/users/{uid}</code></strong></td>
+                <td>Attendee & Admin profiles, university, category, student_id</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>events</code></td>
+                <td><strong><code>/events/{eventId}</code></strong></td>
+                <td>12 Competitions, workshops, timelines, capacity & rules</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>teams</code></td>
+                <td><strong><code>/teams/{teamId}</code></strong></td>
+                <td>Squads with codes (e.g. BYTE-408), leader uid, capacity</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>team_members</code></td>
+                <td><strong><code>/team_members/{id}</code></strong></td>
+                <td>Member mappings with 'leader' or 'member' role</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>registrations</code></td>
+                <td><strong><code>/registrations/{regId}</code></strong></td>
+                <td>Official entry tickets with QR IDs & attendance tracking</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>event_analytics</code></td>
+                <td><strong><code>/event_analytics/{id}</code></strong></td>
+                <td>Real-time registration counters for solo & team events</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>event_daily_analytics</code></td>
+                <td><strong><code>/event_daily_analytics/{id}</code></strong></td>
+                <td>Daily participant registration velocity</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>faqs</code></td>
+                <td><strong><code>/faqs/{faqId}</code></strong></td>
+                <td>Official fest FAQs with publish status and ordering</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td><code>queries</code></td>
+                <td><strong><code>/queries/{queryId}</code></strong></td>
+                <td>Contact form inquiries with status ('open' / 'resolved')</td>
+                <td><span class="badge-status verified">ACTIVE</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
     }
 
     const pendingPaymentsCount = pendingPayments.length;
@@ -829,6 +931,9 @@ async function renderAdminView(container, user) {
         </button>
         <button type="button" class="admin-tab-btn ${adminActiveTab === "payments" ? "active" : ""}" data-tab="payments">
           [ 03. UPI PAYMENTS & UTR (${pendingPaymentsCount} PENDING) ]
+        </button>
+        <button type="button" class="admin-tab-btn ${adminActiveTab === "schema" ? "active" : ""}" data-tab="schema">
+          [ 04. SCHEMA & FIREBASE SYNC ]
         </button>
       </div>
       ${statsHtml}
@@ -923,6 +1028,40 @@ async function renderAdminView(container, user) {
             alert("Rejection failed: " + err.message);
             rejectBtn.disabled = false;
             rejectBtn.textContent = "✕ Reject";
+          }
+          return;
+        }
+
+        const seedBtn = e.target.closest("#btn-run-schema-seed");
+        if (seedBtn) {
+          const progressEl = tabContainer.querySelector("#schema-sync-progress");
+          seedBtn.disabled = true;
+          seedBtn.innerHTML = `<span>[ ⏳ Applying Schema... ]</span>`;
+          if (progressEl) {
+            progressEl.style.display = "block";
+            progressEl.style.background = "#e8f4fd";
+            progressEl.style.color = "#004085";
+            progressEl.textContent = "Connecting to Firebase Cloud Firestore...";
+          }
+          try {
+            const res = await applySchemaToFirestore((p) => {
+              if (progressEl) progressEl.textContent = p.message;
+            });
+            if (progressEl) {
+              progressEl.style.background = "#e6f4ea";
+              progressEl.style.color = "#137333";
+              progressEl.innerHTML = `<strong>✓ Schema Applied Successfully!</strong> Synced ${res.eventsCreated} events, ${res.faqsCreated} FAQs, ${res.analyticsCreated} analytics counters.`;
+            }
+            seedBtn.innerHTML = `<span>[ ✓ Schema Applied ]</span>`;
+          } catch (err) {
+            console.error("Schema sync notice:", err);
+            if (progressEl) {
+              progressEl.style.background = "#fce8e6";
+              progressEl.style.color = "#c5221f";
+              progressEl.innerHTML = `<strong>Notice:</strong> ${err.message}<br/><small style="display:inline-block; margin-top:4px;">If Cloud Firestore is not enabled yet in your Firebase console, visit <a href="https://console.firebase.google.com/project/chaitainya-hptu/firestore" target="_blank" style="color:#000; text-decoration:underline;">Firebase Console > Firestore Database > Create Database</a>.</small>`;
+            }
+            seedBtn.disabled = false;
+            seedBtn.innerHTML = `<span>[ ⚠️ Retry Schema Apply ]</span>`;
           }
           return;
         }
