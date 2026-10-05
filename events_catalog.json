@@ -46,10 +46,14 @@
     {
       "badge": "FLAGSHIP HACKATHON",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 2,
+      "maxTeam": 4,
+      "format": "Team (2–4 members)",
+      "teamSize": "2–4",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-30T18:00:00+05:30",
+      "endsAt": "2026-10-31T18:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -57,7 +61,6 @@
       "date": "DAY 1 – 2",
       "time": "30 Oct, 6:00 PM – 31 Oct, 6:00 PM (24 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -71,17 +74,22 @@
       ],
       "id": "codeforge-reforged",
       "title": "CODEFORGE: REFORGED 2.0",
-      "tagline": "24-hour hackathon: build something real from scratch",
+      "tagline": "24-hour open-source hackathon: build something real from scratch",
       "category": "tech",
-      "overview": "The flagship 24-hour hackathon of Chaitanya 2k26. Teams ideate, design and build a working project overnight and present it to the judges at the end of the sprint."
+      "overview": "The flagship 24-hour open-source hackathon of Chaitanya 2k26. Teams ideate, design and build a working open-source project overnight and present it to the judges at the end of the sprint.",
+      "registrationOpen": false
     },
     {
       "badge": "CODING & TECH",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 3,
+      "format": "Solo or team (up to 3)",
+      "teamSize": "1–3",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-11-01T08:00:00+05:30",
+      "endsAt": "2026-11-01T16:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -89,7 +97,6 @@
       "date": "DAY 3",
       "time": "1 Nov, 8:00 AM – 4:00 PM (8 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -109,23 +116,27 @@
       "title": "CTF: CAPTURE THE FLAG",
       "tagline": "Cybersecurity challenges: find the flags, climb the scoreboard",
       "category": "tech",
-      "overview": "An 8-hour capture-the-flag contest with challenges across web security, cryptography, forensics and reverse engineering. Solve challenges to capture flags and score points."
+      "overview": "An 8-hour capture-the-flag contest with challenges across web security, cryptography, forensics and reverse engineering. Solve challenges to capture flags and score points.",
+      "registrationOpen": false
     },
     {
       "badge": "CODING & TECH",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-31T10:00:00+05:30",
+      "endsAt": "2026-10-31T13:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "2 computer labs (rooms to be announced)",
-      "date": "DAY 1",
-      "time": "30 Oct, 10:00 AM – 1:00 PM (3 hrs)",
+      "date": "DAY 2",
+      "time": "31 Oct, 10:00 AM – 1:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -141,27 +152,56 @@
       "title": "COMPETITIVE PROGRAMMING",
       "tagline": "Algorithms against the clock",
       "category": "tech",
-      "overview": "A 3-hour algorithmic programming contest. Solve as many problems as you can, as efficiently as you can, before time runs out."
+      "overview": "A 3-hour algorithmic programming contest. Solve as many problems as you can, as efficiently as you can, before time runs out.",
+      "registrationOpen": false
     },
     {
-      "badge": "CODING & TECH",
+      "badge": "C++ DEBUGGING",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-11-01T10:00:00+05:30",
+      "endsAt": "2026-11-01T12:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Rooms 207 & 208",
-      "date": "Day TBA",
-      "time": "To be notified",
+      "prizePool": "Top 3 win · prizes to be announced",
+      "venue": "Rooms 207 & 208 (computer lab)",
+      "date": "DAY 3",
+      "time": "1 Nov, 10:00 AM – 12:00 PM (2 hrs, all rounds)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Individual event: one participant per entry, no teams.",
+        "Only C++ may be used in every round.",
+        "Mobile phones are strictly not allowed during the event.",
+        "No internet, AI tools or outside help of any kind.",
+        "Do not talk to or copy from other participants.",
+        "Time limits are strict. Once time is up, no answers are accepted.",
+        "Code and questions shown on screen are confidential. Do not note them down or share them.",
+        "The decision of the judges and coordinators is final and binding.",
+        "Any malpractice leads to immediate disqualification.",
+        "Be on time and follow the coordinators' instructions at all times."
       ],
-      "rounds": [],
+      "rounds": [
+        {
+          "name": "Round 1: Bug Hunt (easy)",
+          "time": "1 min",
+          "description": "A C++ program with multiple errors is shown on screen. Find as many errors as possible and submit them through the Google Form shared at the venue. Top ~50% advance; ties at the cut-off are broken with a harder 30-second code."
+        },
+        {
+          "name": "Round 2: Fix & Run (medium)",
+          "time": "2 min",
+          "description": "Find the error in a new program, correct it and show the correct output. Faster correct answers rank higher. Top ~50% of the remaining advance."
+        },
+        {
+          "name": "Round 3: Complete the Code (hard)",
+          "time": "3 min",
+          "description": "Complete an unfinished C++ pattern program (the code itself is the hint) and show the output. The top 3 are declared winners."
+        }
+      ],
       "judgingCriteria": [],
       "coordinators": [
         {
@@ -179,25 +219,29 @@
       ],
       "id": "error-404",
       "title": "ERROR 404",
-      "tagline": "Find the bugs before they find you",
+      "tagline": "Code not found. Find it. Fix it. Finish it.",
       "category": "tech",
-      "overview": "A debugging challenge: track down and fix the errors hidden in the code. Format details will be announced soon."
+      "overview": "A C++ debugging and code-completion contest (also listed as Glitch Code). Code is shown on a large screen: spot the bug, fix the logic or finish the missing part, faster and more accurately than everyone else. Individual entry, C++ only, three rounds of rising difficulty.",
+      "registrationOpen": false
     },
     {
       "badge": "CODING & TECH",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "To be notified",
       "date": "Day TBA",
-      "time": "3 hrs",
+      "time": "3 hrs (date to be announced)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -213,23 +257,27 @@
       "title": "PROMPT ENGINEERING",
       "tagline": "Get the best out of AI with the right prompt",
       "category": "tech",
-      "overview": "A 3-hour challenge where participants craft prompts to get AI tools to solve the given tasks as accurately as possible."
+      "overview": "A 3-hour challenge where participants craft prompts to get AI tools to solve the given tasks as accurately as possible.",
+      "registrationOpen": false
     },
     {
       "badge": "CODING & TECH",
       "categoryName": "CODING & TECH",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 2,
+      "format": "Solo or team (up to 2)",
+      "teamSize": "1–2",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-11-01T14:00:00+05:30",
+      "endsAt": "2026-11-01T17:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
-      "venue": "To be notified",
-      "date": "Day TBA",
-      "time": "To be notified",
+      "venue": "Room 108",
+      "date": "DAY 3",
+      "time": "1 Nov, 2:00 PM – 5:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -240,15 +288,20 @@
       "title": "UI/UX DESIGNATHON",
       "tagline": "Design the interface, own the experience",
       "category": "tech",
-      "overview": "A design sprint to create user interfaces and experiences for a given problem statement. Details will be announced soon."
+      "overview": "A design sprint to create user interfaces and experiences for a given problem statement. Details will be announced soon.",
+      "registrationOpen": false
     },
     {
       "badge": "DESIGN & INNOVATION",
       "categoryName": "DESIGN & INNOVATION",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-30T13:00:00+05:30",
+      "endsAt": "2026-10-30T17:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -256,7 +309,6 @@
       "date": "DAY 1",
       "time": "30 Oct, 1:00 PM – 5:00 PM (4 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -274,17 +326,22 @@
       ],
       "id": "cadcraft",
       "title": "CADCRAFT",
-      "tagline": "Model it, engineer it, nail the design",
+      "tagline": "CAD modelling: model it, engineer it, nail the design",
       "category": "innovation",
-      "overview": "A 4-hour CAD modelling competition: turn the given problem into a precise, well-engineered 3D design."
+      "overview": "A 4-hour CAD modelling competition: turn the given problem into a precise, well-engineered 3D design.",
+      "registrationOpen": false
     },
     {
-      "badge": "DESIGN & INNOVATION",
+      "badge": "SPEED CUBING",
       "categoryName": "DESIGN & INNOVATION",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-31T09:00:00+05:30",
+      "endsAt": "2026-10-31T10:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -292,11 +349,36 @@
       "date": "DAY 2",
       "time": "31 Oct, 9:00 AM – 10:00 AM (1 hr)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Each cuber gets 1 attempt per sub-round.",
+        "15 seconds of inspection before every solve: you may hold and turn the puzzle in your hands, but make no moves.",
+        "Scrambles are made by the organisers and are identical for all cubers in the same group.",
+        "The timer starts when you lift both hands off the cube/timer pad and stops when you place both hands back.",
+        "The puzzle must be fully solved (or fully in the required pattern) when the timer stops; any visible error is a DNF.",
+        "Ranking in each sub-round is by best single time.",
+        "Penalties: inspection over 15 s = +2 s; over 17 s = DNF; turning the cube during inspection = DNF.",
+        "Cheating, using an unauthorised puzzle or disrupting others leads to disqualification.",
+        "Organisers provide all competition puzzles; bring your own cube only if the judges approve it in advance.",
+        "No talking to or coaching a cuber while they are competing. Spectators stay behind the marked line.",
+        "The judges' decision is final."
       ],
-      "rounds": [],
+      "rounds": [
+        {
+          "name": "Round 1",
+          "time": "2x2 cube · Pyramid",
+          "description": "Opening round. Cubers who beat the time cutoff move to Round 2."
+        },
+        {
+          "name": "Round 2",
+          "time": "3x3 cube · Pattern on 3x3",
+          "description": "Solve the Rubik's Cube, then create the announced pattern (e.g. a checkerboard) from a solved cube. Time cutoff decides who advances."
+        },
+        {
+          "name": "Round 3 (Final)",
+          "time": "Mirror Cube",
+          "description": "Solved by shape, not colour. Finalists attempt the same scramble; the fastest valid time wins."
+        }
+      ],
       "judgingCriteria": [],
       "coordinators": [
         {
@@ -310,17 +392,22 @@
       ],
       "id": "cube-conquest",
       "title": "CUBE CONQUEST",
-      "tagline": "Speedcubing showdown",
+      "tagline": "Speedcubing: three rounds, one Mirror Cube final",
       "category": "innovation",
-      "overview": "A Rubik's cube solving competition. Bring your fastest hands."
+      "overview": "A three-round speedcubing competition. Each round has two sub-rounds, and cubers advance round by round until the Mirror Cube final decides the winners. The organisers provide all competition puzzles, timers and scramble cards.",
+      "registrationOpen": false
     },
     {
       "badge": "DESIGN & INNOVATION",
       "categoryName": "DESIGN & INNOVATION",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "team",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 4,
+      "format": "Team (1–4 members)",
+      "teamSize": "1–4",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -328,7 +415,6 @@
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -346,25 +432,29 @@
       ],
       "id": "innovation-fair",
       "title": "INNOVATION FAIR",
-      "tagline": "Showcase your projects and prototypes",
+      "tagline": "Project exhibition: showcase your projects and prototypes",
       "category": "innovation",
-      "overview": "An exhibition for student projects, prototypes and ideas. Display your work and present it to visitors and judges."
+      "overview": "A project exhibition for student projects, prototypes and ideas. Display your work and present it to visitors and judges.",
+      "registrationOpen": false
     },
     {
       "badge": "BUSINESS & DEBATE",
       "categoryName": "BUSINESS & DEBATE",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "team",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 4,
+      "format": "Team (1–4 members)",
+      "teamSize": "1–4",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-11-01T10:00:00+05:30",
+      "endsAt": "2026-11-01T12:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
-      "venue": "Conference Hall",
-      "date": "Day TBA",
-      "time": "To be notified",
+      "venue": "Conference Hall & labs",
+      "date": "DAY 3",
+      "time": "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -373,25 +463,29 @@
       "coordinators": [],
       "id": "pitch-sansad",
       "title": "PITCH SANSAD",
-      "tagline": "Pitch your startup idea to the house",
+      "tagline": "Pitch competition: present your startup idea to the house",
       "category": "business",
-      "overview": "A startup pitch competition. Present your idea, defend it under questioning and convince the panel."
+      "overview": "A startup pitch competition. Present your idea, defend it under questioning and convince the panel.",
+      "registrationOpen": false
     },
     {
       "badge": "BUSINESS & DEBATE",
       "categoryName": "BUSINESS & DEBATE",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "team",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 3,
+      "format": "Team (1–3 members)",
+      "teamSize": "1–3",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "Conference Hall",
       "date": "Day TBA",
-      "time": "2 hrs",
+      "time": "2 hrs (date to be announced)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -400,30 +494,83 @@
       "coordinators": [],
       "id": "marketmind",
       "title": "MARKETMIND: THE PRODUCT CASE CHALLENGE",
-      "tagline": "Crack the product case, present the strategy",
+      "tagline": "Product management & case studies: crack the case, present the strategy",
       "category": "business",
-      "overview": "A 2-hour product and business case challenge. Analyse the case, build a strategy and present your solution."
+      "overview": "A 2-hour product management and business case challenge. Analyse the case, build a strategy and present your solution.",
+      "registrationOpen": false
     },
     {
-      "badge": "BUSINESS & DEBATE",
+      "badge": "PARLIAMENTARY MUN",
       "categoryName": "BUSINESS & DEBATE",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 2,
+      "format": "Solo or team (up to 2)",
+      "teamSize": "1–2",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-31T14:00:00+05:30",
+      "endsAt": "2026-10-31T17:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Conference Hall",
-      "date": "DAY 1 – 2",
-      "time": "7 hrs across Day 1 & 2 (timings to be announced)",
+      "prizePool": "Best Delegate · High Commendation · Special Mention · certificates for all delegates",
+      "venue": "Open Air Theatre (OAT)",
+      "date": "DAY 2",
+      "time": "31 Oct, 2:00 PM – 5:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Address the Chair as \"Hon'ble Speaker\" or \"Mr./Madam Speaker\" and other members as \"Hon'ble Member\" or \"Hon'ble Minister\". All speeches go through the Chair.",
+        "Stand while speaking; stay seated while the Chair or another member speaks, unless raising a point.",
+        "Unparliamentary language is prohibited: personal attacks, abusive, communal, casteist, sexist or derogatory remarks, or disrespect to any religion, community, region or language.",
+        "Dress code: formal Indian or Western attire (Indian formals encouraged). Keep your portfolio placard visible; no party symbols, slogans or campaign material.",
+        "Standard speaking time is 60 seconds; repeated overruns may be penalised.",
+        "Points of Order, Information, Personal Privilege and Parliamentary Inquiry, and procedural motions, follow the rulebook. Procedural motions pass by simple majority.",
+        "Bills and resolutions must be typed, original and approved by the Secretariat before being introduced. Amendments need a proposer and a seconder.",
+        "Communication in the House is by chits through the Marshals; lobbying only during breaks or when the House is suspended.",
+        "Prohibited: plagiarism, fabricated facts or documents, unapproved pre-written bills, pre-formed unofficial blocs, and impersonating another delegate.",
+        "In situations not covered by the rulebook, the Chair's discretion, guided by Lok Sabha practice, prevails."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Order of business",
+          "time": "Each sitting",
+          "description": "Roll call & quorum → agenda & General Speakers' List → open debate → calling attention motions & special mentions → bills & resolutions → adjournment."
+        },
+        {
+          "name": "Legislative procedure",
+          "time": "Bills",
+          "description": "First reading (introduction, no debate) → second reading (debate and clause-by-clause amendments) → third reading (final debate and vote)."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Content & Research",
+          "weight": "20"
+        },
+        {
+          "name": "Oratory & Delivery",
+          "weight": "20"
+        },
+        {
+          "name": "Rules of Procedure",
+          "weight": "15"
+        },
+        {
+          "name": "Diplomacy & Decorum",
+          "weight": "15"
+        },
+        {
+          "name": "Debate & questions asked",
+          "weight": "15"
+        },
+        {
+          "name": "Document / Bill contribution",
+          "weight": "10"
+        },
+        {
+          "name": "Consistency & participation",
+          "weight": "5"
+        }
+      ],
       "coordinators": [
         {
           "name": "Soummya Jamwal",
@@ -436,17 +583,22 @@
       ],
       "id": "model-lok-sabha",
       "title": "MODEL LOK SABHA",
-      "tagline": "Debate, legislate and represent",
+      "tagline": "Indian Parliamentary MUN: debate, legislate and represent",
       "category": "business",
-      "overview": "A simulation of the Lok Sabha where participants represent members of parliament, debate issues and work through parliamentary procedure."
+      "overview": "Lok Sabha (House of the People) in an Indian Parliamentary MUN format. Delegates represent sitting MPs and follow Lok Sabha procedure. Agenda: The Public Examinations (Prevention of Unfair Means) Legislation: the crisis of paper leaks and cheating in national and state exams such as NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register individually or as a double delegation; MP portfolios are allotted by the secretariat.",
+      "registrationOpen": false
     },
     {
       "badge": "ESPORTS",
       "categoryName": "ESPORTS",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 5,
+      "maxTeam": 6,
+      "format": "Team (5–6 members)",
+      "teamSize": "5–6",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -454,7 +606,6 @@
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -470,28 +621,93 @@
       "title": "ESPORTS: COUNTER-STRIKE 2",
       "tagline": "Tactical 5v5 on campus",
       "category": "esports",
-      "overview": "A Counter-Strike 2 tournament. Format and schedule will be announced soon."
+      "overview": "A Counter-Strike 2 tournament. Format and schedule will be announced soon.",
+      "registrationOpen": false
     },
     {
-      "badge": "ESPORTS",
+      "badge": "BATTLE ROYALE",
       "categoryName": "ESPORTS",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 4,
+      "maxTeam": 4,
+      "format": "Team (4 members)",
+      "teamSize": "4–4",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "To be notified",
-      "date": "DAY 2",
-      "time": "8 hrs (timings to be announced)",
+      "date": "DAY 1 – 2",
+      "time": "30 & 31 Oct, 12:00 PM – 4:00 PM each day",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Squads of exactly 4 players. Mobile devices only; emulators and PC clients are not allowed.",
+        "Use your own BGMI account (no guest accounts) and the in-game name submitted at registration. Only registered players may play.",
+        "Charge your device fully and make sure you have a stable internet connection before every match.",
+        "Carry the event or university ID if organisers ask for it.",
+        "Voice chat only within your registered team. Abusive, threatening or toxic behaviour is not allowed.",
+        "Take a screenshot after every match showing the result/placement; the captain submits it to the organisers within the announced time.",
+        "Prohibited: hacks, cheats, mods, scripts, exploits, unauthorised third-party tools, account sharing, teaming with other squads, abusing glitches, and falsifying screenshots or results. Any of these can lead to disqualification.",
+        "A player who disconnects is treated as eliminated unless organisers announce a technical ruling. Report genuine technical issues to the referee immediately.",
+        "Organisers and referees have final authority on match conduct, disputes, scoring and discipline."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Qualifiers",
+          "time": "If more than 16 teams",
+          "description": "Teams are split into groups; qualifying teams advance on the announced criteria."
+        },
+        {
+          "name": "Day 1 (30 Oct)",
+          "time": "6 matches",
+          "description": "Map rotation: 1 Rondo, 3 Erangel, 2 Miramar."
+        },
+        {
+          "name": "Day 2 (31 Oct)",
+          "time": "6 matches",
+          "description": "Same map rotation, with the Smash Rule applied as announced by the organisers."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Kill",
+          "weight": "1 pt each"
+        },
+        {
+          "name": "1st place (Chicken Dinner)",
+          "weight": "10"
+        },
+        {
+          "name": "2nd",
+          "weight": "6"
+        },
+        {
+          "name": "3rd",
+          "weight": "5"
+        },
+        {
+          "name": "4th",
+          "weight": "4"
+        },
+        {
+          "name": "5th",
+          "weight": "3"
+        },
+        {
+          "name": "6th",
+          "weight": "2"
+        },
+        {
+          "name": "7th–8th",
+          "weight": "1"
+        },
+        {
+          "name": "Below 8th",
+          "weight": "0 (kills still count)"
+        }
+      ],
       "coordinators": [
         {
           "name": "Praveen",
@@ -503,26 +719,34 @@
         }
       ],
       "id": "esports-bgmi",
+      "allDay": [
+        "2026-10-30",
+        "2026-10-31"
+      ],
       "title": "ESPORTS: BGMI",
-      "tagline": "Battle royale squads, last one standing",
+      "tagline": "Battle royale squads: play smart, fight together, win together",
       "category": "esports",
-      "overview": "A BGMI tournament running through Day 2. Squad format and match schedule will be announced soon."
+      "overview": "BGMI battle royale tournament (latest game version) for 4-player squads, on mobile devices only. Six matches per day across Rondo, Erangel and Miramar; earn placement and kill points for the highest overall score.",
+      "registrationOpen": false
     },
     {
       "badge": "ESPORTS",
       "categoryName": "ESPORTS",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 4,
+      "maxTeam": 5,
+      "format": "Team (4–5 members)",
+      "teamSize": "4–5",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-11-01T11:00:00+05:30",
+      "endsAt": "2026-11-01T15:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "To be notified",
-      "date": "DAY 1",
-      "time": "4 hrs (timings to be announced)",
+      "date": "DAY 3",
+      "time": "1 Nov, 11:00 AM – 3:00 PM (4 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -542,23 +766,27 @@
       "title": "ESPORTS: FREE FIRE",
       "tagline": "Fast-paced battle royale",
       "category": "esports",
-      "overview": "A Free Fire tournament on Day 1. Squad format and match schedule will be announced soon."
+      "overview": "A Free Fire tournament. Squad format and match schedule will be announced soon.",
+      "registrationOpen": false
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 2,
+      "maxTeam": 3,
+      "format": "Team (2–3 members)",
+      "teamSize": "2–3",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-31T11:00:00+05:30",
+      "endsAt": "2026-10-31T13:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "Open Air Theatre (OAT)",
       "date": "DAY 2",
-      "time": "2 hrs (timings to be announced)",
+      "time": "31 Oct, 11:00 AM – 1:00 PM (2 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -580,25 +808,29 @@
       ],
       "id": "nerd-wars",
       "title": "NERD WARS",
-      "tagline": "Quizzes, puzzles and pure nerd power",
+      "tagline": "The quiz: trivia, puzzles and pure nerd power",
       "category": "cultural",
-      "overview": "A fun battle of wits for the biggest nerds on campus. Format will be announced soon."
+      "overview": "The Chaitanya 2k26 quiz: a battle of wits for the biggest nerds on campus. Format will be announced soon.",
+      "registrationOpen": false
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "format": "To be notified",
-      "teamSize": "To be notified",
-      "minTeam": 1,
-      "maxTeam": 1,
+      "registrationType": "team",
+      "minTeam": 3,
+      "maxTeam": 4,
+      "format": "Team (3–4 members)",
+      "teamSize": "3–4",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": "2026-10-30T11:00:00+05:30",
+      "endsAt": "2026-10-30T14:00:00+05:30",
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "To be notified",
-      "date": "Day TBA",
-      "time": "3 hrs",
+      "date": "DAY 1",
+      "time": "30 Oct, 11:00 AM – 2:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -622,23 +854,27 @@
       "title": "TREASURE HUNT",
       "tagline": "Follow the clues across campus",
       "category": "cultural",
-      "overview": "A 3-hour campus-wide treasure hunt. Decode the clues, race between checkpoints and find the treasure first."
+      "overview": "A 3-hour campus-wide treasure hunt. Decode the clues, race between checkpoints and find the treasure first.",
+      "registrationOpen": false
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "solo",
       "minTeam": 1,
       "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
       "venue": "Ground floor",
-      "date": "Day TBA",
-      "time": "To be notified",
+      "date": "DAY 1 – 3",
+      "time": "Runs through the fest · final submission 4:00 PM",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -658,15 +894,20 @@
       "title": "CAPTURE THE MOMENT",
       "tagline": "Photography: tell the fest's story in a frame",
       "category": "cultural",
-      "overview": "A photography competition. Capture the best moments of Chaitanya 2k26."
+      "overview": "A photography competition running through the fest. Capture the best moments of Chaitanya 2k26 and submit your entries by the 4:00 PM final submission deadline.",
+      "registrationOpen": false
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 10,
+      "format": "Solo or team (up to 10)",
+      "teamSize": "1–10",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -674,7 +915,6 @@
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -698,15 +938,20 @@
       "title": "CULTURAL WALK",
       "tagline": "A walk through the cultures of India",
       "category": "cultural",
-      "overview": "A cultural parade celebrating traditions, attire and heritage. Details will be announced soon."
+      "overview": "A cultural parade celebrating traditions, attire and heritage. Details will be announced soon.",
+      "registrationOpen": false
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "format": "To be notified",
-      "teamSize": "To be notified",
+      "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 1,
+      "maxTeam": 12,
+      "format": "Solo or team (up to 12)",
+      "teamSize": "1–12",
+      "deadline": "2026-10-29T23:59:00+05:30",
+      "startsAt": null,
+      "endsAt": null,
       "entryFee": "To be notified",
       "entryFeeNum": 0,
       "prizePool": "To be notified",
@@ -714,7 +959,6 @@
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
-      "registrationOpen": false,
       "rules": [
         "Detailed rules and eligibility will be announced soon."
       ],
@@ -734,7 +978,8 @@
       "title": "DANCE COMPETITION",
       "tagline": "Own the stage",
       "category": "cultural",
-      "overview": "Solo and group dance performances. Categories and rules will be announced soon."
+      "overview": "Solo and group dance performances. Categories and rules will be announced soon.",
+      "registrationOpen": false
     }
   ]
 }

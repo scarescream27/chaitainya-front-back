@@ -252,6 +252,21 @@ export function openEventDossier(eventId) {
 
   const canJoin = ev.registrationType !== "solo" && isRegistrationOpen(ev) && !isEventRegistered(ev.id);
 
+  const roundsHtml = (ev.rounds || [])
+    .map(
+      (r) => `
+      <div class="event-round">
+        <div class="event-round-head"><strong>${e(r.name)}</strong><span>${e(r.time)}</span></div>
+        <p>${e(r.description)}</p>
+      </div>`
+    )
+    .join("");
+  const scoringHtml = (ev.judgingCriteria || [])
+    .map((c) => `<div class="event-score-row"><span>${e(c.name)}</span><strong>${e(c.weight)}</strong></div>`)
+    .join("");
+  let sectionCount = 2;
+  const sectionNo = () => String(++sectionCount).padStart(2, "0");
+
   panel.innerHTML = `
     <button class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     <div>
@@ -280,8 +295,20 @@ export function openEventDossier(eventId) {
       <ul class="event-dossier-list">${rulesHtml}</ul>
     </div>
 
+    ${roundsHtml ? `
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 03. STUDENT HEADS & CONTACT ]</h4>
+      <h4 class="event-dossier-heading">[ ${sectionNo()}. FORMAT & ROUNDS ]</h4>
+      <div class="event-rounds">${roundsHtml}</div>
+    </div>` : ""}
+
+    ${scoringHtml ? `
+    <div class="event-dossier-section">
+      <h4 class="event-dossier-heading">[ ${sectionNo()}. ${ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA"} ]</h4>
+      <div class="event-scoring">${scoringHtml}</div>
+    </div>` : ""}
+
+    <div class="event-dossier-section">
+      <h4 class="event-dossier-heading">[ ${sectionNo()}. STUDENT HEADS & CONTACT ]</h4>
       <div>${coordinatorsHtml}</div>
     </div>
 
