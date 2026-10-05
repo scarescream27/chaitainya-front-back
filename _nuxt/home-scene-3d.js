@@ -6368,6 +6368,11 @@ let Ws,
             },
             Ra = async () => {
               try {
+                // Static hosts may answer a missing file with the HTML page;
+                // only hand the loader a real HDR, otherwise use the fallback.
+                const probe = await fetch("/hdri/photo_studio_01_1k.hdr", { method: "HEAD" });
+                const type = probe.headers.get("content-type") || "";
+                if (!probe.ok || type.includes("text/html")) throw new Error("HDR missing");
                 const N = await o.loadAsync("/hdri/photo_studio_01_1k.hdr");
                 ((N.mapping = Ve),
                   (m.environment = N));
@@ -7678,7 +7683,8 @@ let Ws,
             c = et(null),
             u = et(null);
           (t.$onAction(({ name: m }) => {
-            (m === "setPreloaderDone" && d(),
+            // No loading screen: reveal the scene as soon as assets are ready.
+            (m === "setPreloaderDone" && p(),
               m === "setSceneStartingPosition" &&
                 e.add(() => {
                   V.to(l.value, { display: "none", pointerEvents: "none" });
@@ -7688,14 +7694,7 @@ let Ws,
               e.revert();
             }),
             we(() => {
-              e.add(() => {
-                V.to(l.value, {
-                  opacity: 1,
-                  pointerEvents: "auto",
-                  duration: 0.5,
-                  ease: "power2.inOut",
-                });
-              });
+              if (l.value) l.value.style.display = "none";
             }));
           const d = () => {
               e.add(() => {

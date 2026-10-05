@@ -1436,3 +1436,14 @@ header .header .mobile-menu .nav-avatar {
   vertical-align: middle;
   font-size: 16px;
 }
+
+/* Loading screen removed: the 3D scene appears as soon as it is ready. */
+.home-preloader {
+  display: none !important;
+}
+
+/* The header fades in at the end of the home 3D intro; on every other page
+   (including direct links) it must be visible straight away. */
+html.not-home header {
+  opacity: 1 !important;
+}

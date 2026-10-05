@@ -30,11 +30,22 @@
       "package.json",
       "firestore.rules",
       "firestore.indexes.json",
-      "events_catalog.json"
+      "events_catalog.json",
+      "chaitainya-front-back/**",
+      ".agent/**",
+      ".gemini/**",
+      ".claude/**",
+      ".git/**",
+      ".firebase/**",
+      "**/*.exe",
+      "**/*.cmd",
+      "**/*.sh",
+      "netlify.toml",
+      "vercel.json"
     ],
     "rewrites": [
       {
-        "source": "**",
+        "regex": "^/[^.]*$",
         "destination": "/index.html"
       }
     ],

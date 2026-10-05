@@ -117,6 +117,14 @@ let st,
                   }));
             }),
             rt(() => {
+              // The header fades in at the end of the home 3D intro; on any
+              // other page (direct links to /events, /contact, ...) show it now.
+              const markRoute = (path) =>
+                document.documentElement.classList.toggle("not-home", (path || "/").replace(/\/$/, "") !== "");
+              markRoute(window.location.pathname);
+              try {
+                document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to) => markRoute(to.path));
+              } catch (e) {}
               initAuthModal();
               initFirebase();
               syncNavbarAuthState(authCurrentUser.value);
