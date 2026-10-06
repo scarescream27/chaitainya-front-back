@@ -86,6 +86,25 @@
   header .header .mobile-menu .bottom a {
     font-size: clamp(20px, 7vw, 38px);
   }
+
+  /* Menu fills the visible screen (not 100vh, which runs under the browser
+     toolbar) and scrolls on its own when a short phone can't fit it. */
+  header .header .mobile-menu {
+    height: 100dvh;
+    padding: clamp(88px, 18dvh, 147px) 16px calc(27px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+  }
+
+  header .header .mobile-menu .top a {
+    font-size: clamp(36px, 12vw, 48px);
+    margin-bottom: clamp(16px, 4dvh, 30px) !important;
+  }
+
+  header .header .mobile-menu .bottom a:last-child {
+    margin-top: clamp(24px, 5dvh, 50px);
+  }
 }
 
 /* --------------------------------------------------------------------------

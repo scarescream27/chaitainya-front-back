@@ -117,8 +117,8 @@ let st,
       tabEvents = d("span", null, "Events", -1),
       tabAdmin = d("span", null, "Admin", -1),
       gt = at(
-        '<div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
-        6,
+        '<div class="line"></div><div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
+        7,
       ),
       ht = [gt],
       mt = { class: "top" },
@@ -326,12 +326,12 @@ let st,
                               d(
                                 "span",
                                 {
+                                  // Close, don't toggle: on touch, GSAP's observer can
+                                  // replay the tap as a second click, which reopened
+                                  // the menu after navigating Home.
                                   onClick:
                                     o[4] ||
-                                    (o[4] = (_) =>
-                                      w(n).openMobileMenu(
-                                        !w(n).getMobileMenuOpen,
-                                      )),
+                                    (o[4] = (_) => w(n).openMobileMenu(!1)),
                                 },
                                 [
                                   Y(
@@ -1326,7 +1326,11 @@ let st,
                   // How far (seconds) the page trails the scroll input; 0.8 felt sluggish.
                   smooth: reduceMotion ? 0 : 0.4,
                   effects: !1,
-                  normalizeScroll: g,
+                  // Mobile: GSAP takes over touch scrolling (steadies the iOS
+                  // address bar) but must let scrollable panels scroll natively:
+                  // without allowNestedScroll every swipe inside the checkout /
+                  // drawers / dialogs was cancelled and scrolled the page instead.
+                  normalizeScroll: g ? { debounce: !0, allowNestedScroll: !0 } : !1,
                   ignoreMobileResize: !0,
                   smoothTouch: reduceMotion ? 0 : 0.1,
                   onUpdate: (o) => {

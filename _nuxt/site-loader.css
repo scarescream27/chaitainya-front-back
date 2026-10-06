@@ -118,9 +118,11 @@ html.site-loading {
   background-color: #f7faff;
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
+  /* One line down to 320px (it wrapped, leaving "]" alone on line two). */
+  font-size: clamp(10px, 3.4vw, 12px);
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: clamp(0px, 0.15vw, 0.6px);
+  white-space: nowrap;
   text-transform: uppercase;
   color: #005a3c;
   /* Small text: readable at full contrast from the first frame, no fade. */

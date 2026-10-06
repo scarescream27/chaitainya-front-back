@@ -823,8 +823,12 @@ body:has(.events-page-root) .transition-component,
   position: relative;
   width: 100%;
   max-width: 540px;
-  max-height: 90vh;
+  /* % of the overlay, which is sized to the visible viewport (100dvh on
+     phones): 90vh alone could put the bottom under the browser toolbar. */
+  max-height: min(90vh, 100%);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   background-image: url(/images/footerPatern.png);
@@ -1908,13 +1912,21 @@ select.event-reg-input {
 }
 
 @media (max-width: 640px) {
-  .checkout-row,
-  .co-member {
+  .checkout-row {
     grid-template-columns: minmax(0, 1fr);
   }
-  .co-member .cart-remove {
-    justify-self: end;
+
+  /* Each member: name + remove on one row, email full width below. */
+  .co-member {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "name remove" "email email";
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed color-mix(in srgb, var(--ink) 15%, transparent);
   }
+  .co-member .co-member-name { grid-area: name; }
+  .co-member .co-member-email { grid-area: email; }
+  .co-member .cart-remove { grid-area: remove; }
 }
 
 @media (hover: none), (max-width: 1024px) {
@@ -2122,4 +2134,42 @@ select.event-reg-input {
 .event-reg-title:focus,
 .cart-head h3:focus {
   outline: none;
+}
+
+/* Phones: registration is a full-screen sheet (one scroll area, edge to edge)
+   instead of a floating card with a scroll area inside a padded overlay. */
+@media (max-width: 600px) {
+  .event-reg-modal {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .event-reg-card {
+    max-width: none;
+    max-height: none;
+    height: 100%;
+    border-radius: 0;
+    border: 0;
+    /* Solid: phones drop the backdrop blur, so the 94% tint showed the page through. */
+    background-color: var(--surface);
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Swipes that reach the end of a drawer or dialog stay in it instead of
+   scrolling the page underneath. */
+.event-dossier-panel,
+.events-cart-panel {
+  overscroll-behavior: contain;
+}
+
+/* Small phones: hero stat pills stay on one line (the dates pill wrapped,
+   leaving "]" alone on line two at 320px). */
+@media (max-width: 420px) {
+  .events-stat-pill {
+    white-space: nowrap;
+    font-size: clamp(10px, 3.3vw, 12px);
+    letter-spacing: 0;
+    padding: 6px 12px;
+  }
 }
