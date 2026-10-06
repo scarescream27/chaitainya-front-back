@@ -1963,11 +1963,8 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
   }
 }
 
-/* Account (avatar, or Login/Register) is its own group at the far right. */
+/* Account link (avatar, or Register) sits in the nav's flex row like the others. */
 header .header .nav-account {
   display: contents;
 }
 
-header .header .right-menu > .nav-account > a:first-child {
-  margin-inline-start: 16px !important;
-}
