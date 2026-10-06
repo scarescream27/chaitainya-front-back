@@ -21,6 +21,7 @@ service cloud.firestore {
         request.auth.token.email.lower() in [
           "chaitanyahptu@gmail.com",
           "adityaverma200911@gmail.com",
+          "manaskapoor033@gmail.com",
           "admin@chaitanya2k26.org"
         ];
     }
