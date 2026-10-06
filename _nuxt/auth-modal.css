@@ -1963,13 +1963,6 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
   }
 }
 
-/* Events is the site's main action: the one filled link in the nav. */
-header .header .right-menu a.nav-cta {
-  background: var(--ink);
-  color: var(--ink-on-dark);
-  border-radius: 30px;
-}
-
 /* Account (avatar, or Login/Register) is its own group at the far right. */
 header .header .nav-account {
   display: contents;

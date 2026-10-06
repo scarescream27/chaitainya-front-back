@@ -91,6 +91,10 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
       { class: "nav-profile", "aria-label": "Your profile", title: "Profile" },
       [avatar],
     ),
+    // Hidden second slot: the header patches these links pairwise, so the
+    // count must stay two (Login + Register) in both states, or the links
+    // after them get mixed up on sign-in.
+    (openBlock(), block("span", { key: "nav-account-slot", hidden: true })),
   ];
 }
 
@@ -288,7 +292,7 @@ let st,
                         ),
                         Y(
                           z,
-                          { to: "/events", class: "nav-cta" },
+                          { to: "/events" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
                         d(
@@ -302,9 +306,7 @@ let st,
                           },
                           [O("["), tabAdmin, O("]")],
                         ),
-                        // Account sits last, at the far right. One wrapper keeps the
-                        // header's child count the same signed in or out, so hydrating
-                        // the pre-rendered (signed-out) header can't shift elements.
+                        // Account sits last, at the far right.
                         d("span", { class: "nav-account" }, authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O })),
                         d(
                           "div",
