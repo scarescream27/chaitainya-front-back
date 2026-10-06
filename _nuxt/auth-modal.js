@@ -10,6 +10,7 @@ import {
   getCurrentUser,
   YEAR_OPTIONS,
   subscribeAuthState,
+  initFirebase,
 } from "./auth-service.js";
 import { isFirebaseConfigured, isAdminUser } from "./firebase-config.js";
 import { escapeHtml as e } from "./fest-config.js";
@@ -76,6 +77,8 @@ function syncAppInert() {
   const app = document.getElementById("__nuxt");
   if (!app) return;
   const anyOpen = document.querySelector("#chaitanya-auth-backdrop.active, #profile-overlay.active");
+  // Body-level floating buttons (events cart / back-to-top) sit outside #__nuxt.
+  document.documentElement.classList.toggle("dialog-open", Boolean(anyOpen));
   if (anyOpen) {
     // Leave an inert set by someone else (e.g. an events-page drawer) alone.
     if (!app.inert) {
@@ -107,10 +110,11 @@ export function initAuthModal() {
     modalBackdrop.innerHTML = `
       <div class="chaitanya-modal-card" id="chaitanya-modal-content" role="dialog" aria-modal="true" aria-labelledby="chaitanya-modal-title" aria-describedby="chaitanya-modal-subtitle" tabindex="-1">
         <span class="corner corner-tl" aria-hidden="true">+</span>
-        <span class="corner corner-tr" aria-hidden="true">+</span>
         <span class="corner corner-bl" aria-hidden="true">+</span>
         <span class="corner corner-br" aria-hidden="true">+</span>
-        <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn">[ ESC / CLOSE ]</button>
+        <div class="chaitanya-modal-topbar">
+          <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn">[ ESC / CLOSE ]</button>
+        </div>
         <div id="chaitanya-modal-body"></div>
       </div>
     `;
@@ -144,7 +148,7 @@ export function initAuthModal() {
     // Delegated click handler for navbar and any in-page auth buttons
     document.addEventListener("click", (e) => {
       const anchor = e.target.closest("a");
-      if (!anchor) return;
+      if (!anchor || e.defaultPrevented) return;
       const href = anchor.getAttribute("href");
 
       if (href === "#login") {
@@ -170,10 +174,18 @@ export function initAuthModal() {
     // Listen to hash and route changes (#login, #register, #admin, /login, /register, /admin)
     window.addEventListener("hashchange", checkUrlRoute);
     window.addEventListener("popstate", checkUrlRoute);
-    checkUrlRoute();
+    // Wait for the first auth state so signed-in visitors aren't shown Register.
+    initFirebase().finally(checkUrlRoute);
 
     // Subscribe to auth changes to keep navbar updated
     subscribeAuthState(syncNavbarAuthState);
+    // Signed in (popup, redirect or another tab): leave Sign In / Create Account.
+    subscribeAuthState((user) => {
+      if (user && modalBackdrop?.classList.contains("active")) {
+        closeAuthModal();
+        runAfterSignIn();
+      }
+    });
   }
 }
 
@@ -187,15 +199,24 @@ export function syncNavbarAuthState(user) {
 function checkUrlRoute() {
   const hash = window.location.hash;
   const path = window.location.pathname.replace(/\/$/, "");
-  if (hash === "#login" || path === "/login") {
-    openAuthModal("login");
-  } else if (hash === "#register" || path === "/register") {
-    openAuthModal("register");
-  } else if (hash === "#admin") {
-    openAuthModal("admin");
-  } else if (hash === "#profile") {
-    openAuthModal("profile");
+  const mode =
+    hash === "#login" || path === "/login" ? "login"
+    : hash === "#register" || path === "/register" ? "register"
+    : hash === "#admin" ? "admin"
+    : hash === "#profile" ? "profile"
+    : null;
+  if (!mode) return;
+  // /login and /register aren't app routes: open the dialog over Home
+  // instead of the 404 page.
+  if (path === "/login" || path === "/register") {
+    window.__deepLinkPending = false; // index.html would otherwise keep the deep link
+    const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+    // The router may already resolve this to "/" (then replace() is a no-op),
+    // so fix the address bar directly too.
+    router?.replace("/");
+    history.replaceState(history.state, "", "/");
   }
+  openAuthModal(mode);
 }
 
 /**
@@ -279,11 +300,7 @@ export function closeAuthModal() {
       window.location.hash === "#register" ||
       window.location.hash === "#admin"
     ) {
-      history.pushState(
-        "",
-        document.title,
-        window.location.pathname + window.location.search,
-      );
+      history.replaceState(history.state, "", window.location.pathname + window.location.search);
     }
   }
 }
@@ -314,7 +331,6 @@ async function renderModalContent() {
 function renderLoginView(container, isConfigured) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Portal ]</div>
       <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Sign In</h2>
       <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to register for events and view your entry passes.</p>
     </div>
@@ -332,7 +348,7 @@ function renderLoginView(container, isConfigured) {
 
     <div class="chaitanya-modal-footer">
       First time? Signing in creates your account.
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Add college & phone ]</button>
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Create Account ]</button>
     </div>
   `;
 
@@ -358,8 +374,7 @@ function renderLoginView(container, isConfigured) {
 function renderRegisterView(container, isConfigured) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Create Account ]</div>
-      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Register</h2>
+      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Create Account</h2>
       <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Create your fest account, then pick events on the Events page.</p>
     </div>
 

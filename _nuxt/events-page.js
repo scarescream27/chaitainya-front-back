@@ -53,8 +53,20 @@ import {
 
 const UTR_PATTERN = /^\d{12}$/;
 
-let activeCategory = "all";
-let activeSearchQuery = "";
+// Category + search survive a reload of /events (same tab).
+const FILTERS_KEY = "chaitanya-events-filters";
+let { cat: activeCategory = "all", q: activeSearchQuery = "" } = (() => {
+  try {
+    return JSON.parse(sessionStorage.getItem(FILTERS_KEY)) || {};
+  } catch {
+    return {};
+  }
+})();
+function saveFilters() {
+  try {
+    sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ cat: activeCategory, q: activeSearchQuery }));
+  } catch {}
+}
 let isDossierOpen = false;
 let isCartOpen = false;
 let isCheckoutOpen = false;
@@ -241,8 +253,9 @@ export function renderEventsPageHtml() {
 
         <div class="events-toolbar">
           <div class="events-categories" id="events-cat-bar">${categoriesHtml}</div>
-          <div class="events-search-wrap">
-            <input type="text" class="events-search-input" id="events-search-box"
+          <div class="events-search-wrap" role="search">
+            <svg class="events-search-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" class="events-search-input" id="events-search-box"
               placeholder="Search events, venues, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
             <button type="button" class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
           </div>
@@ -299,7 +312,7 @@ function actionButtonHtml(ev, { large = false } = {}) {
     return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`;
   }
   if (isInCart(ev.id)) {
-    return `<button type="button" class="${cls} in-cart" data-action="open-cart" data-event-id="${e(ev.id)}">[ ✓ IN CART ]</button>`;
+    return `<button type="button" class="${cls} in-cart" data-action="remove-from-cart" data-event-id="${e(ev.id)}" aria-label="Added. Remove ${e(ev.title)} from cart" title="Remove from cart">[ ✓ ADDED ]</button>`;
   }
   if (isRegistrationOpen(ev)) {
     return `<button type="button" class="${cls}" data-action="add-to-cart" data-event-id="${e(ev.id)}">[ + ADD TO CART ]</button>`;
@@ -313,18 +326,14 @@ function renderEventCardHtml(ev) {
   const accentColor = catObj?.accent || "var(--ink)";
 
   return `
-    <div class="event-card" data-event-id="${e(ev.id)}">
-      <span class="corner corner-tl" aria-hidden="true">+</span>
-      <span class="corner corner-tr" aria-hidden="true">+</span>
-      <span class="corner corner-bl" aria-hidden="true">+</span>
-      <span class="corner corner-br" aria-hidden="true">+</span>
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}">
 
       <div class="event-card-header">
         <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}</span>
         <span class="event-badge-format">${e(ev.format)}</span>
       </div>
 
-      <h2 class="event-card-title">${e(ev.title)}</h2>
+      <h2 class="event-card-title" title="${e(ev.title)}">${e(ev.title)}</h2>
       <p class="event-card-tagline">${e(ev.tagline)}</p>
 
       <div class="event-card-meta">
@@ -449,7 +458,7 @@ export function openEventDossier(eventId) {
 
     <div class="event-dossier-cta">
       ${actionButtonHtml(ev, { large: true })}
-      ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Already in a team? Join with a team code →</button>` : ""}
+      ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Already in a team? Join with a team code</button>` : ""}
     </div>
   `;
 
@@ -512,7 +521,7 @@ function renderCartPanel() {
       ? `<ul class="cart-list">${rows}</ul>
          <div class="cart-foot">
            <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
-           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ DONE → REGISTER ]</button>
+           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ REGISTER ]</button>
          </div>`
       : `<div class="cart-empty"><p>Your cart is empty.</p><p>Open an event and tap <strong>ADD TO CART</strong>.</p></div>`}
   `;
@@ -551,6 +560,15 @@ function handleAddToCart(eventId) {
   } catch (err) {
     flashToast(err.message);
   }
+  refreshEventsGrid();
+  if (isDossierOpen) openEventDossier(ev.id);
+}
+
+function handleRemoveFromCart(eventId) {
+  const ev = getEventById(eventId);
+  if (!ev) return;
+  removeFromCart(ev.id);
+  flashToast(`${ev.title} removed from cart`);
   refreshEventsGrid();
   if (isDossierOpen) openEventDossier(ev.id);
 }
@@ -708,7 +726,7 @@ function stepperHtml() {
   const steps = stepList();
   const current = steps.indexOf(checkout.step);
   return `<ol class="checkout-steps">${steps
-    .map((s, i) => `<li class="${i === current ? "current" : i < current ? "done" : ""}"${i === current ? ' aria-current="step"' : ""}>${i + 1}. ${names[s]}</li>`)
+    .map((s, i) => `<li class="${i === current ? "current" : i < current ? "done" : ""}"${i === current ? ' aria-current="step"' : ""}>${i < current ? "✓" : `${i + 1}.`} ${names[s]}</li>`)
     .join("")}</ol>`;
 }
 
@@ -1311,7 +1329,7 @@ export function refreshEventsGrid() {
   const grid = document.getElementById("events-card-grid");
   if (!grid) return;
   // Keep keyboard focus on the same card when its buttons are re-rendered
-  // (e.g. ADD TO CART becomes IN CART).
+  // (e.g. ADD TO CART becomes ADDED).
   const focused = grid.contains(document.activeElement) ? document.activeElement : null;
   const focusEventId = focused?.dataset?.eventId;
   const focusAction = focused?.dataset?.action;
@@ -1347,9 +1365,8 @@ function bindGlobalListeners() {
         return id && openEventDossier(id);
       case "add-to-cart":
         return id && handleAddToCart(id);
-      case "open-cart":
-        closeEventDossier();
-        return openCart();
+      case "remove-from-cart":
+        return id && handleRemoveFromCart(id);
       case "view-booking":
         closeEventDossier();
         if (typeof window.openProfilePanel === "function") window.openProfilePanel("registrations");
@@ -1445,11 +1462,14 @@ export function initEventsPage() {
   catBar?.addEventListener("click", (evt) => {
     const btn = evt.target.closest(".events-cat-btn");
     if (!btn?.dataset.cat) return;
-    activeCategory = btn.dataset.cat;
+    // Clicking the active category again deselects it (back to all events).
+    activeCategory = btn.dataset.cat === activeCategory ? "all" : btn.dataset.cat;
     catBar.querySelectorAll(".events-cat-btn").forEach((b) => {
-      b.classList.toggle("active", b === btn);
-      b.setAttribute("aria-pressed", String(b === btn));
+      const on = b.dataset.cat === activeCategory;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
     });
+    saveFilters();
     refreshEventsGrid();
   });
 
@@ -1458,12 +1478,14 @@ export function initEventsPage() {
   searchBox?.addEventListener("input", (evt) => {
     activeSearchQuery = evt.target.value || "";
     clearBtn?.classList.toggle("active", Boolean(activeSearchQuery));
+    saveFilters();
     refreshEventsGrid();
   });
   clearBtn?.addEventListener("click", () => {
     if (searchBox) searchBox.value = "";
     activeSearchQuery = "";
     clearBtn.classList.remove("active");
+    saveFilters();
     refreshEventsGrid();
     searchBox?.focus(); // the clear button hides itself, so don't drop focus
   });

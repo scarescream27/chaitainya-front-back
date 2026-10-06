@@ -29,11 +29,8 @@
 /* Modal Root Overlay - Frosted luminous blur */
 .chaitanya-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 120;
+  inset: 0;
+  z-index: 1000; /* above the events floating buttons (990) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,6 +51,12 @@
   pointer-events: auto;
   visibility: visible;
   transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
+}
+
+/* Floating events buttons live outside #__nuxt, so the app's inert misses them. */
+html.dialog-open .events-cart-fab,
+html.dialog-open .events-scroll-hud {
+  visibility: hidden;
 }
 
 /* The sign-in dialog can be opened from the organiser verify overlay; keep it on top. */
@@ -121,15 +124,17 @@ html.pp-open .chaitanya-modal-backdrop {
   user-select: none;
 }
 .chaitanya-modal-card .corner-tl { top: 12px; left: 16px; }
-.chaitanya-modal-card .corner-tr { top: 12px; right: 16px; }
 .chaitanya-modal-card .corner-bl { bottom: 12px; left: 16px; }
 .chaitanya-modal-card .corner-br { bottom: 12px; right: 16px; }
 
-/* Close Button */
+/* Close Button: its own row above the title, so it never covers the heading. */
+.chaitanya-modal-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: -12px -12px 8px 0;
+}
+
 .chaitanya-modal-close {
-  position: absolute;
-  top: 16px;
-  right: 20px;
   background: var(--surface);
   border: 1.5px solid var(--ink);
   color: var(--ink);
@@ -155,17 +160,6 @@ html.pp-open .chaitanya-modal-backdrop {
 .chaitanya-modal-header {
   text-align: center;
   margin-bottom: 18px;
-}
-
-.chaitanya-modal-tag {
-  display: inline-block;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--fs-label);
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--ink);
-  margin-bottom: 6px;
 }
 
 .chaitanya-modal-title {
@@ -1818,8 +1812,13 @@ body:has(.profile-page-root) .transition-component {
 
 /* The site header is transparent; on the profile page fade the page colour in
    behind it so form controls scrolling underneath don't collide with the logo. */
-body:has(.profile-page-root) header {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--sky-top) 96%, transparent) 70%, color-mix(in srgb, var(--sky-top) 0%, transparent));
+html body:has(.profile-page-root) header {
+  /* Same pattern + sky as the page (viewport-anchored), so at the top the
+     header is indistinguishable from the page instead of a flat white band,
+     and content scrolling underneath still doesn't collide with the logo. */
+  background-image: var(--page-bg);
+  background-size: var(--page-bg-size);
+  background-attachment: fixed;
 }
 
 /* Deregister / delete-profile confirmations */

@@ -25,7 +25,7 @@ const TBN = "To be notified";
 // they pass WCAG AA (4.5:1) for 12px labels on the cards. Change the hues in
 // tokens.css, not here.
 export const EVENT_CATEGORIES = [
-  { id: "all", name: "ALL EVENTS", shortCode: "ALL", count: 20 },
+  { id: "all", name: "ALL", shortCode: "ALL", count: 20 },
   { id: "tech", name: "CODING & TECH", shortCode: "TECH", count: 6, accent: "var(--cat-tech)" },
   { id: "innovation", name: "DESIGN & INNOVATION", shortCode: "BUILD", count: 3, accent: "var(--cat-innovation)" },
   { id: "business", name: "BUSINESS & DEBATE", shortCode: "PITCH", count: 3, accent: "var(--cat-business)" },
@@ -509,7 +509,7 @@ export function filterEvents(category = "all", searchQuery = "") {
   }
 
   if (searchQuery && searchQuery.trim()) {
-    const q = searchQuery.toLowerCase().trim();
+    const q = searchQuery.toLowerCase().trim().replace(/\s+/g, " ");
     list = list.filter((ev) =>
       [ev.title, ev.tagline, ev.categoryName, ev.venue, ev.badge, ev.format, ...(ev.coordinators || []).map((c) => c.name)]
         .filter(Boolean)

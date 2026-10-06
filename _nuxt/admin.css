@@ -20,8 +20,13 @@ body:has(.admin-page-root) .transition-component {
   pointer-events: none !important;
 }
 
-body:has(.admin-page-root) header {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--sky-top) 96%, transparent) 70%, color-mix(in srgb, var(--sky-top) 0%, transparent));
+html body:has(.admin-page-root) header {
+  /* Same pattern + sky as the page (viewport-anchored), so at the top the
+     header is indistinguishable from the page instead of a flat white band,
+     and content scrolling underneath still doesn't collide with the logo. */
+  background-image: var(--page-bg);
+  background-size: var(--page-bg-size);
+  background-attachment: fixed;
 }
 
 .adm-shell {

@@ -111,19 +111,15 @@
 
   .chaitanya-modal-card {
     max-height: calc(100dvh - 24px);
-    /* Room at the top for the absolutely placed [ ESC / CLOSE ] button,
-       which covered the "[ Chaitanya 2k26 • … ]" tag. */
-    padding: 60px 20px 24px;
+    padding: 24px 20px 24px;
     border-radius: 22px;
     background-color: var(--surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  .chaitanya-modal-close {
-    top: 14px;
-    right: 14px;
-    min-height: 40px;
+  .chaitanya-modal-topbar {
+    margin: -10px -6px 8px 0;
   }
 
   /* "[ Continue with Google ]" wrapped, leaving a lone "]" on line two. */

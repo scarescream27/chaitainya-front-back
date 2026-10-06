@@ -137,9 +137,9 @@ body:has(.events-page-root) .transition-component,
   border-radius: 40px;
   box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -156,7 +156,7 @@ body:has(.events-page-root) .transition-component,
 @media (max-width: 991px) {
   .events-toolbar {
     top: 62px;
-    flex-direction: column;
+    align-items: stretch;
     border-radius: 20px;
     padding: 12px;
     gap: 12px;
@@ -216,17 +216,19 @@ body:has(.events-page-root) .transition-component,
   opacity: 0.7;
 }
 
-/* Search Box */
+/* Search Box: centred, icon left / clear right, same inset on both sides. */
 .events-search-wrap {
   position: relative;
-  min-width: 260px;
-  flex-shrink: 0;
+  width: min(560px, 100%);
+  color: var(--ink-muted);
 }
 
-@media (max-width: 991px) {
-  .events-search-wrap {
-    width: 100%;
-  }
+.events-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .events-search-input {
@@ -234,7 +236,8 @@ body:has(.events-page-root) .transition-component,
   background: var(--surface);
   border: 1.5px solid color-mix(in srgb, var(--ink) 15%, transparent);
   border-radius: 30px;
-  padding: 8px 36px 8px 16px;
+  min-height: 40px;
+  padding: 8px 44px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 500;
@@ -245,6 +248,10 @@ body:has(.events-page-root) .transition-component,
   letter-spacing: 0.3px;
 }
 
+.events-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
 .events-search-input:focus {
   border-color: var(--line-strong);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
@@ -252,7 +259,7 @@ body:has(.events-page-root) .transition-component,
 
 .events-search-clear {
   position: absolute;
-  right: 12px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
@@ -273,13 +280,12 @@ body:has(.events-page-root) .transition-component,
  * ============================================================================ */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 22px;
 }
 
 @media (max-width: 767px) {
   .events-grid {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
 }
@@ -320,7 +326,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-card.is-revealed:hover {
-  transform: translateY(-5px) scale(1.008);
+  transform: translateY(-3px);
   box-shadow: 
     0 32px 64px rgba(15, 23, 42, 0.14),
     0 4px 16px rgba(0, 0, 0, 0.05),
@@ -328,19 +334,14 @@ body:has(.events-page-root) .transition-component,
   border-color: var(--line-strong);
 }
 
-/* Corner plus glyphs */
-.event-card .corner {
-  position: absolute;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--fs-label);
-  font-weight: 600;
-  color: color-mix(in srgb, var(--ink) 25%, transparent);
-  user-select: none;
+/* Card state: added to cart / registered. */
+.event-card.is-added {
+  border-color: var(--line-strong);
 }
-.event-card .corner-tl { top: 8px; left: 10px; }
-.event-card .corner-tr { top: 8px; right: 10px; }
-.event-card .corner-bl { bottom: 8px; left: 10px; }
-.event-card .corner-br { bottom: 8px; right: 10px; }
+
+.event-card.is-registered {
+  border-color: var(--ok);
+}
 
 /* Card Top Badges */
 .event-card-header {
@@ -384,6 +385,12 @@ body:has(.events-page-root) .transition-component,
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .event-card-tagline {
@@ -394,6 +401,13 @@ body:has(.events-page-root) .transition-component,
   line-height: 1.4;
   margin-bottom: 16px;
   text-transform: none;
+  /* Two lines, always: the meta blocks line up across a row of cards. */
+  min-height: 2.8em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 /* Card Metadata Grid */
@@ -410,8 +424,9 @@ body:has(.events-page-root) .transition-component,
 
 .event-meta-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   letter-spacing: 0.3px;
@@ -421,6 +436,7 @@ body:has(.events-page-root) .transition-component,
   color: var(--ink-muted);
   font-weight: 500;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .event-meta-val {
@@ -428,6 +444,8 @@ body:has(.events-page-root) .transition-component,
   font-weight: 600;
   text-transform: none;
   text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .event-meta-val.prize {
@@ -517,10 +535,7 @@ body:has(.events-page-root) .transition-component,
  * ============================================================================ */
 .event-dossier-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   z-index: 99999 !important;
   background: color-mix(in srgb, color-mix(in srgb, var(--sky-bottom) 40%, var(--sky-top)) 50%, transparent);
   -webkit-backdrop-filter: blur(16px);
@@ -780,10 +795,7 @@ body:has(.events-page-root) .transition-component,
  * ============================================================================ */
 .event-reg-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   z-index: 100000 !important;
   background: color-mix(in srgb, color-mix(in srgb, var(--sky-bottom) 40%, var(--sky-top)) 55%, transparent);
   -webkit-backdrop-filter: blur(20px);
@@ -875,6 +887,9 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--surface);
   border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 12px;
@@ -921,8 +936,12 @@ body:has(.events-page-root) .transition-component,
 
 .event-upi-id-copy {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: color-mix(in srgb, var(--ink) 6%, var(--surface));
   padding: 6px 12px;
   border-radius: 20px;
@@ -1725,6 +1744,7 @@ body:has(.events-page-root) .transition-component,
 /* Checkout */
 .checkout-steps {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   list-style: none;
   margin: 18px 0 14px;
@@ -1735,21 +1755,23 @@ body:has(.events-page-root) .transition-component,
 }
 
 .checkout-steps li {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: max-content;
   text-align: center;
-  padding: 6px 4px;
+  padding: 6px 8px;
   border-radius: 20px;
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: 1.5px solid transparent;
   color: var(--ink-muted);
+  white-space: nowrap;
+  user-select: none;
 }
 
 .checkout-steps li.current {
-  background: var(--ink);
-  color: var(--ink-on-dark);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .checkout-steps li.done {
-  background: var(--ok-bg);
   color: var(--ok);
 }
 
@@ -1759,7 +1781,7 @@ body:has(.events-page-root) .transition-component,
 
 .checkout-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -1805,7 +1827,7 @@ body:has(.events-page-root) .transition-component,
 
 .co-member {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 6px;
   align-items: center;
   margin-bottom: 6px;
@@ -1823,6 +1845,8 @@ body:has(.events-page-root) .transition-component,
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 8px 0;
   border-bottom: 1px dashed color-mix(in srgb, var(--ink) 15%, transparent);
 }
@@ -1861,7 +1885,10 @@ body:has(.events-page-root) .transition-component,
 
 .checkout-codes li {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 4px 10px;
+  overflow-wrap: anywhere;
   padding: 4px 0;
 }
 
@@ -1878,9 +1905,12 @@ select.event-reg-input {
     left: 16px;
     bottom: 16px;
   }
+}
+
+@media (max-width: 640px) {
   .checkout-row,
   .co-member {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .co-member .cart-remove {
     justify-self: end;
@@ -2027,11 +2057,12 @@ select.event-reg-input {
    Polish pass
    ========================================================================== */
 
-/* Desktop: the category chips wrap onto a second row instead of scrolling
-   under the search box (they grew with the 12px label floor). */
+/* Desktop: the category chips wrap (centred, above the search row) instead
+   of scrolling. */
 @media (min-width: 992px) {
   .events-categories {
     flex-wrap: wrap;
+    justify-content: center;
     overflow: visible;
     row-gap: 8px;
   }

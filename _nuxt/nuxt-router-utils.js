@@ -225,7 +225,7 @@ let st,
                 ),
                 g.path === "/" &&
                   k.fromTo(
-                    ".click-and-hold, .social-links-global",
+                    ".social-links-global",
                     { opacity: 1, pointerEvents: "auto" },
                     {
                       opacity: 0,

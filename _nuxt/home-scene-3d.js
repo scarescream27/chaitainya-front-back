@@ -6070,10 +6070,6 @@ let Ws,
     let lo,
       co,
       ho,
-      uo,
-      po,
-      yo,
-      mo,
       vo,
       fo,
       go,
@@ -6276,34 +6272,6 @@ let Ws,
             }
             if (
               (N === "updateProgress" && Le.progress(A[0]),
-              N === "startProgress" &&
-                ((hi = !0),
-                Pt.forEach(({ body: G }) => {
-                  ye(G, 5);
-                }),
-                c.add(() => {
-                  V.to(de.shapes[0], {
-                    radius: 1,
-                    duration: 1,
-                    ease: "power2.out",
-                  });
-                }),
-                d.gravity.set(0, 0.2, 0),
-                (Vt = -20)),
-              N === "stopProgress" &&
-                ((hi = !1),
-                Pt.forEach(({ body: G }) => {
-                  ye(G, 1.5);
-                }),
-                c.add(() => {
-                  V.to(de.shapes[0], {
-                    radius: 2.81,
-                    duration: 1,
-                    ease: "power2.out",
-                  });
-                }),
-                d.gravity.set(0, 2, 0),
-                (Vt = 20)),
               N === "finishProgress")
             ) {
               ((di = !0),
@@ -6358,8 +6326,7 @@ let Ws,
                       }));
                   },
                 });
-              }),
-                setTimeout(() => {}, 2e3));
+              }));
             }
           }),
             Si(() => {
@@ -7451,130 +7418,17 @@ let Ws,
         },
       }),
       (ho = co),
-      (uo = { class: "click-and-hold" }),
-      (po = { class: "wrapper" }),
-      (yo = O(
-        "p",
-        { class: "text" },
-        [
-          O("span", null, "Are you ready to step into the future?"),
-          Lt(),
-          O("span", null, "Click and hold"),
-          O("span", null, "Tap and hold"),
-          O("span", { class: "hold-key-hint" }, "or hold Space"),
-        ],
-        -1,
-      )),
-      (mo = { class: "progress" }),
       (vo = {
-        __name: "clickAndHold",
+        __name: "introUnlock",
         setup(b) {
-          const t = ge(),
-            e = et(null),
-            i = et(null),
-            o = et(null),
-            s = et(!1);
-          let n,
-            r = V.context(() => {
-              n = V.timeline({ paused: !0 });
-            });
-          (t.$onAction(({ name: d }) => {
-            (d === "setSceneStartingPosition" && (l(), a()),
-              d === "finishProgress" && (s.value = !0),
-              d === "holdGlass" && c(),
-              d === "stopGlass" && u());
-          }),
-            // Keyboard path: holding Space/Enter works like click-and-hold
-            // (the intro otherwise locks keyboard users out of the page).
-            we(() => {
-              window.addEventListener("keydown", hk), window.addEventListener("keyup", hu);
-            }),
-            Si(() => {
-              window.removeEventListener("keydown", hk), window.removeEventListener("keyup", hu);
-            }));
-          const isHoldKey = (ev) =>
-              (ev.key === " " || ev.key === "Enter") &&
-              !s.value &&
-              !ev.target.closest?.("input, textarea, select, a, button, [contenteditable]") &&
-              !document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"),
-            hk = (ev) => {
-              if (!isHoldKey(ev)) return;
-              ev.preventDefault();
-              ev.repeat || t.holdGlass();
-            },
-            hu = (ev) => {
-              if (!isHoldKey(ev)) return;
-              ev.preventDefault();
-              t.stopGlass();
-            };
-          const a = () => {
-              r.add(() => {
-                V.to(i.value, { duration: 0.5, opacity: 1 });
-              });
-            },
-            l = () => {
-              n.fromTo(
-                e.value,
-                { width: "0%" },
-                {
-                  width: "100%",
-                  duration: 2,
-                  ease: "none",
-                  onUpdate: function () {
-                    t.updateProgress(this.progress());
-                  },
-                  onComplete: () => {
-                    (
-                      t.finishProgress(),
-                      V.to(".click-and-hold", {
-                        duration: 0.5,
-                        opacity: 0,
-                        onComplete: () => {
-                          V.set(".click-and-hold", { display: "none" });
-                        },
-                      }));
-                  },
-                },
-              );
-            },
-            c = () => {
-              s.value || (t.startProgress(), n.play());
-            },
-            u = () => {
-              s.value || (t.stopProgress(), n.pause(), n.reverse());
-            };
-          return (d, p) => (
-            _t(),
-            Ue(
-              "div",
-              { ref_key: "parent", ref: i, class: "parent-click-hold" },
-              [
-                O("div", uo, [
-                  O("div", po, [
-                    yo,
-                    O("div", mo, [
-                      O(
-                        "div",
-                        { ref_key: "progress", ref: e, class: "progress-bar" },
-                        null,
-                        512,
-                      ),
-                    ]),
-                  ]),
-                ]),
-                O(
-                  "audio",
-                  {
-                    ref_key: "audio",
-                    ref: o,
-                  },
-                  null,
-                  512,
-                ),
-              ],
-              512,
-            )
-          );
+          const t = ge();
+          // No click-and-hold gate: the site unlocks as soon as the
+          // jellyfish entrance lands (deferred so the scene's own
+          // setSceneStartingPosition handler runs first).
+          t.$onAction(({ name: d }) => {
+            d === "setSceneStartingPosition" && setTimeout(() => t.finishProgress());
+          });
+          return () => null;
         },
       }),
       (fo = vo),
@@ -7793,6 +7647,7 @@ let Ws,
                 O("div", Fo, [
                   O("div", Ro, [
                     No,
+                    O("p", { class: "brand" }, "Chaitanya 2026"),
                     O(
                       "p",
                       Io,
@@ -8100,22 +7955,6 @@ let Ws,
                   O(
                     "div",
                     {
-                      onMousedown:
-                        i[0] ||
-                        (i[0] = (...s) =>
-                          J(t).holdGlass && J(t).holdGlass(...s)),
-                      onMouseup:
-                        i[1] ||
-                        (i[1] = (...s) =>
-                          J(t).stopGlass && J(t).stopGlass(...s)),
-                      onTouchstart:
-                        i[2] ||
-                        (i[2] = (...s) =>
-                          J(t).holdGlass && J(t).holdGlass(...s)),
-                      onTouchend:
-                        i[3] ||
-                        (i[3] = (...s) =>
-                          J(t).stopGlass && J(t).stopGlass(...s)),
                       class: "home-page",
                     },
                     [

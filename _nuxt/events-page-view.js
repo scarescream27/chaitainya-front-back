@@ -48,12 +48,6 @@ let a,
           }
         });
 
-        setTimeout(() => {
-          try {
-            initEventsPage();
-          } catch (err) {}
-        }, 100);
-
         const eventsHtml = renderEventsPageHtml();
 
         return (i, c) => (
