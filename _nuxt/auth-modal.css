@@ -27,39 +27,6 @@
   --am-cart-bg: #e8f0fe;
   --am-cart-ink: #0b3d91;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --am-scrim: rgba(5, 9, 18, 0.6);
-    --am-scrim-solid: rgba(5, 9, 18, 0.85);
-    --am-pp-scrim: rgba(5, 9, 18, 0.5);
-    --am-pattern: none; /* the dot pattern is dark-on-light art */
-    --am-link-hover: #7cb2ff;
-    --am-hot: var(--danger);
-    --am-excel: #5fd3a0;
-    --am-info-bg: #12233d;
-    --am-info-ink: #9cc4ff;
-    --am-cart-bg: #12233d;
-    --am-cart-ink: #9cc4ff;
-  }
-
-  /* Home and 404 stay light (see tokens.css). */
-  html:not(.not-home),
-  html:has(.error-page) {
-    --am-scrim: rgba(220, 232, 252, 0.45);
-    --am-scrim-solid: rgba(220, 226, 236, 0.8);
-    --am-pp-scrim: rgba(214, 220, 232, 0.35);
-    --am-pattern: url(/images/footerPatern.png);
-    --am-link-hover: #0433ff;
-    --am-hot: #e4001d;
-    --am-excel: #107c41;
-    --am-info-bg: #e8f4fd;
-    --am-info-ink: #004085;
-    --am-cart-bg: #e8f0fe;
-    --am-cart-ink: #0b3d91;
-  }
-}
-
 /* Modal Root Overlay - Frosted luminous blur */
 .chaitanya-modal-backdrop {
   position: fixed;

@@ -11,14 +11,6 @@
 .transition-component {
   background: var(--surface);
 }
-
-@media (prefers-color-scheme: dark) {
-  /* The curtain's logo is black art: invert it to light ink on dark pages. */
-  html.not-home:not(:has(.error-page)) .transition-component .wrapper .logo {
-    filter: invert(1);
-  }
-}
-
 /* 404 page "go home" link. */
 .error-page .go-home {
   color: var(--ink);

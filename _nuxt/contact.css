@@ -457,39 +457,6 @@
   white-space: nowrap;
   border: 0;
 }
-
-@media (prefers-color-scheme: dark) {
-  .contact-page[data-v-8976a4c8] {
-    background-color: var(--sky-top);
-    background-image: var(--page-bg);
-    background-size: var(--page-bg-size);
-  }
-  .contact-page {
-    /* Field outlines stay ≥3:1 against the navy sky (WCAG 1.4.11). */
-    --contact-bubble-border: color-mix(in srgb, var(--ink-muted) 70%, transparent);
-    --contact-bubble-fill: var(--surface-sunken);
-    --contact-bubble-focus-fill: var(--surface-raised);
-    --contact-bubble-focus-shadow: var(--shadow-soft);
-    --contact-track: var(--line);
-  }
-  .contact-form .wrapper form .input-wrapper.red-outline .outline {
-    border-color: var(--danger);
-  }
-  .contact-form .wrapper form .input-wrapper .error {
-    background: var(--danger-bg);
-    border-color: var(--danger-bg);
-    color: var(--danger-ink);
-  }
-  .bubble-hud-badge {
-    box-shadow: var(--shadow-soft);
-  }
-  .contact-form .wrapper form .heart {
-    background: var(--surface-raised);
-    background-image: none;
-    box-shadow: var(--shadow-soft);
-  }
-}
-
 /* ==========================================================================
    Text scaling: phone pills had a fixed height, so enlarged text (text-only
    zoom / larger default font) was clipped. Grow from a 54px minimum instead.

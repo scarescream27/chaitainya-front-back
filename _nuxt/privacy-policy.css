@@ -457,36 +457,3 @@ body:has(.privacy-page-root) .transition-component,
     min-height: var(--tap);
   }
 }
-
-/* Dark: opaque token surface (no translucent wash, no backdrop blur) and the
-   black-alpha hairlines become --line. */
-@media (prefers-color-scheme: dark) {
-  .privacy-page-root {
-    --privacy-accent: #6a2a8a;
-  }
-
-  .privacy-back-btn,
-  .privacy-contact-btn,
-  .privacy-quick-nav,
-  .privacy-card {
-    background: var(--surface);
-  }
-
-  .privacy-back-btn:hover,
-  .privacy-contact-btn:hover {
-    background: var(--ink);
-  }
-
-  .privacy-quick-nav {
-    border-color: var(--line);
-  }
-
-  .privacy-card-header {
-    border-bottom-color: var(--line);
-  }
-
-  .privacy-card,
-  .privacy-card:hover {
-    box-shadow: var(--shadow-soft);
-  }
-}

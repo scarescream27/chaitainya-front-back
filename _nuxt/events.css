@@ -2115,82 +2115,12 @@ select.event-reg-input {
     margin-top: 36px;
   }
 }
-
-/* ==========================================================================
-   Dark mode (colours come from tokens.css; this only drops the dot pattern,
-   which is dark-on-light art, from the cards and panels).
-   ========================================================================== */
-@media (prefers-color-scheme: dark) {
-  .event-card,
-  .event-dossier-panel,
-  .event-reg-card {
-    background-image: none;
-  }
-}
-
 /* Placeholders: browser default grey fell to ~3.7:1 on the dark surface. */
 .events-search-input::placeholder,
 .event-reg-input::placeholder {
   color: var(--ink-muted);
   opacity: 1;
 }
-
-/* Dark mode: the light theme's navy-tinted shadows read as coloured glows on
-   the navy page, so swap them for neutral black ones (hover stays stronger). */
-@media (prefers-color-scheme: dark) {
-  .events-stat-pill {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .events-toolbar {
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
-  }
-
-  .events-toolbar.is-pinned {
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .event-card {
-    box-shadow:
-      0 20px 48px rgba(0, 0, 0, 0.35),
-      0 2px 10px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 var(--surface);
-  }
-
-  .event-card.is-revealed:hover {
-    box-shadow:
-      0 32px 64px rgba(0, 0, 0, 0.5),
-      0 4px 16px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 var(--surface);
-  }
-
-  .event-dossier-panel {
-    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.45);
-  }
-
-  .event-reg-card {
-    box-shadow: var(--shadow-soft);
-  }
-
-  .events-scroll-hud {
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 var(--surface);
-  }
-
-  .events-scroll-top-btn:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  .events-cart-panel {
-    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.45);
-  }
-}
-
-@media (prefers-color-scheme: dark) and (hover: none), (prefers-color-scheme: dark) and (max-width: 1024px) {
-  .event-card {
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-  }
-}
-
 /* Dialog titles take programmatic focus (tabindex="-1") when a drawer/modal
    opens or a checkout step changes; they are not controls, so no ring. */
 .event-dossier-title:focus,

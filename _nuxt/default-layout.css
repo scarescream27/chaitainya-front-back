@@ -75,32 +75,6 @@ header .header .menu-switch:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
-
-@media (prefers-color-scheme: dark) {
-  /* Dark pages: the black logo art is inverted to light ink, and the
-     dark-on-light dot pattern is dropped from the mobile menu. */
-  html.not-home:not(:has(.error-page)) header .header .header-logo img {
-    filter: invert(1);
-  }
-
-  html.not-home:not(:has(.error-page)) header .header .mobile-menu {
-    background-image: linear-gradient(180deg, var(--surface), transparent 79%);
-  }
-
-  @supports (color: color-mix(in srgb, red 30%, transparent)) {
-    html.not-home:not(:has(.error-page)) header .header .mobile-menu {
-      background-image: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 30%, transparent) 79%);
-    }
-  }
-
-  /* Page background behind everything (overscroll, short pages). The loader
-     classes and the home/404 pages keep the light gradient above. */
-  html.not-home:not(.ch-preload):not(.site-loading):not(:has(.error-page)) {
-    background: linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
-    background-attachment: fixed;
-  }
-}
-
 /* Tablet widths (768-1100px): six nav links plus the logo overflowed the
    header around 768-890px. Tighten the spacing, never the text size. */
 @media (min-width: 768px) and (max-width: 1100px) {
