@@ -44,7 +44,7 @@ function goTo(path) {
 }
 
 /**
- * The account slot of the nav: [Sign In/Up] when signed out, the profile
+ * The account slot of the nav: [Register] when signed out, the profile
  * avatar when signed in (log out lives on the profile page).
  *
  * Each link is its own keyed block (openBlock + createElementBlock): the
@@ -75,8 +75,8 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
   // mixes up the links after them on sign-in / sign-out.
   const slot = () => (openBlock(), block("span", { key: "nav-account-slot", hidden: true }));
   if (!user) {
-    // Google sign-in also creates the account, so one entry point covers both.
-    return [link("nav-signin", "#login", "Sign In/Up", () => openAuthModal("login")), slot()];
+    // One entry point: the Register dialog links to Sign In for returning users.
+    return [link("nav-register", "#register", "Register", () => openAuthModal("register")), slot()];
   }
   const initials = (user.displayName || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
   const avatar = user.photoURL
