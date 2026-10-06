@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Phones and touch screens
+   Loaded last (index.html), so these rules win over the page stylesheets
+   they adjust. Desktop layouts are untouched: every rule sits behind a
+   width or pointer media query.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Touch input (any width)
+   -------------------------------------------------------------------------- */
+@media (hover: none), (pointer: coarse) {
+  /* The follow-the-mouse cursor has no mouse to follow on a touch screen; it
+     sat in the middle of the screen (or wherever the last tap was). */
+  #cursor {
+    display: none !important;
+  }
+
+  /* iOS Safari zooms the page into any focused field under 16px. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* A fixed background repaints the whole page on every scroll frame on
+     phones (iOS ignores it anyway). */
+  html {
+    background-attachment: scroll;
+  }
+
+  a,
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Home intro is "tap and hold": stop the long press from selecting the
+     hero text or opening the copy / save-image callout. */
+  .home-page,
+  .scene-texts,
+  .parent-click-hold,
+  .click-and-hold,
+  #home-scene {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Header and mobile menu
+   -------------------------------------------------------------------------- */
+@media (max-width: 991px) {
+  /* Content pages scroll under the fixed header; without a background their
+     text ran straight through the logo. (Home keeps the clear header over
+     the 3D scene.) */
+  html.not-home header {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sky-top) 97%, transparent) 80%,
+      color-mix(in srgb, var(--sky-top) 0%, transparent)
+    );
+  }
+}
+
+@media (max-width: 767px) {
+  /* The open menu is inside #__nuxt (its own stacking layer, z-index 11),
+     so the floating cart / scroll buttons (990, outside it) drew on top of
+     the menu. Hide them while the menu is open. */
+  html:has(header .menu-switch.active) .events-cart-fab,
+  html:has(header .menu-switch.active) .events-scroll-hud {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Opaque menu instead of a live blur of the page (or the 3D scene) behind
+     it, which phones recomputed every frame. */
+  header .header .mobile-menu {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-image: url(/images/footerPatern.png), linear-gradient(180deg, #ffffff, #f7faff 79%);
+  }
+
+  /* The e-mail ran off both edges at 38px. */
+  header .header .mobile-menu .bottom a {
+    font-size: clamp(20px, 7vw, 38px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dialogs: sign in / register, event details, cart, registration
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Mobile browser bars cover the bottom of 100vh; size to the visible area
+     (browsers without dvh keep the vh value from the page stylesheets). */
+  .chaitanya-modal-backdrop,
+  .event-dossier-overlay,
+  .event-reg-modal {
+    height: 100dvh;
+  }
+
+  .chaitanya-modal-backdrop {
+    padding: 12px;
+    /* A live blur of the page (and of the running 3D scene on home) behind
+       the dialog is the costliest thing a phone can composite. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--sky-top) 82%, transparent);
+  }
+
+  .chaitanya-modal-card {
+    max-height: calc(100dvh - 24px);
+    /* Room at the top for the absolutely placed [ ESC / CLOSE ] button,
+       which covered the "[ Chaitanya 2k26 • … ]" tag. */
+    padding: 60px 20px 24px;
+    border-radius: 22px;
+    background-color: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .chaitanya-modal-close {
+    top: 14px;
+    right: 14px;
+    min-height: 40px;
+  }
+
+  /* "[ Continue with Google ]" wrapped, leaving a lone "]" on line two. */
+  .btn-google-auth {
+    gap: 10px;
+    padding: 14px 16px;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+
+  /* Event details, cart and registration panels fill the phone screen, so
+     the blur behind them was never visible, only paid for. */
+  .event-dossier-overlay,
+  .event-reg-modal,
+  .events-cart-overlay {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .events-cart-panel {
+    background: var(--surface);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Events page
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Let the last cards scroll clear of the floating cart / top buttons. */
+  .events-page-root {
+    padding-bottom: 104px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* The "% explored" readout made the scroll pill run into the cart button;
+     keep just [ ↑ TOP ], level with the cart button. */
+  .events-scroll-hud {
+    right: 16px;
+    bottom: 16px;
+    padding: 4px;
+    gap: 0;
+  }
+
+  .events-scroll-metric {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Two buttons side by side wrapped to two lines each ("]" alone on the
+     second); stack them full width instead. */
+  .event-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .event-btn-details,
+  .event-btn-register {
+    flex: none;
+    width: 100%;
+    white-space: nowrap;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Contact page
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* 8px side margins left the form touching the screen edges. */
+  .contact-page[data-v-8976a4c8] {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* contact.css sizes the pills to 100vw - 16px with !important. */
+  .contact-form .wrapper form .input-wrapper {
+    flex: 0 0 100% !important;
+  }
+
+  /* The field itself was a 20px strip in the middle of the 56px pill, so
+     most taps on the pill missed it. */
+  .contact-form .wrapper form .input-wrapper input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0 20px;
+  }
+
+  .contact-form .wrapper form .input-wrapper textarea {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    min-height: 36px;
+    padding: 0 20px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Privacy policy
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  /* Eight stacked section links took a whole screen; one swipeable row. */
+  .privacy-quick-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding: 12px;
+  }
+
+  .privacy-quick-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quick-nav-pill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 40px;
+  }
+}

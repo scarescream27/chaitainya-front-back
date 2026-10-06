@@ -21,9 +21,9 @@ export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
 
-// Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours),
-// so they switch with light/dark mode; both palettes pass WCAG AA (4.5:1) for
-// 12px labels on the cards. Change the hues in tokens.css, not here.
+// Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
+// they pass WCAG AA (4.5:1) for 12px labels on the cards. Change the hues in
+// tokens.css, not here.
 export const EVENT_CATEGORIES = [
   { id: "all", name: "ALL EVENTS", shortCode: "ALL", count: 20 },
   { id: "tech", name: "CODING & TECH", shortCode: "TECH", count: 6, accent: "var(--cat-tech)" },

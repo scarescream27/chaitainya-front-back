@@ -2,7 +2,7 @@
    Chaitanya 2k26 — design tokens and base defaults
    Loaded first; every other stylesheet may use these variables.
 
-   Light only: the site does not follow the device dark-mode setting.
+   The site has a single light theme (no dark mode).
    ========================================================================== */
 
 :root {

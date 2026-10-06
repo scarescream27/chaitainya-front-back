@@ -11,9 +11,8 @@
  */
 
 /* Local colours for the dialog, profile and admin UI that have no shared
-   token. Light values are the original ones; dark values follow tokens.css.
-   Translucent white/black tints elsewhere in this file are written as
-   color-mix() of --surface / --ink, so light mode renders exactly as before. */
+   token. Translucent white/black tints elsewhere in this file are written as
+   color-mix() of --surface / --ink. */
 :root {
   --am-scrim: rgba(220, 232, 252, 0.45);
   --am-scrim-solid: rgba(220, 226, 236, 0.8);
@@ -1719,7 +1718,7 @@ html.not-home header {
   width: 132px;
 }
 
-/* Literally white (not --surface) so the QR stays black on white in dark mode. */
+/* Literally white so the QR always scans as black on white. */
 .prof-qr-code {
   width: 100%;
   background: #ffffff;
@@ -1768,7 +1767,7 @@ html.not-home header {
 }
 
 .checkout-qrs li svg {
-  background: #ffffff; /* keep entry QRs black on white in dark mode */
+  background: #ffffff; /* keep entry QRs black on white */
 }
 
 .checkout-qrs li {
@@ -1930,7 +1929,6 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
     align-items: center;
   }
 }
-
 
 /* Touch screens: dialog, profile and admin controls are at least 44px tall. */
 @media (pointer: coarse), (max-width: 767px) {

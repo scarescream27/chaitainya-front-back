@@ -14,7 +14,7 @@
   min-height: 100vh;
   width: 100%;
   padding: 85px 24px 60px;
-  /* Dot pattern + sky gradient in light, gradient only in dark (tokens.css). */
+  /* Dot pattern + sky gradient (tokens.css). */
   background-image: var(--page-bg);
   background-repeat: repeat;
   background-size: var(--page-bg-size);
@@ -681,7 +681,6 @@ body:has(.events-page-root) .transition-component,
   color: var(--ink);
   border-bottom: 1.5px solid var(--line-strong);
   padding-bottom: 6px;
-  margin-top: 16px;
   margin-bottom: 12px;
 }
 
@@ -1234,35 +1233,6 @@ body:has(.events-page-root) .transition-component,
   margin: 0;
 }
 
-.event-upi-copy-btn {
-  margin-inline-start: auto;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 20px;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-
-.event-upi-where {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--fs-label);
-  line-height: 1.5;
-}
-
-.event-upi-where summary {
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.event-upi-where p {
-  margin: 6px 0 0;
-  color: color-mix(in srgb, var(--ink) 73%, var(--surface));
-}
-
 #reg-payment-box .event-reg-group {
   width: 100%;
   text-align: left;
@@ -1720,10 +1690,6 @@ body:has(.events-page-root) .transition-component,
   width: 100%;
 }
 
-.cart-done + .cart-done {
-  margin-top: 8px;
-}
-
 .cart-empty {
   padding: 40px 22px;
   text-align: center;
@@ -2030,7 +1996,6 @@ select.event-reg-input {
   background: color-mix(in srgb, var(--surface) 97%, transparent);
 }
 
-
 /* Touch screens: every control is at least 44px tall (WCAG 2.5.8 / Apple HIG). */
 @media (pointer: coarse), (max-width: 767px) {
   .events-cat-btn,
@@ -2057,7 +2022,6 @@ select.event-reg-input {
     min-width: var(--tap);
   }
 }
-
 
 /* ==========================================================================
    Polish pass
@@ -2115,7 +2079,7 @@ select.event-reg-input {
     margin-top: 36px;
   }
 }
-/* Placeholders: browser default grey fell to ~3.7:1 on the dark surface. */
+/* Placeholders: browser default grey is too faint; use the muted ink. */
 .events-search-input::placeholder,
 .event-reg-input::placeholder {
   color: var(--ink-muted);
