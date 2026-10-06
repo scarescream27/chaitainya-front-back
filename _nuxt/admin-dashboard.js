@@ -24,6 +24,9 @@ import {
   rejectPayment,
   backfillTeamCodes,
   passId,
+  legacyPassId,
+  paymentCovers,
+  teamCovers,
 } from "./auth-service.js";
 import { isAdminUser } from "./firebase-config.js";
 import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
@@ -214,13 +217,15 @@ function computeData() {
     const fee = eventFee(r.event_id);
     let payStatus;
     if (r.participation_type === "team" && r.team_role === "member") {
+      // Only the leader's payment for this team's own event counts for a linked member.
       const team = teamsById.get(r.team_id);
-      const leaderPay = team?.paymentId ? paymentsById.get(team.paymentId) : null;
-      payStatus = fee === 0 ? "free" : leaderPay?.status || "unpaid";
+      const leaderPay = teamCovers(team, r) && team.paymentId ? paymentsById.get(team.paymentId) : null;
+      payStatus = fee === 0 ? "free" : (paymentCovers(leaderPay, r.event_id, team?.leaderUid) && leaderPay.status) || "unpaid";
     } else if (fee === 0) {
       payStatus = "free";
     } else {
-      payStatus = paymentsById.get(r.payment_id)?.status || "unpaid";
+      const pay = paymentsById.get(r.payment_id);
+      payStatus = (paymentCovers(pay, r.event_id, r.user_id) && pay.status) || "unpaid";
     }
     return { ...r, fee, payStatus, team: teamsById.get(r.team_id) || null };
   });
@@ -520,7 +525,7 @@ function parseCheckinInput(raw) {
   if (verify) return { studentId: verify[1].toUpperCase() };
   const up = text.toUpperCase();
   if (/^CH26-[A-Z2-9]{8}$/.test(up)) return { studentId: up };
-  if (/^CH26-[A-Z0-9]{1,4}-\d{5}$/.test(up)) return { pass: up };
+  if (/^CH26-([A-Z0-9]{4}-\d{7}|[A-Z0-9]{1,4}-\d{5})$/.test(up)) return { pass: up };
   return { text: text.toLowerCase() };
 }
 
@@ -532,7 +537,7 @@ function renderCheckin({ regRows }) {
     let matches = [];
     // Only trust a pass ID that matches the one derived from the registration's own event + user;
     // registration_qr_id is client-written, so a copied ID on another booking must not match.
-    if (q?.pass) matches = regRows.filter((r) => passId(r.event_id, r.user_id) === q.pass);
+    if (q?.pass) matches = regRows.filter((r) => [passId(r.event_id, r.user_id), legacyPassId(r.event_id, r.user_id)].includes(q.pass));
     else if (q?.studentId) matches = regRows.filter((r) => String(r.student_id || "").toUpperCase() === q.studentId);
     else if (q?.text) matches = regRows.filter((r) => [r.user_name, r.user_email, r.user_phone].some((v) => String(v || "").toLowerCase().includes(q.text)));
     results = matches.length
@@ -555,7 +560,7 @@ function renderCheckin({ regRows }) {
       : `<div class="pp-verify bad"><strong>✕ NOT FOUND</strong><p>No registration matches “${e(c.query)}”.</p></div>`;
   }
   return `
-    ${sectionHead("02 // CHECK-IN", "Venue check-in", "Scan a participant's entry QR (most scanner apps paste the text), or type a pass ID (CH26-XXXX-00000), Chaitanya ID (CH26-XXXXXXXX), name, email or phone.")}
+    ${sectionHead("02 // CHECK-IN", "Venue check-in", "Scan a participant's entry QR (most scanner apps paste the text), or type a pass ID (CH26-XXXX-0000000), Chaitanya ID (CH26-XXXXXXXX), name, email or phone.")}
     <form class="adm-checkin-form" data-adm-form="checkin" novalidate>
       <input type="text" name="q" value="${e(c?.query || "")}" placeholder="Paste QR text or type an ID / name" autocomplete="off" aria-label="Pass ID, Chaitanya ID, QR text, name, email or phone" />
       <button type="submit" class="pp-primary">Look up</button>

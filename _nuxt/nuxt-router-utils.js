@@ -115,6 +115,7 @@ let st,
       ut = d("img", { src: lt, alt: "Logo" }, null, -1),
       tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
+      tabAbout = d("span", null, "About", -1),
       tabAdmin = d("span", null, "Admin", -1),
       gt = at(
         '<div class="line"></div><div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
@@ -124,6 +125,7 @@ let st,
       mt = { class: "top" },
       mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
+      mAbout = d("span", null, "About", -1),
       mAdmin = d("span", null, "Admin", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
@@ -149,6 +151,23 @@ let st,
             N.value && (N.value.inert = !open);
           };
           const onMenuKey = (e) => {
+            // Open menu covers the page: Tab cycles between the menu button and
+            // the menu's links instead of escaping to hidden content behind it.
+            if (e.key === "Tab" && n.getMobileMenuOpen && N.value) {
+              const sw = document.querySelector("header .header .menu-switch");
+              const items = [sw, ...N.value.querySelectorAll("a[href], button:not(:disabled)")].filter(
+                (el) => el && el.offsetParent !== null,
+              );
+              if (items.length) {
+                const i = items.indexOf(document.activeElement);
+                const next = e.shiftKey
+                  ? items[i <= 0 ? items.length - 1 : i - 1]
+                  : items[i === -1 || i === items.length - 1 ? 0 : i + 1];
+                e.preventDefault();
+                next.focus();
+              }
+              return;
+            }
             if (e.key === "Escape" && n.getMobileMenuOpen) {
               n.openMobileMenu(!1);
               document.querySelector("header .header .menu-switch")?.focus();
@@ -175,7 +194,7 @@ let st,
                 m === "setSceneStartingPosition" &&
                   be.to("header", {
                     opacity: 1,
-                    duration: 0.5,
+                    duration: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 0.15 : 0.5,
                     ease: "power2.inOut",
                   }));
             }),
@@ -207,21 +226,25 @@ let st,
               initAuthModal();
               initFirebase();
               syncNavbarAuthState(authCurrentUser.value);
+              const rmMenu = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
               (f
                 .fromTo(
                   N.value,
                   { opacity: 0, pointerEvents: "none" },
                   {
                     opacity: 1,
-                    duration: 0.5,
+                    // Reduced motion: a short opacity fade only.
+                    duration: rmMenu ? 0.15 : 0.5,
                     pointerEvents: "auto",
                     ease: "power2.inOut",
                   },
                 )
                 .fromTo(
                   ".mobile-menu a",
-                  { opacity: 0, y: -5 },
-                  { opacity: 1, y: 0, stagger: 0.05, ease: "power2.inOut" },
+                  { opacity: 0, y: rmMenu ? 0 : -5 },
+                  rmMenu
+                    ? { opacity: 1, y: 0, duration: 0.15, ease: "none" }
+                    : { opacity: 1, y: 0, stagger: 0.05, ease: "power2.inOut" },
                 ),
                 g.path === "/" &&
                   k.fromTo(
@@ -290,6 +313,11 @@ let st,
                           { to: "/events" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
+                        Y(
+                          z,
+                          { to: "/about" },
+                          { default: Z(() => [O("["), tabAbout, O("]")]), _: 1 },
+                        ),
                         d(
                           "a",
                           {
@@ -347,6 +375,14 @@ let st,
                                     { to: "/events" },
                                     {
                                       default: Z(() => [O("["), mEvents, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  Y(
+                                    z,
+                                    { to: "/about" },
+                                    {
+                                      default: Z(() => [O("["), mAbout, O("]")]),
                                       _: 1,
                                     },
                                   ),

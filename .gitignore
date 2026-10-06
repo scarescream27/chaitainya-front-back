@@ -28,3 +28,4 @@ __pycache__/
 
 # Firebase CLI deploy cache
 .firebase/
+.gstack/

@@ -34,6 +34,7 @@ const GOOGLE_ICON_SVG = `
 `;
 
 let modalBackdrop = null;
+let bound = false; // global listeners/subscriptions attached
 let currentMode = "login"; // "login" | "register" | "profile" | "admin"
 let afterSignIn = null; // e.g. open the profile once a signed-out visitor signs in
 let lastFocus = null; // element that opened the dialog; focus returns there on close
@@ -97,11 +98,10 @@ function syncAppInert() {
 export function initAuthModal() {
   if (typeof document === "undefined") return;
 
-  const existingBackdrop = document.getElementById("chaitanya-auth-backdrop");
-  if (existingBackdrop) {
-    modalBackdrop = existingBackdrop;
-    return;
-  }
+  // Bind once, even when the backdrop is already in the DOM (reuse it then).
+  if (bound) return;
+  bound = true;
+  modalBackdrop = document.getElementById("chaitanya-auth-backdrop");
 
   if (!modalBackdrop) {
     modalBackdrop = document.createElement("div");
@@ -121,72 +121,72 @@ export function initAuthModal() {
 
     modalBackdrop.inert = true; // closed: nothing inside is focusable
     document.body.appendChild(modalBackdrop);
-
-    // Close listeners
-    modalBackdrop.addEventListener("click", (e) => {
-      if (e.target === modalBackdrop) {
-        closeAuthModal();
-      }
-    });
-
-    const closeBtn = modalBackdrop.querySelector("#chaitanya-modal-close-btn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => closeAuthModal());
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (!modalBackdrop.classList.contains("active")) return;
-      if (e.key === "Escape") {
-        e.preventDefault(); // tells other Escape handlers this press was used
-        closeAuthModal();
-      } else if (e.key === "Tab") {
-        const card = modalBackdrop.querySelector(".chaitanya-modal-card");
-        if (card) trapTab(e, card);
-      }
-    });
-
-    // Delegated click handler for navbar and any in-page auth buttons
-    document.addEventListener("click", (e) => {
-      const anchor = e.target.closest("a");
-      if (!anchor || e.defaultPrevented) return;
-      const href = anchor.getAttribute("href");
-
-      if (href === "#login") {
-        e.preventDefault();
-        openAuthModal("login");
-      } else if (href === "#register") {
-        e.preventDefault();
-        openAuthModal("register");
-      } else if (href === "#admin") {
-        e.preventDefault();
-        openAuthModal("admin");
-      } else if (href === "#profile") {
-        e.preventDefault();
-        openAuthModal("profile");
-      } else if (href === "#logout") {
-        e.preventDefault();
-        signOutUser().then(() => {
-          if (window.location.pathname.replace(/\/$/, "") === "/profile") goToPage("/");
-        });
-      }
-    });
-
-    // Listen to hash and route changes (#login, #register, #admin, /login, /register, /admin)
-    window.addEventListener("hashchange", checkUrlRoute);
-    window.addEventListener("popstate", checkUrlRoute);
-    // Wait for the first auth state so signed-in visitors aren't shown Register.
-    initFirebase().finally(checkUrlRoute);
-
-    // Subscribe to auth changes to keep navbar updated
-    subscribeAuthState(syncNavbarAuthState);
-    // Signed in (popup, redirect or another tab): leave Sign In / Create Account.
-    subscribeAuthState((user) => {
-      if (user && modalBackdrop?.classList.contains("active")) {
-        closeAuthModal();
-        runAfterSignIn();
-      }
-    });
   }
+
+  // Close listeners
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) {
+      closeAuthModal();
+    }
+  });
+
+  const closeBtn = modalBackdrop.querySelector("#chaitanya-modal-close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => closeAuthModal());
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (!modalBackdrop.classList.contains("active")) return;
+    if (e.key === "Escape") {
+      e.preventDefault(); // tells other Escape handlers this press was used
+      closeAuthModal();
+    } else if (e.key === "Tab") {
+      const card = modalBackdrop.querySelector(".chaitanya-modal-card");
+      if (card) trapTab(e, card);
+    }
+  });
+
+  // Delegated click handler for navbar and any in-page auth buttons
+  document.addEventListener("click", (e) => {
+    const anchor = e.target.closest("a");
+    if (!anchor || e.defaultPrevented) return;
+    const href = anchor.getAttribute("href");
+
+    if (href === "#login") {
+      e.preventDefault();
+      openAuthModal("login");
+    } else if (href === "#register") {
+      e.preventDefault();
+      openAuthModal("register");
+    } else if (href === "#admin") {
+      e.preventDefault();
+      openAuthModal("admin");
+    } else if (href === "#profile") {
+      e.preventDefault();
+      openAuthModal("profile");
+    } else if (href === "#logout") {
+      e.preventDefault();
+      signOutUser().then(() => {
+        if (window.location.pathname.replace(/\/$/, "") === "/profile") goToPage("/");
+      });
+    }
+  });
+
+  // Listen to hash and route changes (#login, #register, #admin, /login, /register, /admin)
+  window.addEventListener("hashchange", checkUrlRoute);
+  window.addEventListener("popstate", checkUrlRoute);
+  // Wait for the first auth state so signed-in visitors aren't shown Register.
+  initFirebase().finally(checkUrlRoute);
+
+  // Subscribe to auth changes to keep navbar updated
+  subscribeAuthState(syncNavbarAuthState);
+  // Signed in (popup, redirect or another tab): leave Sign In / Create Account.
+  subscribeAuthState((user) => {
+    if (user && modalBackdrop?.classList.contains("active")) {
+      closeAuthModal();
+      runAfterSignIn();
+    }
+  });
 }
 
 export function syncNavbarAuthState(user) {
@@ -331,8 +331,8 @@ async function renderModalContent() {
 function renderLoginView(container, isConfigured) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Sign In</h2>
-      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to register for events and view your entry passes.</p>
+      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Sign in</h2>
+      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to register for events and see your entry QR codes.</p>
     </div>
 
     ${isConfigured ? "" : DEMO_BANNER}
@@ -344,23 +344,23 @@ function renderLoginView(container, isConfigured) {
       <span>[ Continue with Google ]</span>
     </button>
 
-    <div class="chaitanya-divider"><span>New here?</span></div>
+    <div class="chaitanya-divider"><span>New here</span></div>
 
     <div class="chaitanya-modal-footer">
-      First time? Signing in creates your account.
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Create Account ]</button>
+      Add your college details before you sign in.
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Create account ]</button>
     </div>
   `;
 
   const btnLogin = container.querySelector("#btn-do-google-login");
   btnLogin.addEventListener("click", async () => {
-    setBusy(btnLogin, true, "Connecting to Google...");
+    setBusy(btnLogin, true, "Connecting to Google…");
     try {
       const res = await signInWithGoogle();
       closeAuthModal();
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {
-      showAuthError(err.message || "Google sign-in failed.");
+      showAuthError(err.message || "Google sign-in didn't finish. Please try again.");
       setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`);
     }
   });
@@ -374,8 +374,8 @@ function renderLoginView(container, isConfigured) {
 function renderRegisterView(container, isConfigured) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Create Account</h2>
-      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Create your fest account, then pick events on the Events page.</p>
+      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Create account</h2>
+      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Add your details and sign in with Google. Then pick your events.</p>
     </div>
 
     ${isConfigured ? "" : DEMO_BANNER}
@@ -397,21 +397,21 @@ function renderRegisterView(container, isConfigured) {
       </div>
 
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label" for="reg-phone">Contact No (WhatsApp) *</label>
+        <label class="chaitanya-form-label" for="reg-phone">WhatsApp number *</label>
         <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
       </div>
 
-      <div class="chaitanya-divider"><span>Verify with Google</span></div>
+      <div class="chaitanya-divider"><span>Finish with Google</span></div>
 
       <button type="submit" class="btn-google-auth" id="btn-do-google-register">
         ${GOOGLE_ICON_SVG}
-        <span>[ Register with Google ]</span>
+        <span>[ Create account with Google ]</span>
       </button>
     </form>
 
     <div class="chaitanya-modal-footer">
-      Already registered?
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">[ Sign In ]</button>
+      Have an account?
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">[ Sign in ]</button>
     </div>
   `;
 
@@ -421,19 +421,19 @@ function renderRegisterView(container, isConfigured) {
     const college = container.querySelector("#reg-college").value.trim();
     const phone = container.querySelector("#reg-phone").value.trim();
     const year = container.querySelector("#reg-year").value;
-    if (!college) return showAuthError("Please enter your college / university.");
-    if (!year) return showAuthError("Please select your year.");
-    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Please enter a valid contact number.");
+    if (!college) return showAuthError("Enter your college or university.");
+    if (!year) return showAuthError("Select your year.");
+    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Enter a valid WhatsApp number (10 digits; country code optional).");
 
     const btn = container.querySelector("#btn-do-google-register");
-    setBusy(btn, true, "Registering via Google...");
+    setBusy(btn, true, "Creating your account…");
     try {
       const res = await signInWithGoogle({ college, phone, year });
       closeAuthModal();
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {
-      showAuthError(err.message || "Registration failed.");
-      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`);
+      showAuthError(err.message || "Couldn't create your account. Please try again.");
+      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Create account with Google ]</span>`);
     }
   });
 

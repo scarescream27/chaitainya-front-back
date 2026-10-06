@@ -43,7 +43,7 @@ def resolve_safe_path(url_path):
     parts = [p for p in url_path.split('/') if p]
     if any(p.startswith('.') for p in parts):  # dotfiles, .git, .env, '..'
         return None
-    if parts and parts[0] in BLOCKED_TOP_LEVEL:
+    if parts and parts[0].lower() in BLOCKED_TOP_LEVEL:
         return None
     if parts and os.path.splitext(parts[-1])[1].lower() in BLOCKED_EXTS:
         return None
@@ -340,7 +340,7 @@ class CachedHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if match:
                 start = int(match.group(1))
                 end = int(match.group(2)) if match.group(2) else total_len - 1
-                if start < total_len:
+                if start < total_len and end >= start:
                     end = min(end, total_len - 1)
                     content_length = end - start + 1
                     self.send_response(206)

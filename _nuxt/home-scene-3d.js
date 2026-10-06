@@ -192,6 +192,12 @@ const PERF_LOW = (() => {
     window.innerWidth < 900
   );
 })();
+// Reduced motion: no ambient autoplay. The jellyfish holds its pose and the
+// glass shaders stop shimmering; scroll and click-and-hold still respond.
+const REDUCED_MOTION =
+  typeof window !== "undefined" &&
+  !!window.matchMedia &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let perfFrame = 0;
 let Ws,
   Bl = Promise.all([
@@ -6855,6 +6861,7 @@ let Ws,
                     (W.children[1].material.transparent = !0),
                     (W.children[1].material.side = He),
                     c.add(() => {
+                      if (REDUCED_MOTION) return;
                       V.fromTo(
                         W.children[1].material.map.offset,
                         { x: 0 },
@@ -7034,7 +7041,7 @@ let Ws,
                 }, 100));
             },
             Oa = () => {
-              j.time = rt.getElapsedTime();
+              j.time = REDUCED_MOTION ? 0 : rt.getElapsedTime();
               for (const N of ns) {
                 const A = N;
                 j.buffer === R.texture &&
@@ -7064,7 +7071,7 @@ let Ws,
               }
             },
             Wa = () => {
-              _.time = rt.getElapsedTime();
+              _.time = REDUCED_MOTION ? 0 : rt.getElapsedTime();
               if (ri.length > 0 && _.buffer === P.texture) {
                 const A = ri[0];
                 mt = Y.gl.toneMapping;
@@ -7396,7 +7403,7 @@ let Ws,
               (fs && qa(),
                 Kt && Ka(N),
                 ms && !Kt && $a(),
-                p._actions && p.update(N),
+                p._actions && p.update(REDUCED_MOTION ? 0 : N),
                 // The glass refraction buffers re-render the whole scene; on
                 // low-power devices refresh them every other frame.
                 (perfFrame = (perfFrame + 1) % 2),
@@ -7662,7 +7669,7 @@ let Ws,
                 O("div", Fo, [
                   O("div", Ro, [
                     No,
-                    O("p", { class: "brand" }, "Chaitanya 2026"),
+                    O("p", { class: "brand" }, "Chaitanya 2k26"),
                     O(
                       "p",
                       Io,
@@ -7709,9 +7716,9 @@ let Ws,
         "p",
         null,
         [
-          Lt(" T\u043E make this experience more"),
+          Lt(" Loading the"),
           O("br"),
-          Lt(" immersive we use sound effects "),
+          Lt(" 3D fest arena "),
         ],
         -1,
       )),

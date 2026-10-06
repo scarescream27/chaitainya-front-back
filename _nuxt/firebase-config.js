@@ -43,7 +43,6 @@ export const ADMIN_EMAILS = [
   "chaitanyahptu@gmail.com",
   "adityaverma200911@gmail.com",
   "manaskapoor033@gmail.com",
-  "admin@chaitanya2k26.org",
 ];
 
 export function isAdminUser(email) {

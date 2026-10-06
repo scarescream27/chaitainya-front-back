@@ -1,4 +1,4 @@
-.contact-hero h1{color:#000;font-family:DrukMedium;font-size:89.848px;font-style:normal;font-weight:500;letter-spacing:-1.797px;line-height:76.8%;text-align:left;text-transform:uppercase}@media (max-width:991px){.contact-hero h1{font-size:44px;letter-spacing:1.12px}}@media (max-width:767px){.contact-hero h1{font-size:28px;letter-spacing:.56px}}.contact-hero h2{color:#000;font-family:DrukMedium;font-size:89.848px;font-style:normal;font-weight:500;letter-spacing:-1.797px;line-height:76.8%;margin-top:10px;text-align:right;text-transform:uppercase}@media (max-width:991px){.contact-hero h2{font-size:44px;letter-spacing:1.12px}}@media (max-width:767px){.contact-hero h2{font-size:28px;letter-spacing:.56px;margin-top:5px;text-align:left}}.contact-form{height:calc(16.666vw - 6px);margin-top:20px}@media (max-width:991px){.contact-form{height:auto;margin-top:32px}}.contact-form .wrapper form{display:flex;position:relative}@media (max-width:991px){.contact-form .wrapper form{flex-wrap:wrap;justify-content:center}}.contact-form .wrapper form .input-wrapper{align-items:center;-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px);background:#ffffff0d;border:2px solid #fff;border-radius:50%;display:flex;flex:0 0 16.666%;height:calc(16.666vw - 6px);justify-content:center;position:relative}@media (max-width:991px){.contact-form .wrapper form .input-wrapper{flex:0 0 40vw;height:40vw;margin-bottom:30px}}@media (max-width:767px){.contact-form .wrapper form .input-wrapper{border-radius:50px;flex:0 0 calc(100vw - 16px);height:56px;margin-bottom:30px}}.contact-form .wrapper form .input-wrapper .outline{border:2px solid #000;border-radius:50%;height:100%;opacity:0;pointer-events:none;position:absolute;transition:.3s ease-in-out;width:100%}@media (max-width:767px){.contact-form .wrapper form .input-wrapper .outline{border-radius:50px}}.contact-form .wrapper form .input-wrapper .error{align-items:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);background:#fff;border:2px solid #fff;border-radius:300px;bottom:-29px;color:red;display:flex;font-family:IBM Plex Mono;font-size:var(--fs-label);font-style:normal;font-weight:500;height:24px;justify-content:center;letter-spacing:.33px;line-height:12px;position:absolute;text-align:center;text-transform:uppercase;width:100%}.contact-form .wrapper form .input-wrapper input{background:none;border:none;color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:13px;outline:none;text-align:center;width:80%}.contact-form .wrapper form .input-wrapper input::-moz-placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper input::placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper input:focus::-moz-placeholder{opacity:0}.contact-form .wrapper form .input-wrapper input:focus::placeholder{opacity:0}.contact-form .wrapper form .input-wrapper input:focus+.outline,.contact-form .wrapper form .input-wrapper textarea:focus+.outline{opacity:1}.contact-form .wrapper form .input-wrapper textarea{background:none;border:none;color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;height:17px;letter-spacing:.39px;line-height:13px;max-height:50%;max-width:80%;outline:none;resize:none;text-align:center;width:80%}@media (max-width:767px){.contact-form .wrapper form .input-wrapper textarea{align-content:center;align-items:center;display:table-cell;height:auto;max-height:100vh;vertical-align:middle}}.contact-form .wrapper form .input-wrapper textarea::-moz-placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper textarea::placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper textarea:focus::-moz-placeholder{opacity:0}.contact-form .wrapper form .input-wrapper textarea:focus::placeholder{opacity:0}.contact-form .wrapper form .input-wrapper select{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-color:transparent;background-image:url(../images/icons/iconSelect.svg);background-position:100% 50%;background-repeat:no-repeat;border:none;color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:13px;outline:none;padding-right:15px;position:relative;text-align:center;text-transform:uppercase}.contact-form .wrapper form .input-wrapper.send{background:#fff;transition:.3s ease-in-out}.contact-form .wrapper form .input-wrapper.send p{color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:13px;text-align:center;text-transform:uppercase;transition:.3s ease-in-out}.contact-form .wrapper form .input-wrapper.send img{filter:invert(1)}.contact-form .wrapper form .input-wrapper.send:hover{background:#000}.contact-form .wrapper form .input-wrapper.send:hover p{color:#fff}.contact-form .wrapper form .input-wrapper.red-outline .outline{border-color:red;opacity:1}@media (max-width:767px){.contact-form .wrapper form .input-wrapper-text{height:auto;min-height:56px;padding:10px 0}}.contact-form .wrapper form .heart{opacity:0;pointer-events:none;position:absolute;z-index:20}.contact-footer{height:calc(100vh - 20vw - 280px);margin-top:46px}@media (max-width:991px){.contact-footer{height:auto}}@media (max-width:767px){.contact-footer{padding-bottom:10px}}.contact-footer .wrapper{display:flex;height:100%;justify-content:space-between}@media (max-width:991px){.contact-footer .wrapper{flex-wrap:wrap;height:auto}}.contact-footer .wrapper .title{color:#000;font-family:DrukMedium;font-size:33.528px;font-style:normal;font-weight:500;letter-spacing:.671px;line-height:93%;text-transform:uppercase}@media (max-width:991px){.contact-footer .wrapper .title{font-size:38px}}.contact-footer .wrapper .copy{color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:14px;text-transform:uppercase}@media (max-width:991px){.contact-footer .wrapper .copy{display:none}}.contact-footer .wrapper .left{border-top:1px solid #000;display:flex;flex:0 0 calc(50% - 10px);flex-direction:column;height:100%;justify-content:space-between;padding-top:5px}@media (max-width:991px){.contact-footer .wrapper .left{border-top:0;display:none;flex:0 0 100%;height:auto}}.contact-footer .wrapper .mobile-bottom{display:none;margin-top:10px;width:100%}@media (max-width:991px){.contact-footer .wrapper .mobile-bottom{display:flex;justify-content:space-between}}@media (max-width:767px){.contact-footer .wrapper .mobile-bottom{margin-top:20px}}.contact-footer .wrapper .mobile-bottom .copy-m{color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:14px;text-transform:uppercase}.contact-footer .wrapper .right{border-top:1px solid #000;display:flex;flex:0 0 calc(50% - 10px);flex-direction:column;justify-content:space-between;padding-top:5px}@media (max-width:991px){.contact-footer .wrapper .right{border-top:2px solid #000;flex:0 0 100%;height:auto}}.contact-footer .wrapper .right .titles{display:flex;flex-direction:column;justify-content:space-between}.contact-footer .wrapper .right .titles a{color:#000;display:inline-block;font-family:DrukMedium;font-size:33.528px;font-style:normal;font-weight:500;letter-spacing:.671px;line-height:93%;text-transform:uppercase;width:auto}.contact-footer .wrapper .right .bottom{align-items:flex-end;display:flex;justify-content:space-between;width:100%}@media (max-width:991px){.contact-footer .wrapper .right .bottom{margin-top:40px}}.contact-page[data-v-8976a4c8]{background-image:url(../images/footerPatern.png),linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff);background-repeat:repeat;background-size:5%;min-height:100vh;padding:70px 20px 14px}@media (max-width:991px){.contact-page[data-v-8976a4c8]{background-size:8%;padding:80px 8px 14px}}
+.contact-hero h1{color:#000;font-family:DrukMedium;font-size:89.848px;font-style:normal;font-weight:500;letter-spacing:-1.797px;line-height:110%;text-align:left;text-transform:uppercase}@media (max-width:991px){.contact-hero h1{font-size:44px;letter-spacing:1.12px}}@media (max-width:767px){.contact-hero h1{font-size:28px;letter-spacing:.56px}}.contact-hero h2{color:#000;font-family:DrukMedium;font-size:89.848px;font-style:normal;font-weight:500;letter-spacing:-1.797px;line-height:110%;margin-top:12px;text-align:right;text-transform:uppercase}@media (max-width:991px){.contact-hero h2{font-size:44px;letter-spacing:1.12px}}@media (max-width:767px){.contact-hero h2{font-size:28px;letter-spacing:.56px;margin-top:4px;text-align:left}}.contact-form{height:calc(16.666vw - 6px);margin-top:24px}@media (max-width:991px){.contact-form{height:auto;margin-top:32px}}.contact-form .wrapper form{display:flex;position:relative}@media (max-width:991px){.contact-form .wrapper form{flex-wrap:wrap;justify-content:center}}.contact-form .wrapper form .input-wrapper{align-items:center;-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px);background:#ffffff0d;border:2px solid #fff;border-radius:50%;display:flex;flex:0 0 16.666%;height:calc(16.666vw - 6px);justify-content:center;position:relative}@media (max-width:991px){.contact-form .wrapper form .input-wrapper{flex:0 0 40vw;height:40vw;margin-bottom:32px}}@media (max-width:767px){.contact-form .wrapper form .input-wrapper{border-radius:50px;flex:0 0 calc(100vw - 16px);height:56px;margin-bottom:32px}}.contact-form .wrapper form .input-wrapper .outline{border:2px solid #000;border-radius:50%;height:100%;opacity:0;pointer-events:none;position:absolute;transition:.3s ease-in-out;width:100%}@media (max-width:767px){.contact-form .wrapper form .input-wrapper .outline{border-radius:50px}}.contact-form .wrapper form .input-wrapper .error{align-items:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);background:#fff;border:2px solid #fff;border-radius:300px;bottom:-29px;color:red;display:flex;font-family:IBM Plex Mono;font-size:var(--fs-label);font-style:normal;font-weight:500;height:24px;justify-content:center;letter-spacing:.33px;line-height:12px;position:absolute;text-align:center;text-transform:uppercase;width:100%}.contact-form .wrapper form .input-wrapper input{background:none;border:none;color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:16px;outline:none;text-align:center;width:80%}.contact-form .wrapper form .input-wrapper input::-moz-placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper input::placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper input:focus::-moz-placeholder{opacity:0}.contact-form .wrapper form .input-wrapper input:focus::placeholder{opacity:0}.contact-form .wrapper form .input-wrapper input:focus+.outline,.contact-form .wrapper form .input-wrapper textarea:focus+.outline{opacity:1}.contact-form .wrapper form .input-wrapper textarea{background:none;border:none;color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;height:17px;letter-spacing:.39px;line-height:16px;max-height:50%;max-width:80%;outline:none;resize:none;text-align:center;width:80%}@media (max-width:767px){.contact-form .wrapper form .input-wrapper textarea{align-content:center;align-items:center;display:table-cell;height:auto;max-height:100vh;vertical-align:middle}}.contact-form .wrapper form .input-wrapper textarea::-moz-placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper textarea::placeholder{color:#000;text-align:center}.contact-form .wrapper form .input-wrapper textarea:focus::-moz-placeholder{opacity:0}.contact-form .wrapper form .input-wrapper textarea:focus::placeholder{opacity:0}.contact-form .wrapper form .input-wrapper select{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-color:transparent;background-image:url(../images/icons/iconSelect.svg);background-position:100% 50%;background-repeat:no-repeat;border:none;color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:16px;outline:none;padding-right:16px;position:relative;text-align:center;text-transform:uppercase}.contact-form .wrapper form .input-wrapper.send{background:#fff;transition:.3s ease-in-out}.contact-form .wrapper form .input-wrapper.send p{color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:16px;text-align:center;text-transform:uppercase;transition:.3s ease-in-out}.contact-form .wrapper form .input-wrapper.send img{filter:invert(1)}.contact-form .wrapper form .input-wrapper.send:hover{background:#000}.contact-form .wrapper form .input-wrapper.send:hover p{color:#fff}.contact-form .wrapper form .input-wrapper.red-outline .outline{border-color:red;opacity:1}@media (max-width:767px){.contact-form .wrapper form .input-wrapper-text{height:auto;min-height:56px;padding:12px 0}}.contact-form .wrapper form .heart{opacity:0;pointer-events:none;position:absolute;z-index:20}.contact-footer{height:calc(100vh - 20vw - 280px);margin-top:48px}@media (max-width:991px){.contact-footer{height:auto}}@media (max-width:767px){.contact-footer{padding-bottom:12px}}.contact-footer .wrapper{display:flex;height:100%;justify-content:space-between}@media (max-width:991px){.contact-footer .wrapper{flex-wrap:wrap;height:auto}}.contact-footer .wrapper .title{color:#000;font-family:DrukMedium;font-size:33.528px;font-style:normal;font-weight:500;letter-spacing:.671px;line-height:110%;text-transform:uppercase}@media (max-width:991px){.contact-footer .wrapper .title{font-size:38px}}.contact-footer .wrapper .copy{color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:16px;text-transform:uppercase}@media (max-width:991px){.contact-footer .wrapper .copy{display:none}}.contact-footer .wrapper .left{border-top:1px solid #000;display:flex;flex:0 0 calc(50% - 10px);flex-direction:column;height:100%;justify-content:space-between;padding-top:4px}@media (max-width:991px){.contact-footer .wrapper .left{border-top:0;display:none;flex:0 0 100%;height:auto}}.contact-footer .wrapper .mobile-bottom{display:none;margin-top:12px;width:100%}@media (max-width:991px){.contact-footer .wrapper .mobile-bottom{display:flex;justify-content:space-between}}@media (max-width:767px){.contact-footer .wrapper .mobile-bottom{margin-top:24px}}.contact-footer .wrapper .mobile-bottom .copy-m{color:#000;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:16px;text-transform:uppercase}.contact-footer .wrapper .right{border-top:1px solid #000;display:flex;flex:0 0 calc(50% - 10px);flex-direction:column;justify-content:space-between;padding-top:4px}@media (max-width:991px){.contact-footer .wrapper .right{border-top:2px solid #000;flex:0 0 100%;height:auto}}.contact-footer .wrapper .right .titles{display:flex;flex-direction:column;justify-content:space-between}.contact-footer .wrapper .right .titles a{color:#000;display:inline-block;font-family:DrukMedium;font-size:33.528px;font-style:normal;font-weight:500;letter-spacing:.671px;line-height:110%;text-transform:uppercase;width:auto}.contact-footer .wrapper .right .bottom{align-items:flex-end;display:flex;justify-content:space-between;width:100%}@media (max-width:991px){.contact-footer .wrapper .right .bottom{margin-top:40px}}.contact-page[data-v-8976a4c8]{background-image:url(../images/footerPatern.png),linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff);background-repeat:repeat;background-size:5%;min-height:100vh;padding:72px 24px 16px}@media (max-width:991px){.contact-page[data-v-8976a4c8]{background-size:8%;padding:80px 8px 16px}}
 
 /* ============================================================================
  * Chaitanya 2k26 — Dynamic Contact Form Animations & Kinetic Filling Effects
@@ -20,8 +20,8 @@
   backdrop-filter: blur(16px);
   border-color: var(--ink) !important;
   box-shadow: 
-    0 20px 50px rgba(15, 23, 42, 0.14),
-    0 0 25px rgba(255, 255, 255, 0.9),
+    0 20px 50px rgba(15, 23, 42, 0.06),
+    0 0 25px rgba(255, 255, 255, 0.06),
     inset 0 0 15px rgba(255, 255, 255, 0.7);
   z-index: 5;
 }
@@ -103,7 +103,7 @@
   background: var(--surface);
   border: 1.5px solid var(--ink);
   border-radius: 20px;
-  padding: 3px 12px;
+  padding: 4px 12px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -111,7 +111,7 @@
   white-space: nowrap;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -137,8 +137,8 @@
 }
 
 @keyframes transmittingGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); }
-  50% { box-shadow: 0 0 45px rgba(4, 51, 255, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.06); }
+  50% { box-shadow: 0 0 45px rgba(4, 51, 255, 0.06); }
 }
 
 .contact-form .wrapper form .input-wrapper.send.transmitting {
@@ -184,7 +184,7 @@
   -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
   border: 2px solid var(--ink);
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
   border-radius: 24px;
   padding: 0 !important;
   box-sizing: border-box;
@@ -198,7 +198,7 @@
 }
 
 .heart-dispatch-inner {
-  padding: 16px 22px 14px;
+  padding: 16px 24px 16px;
   box-sizing: border-box;
   text-align: center;
   width: 100%;
@@ -209,16 +209,16 @@
   display: block;
   margin-bottom: 2px;
   color: var(--ink);
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .heart-success-title {
   font-family: "DrukMedium", sans-serif;
   font-size: 24px;
-  line-height: 1;
+  line-height: 1.1;
   color: var(--ink);
   text-transform: uppercase;
-  margin: 4px 0 3px;
+  margin: 4px 0 4px;
   letter-spacing: -0.3px;
 }
 
@@ -227,7 +227,7 @@
   font-size: var(--fs-body);
   color: var(--ink-muted);
   line-height: 1.4;
-  margin: 0 auto 10px;
+  margin: 0 auto 12px;
   max-width: 360px;
 }
 
@@ -236,7 +236,7 @@
   color: var(--ink-on-dark);
   border: 1.5px solid var(--ink);
   border-radius: 30px;
-  padding: 7px 18px;
+  padding: 8px 16px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -291,7 +291,7 @@
     border-radius: 50px !important;
     flex: 0 0 calc(100vw - 16px) !important;
     height: 54px !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 16px !important;
   }
   .contact-form .wrapper form .heart {
     left: 50% !important;

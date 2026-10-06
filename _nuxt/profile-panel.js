@@ -165,10 +165,10 @@ function renderPage() {
       <section class="prof-card prof-signed-out">
         <span class="pp-kicker">CHAITANYA 2K26 • PROFILE</span>
         <h1 class="prof-title">Sign in to view your profile</h1>
-        <p class="pp-hint">Your profile, event registrations and entry QR codes are available after you sign in.</p>
+        <p class="pp-hint">Sign in to see your details, event registrations and entry QR codes.</p>
         <div class="prof-actions">
-          <button type="button" class="pp-primary" data-prof="login">[ Login ]</button>
-          <button type="button" class="pp-action subtle" data-prof="register">[ Register ]</button>
+          <button type="button" class="pp-primary" data-prof="login">[ Sign in ]</button>
+          <button type="button" class="pp-action subtle" data-prof="register">[ Create account ]</button>
         </div>
       </section>`;
     refreshScroll();
@@ -184,14 +184,14 @@ function renderPage() {
         <span class="pp-sub">${e(user.email)}</span>
         ${user.studentId ? `<span class="pp-sub">Chaitanya ID <b class="mono">${e(user.studentId)}</b></span>` : ""}
       </div>
-      <button type="button" class="pp-logout prof-logout" data-prof="logout">[ Log out ]</button>
+      <button type="button" class="pp-logout prof-logout" data-prof="logout">[ Sign out ]</button>
     </div>
 
     <section class="prof-card" id="profile-details" aria-labelledby="prof-details-title">
       <div class="prof-section-head">
         <span class="pp-kicker">01 // YOUR DETAILS</span>
         <h2 class="prof-h2" id="prof-details-title">Profile information</h2>
-        <p class="pp-hint">These details are used for your event registrations and entry QR codes.</p>
+        <p class="pp-hint">These details appear on your registrations, entry QR codes and Digital ID.</p>
       </div>
       ${detailsFormHtml(user)}
     </section>
@@ -200,7 +200,7 @@ function renderPage() {
       <div class="prof-section-head">
         <span class="pp-kicker">02 // MY REGISTRATIONS</span>
         <h2 class="prof-h2" id="prof-regs-title">Events &amp; entry QR codes</h2>
-        <p class="pp-hint">Each registration has its own QR code with your name, college and event. Show it at the venue.</p>
+        <p class="pp-hint">Each registration has its own entry QR with your name, college and event. Show it at the venue.</p>
       </div>
       <div data-prof-regs><div class="pp-loading">Loading your registrations…</div></div>
     </section>
@@ -217,7 +217,7 @@ function renderPage() {
       <div class="prof-section-head">
         <span class="pp-kicker">04 // DELETE PROFILE</span>
         <h2 class="prof-h2" id="prof-delete-title">Delete profile</h2>
-        <p class="pp-hint">Cancels all your free registrations, deletes your profile and Chaitanya ID, and signs you out. You can register again afterwards with a fresh profile.</p>
+        <p class="pp-hint">Cancels all your free registrations, deletes your profile and Chaitanya ID, and signs you out. You can create a new account afterwards.</p>
       </div>
       <div data-prof-delete>
         <button type="button" class="pp-logout prof-delete-open" data-prof="delete-open">Delete my profile…</button>
@@ -270,7 +270,7 @@ function detailsFormHtml(user) {
           ${YEAR_OPTIONS.map((y) => `<option ${y === user.year ? "selected" : ""}>${e(y)}</option>`).join("")}
         </select>
       </label>
-      <label class="pp-field"><span>Contact no (WhatsApp) *</span>
+      <label class="pp-field"><span>WhatsApp number *</span>
         <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" placeholder="+91 9XXXX XXXXX" autocomplete="tel" required />
       </label>
       <div class="pp-msg" role="status" aria-live="polite" hidden></div>
@@ -285,10 +285,10 @@ function validateDetails(form) {
   const college = form.college.value.trim();
   const year = form.year.value;
   const digits = form.phone.value.replace(/\D/g, "").length;
-  if (!name) return ["displayName", "Please enter your name."];
-  if (!college) return ["college", "Please enter your college / university."];
-  if (!year) return ["year", "Please select your year."];
-  if (digits < 10 || digits > 15) return ["phone", "Enter a valid phone number (10 digits, optional country code)."];
+  if (!name) return ["displayName", "Enter your full name."];
+  if (!college) return ["college", "Enter your college or university."];
+  if (!year) return ["year", "Select your year."];
+  if (digits < 10 || digits > 15) return ["phone", "Enter a valid WhatsApp number (10 digits; country code optional)."];
   return null;
 }
 
@@ -302,23 +302,30 @@ function showFormMessage(form, text, ok) {
 // ---- Registrations ----------------------------------------------------------
 
 const STATUS_CHIP = {
-  booked: { label: "BOOKED", cls: "ok" },
+  booked: { label: "CONFIRMED", cls: "ok" },
   pending: { label: "PAYMENT PENDING", cls: "pending" },
   rejected: { label: "PAYMENT NOT VERIFIED", cls: "bad" },
   cart: { label: "IN CART", cls: "cart" },
 };
 
+// page.regsLoading holds the uid being loaded, so a sign-in as someone else
+// mid-load starts a fresh load and the stale result is dropped.
 async function loadRegistrations() {
-  if (!getCurrentUser() || page.regsLoading) return;
-  page.regsLoading = true;
-  page.regsError = "";
+  const uid = getCurrentUser()?.uid;
+  if (!uid || page.regsLoading === uid) return;
+  page.regsLoading = uid;
+  let regs, regsError = "";
   try {
-    page.regs = await getMyRegistrations();
+    regs = await getMyRegistrations();
   } catch (err) {
-    page.regsError = err.message || "Could not load your registrations.";
-    page.regs = [];
+    regsError = err.message || "Couldn't load your registrations. Check your connection and try again.";
+    regs = [];
   }
+  if (page.regsLoading !== uid) return; // a load for a newer user took over
   page.regsLoading = false;
+  if (getCurrentUser()?.uid !== uid) return loadRegistrations();
+  page.regs = regs;
+  page.regsError = regsError;
   renderRegistrations();
   renderDigitalId();
 }
@@ -384,17 +391,17 @@ function renderRegistrations() {
             ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
             ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
             ${canCancelRegistration(r) && page.confirmDereg !== r.event_id
-              ? `<button type="button" class="pp-action subtle prof-dereg" data-prof="dereg-ask" data-event-id="${e(r.event_id)}">Deregister</button>`
+              ? `<button type="button" class="pp-action subtle prof-dereg" data-prof="dereg-ask" data-event-id="${e(r.event_id)}">Cancel registration</button>`
               : ""}
           </div>
-          ${!canCancelRegistration(r) ? `<span class="pp-reg-note">Paid registration: contact the fest team to cancel it.</span>` : ""}
+          ${!canCancelRegistration(r) ? `<span class="pp-reg-note">Paid registrations can't be cancelled here. Contact the fest team.</span>` : ""}
           ${page.confirmDereg === r.event_id ? deregConfirmHtml(r, team) : ""}
           ${page.deregError?.eventId === r.event_id ? `<p class="pp-msg bad" role="alert">${e(page.deregError.message)}</p>` : ""}
           ${status === "rejected" && payment ? `
             <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
-              <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match your UTR.")}</span>
+              <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this UTR. Enter the correct one below.")}</span>
               <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit UTR" aria-label="Correct 12-digit UTR" />
-              <button type="submit" class="pp-action">Resubmit</button>
+              <button type="submit" class="pp-action">Resubmit UTR</button>
             </form>` : ""}
         </div>
         ${registrationQrHtml(r)}
@@ -412,7 +419,7 @@ function renderRegistrations() {
           <span class="pp-reg-meta">${e(`${c.event.date} · ${c.event.time}`)}</span>
           <div class="pp-reg-actions">
             <button type="button" class="pp-action" data-prof="checkout">Complete registration →</button>
-            <button type="button" class="pp-action subtle" data-prof="cart-remove" data-event-id="${e(c.eventId)}">Remove</button>
+            <button type="button" class="pp-action subtle" data-prof="cart-remove" data-event-id="${e(c.eventId)}">Remove from cart</button>
           </div>
         </div>
       </li>`
@@ -422,7 +429,7 @@ function renderRegistrations() {
     rows.length || cartRows.length
       ? `<ul class="pp-regs prof-regs">${rows.join("")}${cartRows.join("")}</ul>`
       : `<div class="pp-empty">
-           <p>No registrations yet.</p>
+           <p>You haven't registered for any events yet.</p>
            <a class="pp-primary" href="/events" data-prof="browse">Browse events</a>
          </div>`;
   refreshScroll();
@@ -437,10 +444,10 @@ function deregConfirmHtml(r, team) {
       ? `You'll be removed from team ${e(team.teamName)}.`
       : "";
   return `
-    <div class="prof-confirm" role="group" aria-label="Confirm deregistration">
-      <p><strong>Deregister from ${e(r.event_title)}?</strong> ${["Your entry QR for this event stops working.", note, "You can register again while registration is open."].filter(Boolean).join(" ")}</p>
+    <div class="prof-confirm" role="group" aria-label="Confirm cancellation">
+      <p><strong>Cancel your registration for ${e(r.event_title)}?</strong> ${["Your entry QR for this event stops working.", note, "You can register again while registration is open."].filter(Boolean).join(" ")}</p>
       <div class="prof-actions">
-        <button type="button" class="pp-logout prof-confirm-yes" data-prof="dereg-yes" data-event-id="${e(r.event_id)}" ${busy ? "disabled" : ""}>${busy ? "Deregistering…" : `Yes, deregister`}</button>
+        <button type="button" class="pp-logout prof-confirm-yes" data-prof="dereg-yes" data-event-id="${e(r.event_id)}" ${busy ? "disabled" : ""}>${busy ? "Cancelling…" : `Yes, cancel it`}</button>
         <button type="button" class="pp-action subtle" data-prof="dereg-cancel" ${busy ? "disabled" : ""}>Keep registration</button>
       </div>
     </div>`;
@@ -462,7 +469,7 @@ function renderDeleteConfirm(open) {
       <div class="pp-msg" role="alert" hidden></div>
       <div class="prof-actions">
         <button type="submit" class="pp-logout prof-confirm-yes" disabled>Delete profile permanently</button>
-        <button type="button" class="pp-action subtle" data-prof="delete-cancel">Cancel</button>
+        <button type="button" class="pp-action subtle" data-prof="delete-cancel">Keep my profile</button>
       </div>
     </form>`;
   box.querySelector("input").focus();
@@ -572,7 +579,7 @@ async function onPageClick(evt) {
       return loadRegistrations();
     } catch (err) {
       page.deregBusy = null;
-      page.deregError = { eventId, message: err.message || "Could not cancel the registration." };
+      page.deregError = { eventId, message: err.message || "Couldn't cancel this registration. Please try again." };
       return renderRegistrations();
     }
   }
@@ -622,7 +629,7 @@ async function onPageSubmit(evt) {
       });
       showFormMessage(form, "✓ Profile saved.", true);
     } catch (err) {
-      showFormMessage(form, err.message || "Could not save your profile.", false);
+      showFormMessage(form, err.message || "Couldn't save your profile. Please try again.", false);
     }
     btn.disabled = false;
     btn.textContent = "Save changes";
@@ -639,7 +646,7 @@ async function onPageSubmit(evt) {
       goTo("/");
       setTimeout(() => window.openAuthModal?.("register"), 400);
     } catch (err) {
-      showFormMessage(form, err.message || "Could not delete your profile.", false);
+      showFormMessage(form, err.message || "Couldn't delete your profile. Please try again.", false);
       btn.disabled = false;
       btn.textContent = "Delete profile permanently";
       page.regs = null;
@@ -798,7 +805,7 @@ async function renderVerify(body) {
     body.innerHTML = `
       <div class="pp-empty">
         <p>Scanned ID <b class="mono">${e(verifyId)}</b></p>
-        <p>${e(user.email)} isn't an organiser account, so this ID can't be verified here.</p>
+        <p>${e(user.email)} isn't an organiser account. Sign in with an organiser account to verify IDs.</p>
       </div>`;
     return;
   }
@@ -816,7 +823,7 @@ async function renderVerify(body) {
     body.innerHTML = `
       <div class="pp-verify ${res.verified ? "ok" : "bad"}">
         <strong>${res.verified ? "✓ VERIFIED PARTICIPANT" : "✕ NOT VERIFIED"}</strong>
-        <p>${res.verified ? "Has at least one confirmed booking." : "No confirmed booking yet."}</p>
+        <p>${res.verified ? "Has at least one confirmed registration." : "No confirmed registration yet."}</p>
       </div>
       <div class="pp-idcard-main">
         ${avatarHtml({ photoURL: p.photoURL, displayName: p.displayName }, "pp-id-photo")}

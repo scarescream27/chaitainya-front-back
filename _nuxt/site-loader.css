@@ -18,6 +18,9 @@ html.site-loading {
   background: #f7faff;
 }
 
+/* Motion exception (motion audit): the one-time boot loader choreographs the
+   logo reveal over ~1.5s, so its durations sit outside the 100–300ms tokens.
+   It runs once per load and honours prefers-reduced-motion. */
 #site-loader {
   position: fixed;
   inset: 0;
@@ -82,7 +85,7 @@ html.site-loading {
   font-family: "DrukMedium", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: clamp(56px, 11vw, 168px);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   opacity: 0;
@@ -101,7 +104,7 @@ html.site-loading {
 
 /* Scripts Druk doesn't cover fall back to a bolder system face. */
 .site-loader-word[lang]:not([lang="en"]) {
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   font-size: clamp(44px, 8vw, 128px);
 }
@@ -114,7 +117,7 @@ html.site-loading {
   width: max-content;
   max-width: calc(100% - 32px);
   margin: 0;
-  padding: 4px 10px;
+  padding: 4px 12px;
   background-color: #f7faff;
   text-align: center;
   font-family: "IBM Plex Mono", monospace;

@@ -272,10 +272,28 @@ function baseProfile(fbUser) {
   };
 }
 
+// In-flight profile loads per uid: first sign-in fires both the auth listener
+// and signInWithGoogle, which must not create the profile twice concurrently.
+const profileLoads = new Map();
+
+function loadProfile(fbUser, extra = {}) {
+  const uid = fbUser.uid;
+  const prev = profileLoads.get(uid);
+  // A load that carries form details still runs, but only after the one in flight.
+  if (prev && !Object.values(extra || {}).some(Boolean)) return prev;
+  const next = (prev ? prev.catch(() => {}) : Promise.resolve()).then(() => fetchProfile(fbUser, extra));
+  const done = () => {
+    if (profileLoads.get(uid) === next) profileLoads.delete(uid);
+  };
+  profileLoads.set(uid, next);
+  next.then(done, done);
+  return next;
+}
+
 /**
  * Ensure the users/{uid} document exists and merge it with auth details.
  */
-async function loadProfile(fbUser, extra = {}) {
+async function fetchProfile(fbUser, extra = {}) {
   const { doc, getDoc, setDoc, serverTimestamp } = fsMod;
   const ref = doc(firebaseFirestore, "users", fbUser.uid);
   const snap = await getDoc(ref);
@@ -472,11 +490,22 @@ function registrationId(eventId, uid) {
   return `reg_${eventId}_${uid}`;
 }
 
+function hash32(text) {
+  let hash = 0;
+  for (const ch of text) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return hash;
+}
+
 export function passId(eventId, uid) {
   // Deterministic, so the same pass ID is shown every time it is opened.
-  let hash = 0;
-  for (const ch of `${eventId}:${uid}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return `CH26-${eventId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(hash % 100000).padStart(5, "0")}`;
+  // Event part hashes the full event id, so events sharing a prefix don't collide.
+  const ev = (hash32(eventId) % 36 ** 4).toString(36).toUpperCase().padStart(4, "0");
+  return `CH26-${ev}-${String(hash32(`${eventId}:${uid}`) % 1e7).padStart(7, "0")}`;
+}
+
+// Format of passes issued before the hashed event part (still printed on old QRs).
+export function legacyPassId(eventId, uid) {
+  return `CH26-${eventId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(hash32(`${eventId}:${uid}`) % 100000).padStart(5, "0")}`;
 }
 
 /**
@@ -801,6 +830,11 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
         });
         tx.set(regRef, registration);
       });
+    } catch (err) {
+      throw friendlyError(err, "Could not join the team. Please try again.");
+    }
+    // The join is committed; a failed profile update must not report it as failed.
+    try {
       await setDoc(
         doc(firebaseFirestore, "users", user.uid),
         {
@@ -814,7 +848,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
         { merge: true }
       );
     } catch (err) {
-      throw friendlyError(err, "Could not join the team. Please try again.");
+      console.warn("Joined the team, but the profile could not be updated:", err);
     }
   } else {
     if (demoGet("registrations", registration.id)) throw new Error("You are already registered for this event.");
@@ -847,9 +881,10 @@ async function findTeamByCode(code) {
 }
 
 async function generateUniqueTeamCode(name) {
-  const prefix = String(name).replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "TEAM";
+  let prefix = String(name).replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 4);
+  if (prefix.length < 2) prefix = "TEAM";
   for (let attempt = 0; attempt < 5; attempt++) {
-    const code = `${prefix}-${randomCode(4)}`;
+    const code = `${prefix}-${randomCode(6)}`;
     const taken = isLive()
       ? (await fsMod.getDoc(fsMod.doc(firebaseFirestore, "team_codes", code))).exists()
       : await findTeamByCode(code);
@@ -862,15 +897,26 @@ async function generateUniqueTeamCode(name) {
  * Effective booking status for a registration.
  * booked | pending | rejected
  */
+// A payment counts only if `payerUid` paid it and it covers `eventId`.
+export function paymentCovers(payment, eventId, payerUid) {
+  return !!payment && payment.payerUid === payerUid && paymentItems(payment).some((i) => i.eventId === eventId);
+}
+
+// A team covers a registration only for its own event and its linked accounts.
+export function teamCovers(team, registration) {
+  return !!team && team.eventId === registration?.event_id && (team.memberUids || []).includes(registration.user_id);
+}
+
 export function bookingStatus(registration, payment, team) {
   const s = registration?.payment_status;
   if (s === PAYMENT_STATUS.FREE) return "booked";
   if (s === PAYMENT_STATUS.TEAM) {
-    const ts = team?.paymentStatus;
+    if (!teamCovers(team, registration)) return "pending";
+    const ts = team.paymentStatus;
     if (!ts || ts === "free" || ts === "paid" || ts === "verified") return "booked";
     return ts === "rejected" ? "rejected" : "pending";
   }
-  const ps = payment?.status || s;
+  const ps = (paymentCovers(payment, registration?.event_id, registration?.user_id) ? payment.status : null) || s;
   if (ps === PAYMENT_STATUS.VERIFIED) return "booked";
   if (ps === PAYMENT_STATUS.REJECTED) return "rejected";
   return "pending";
@@ -1287,15 +1333,23 @@ async function setPaymentStatus(payment, status, extra) {
   const teamStatus = status === PAYMENT_STATUS.VERIFIED ? "paid" : status;
   const items = paymentItems(payment);
 
+  // Only the payer's own registration and team for each item; teamId is client-written.
+  const ownTeam = (item) => item.teamId && item.teamId === `team_${item.eventId}_${payment.payerUid}`;
+
   if (isLive()) {
-    const { doc, writeBatch } = fsMod;
+    const { doc, getDoc, writeBatch } = fsMod;
     const batch = writeBatch(firebaseFirestore);
     batch.update(doc(firebaseFirestore, "payments", payment.paymentId), patch);
-    items.forEach((item) => {
-      batch.set(doc(firebaseFirestore, "registrations", registrationId(item.eventId, payment.payerUid)), { payment_status: status }, { merge: true });
-      if (item.teamId) batch.set(doc(firebaseFirestore, "teams", item.teamId), { paymentStatus: teamStatus }, { merge: true });
-    });
     try {
+      // update (not set+merge) so deregistered docs aren't recreated as stubs; skip missing ones.
+      for (const item of items) {
+        const regRef = doc(firebaseFirestore, "registrations", registrationId(item.eventId, payment.payerUid));
+        if ((await getDoc(regRef)).exists()) batch.update(regRef, { payment_status: status });
+        if (ownTeam(item)) {
+          const teamRef = doc(firebaseFirestore, "teams", item.teamId);
+          if ((await getDoc(teamRef)).exists()) batch.update(teamRef, { paymentStatus: teamStatus });
+        }
+      }
       await batch.commit();
     } catch (err) {
       throw friendlyError(err, "Could not update the payment.");
@@ -1304,7 +1358,7 @@ async function setPaymentStatus(payment, status, extra) {
     demoUpdate("payments", payment.paymentId, patch);
     items.forEach((item) => {
       demoUpdate("registrations", registrationId(item.eventId, payment.payerUid), { payment_status: status });
-      if (item.teamId) demoUpdate("teams", item.teamId, { paymentStatus: teamStatus });
+      if (ownTeam(item)) demoUpdate("teams", item.teamId, { paymentStatus: teamStatus });
     });
   }
   return { success: true, payment: { ...payment, ...patch }, admin: admin.email };
