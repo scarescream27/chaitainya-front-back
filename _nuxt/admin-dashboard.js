@@ -22,6 +22,8 @@ import {
   paymentItems,
   approvePayment,
   rejectPayment,
+  backfillTeamCodes,
+  passId,
 } from "./auth-service.js";
 import { isAdminUser } from "./firebase-config.js";
 import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
@@ -528,7 +530,9 @@ function renderCheckin({ regRows }) {
   if (c) {
     const q = parseCheckinInput(c.query);
     let matches = [];
-    if (q?.pass) matches = regRows.filter((r) => String(r.registration_qr_id).toUpperCase() === q.pass);
+    // Only trust a pass ID that matches the one derived from the registration's own event + user;
+    // registration_qr_id is client-written, so a copied ID on another booking must not match.
+    if (q?.pass) matches = regRows.filter((r) => passId(r.event_id, r.user_id) === q.pass);
     else if (q?.studentId) matches = regRows.filter((r) => String(r.student_id || "").toUpperCase() === q.studentId);
     else if (q?.text) matches = regRows.filter((r) => [r.user_name, r.user_email, r.user_phone].some((v) => String(v || "").toLowerCase().includes(q.text)));
     results = matches.length
@@ -888,7 +892,8 @@ async function onClick(evt) {
     progress.textContent = "Connecting to Firestore…";
     try {
       const res = await applySchemaToFirestore((p) => (progress.textContent = p.message));
-      progress.textContent = `✓ Synced ${res.eventsCreated} events and ${res.faqsCreated} FAQs.${res.errors?.length ? ` Errors: ${res.errors.join("; ")}` : ""}`;
+      const codes = await backfillTeamCodes(state.teams || []);
+      progress.textContent = `✓ Synced ${res.eventsCreated} events, ${res.faqsCreated} FAQs and ${codes} team codes.${res.errors?.length ? ` Errors: ${res.errors.join("; ")}` : ""}`;
     } catch (err) {
       progress.textContent = `Sync failed: ${err.message}`;
     } finally {

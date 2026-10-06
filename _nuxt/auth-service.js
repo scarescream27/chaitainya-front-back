@@ -472,7 +472,7 @@ function registrationId(eventId, uid) {
   return `reg_${eventId}_${uid}`;
 }
 
-function passId(eventId, uid) {
+export function passId(eventId, uid) {
   // Deterministic, so the same pass ID is shown every time it is opened.
   let hash = 0;
   for (const ch of `${eventId}:${uid}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
@@ -621,6 +621,8 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
           registeredAt: nowIso(),
         },
       ]);
+      // Code -> team lookup. Teams can't be listed, so knowing the code is what lets you join.
+      writes.push(["team_codes", teamCode, { teamId, eventId: ev.id }]);
     }
 
     writes.push([
@@ -837,11 +839,9 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
 
 async function findTeamByCode(code) {
   if (isLive()) {
-    const { collection, query, where, limit, getDocs } = fsMod;
-    const snap = await getDocs(
-      query(collection(firebaseFirestore, "teams"), where("teamCode", "==", code), limit(1))
-    );
-    return snap.empty ? null : snap.docs[0].data();
+    const { doc, getDoc } = fsMod;
+    const snap = await getDoc(doc(firebaseFirestore, "team_codes", code));
+    return snap.exists() ? getDocData("teams", snap.data().teamId) : null;
   }
   return demoList("teams").find((t) => t.teamCode === code) || null;
 }
@@ -850,7 +850,10 @@ async function generateUniqueTeamCode(name) {
   const prefix = String(name).replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "TEAM";
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = `${prefix}-${randomCode(4)}`;
-    if (!(await findTeamByCode(code))) return code;
+    const taken = isLive()
+      ? (await fsMod.getDoc(fsMod.doc(firebaseFirestore, "team_codes", code))).exists()
+      : await findTeamByCode(code);
+    if (!taken) return code;
   }
   throw new Error("Could not generate a team code. Please try again.");
 }
@@ -1018,7 +1021,10 @@ export async function cancelRegistration(eventId) {
     const { doc, writeBatch, arrayRemove, serverTimestamp } = fsMod;
     const batch = writeBatch(firebaseFirestore);
     if (registration) batch.delete(doc(firebaseFirestore, "registrations", regId));
-    if (teamAction === "delete") batch.delete(doc(firebaseFirestore, "teams", team.teamId));
+    if (teamAction === "delete") {
+      batch.delete(doc(firebaseFirestore, "teams", team.teamId));
+      if (team.teamCode) batch.delete(doc(firebaseFirestore, "team_codes", team.teamCode));
+    }
     if (teamAction === "leave") {
       batch.update(doc(firebaseFirestore, "teams", team.teamId), {
         memberUids: team.memberUids.filter((uid) => uid !== user.uid),
@@ -1214,6 +1220,21 @@ export function getRegisteredAttendees() {
 
 export function getAllTeams() {
   return listCollection("teams");
+}
+
+// Admin: create the team_codes lookup for teams made before it existed.
+export async function backfillTeamCodes(teams) {
+  if (!isLive()) return 0;
+  const { doc, writeBatch } = fsMod;
+  const todo = teams.filter((t) => t.teamCode && t.teamId);
+  for (let i = 0; i < todo.length; i += 400) {
+    const batch = writeBatch(firebaseFirestore);
+    todo.slice(i, i + 400).forEach((t) =>
+      batch.set(doc(firebaseFirestore, "team_codes", t.teamCode), { teamId: t.teamId, eventId: t.eventId })
+    );
+    await batch.commit();
+  }
+  return todo.length;
 }
 
 export function getAllPayments() {
