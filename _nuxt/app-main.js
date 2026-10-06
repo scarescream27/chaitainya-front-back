@@ -45453,7 +45453,7 @@ void main() {
       (Nb = { class: "lines" }),
       (Ob = Be("div", { class: "back-left" }, null, -1)),
       (Ub = Be("div", { class: "back-right" }, null, -1)),
-      (Db = Be("img", { alt: "icon", class: "jel-icon", src: Ab }, null, -1)),
+      (Db = Be("img", { alt: "", class: "jel-icon", src: Ab }, null, -1)),
       (kb = { class: "colors" }),
       (Fb = ["onClick"]),
       (Bb = { class: "colors" }),
@@ -46008,7 +46008,7 @@ void main() {
                               "img",
                               {
                                 onMousedown: g,
-                                alt: "icon",
+                                alt: "",
                                 class: "restart",
                                 src: Pb,
                               },

@@ -681,6 +681,7 @@ body:has(.events-page-root) .transition-component,
   color: var(--ink);
   border-bottom: 1.5px solid var(--line-strong);
   padding-bottom: 6px;
+  margin-top: 16px;
   margin-bottom: 12px;
 }
 
@@ -1233,6 +1234,35 @@ body:has(.events-page-root) .transition-component,
   margin: 0;
 }
 
+.event-upi-copy-btn {
+  margin-inline-start: auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.event-upi-where {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  line-height: 1.5;
+}
+
+.event-upi-where summary {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.event-upi-where p {
+  margin: 6px 0 0;
+  color: color-mix(in srgb, var(--ink) 73%, var(--surface));
+}
+
 #reg-payment-box .event-reg-group {
   width: 100%;
   text-align: left;
@@ -1688,6 +1718,10 @@ body:has(.events-page-root) .transition-component,
 
 .cart-done {
   width: 100%;
+}
+
+.cart-done + .cart-done {
+  margin-top: 8px;
 }
 
 .cart-empty {

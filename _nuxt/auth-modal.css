@@ -1996,3 +1996,10 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
     min-height: var(--tap);
   }
 }
+
+/* Events is the site's main action: the one filled link in the nav. */
+header .header .right-menu a.nav-cta {
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border-radius: 30px;
+}

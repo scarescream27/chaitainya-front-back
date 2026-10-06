@@ -296,7 +296,7 @@ let st,
                         ),
                         Y(
                           z,
-                          { to: "/events" },
+                          { to: "/events", class: "nav-cta" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
                         ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),

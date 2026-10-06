@@ -7552,9 +7552,9 @@ let Ws,
       (ni = Xe("/images/icons/rightBar.svg")),
       (bo = { class: "wrapper" }),
       (Eo = { class: "bottom-texts" }),
-      (So = O("img", { alt: "icon", src: go }, null, -1)),
-      (zo = O("img", { alt: "icon", src: wo }, null, -1)),
-      (Co = O("img", { alt: "icon", src: xo }, null, -1)),
+      (So = O("img", { alt: "", src: go }, null, -1)),
+      (zo = O("img", { alt: "", src: wo }, null, -1)),
+      (Co = O("img", { alt: "", src: xo }, null, -1)),
       (Ao = O(
         "p",
         null,
@@ -7569,15 +7569,11 @@ let Ws,
         -1,
       )),
       (Po = [Mo]),
-      (Bo = Ls(
-        '<div class="left-bar"><div class="parent"><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">AR</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">3D</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">AI</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">XR</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div></div></div>',
-        1,
-      )),
       (Fo = { class: "right-bar" }),
       (Ro = { class: "parent" }),
-      (No = O("img", { alt: "icon", src: ni }, null, -1)),
+      (No = O("img", { alt: "", src: ni }, null, -1)),
       (Io = { class: "progress" }),
-      (ko = O("img", { alt: "icon", src: ni }, null, -1)),
+      (ko = O("img", { alt: "", src: ni }, null, -1)),
       (qo = {
         __name: "sceneTextsComponent",
         setup(b) {
@@ -7762,7 +7758,6 @@ let Ws,
                     512,
                   ),
                 ]),
-                Bo,
                 O("div", Fo, [
                   O("div", Ro, [
                     No,
@@ -7834,7 +7829,9 @@ let Ws,
             u = et(null);
           (t.$onAction(({ name: m }) => {
             // No loading screen: reveal the scene as soon as assets are ready.
-            (m === "setPreloaderDone" && p(),
+            // The site loader (index.html) waits for this before lifting.
+            (m === "setPreloaderDone" &&
+              (p(), (window.__chSceneReady = !0), window.dispatchEvent(new Event("ch:scene-ready"))),
               m === "setSceneStartingPosition" &&
                 e.add(() => {
                   V.to(l.value, { display: "none", pointerEvents: "none" });

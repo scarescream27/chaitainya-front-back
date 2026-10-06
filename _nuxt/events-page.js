@@ -63,6 +63,8 @@ let globalListenersBound = false;
 
 // Checkout wizard state
 let checkout = null;
+// Survives the tab reload phones do while the student is away in a UPI app.
+const CHECKOUT_DRAFT_KEY = "chaitanya-checkout-draft";
 
 // ----------------------------------------------------------------------------
 // DIALOG PLUMBING (details drawer, cart drawer, checkout modal)
@@ -227,14 +229,14 @@ export function renderEventsPageHtml() {
           <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
           <p class="events-hero-subtitle">
             Explore ${e(totalEvents())} events across coding, design, business, esports &amp; culture.
-            Add the ones you like to your cart and register for all of them in one go.
+            Register for one, or pick several and register for all of them in one go.
           </p>
           <div class="events-stats-strip">
             <span class="events-stat-pill highlight">[ ${e(totalEvents())} EVENTS ]</span>
             <span class="events-stat-pill">[ ${e(FEST_CONFIG.festDays || 2)} DAYS // ${e(getFestDatesLabel())} ]</span>
             <span class="events-stat-pill">[ HPTU HAMIRPUR ]</span>
           </div>
-          <p class="events-hero-note">Entry fees, prizes and registration details will be notified soon. Timings and venues may change.</p>
+          <p class="events-hero-note">Prizes and rules will be notified soon. Timings and venues may change.</p>
         </div>
 
         <div class="events-toolbar">
@@ -258,7 +260,7 @@ export function renderEventsPageHtml() {
       </div>
 
       <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog">
-        <span class="events-cart-fab-label">[ CART ]</span>
+        <span class="events-cart-fab-label">[ SELECTED ]</span>
         <span class="events-cart-fab-count" id="events-cart-count">0</span>
       </button>
 
@@ -297,10 +299,10 @@ function actionButtonHtml(ev, { large = false } = {}) {
     return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`;
   }
   if (isInCart(ev.id)) {
-    return `<button type="button" class="${cls} in-cart" data-action="open-cart" data-event-id="${e(ev.id)}">[ ✓ IN CART ]</button>`;
+    return `<button type="button" class="${cls} in-cart" data-action="open-cart" data-event-id="${e(ev.id)}">[ ✓ SELECTED ]</button>`;
   }
   if (isRegistrationOpen(ev)) {
-    return `<button type="button" class="${cls}" data-action="add-to-cart" data-event-id="${e(ev.id)}">[ + ADD TO CART ]</button>`;
+    return `<button type="button" class="${cls}" data-action="add-to-cart" data-event-id="${e(ev.id)}">[ REGISTER ]</button>`;
   }
   const label = isPastDeadline(ev) ? "REGISTRATION CLOSED" : "REGISTRATION SOON";
   return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
@@ -312,10 +314,10 @@ function renderEventCardHtml(ev) {
 
   return `
     <div class="event-card" data-event-id="${e(ev.id)}">
-      <span class="corner corner-tl">+</span>
-      <span class="corner corner-tr">+</span>
-      <span class="corner corner-bl">+</span>
-      <span class="corner corner-br">+</span>
+      <span class="corner corner-tl" aria-hidden="true">+</span>
+      <span class="corner corner-tr" aria-hidden="true">+</span>
+      <span class="corner corner-bl" aria-hidden="true">+</span>
+      <span class="corner corner-br" aria-hidden="true">+</span>
 
       <div class="event-card-header">
         <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}</span>
@@ -419,29 +421,29 @@ export function openEventDossier(eventId) {
     </div>
 
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 01. ABOUT ]</h4>
+      <h3 class="event-dossier-heading">[ 01. ABOUT ]</h3>
       <p class="event-dossier-text">${e(ev.overview)}</p>
     </div>
 
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 02. RULES ]</h4>
+      <h3 class="event-dossier-heading">[ 02. RULES ]</h3>
       <ul class="event-dossier-list">${rulesHtml}</ul>
     </div>
 
     ${roundsHtml ? `
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ ${sectionNo()}. FORMAT & ROUNDS ]</h4>
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. FORMAT & ROUNDS ]</h3>
       <div class="event-rounds">${roundsHtml}</div>
     </div>` : ""}
 
     ${scoringHtml ? `
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ ${sectionNo()}. ${ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA"} ]</h4>
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. ${ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA"} ]</h3>
       <div class="event-scoring">${scoringHtml}</div>
     </div>` : ""}
 
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ ${sectionNo()}. STUDENT HEADS & CONTACT ]</h4>
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. STUDENT HEADS & CONTACT ]</h3>
       <div>${coordinatorsHtml}</div>
     </div>
 
@@ -456,7 +458,7 @@ export function openEventDossier(eventId) {
   overlay.classList.add("active");
   isDossierOpen = true;
   panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
-  // Fresh open: focus the title. Re-render after ADD TO CART: stay on the action.
+  // Fresh open: focus the title. Re-render while open: stay on the action.
   activateDialog("dossier", wasOpen ? ".event-action-large" : "#event-dossier-title");
 }
 
@@ -503,16 +505,17 @@ function renderCartPanel() {
 
   panel.innerHTML = `
     <div class="cart-head">
-      <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
-      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart">[ CLOSE ]</button>
+      <h3 id="events-cart-title" tabindex="-1">REGISTER FOR</h3>
+      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close">[ CLOSE ]</button>
     </div>
     ${items.length
       ? `<ul class="cart-list">${rows}</ul>
          <div class="cart-foot">
            <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
-           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ DONE → REGISTER ]</button>
+           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ CONTINUE → ]</button>
+           <button type="button" class="event-submit-btn secondary cart-done" data-action="cart-close">[ + ADD ANOTHER EVENT ]</button>
          </div>`
-      : `<div class="cart-empty"><p>Your cart is empty.</p><p>Open an event and tap <strong>ADD TO CART</strong>.</p></div>`}
+      : `<div class="cart-empty"><p>No events selected.</p><p>Open an event and tap <strong>REGISTER</strong>.</p></div>`}
   `;
   // Re-rendered while open (remove / solo-team switch): keep keyboard focus.
   if (activeDialog === "cart" && !panel.contains(document.activeElement)) focusInto(panel, keepFocus || DIALOGS.cart.title);
@@ -545,12 +548,12 @@ function handleAddToCart(eventId) {
   if (!ev) return;
   try {
     addToCart(ev.id);
-    flashToast(`${ev.title} added to cart`);
+    closeEventDossier();
+    openCart();
   } catch (err) {
     flashToast(err.message);
   }
   refreshEventsGrid();
-  if (isDossierOpen) openEventDossier(ev.id);
 }
 
 // The toast is a polite live region. It is created (empty) when the page
@@ -614,6 +617,10 @@ function startCheckout() {
     result: null,
     joinEventId: null,
   };
+  const draft = readCheckoutDraft();
+  if (draft?.cartKey === cartKey(items)) {
+    Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
+  }
   closeCart();
   openCheckoutModal();
 }
@@ -653,7 +660,40 @@ export function closeCheckout() {
   document.getElementById("event-reg-modal")?.classList.remove("active");
   isCheckoutOpen = false;
   checkout = null;
+  saveCheckoutDraft();
   deactivateDialog("checkout");
+}
+
+// Esc, backdrop and the close button: past the details step the student may
+// have typed team names or already paid, so don't drop that on one keystroke.
+function requestCloseCheckout() {
+  const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
+  if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
+    if (!confirm("Leave registration? What you entered here will be cleared. Your selected events stay.")) return;
+  }
+  closeCheckout();
+}
+
+const cartKey = (items) => items.map((i) => `${i.eventId}:${i.mode}`).join(",");
+
+function readCheckoutDraft() {
+  try {
+    return JSON.parse(sessionStorage.getItem(CHECKOUT_DRAFT_KEY));
+  } catch {
+    return null;
+  }
+}
+
+// Saves the open cart checkout, or clears the draft once it's closed or done.
+function saveCheckoutDraft() {
+  try {
+    if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
+      const { step, teams, details, utr, items } = checkout;
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items) }));
+    } else {
+      sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+    }
+  } catch {}
 }
 
 function stepList() {
@@ -669,7 +709,7 @@ function stepperHtml() {
   const steps = stepList();
   const current = steps.indexOf(checkout.step);
   return `<ol class="checkout-steps">${steps
-    .map((s, i) => `<li class="${i === current ? "current" : i < current ? "done" : ""}">${i + 1}. ${names[s]}</li>`)
+    .map((s, i) => `<li class="${i === current ? "current" : i < current ? "done" : ""}"${i === current ? ' aria-current="step"' : ""}>${i + 1}. ${names[s]}</li>`)
     .join("")}</ol>`;
 }
 
@@ -761,7 +801,7 @@ function renderCheckout(focusSel) {
         ${detailsFieldsHtml(checkout.details, user)}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← CART ]</button>
+          <button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← BACK ]</button>
           <button type="submit" class="event-submit-btn">[ NEXT → ]</button>
         </div>
       </form>`;
@@ -785,8 +825,8 @@ function renderCheckout(focusSel) {
           <fieldset class="co-team" data-team-event="${e(ev.id)}">
             <legend>${e(ev.title)} <span>· ${e(ev.minTeam)}–${e(ev.maxTeam)} members</span></legend>
             <div class="event-reg-group">
-              <label class="event-reg-label">Team name *</label>
-              <input type="text" class="event-reg-input co-team-name" maxlength="60" value="${e(t.teamName)}" placeholder="e.g. ByteBusters" />
+              <label class="event-reg-label" for="co-team-name-${e(ev.id)}">Team name *</label>
+              <input type="text" class="event-reg-input co-team-name" id="co-team-name-${e(ev.id)}" maxlength="60" value="${e(t.teamName)}" placeholder="e.g. ByteBusters" />
             </div>
             <div class="event-reg-group">
               <span class="event-reg-label">Team leader</span>
@@ -832,8 +872,12 @@ function renderCheckout(focusSel) {
               <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
               ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
               ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">[ PAY ₹${e(total)} WITH A UPI APP ]</a>` : ""}
-              <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span></div>
-              <p class="event-upi-help">After paying, enter the 12-digit UTR from the receipt. The fest team checks it against the bank statement before your booking shows as confirmed.</p>
+              <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
+              <p class="event-upi-help">After paying, come back here and enter the 12-digit UTR from the payment receipt. The fest team checks it against the bank statement before your booking shows as confirmed.</p>
+              <details class="event-upi-where">
+                <summary>Where do I find the UTR?</summary>
+                <p>Open the payment in your UPI app's history. Google Pay calls it <strong>UPI transaction ID</strong>, PhonePe calls it <strong>UTR</strong>, Paytm calls it <strong>UPI Ref No.</strong> It is always 12 digits.</p>
+              </details>
               <div class="event-reg-group">
                 <label class="event-reg-label" for="co-utr">12-digit UTR *</label>
                 <input type="text" class="event-reg-input event-reg-utr" id="co-utr" inputmode="numeric" maxlength="12" autocomplete="off" value="${e(checkout.utr || "")}" />
@@ -868,9 +912,10 @@ function renderCheckout(focusSel) {
     body = `
       <div class="event-reg-head">
         <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
-        <h3 class="event-reg-title" id="co-title" tabindex="-1">You're in!</h3>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">${pending ? "Registration received" : "You're in!"}</h3>
         <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.total > 0 ? " Your bookings will show as confirmed once the fest team verifies your payment." : r.teamPending ? " Your booking is confirmed once the fest team verifies your leader's payment." : ""}</p>
       </div>
+      ${pending ? `<p class="event-upi-help">Payment question? Email <a href="mailto:${e(FEST_CONFIG.contactEmail)}">${e(FEST_CONFIG.contactEmail)}</a> with your UTR.</p>` : ""}
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
       ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
       <div class="checkout-nav">
@@ -914,8 +959,13 @@ function renderCheckout(focusSel) {
 
   const form = card.querySelector("#co-form");
   const utr = card.querySelector("#co-utr");
-  if (utr) utr.oninput = () => (utr.value = utr.value.replace(/\D/g, "").slice(0, 12));
+  if (utr)
+    utr.oninput = () => {
+      utr.value = checkout.utr = utr.value.replace(/\D/g, "").slice(0, 12);
+      saveCheckoutDraft();
+    };
   if (form) form.onsubmit = (evt) => onCheckoutSubmit(evt, card);
+  saveCheckoutDraft();
 }
 
 async function onCheckoutSubmit(evt, card) {
@@ -1000,7 +1050,14 @@ function onCheckoutClick(evt) {
   const action = btn.dataset.action;
   const steps = stepList();
 
-  if (action === "co-close") return closeCheckout();
+  if (action === "co-close") return requestCloseCheckout();
+  if (action === "co-copy-upi") {
+    navigator.clipboard?.writeText(FEST_CONFIG.upiId).then(
+      () => flashToast("UPI ID copied"),
+      () => flashToast(`Couldn't copy. The UPI ID is ${FEST_CONFIG.upiId}`)
+    );
+    return;
+  }
   if (action === "co-back-cart") {
     closeCheckout();
     return openCart();
@@ -1330,7 +1387,7 @@ function bindGlobalListeners() {
     if (evt.key !== "Escape") return;
     // The profile overlay / auth modal handle their own Escape.
     if (isOtherOverlayOpen()) return;
-    if (isCheckoutOpen) closeCheckout();
+    if (isCheckoutOpen) requestCloseCheckout();
     else if (isCartOpen) closeCart();
     else if (isDossierOpen) closeEventDossier();
   });
@@ -1422,7 +1479,7 @@ export function initEventsPage() {
   const outside = [
     ["event-dossier-overlay", closeEventDossier],
     ["events-cart-overlay", closeCart],
-    ["event-reg-modal", closeCheckout],
+    ["event-reg-modal", requestCloseCheckout],
   ];
   outside.forEach(([id, close]) => {
     const el = document.getElementById(id);
@@ -1442,6 +1499,13 @@ export function initEventsPage() {
     url.searchParams.delete("cart");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
     setTimeout(openCart, 400);
+  }
+
+  // Reloaded mid-checkout (e.g. the phone dropped the tab during the UPI
+  // payment): reopen it where the student left off once they're signed in.
+  if (readCheckoutDraft()) {
+    if (getCurrentUser()) setTimeout(startCheckout, 400);
+    else resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
   }
 }
 
