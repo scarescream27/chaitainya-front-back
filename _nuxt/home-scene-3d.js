@@ -7389,6 +7389,10 @@ let Ws,
             Ms = () => {
               if (Ms.__disposed) return void V.ticker.remove(Ms);
               const N = rt.getDelta();
+              // The footer's solid area fills the screen: nothing of the scene
+              // shows, so skip the frame (the clock still ticks, so physics
+              // doesn't jump on return). Saves the GPU while people type.
+              if (window.__sgfCovers) return;
               (fs && qa(),
                 Kt && Ka(N),
                 ms && !Kt && $a(),

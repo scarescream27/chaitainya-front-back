@@ -1,42 +1,129 @@
-.home-footer{background:linear-gradient(180deg,#ffffffb3,#f7faffd9);bottom:0;height:50vh;left:0;position:relative;width:100%;z-index:10}.home-footer .wrapper{display:flex;flex-direction:column;height:100%;justify-content:flex-end;padding:25px 20px 15px;position:relative;width:100%}@media (max-width:767px){.home-footer .wrapper{padding:25px 8px 15px}}.home-footer .wrapper .for-social{position:relative;z-index:2}.home-footer .wrapper .socials{display:flex;justify-content:space-between;margin-bottom:8px}@media (max-width:767px){.home-footer .wrapper .socials{flex-wrap:wrap}}.home-footer .wrapper .socials a{color:#000;font-family:DrukMedium;font-size:7.5vw;font-style:normal;font-weight:500;letter-spacing:-2.3px;line-height:76.8%;text-align:center;text-transform:uppercase}@media (max-width:767px){.home-footer .wrapper .socials a{font-size:15.3vw;text-align:center}.home-footer .wrapper .socials a:nth-child(2){margin-bottom:10px;margin-top:10px;order:3}}.home-footer .wrapper h4{color:#000;font-family:DrukMedium;font-size:48.897px;font-style:normal;font-weight:500;letter-spacing:.978px;line-height:93%;position:relative;text-align:center;text-transform:uppercase;z-index:2}@media (max-width:767px){.home-footer .wrapper h4{font-size:32px}}.home-footer .wrapper .bottom{display:flex;justify-content:space-between;position:relative;z-index:2}.home-footer .wrapper .bottom a,.home-footer .wrapper .bottom p{color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:14px;text-transform:uppercase}.home-footer .wrapper .send{display:flex;justify-content:center;position:relative;z-index:2}.home-footer .wrapper .send .child{position:relative}.home-footer .wrapper .send .child .elem{display:inline-block;position:absolute;transition:.3s ease-in-out}.home-footer .wrapper .send .child .elem-1{left:0;top:0}.home-footer .wrapper .send .child .elem-2{right:0;top:0}.home-footer .wrapper .send .child .elem-3{bottom:0;left:0}.home-footer .wrapper .send .child .elem-4{bottom:0;right:0}.home-footer .wrapper .send .child:hover .elem-1{transform:translate(-20px)}.home-footer .wrapper .send .child:hover .elem-2{transform:translate(20px)}.home-footer .wrapper .send .child:hover .elem-3{transform:translate(-20px)}.home-footer .wrapper .send .child:hover .elem-4{transform:translate(20px)}.home-footer .wrapper .send .child .circle{align-items:center;background:#fff;border-radius:50%;display:flex;height:149px;justify-content:center;width:149px}.home-footer .wrapper .send .child .circle .inner-circle{align-items:center;border:1px solid rgba(0,0,0,.2);border-radius:50%;display:flex;height:138px;justify-content:center;width:138px}.home-footer .wrapper .send .child .circle .inner-circle p{color:#000;font-family:IBM Plex Mono;font-size:13px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:14px;text-align:center;text-transform:uppercase}.home-footer .wrapper .points{background-image:url(../images/footerPatern.png);background-repeat:repeat;background-size:5%;height:100%;left:0;pointer-events:none;position:absolute;top:0;width:100%}@media (max-width:767px){.home-footer .wrapper .points{background-size:8%}}
+/* ==========================================================================
+   Home footer: Shutter Glyph Footer (see shutter-footer.js) with the
+   Contact Us form. Ported from components/ui/shutter-glyph-footer.tsx and
+   recoloured to the site's sky palette.
+   ========================================================================== */
+.sgf {
+  --sgf-ink: #000;
+  --sgf-bg: var(--sky-bottom, #b4cbf5);
+  --sgf-top: var(--sky-top, #f7faff);
+  --sgf-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+  overflow: hidden;
+  container-type: inline-size;
+  color: var(--sgf-ink);
+  /* Clear at the top so the 3D scene runs into it, solid under the text. */
+  background: linear-gradient(180deg, rgba(247, 250, 255, 0) 0, var(--sgf-top) 14%, var(--sgf-bg) 100%);
+  font-family: var(--sgf-mono);
+  font-size: clamp(12px, 1.12cqw, 13.5px);
+  line-height: 1.25;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* Phones: the e-mail sat edge to edge at 15.3vw with -2.3px tracking, and
-   the scene's caption showed through behind it. Gutter, readable size,
-   wraps if a narrow phone can't fit it, solid backdrop under the text. */
-@media (max-width: 767px) {
-  .home-footer {
-    background: linear-gradient(180deg, rgba(247, 250, 255, 0), #f7faff 45%);
-  }
+.sgf ::selection { background: var(--sgf-ink); color: var(--sgf-top); }
+:where(.sgf) a { color: inherit; text-decoration: none; }
+:where(.sgf) button { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+:where(.sgf) ul { list-style: none; margin: 0; padding: 0; }
+:where(.sgf) p, :where(.sgf) h2 { margin: 0; }
+.sgf svg { max-width: none; }
+.sgf .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-  .home-footer .wrapper {
-    padding: 24px 16px calc(20px + env(safe-area-inset-bottom));
-  }
+.sgf-top {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr) auto;
+  column-gap: 24px;
+  row-gap: 36px;
+  padding: clamp(96px, 11.5cqw, 160px) clamp(16px, 2.6cqw, 40px) 0;
+}
 
-  .home-footer .wrapper .socials {
-    justify-content: center;
-    margin-bottom: 16px;
-  }
+.sgf-fade { transition: opacity 0.8s ease var(--sgf-d, 0ms), translate 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) var(--sgf-d, 0ms); }
+.sgf[data-in="false"] .sgf-fade { opacity: 0; translate: 0 10px; }
 
-  .home-footer .wrapper .socials a {
-    max-width: 100%;
-    font-size: clamp(30px, 10.4vw, 64px);
-    letter-spacing: 0.01em;
-    line-height: 0.95;
-    overflow-wrap: anywhere;
-  }
+/* Contact form */
+.sgf-form { max-width: 380px; }
+.sgf-lede { font: inherit; letter-spacing: inherit; max-width: 300px; }
+.sgf-fields { display: flex; flex-direction: column; gap: 6px; margin-top: clamp(14px, 2cqw, 22px); }
+.sgf-fields.is-shake { animation: sgf-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes sgf-shake { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
+.sgf-field { position: relative; display: flex; align-items: center; padding: 6px 0 6px; border-bottom: 1px solid var(--sgf-ink); }
+.sgf-field::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--sgf-ink); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sgf-field:focus-within::after { transform: scaleX(1); }
+.sgf-field:has([aria-invalid="true"]) { border-bottom-color: var(--danger, #b3261e); }
+.sgf-input { flex: 1; min-width: 0; min-height: 28px; font: inherit; letter-spacing: inherit; text-transform: none; color: inherit; background: transparent; border: 0; outline: none; padding: 0; margin: 0; border-radius: 0; -webkit-appearance: none; appearance: none; resize: vertical; }
+textarea.sgf-input { min-height: 4.2em; line-height: 1.4; }
+.sgf-input::placeholder { color: var(--sgf-ink); opacity: 0.75; text-transform: uppercase; transition: opacity 0.25s; }
+.sgf-input:focus::placeholder { opacity: 0.35; }
+.sgf-send { display: inline-flex; align-self: flex-start; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; padding: 0 2px; }
+.sgf-send:disabled { cursor: progress; opacity: 0.7; }
+.sgf-go { display: grid; place-items: center; width: 14px; }
+.sgf-go svg { width: 11px; height: 11px; transition: translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sgf-send:focus-visible .sgf-go svg { translate: 4px 0; }
+@media (hover: hover) { .sgf-send:hover .sgf-go svg { translate: 4px 0; } }
+.sgf-send:focus-visible, .sgf-done button:focus-visible { outline: 1px dashed var(--sgf-ink); outline-offset: 3px; }
+.sgf-done { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: clamp(14px, 2cqw, 22px); padding: 10px 0; border-bottom: 1px solid var(--sgf-ink); overflow-wrap: anywhere; }
+.sgf-done svg { width: 12px; height: 12px; flex: none; }
+.sgf-done button { margin-left: auto; min-height: 44px; opacity: 0.6; transition: opacity 0.2s; }
+.sgf-done button:hover { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+.sgf-msg { min-height: 1.3em; margin-top: 8px; font-size: 0.9em; }
 
-  .home-footer .wrapper .bottom {
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px 16px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(0, 0, 0, 0.12);
-  }
+/* Links: mono label, arrow that walks right, underline that wipes in */
+.sgf-list { display: flex; flex-direction: column; gap: clamp(2px, 0.4cqw, 4px); }
+.sgf-link { position: relative; display: inline-flex; align-items: center; gap: 0.65em; min-height: 32px; white-space: nowrap; }
+.sgf-link::after { content: ""; position: absolute; left: 0; right: 1.6em; bottom: 6px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 100% 50%; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sgf-link:focus-visible::after { transform: scaleX(1); transform-origin: 0 50%; }
+@media (hover: hover) { .sgf-link:hover::after { transform: scaleX(1); transform-origin: 0 50%; } }
+.sgf-link svg { width: 0.8em; height: 0.8em; flex: none; transition: translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sgf-link:focus-visible svg { translate: 5px 0; }
+@media (hover: hover) { .sgf-link:hover svg { translate: 5px 0; } }
+.sgf-link:focus-visible { outline: 1px dashed var(--sgf-ink); outline-offset: 2px; }
+.sgf-copy { white-space: pre-line; }
 
-  .home-footer .wrapper .bottom a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
+/* Wordmark */
+.sgf-mark { box-sizing: border-box; padding: clamp(36px, 4.6cqw, 64px) clamp(16px, 2.6cqw, 40px) calc(clamp(14px, 2.1cqw, 28px) + env(safe-area-inset-bottom)); }
+.sgf-svg { display: block; width: 100%; height: auto; overflow: hidden; fill: var(--sgf-ink); }
+.sgf-rise { transition: transform 1.15s cubic-bezier(0.16, 0.84, 0.2, 1) var(--sgf-d, 0ms); }
+.sgf[data-in="false"] .sgf-rise { transform: translateY(112px); }
+.sgf-g { cursor: pointer; }
+.sgf-flip { transform-box: fill-box; transform-origin: 50% 50%; }
+.sgf-flip.is-flip { animation: sgf-flip 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes sgf-flip { 0% { transform: scaleY(1); } 45% { transform: scaleY(-1); } 100% { transform: scaleY(1); } }
+.sgf-half { transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.15); }
+.sgf-g { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Hover-only effects: on touch screens a tap left the letter "stuck" sliced. */
+@media (hover: hover) and (pointer: fine) {
+  .sgf-g:hover .sgf-up { transform: translate(5px, -1.5px); }
+  .sgf-g:hover .sgf-dn { transform: translate(-5px, 1.5px); }
+}
+
+
+/* Narrow: form full width, links in two columns, then one column on phones */
+@container (max-width: 760px) {
+  .sgf-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sgf-top > :first-child, .sgf-top > .sgf-copy { grid-column: 1 / -1; }
+  .sgf-copy { order: 3; }
+  .sgf-form { max-width: none; }
+}
+@container (max-width: 420px) {
+  .sgf-top { row-gap: 28px; }
+  .sgf-link { min-height: 40px; }
+}
+
+/* Touch screens: 16px inputs (iOS zooms the page into smaller ones on
+   focus), fixed-height message box, no tap flash on buttons. */
+@media (pointer: coarse) {
+  .sgf-input { font-size: 16px; }
+  textarea.sgf-input { resize: none; }
+  .sgf-send, .sgf-link, .sgf-done button { -webkit-tap-highlight-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sgf .sgf-rise, .sgf .sgf-fade, .sgf .sgf-half, .sgf .sgf-link svg, .sgf .sgf-link::after, .sgf .sgf-field::after, .sgf .sgf-go svg { transition: none !important; }
+  .sgf .sgf-fields, .sgf .sgf-flip { animation: none !important; }
+  .sgf[data-in="false"] .sgf-rise { transform: none; }
+  .sgf[data-in="false"] .sgf-fade { opacity: 1; translate: none; }
 }

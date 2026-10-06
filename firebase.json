@@ -32,6 +32,7 @@
       "firestore.indexes.json",
       "events_catalog.json",
       "chaitainya-front-back/**",
+      "components/**",
       ".agent/**",
       ".gemini/**",
       ".claude/**",

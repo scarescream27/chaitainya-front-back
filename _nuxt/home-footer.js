@@ -1,106 +1,33 @@
 /**
  * ============================================================================
  * File: home-footer.js
- * Purpose: Home footer component with interactive physics ball, message button, and social links.
+ * Purpose: Home footer: the Shutter Glyph Footer (wordmark + Contact Us form),
+ * built by shutter-footer.js inside a single <footer> root.
  * ============================================================================
  */
-import { _ as w, __tla as k } from "./nuxt-link.js";
-import { u as x, __tla as F } from "./app-main.js";
-import {
-  H as A,
-  F as H,
-  M as e,
-  L,
-  J as N,
-  u as n,
-  X as b,
-} from "./vue-runtime.js";
-let M,
-  E = Promise.all([
-    (() => {
-      try {
-        return k;
-      } catch {}
-    })(),
-    (() => {
-      try {
-        return F;
-      } catch {}
-    })(),
-  ]).then(async () => {
-    let l, r, o, c, i, m, d, u, h, p, _, f, v, y, g;
-    ((l = { class: "home-footer" }),
-      (r = { class: "wrapper" }),
-      (o = e("h4", null, "Let's innovate together", -1)),
-      (c = e("span", { class: "elem-1 elem" }, "[", -1)),
-      (i = e("span", { class: "elem-2 elem" }, "]", -1)),
-      (m = e("span", { class: "elem-3 elem" }, "[", -1)),
-      (d = e("span", { class: "elem-4 elem" }, "]", -1)),
-      (u = e(
-        "div",
-        { class: "circle" },
-        [
-          e("div", { class: "inner-circle" }, [
-            e("p", null, [b("send"), e("br"), b(" message")]),
-          ]),
-        ],
-        -1,
-      )),
-      (h = [c, i, m, d, u]),
-      (p = { class: "for-social" }),
-      (_ = { class: "socials" }),
-      (f = { class: "bottom" }),
-      (v = e("p", { class: "copy" }, "\xA9 All rights reserved", -1)),
-      (y = e("div", { class: "points" }, null, -1)),
-      (g = {
-        __name: "homeFooter",
-        setup(J) {
-          const a = x();
-          return (P, s) => {
-            const C = w;
-            return (
-              A(),
-              H("div", l, [
-                e("div", r, [
-                  e("div", p, [
-                    e("div", _, [
-                      e(
-                        "a",
-                        {
-                          onMouseleave:
-                            s[2] || (s[2] = (t) => n(a).hideCursor("", "none")),
-                          onMouseenter:
-                            s[3] ||
-                            (s[3] = (t) => n(a).blendCursor("difference")),
-                          target: "_blank",
-                          href: "mailto:chaitanyahptu@gmail.com",
-                        },
-                        "chaitanyahptu@gmail.com",
-                        32,
-                      ),
-                    ]),
-                    e("div", f, [
-                      v,
-                      e(
-                        "a",
-                        {
-                          href: "/contact",
-                          onClick: (t) => {
-                            const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
-                            if (router) (t.preventDefault(), router.push("/contact"));
-                          },
-                        },
-                        "[Contact Us]",
-                      ),
-                    ]),
-                  ]),
-                  y,
-                ]),
-              ])
-            );
-          };
-        },
-      }),
-      (M = g));
-  });
+import { E as onMounted, o as onBeforeUnmount, H as openBlock, F as createElementBlock } from "./vue-runtime.js";
+import { mountShutterFooter } from "./shutter-footer.js";
+
+const M = {
+  __name: "homeFooter",
+  setup() {
+    let root = null;
+    let handle = null;
+    onMounted(() => {
+      if (root) handle = mountShutterFooter(root);
+    });
+    onBeforeUnmount(() => {
+      handle?.destroy();
+      handle = null;
+    });
+    // Vue owns only the <footer>; its contents are built by mountShutterFooter.
+    return () => (
+      openBlock(),
+      createElementBlock("footer", { class: "home-footer sgf", id: "contact", ref: (el) => (root = el) }, null, 512)
+    );
+  },
+};
+
+// home-scene-3d.js awaits this (the bundle's top-level-await convention).
+const E = Promise.resolve();
 export { M as H, E as __tla };

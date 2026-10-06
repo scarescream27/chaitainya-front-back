@@ -4123,7 +4123,7 @@ let At,
           path: "/contact",
           meta: {},
           alias: [],
-          redirect: rd == null ? void 0 : rd.redirect,
+          redirect: "/", // Contact Us is the form in the home footer
           component: () =>
             Si(
               () =>
