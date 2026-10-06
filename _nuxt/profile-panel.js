@@ -215,6 +215,7 @@ function renderPage() {
 
     <section class="prof-card prof-danger" id="profile-delete" aria-labelledby="prof-delete-title">
       <div class="prof-section-head">
+        <span class="pp-kicker">04 // DELETE PROFILE</span>
         <h2 class="prof-h2" id="prof-delete-title">Delete profile</h2>
         <p class="pp-hint">Cancels all your free registrations, deletes your profile and Chaitanya ID, and signs you out. You can register again afterwards with a fresh profile.</p>
       </div>
@@ -304,7 +305,7 @@ const STATUS_CHIP = {
   booked: { label: "BOOKED", cls: "ok" },
   pending: { label: "PAYMENT PENDING", cls: "pending" },
   rejected: { label: "PAYMENT NOT VERIFIED", cls: "bad" },
-  cart: { label: "NOT REGISTERED YET", cls: "cart" },
+  cart: { label: "IN CART", cls: "cart" },
 };
 
 async function loadRegistrations() {
