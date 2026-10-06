@@ -302,8 +302,10 @@ let st,
                           },
                           [O("["), tabAdmin, O("]")],
                         ),
-                        // Account sits last, at the far right.
-                        ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),
+                        // Account sits last, at the far right. One wrapper keeps the
+                        // header's child count the same signed in or out, so hydrating
+                        // the pre-rendered (signed-out) header can't shift elements.
+                        d("span", { class: "nav-account" }, authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O })),
                         d(
                           "div",
                           {
@@ -365,13 +367,17 @@ let st,
                                 },
                                 [O("["), mAdmin, O("]")],
                               ),
-                              ...authNavLinks(authCurrentUser.value, {
-                                openBlock: we,
-                                block: ot,
-                                h: d,
-                                text: O,
-                                before: () => w(n).openMobileMenu(!1),
-                              }),
+                              d(
+                                "span",
+                                { class: "nav-account" },
+                                authNavLinks(authCurrentUser.value, {
+                                  openBlock: we,
+                                  block: ot,
+                                  h: d,
+                                  text: O,
+                                  before: () => w(n).openMobileMenu(!1),
+                                }),
+                              ),
                             ]),
                             _t,
                           ],

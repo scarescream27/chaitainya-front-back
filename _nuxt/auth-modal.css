@@ -1924,7 +1924,8 @@ header .header .mobile-menu a.nav-profile .nav-avatar {
 @media (min-width: 768px) {
   /* Desktop only: below 768px default-layout.css hides these links in favour
      of the menu button, and that must keep winning. */
-  html body header .header .right-menu > a {
+  html body header .header .right-menu > a,
+  html body header .header .right-menu > .nav-account > a {
     display: inline-flex;
     align-items: center;
   }
@@ -1970,7 +1971,10 @@ header .header .right-menu a.nav-cta {
 }
 
 /* Account (avatar, or Login/Register) is its own group at the far right. */
-header .header .right-menu > a.nav-profile,
-header .header .right-menu > a[href="#login"] {
+header .header .nav-account {
+  display: contents;
+}
+
+header .header .right-menu > .nav-account > a:first-child {
   margin-inline-start: 16px !important;
 }
