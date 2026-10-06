@@ -1,12 +1,11 @@
 /**
  * ============================================================================
  * File: home-footer.js
- * Purpose: Home footer: fest dates, register link, contact email.
+ * Purpose: Home footer component with interactive physics ball, message button, and social links.
  * ============================================================================
  */
 import { _ as w, __tla as k } from "./nuxt-link.js";
 import { u as x, __tla as F } from "./app-main.js";
-import { getFestDatesLabel } from "./fest-config.js";
 import {
   H as A,
   F as H,
@@ -30,10 +29,25 @@ let M,
       } catch {}
     })(),
   ]).then(async () => {
-    let l, r, o, p, _, f, v, y, g;
+    let l, r, o, c, i, m, d, u, h, p, _, f, v, y, g;
     ((l = { class: "home-footer" }),
       (r = { class: "wrapper" }),
-      (o = e("h4", null, `${getFestDatesLabel()} · HPTU Hamirpur`, -1)),
+      (o = e("h4", null, "Let's innovate together", -1)),
+      (c = e("span", { class: "elem-1 elem" }, "[", -1)),
+      (i = e("span", { class: "elem-2 elem" }, "]", -1)),
+      (m = e("span", { class: "elem-3 elem" }, "[", -1)),
+      (d = e("span", { class: "elem-4 elem" }, "]", -1)),
+      (u = e(
+        "div",
+        { class: "circle" },
+        [
+          e("div", { class: "inner-circle" }, [
+            e("p", null, [b("send"), e("br"), b(" message")]),
+          ]),
+        ],
+        -1,
+      )),
+      (h = [c, i, m, d, u]),
       (p = { class: "for-social" }),
       (_ = { class: "socials" }),
       (f = { class: "bottom" }),
@@ -49,20 +63,8 @@ let M,
               A(),
               H("div", l, [
                 e("div", r, [
-                  o,
                   e("div", p, [
                     e("div", _, [
-                      e(
-                        "a",
-                        {
-                          href: "/events",
-                          onClick: (t) => {
-                            const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
-                            if (router) (t.preventDefault(), router.push("/events"));
-                          },
-                        },
-                        "Register for events →",
-                      ),
                       e(
                         "a",
                         {
