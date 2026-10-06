@@ -83,3 +83,33 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Marker highlight under headings (desktop): an 8px yellow line that fades in
+   under the text, like a highlighter pass. Native text-decoration, so it
+   follows each wrapped line. ponytail: fades in rather than wiping left to
+   right; a wipe needs an inline wrapper around every heading's text. */
+@media (min-width: 768px) {
+  :is(h1, h2, h3):not(.event-dossier-heading),
+  .scene-texts p {
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 8px;
+    text-underline-offset: 2px;
+    text-decoration-skip-ink: none;
+    animation: text-highlight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes text-highlight {
+  to {
+    text-decoration-color: #fde047;
+  }
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: reduce) {
+  :is(h1, h2, h3):not(.event-dossier-heading),
+  .scene-texts p {
+    animation: none;
+    text-decoration-color: #fde047;
+  }
+}
