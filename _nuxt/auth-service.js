@@ -65,47 +65,8 @@ function scheduleAnalytics(app) {
       setTimeout(load, 3000);
     }
   };
-  // Analytics sets cookies, so it only loads once the visitor accepts.
-  const start = () => {
-    if (document.readyState === "complete") whenIdle();
-    else window.addEventListener("load", whenIdle, { once: true });
-  };
-  const consent = readCookieConsent();
-  if (consent === "yes") start();
-  else if (consent !== "no") askCookieConsent(start);
-}
-
-const COOKIE_CONSENT_KEY = "ch-cookie-consent";
-
-function readCookieConsent() {
-  try {
-    return localStorage.getItem(COOKIE_CONSENT_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function askCookieConsent(onAccept) {
-  const bar = document.createElement("div");
-  bar.className = "cookie-consent";
-  bar.setAttribute("role", "region");
-  bar.setAttribute("aria-label", "Cookie consent");
-  bar.innerHTML = `
-    <p>We use cookies for anonymous usage analytics (Google Analytics for Firebase). Sign-in works either way. <a href="/privacy-policy">Privacy policy</a></p>
-    <div class="cookie-consent-actions">
-      <button type="button" data-consent="no">Decline</button>
-      <button type="button" data-consent="yes">Accept cookies</button>
-    </div>`;
-  bar.addEventListener("click", (evt) => {
-    const choice = evt.target.closest("[data-consent]")?.dataset.consent;
-    if (!choice) return;
-    try {
-      localStorage.setItem(COOKIE_CONSENT_KEY, choice);
-    } catch {}
-    bar.remove();
-    if (choice === "yes") onAccept();
-  });
-  document.body.appendChild(bar);
+  if (document.readyState === "complete") whenIdle();
+  else window.addEventListener("load", whenIdle, { once: true });
 }
 
 const DEMO_DB_KEY = "chaitanya_demo_db";
