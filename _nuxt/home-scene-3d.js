@@ -6909,8 +6909,19 @@ let Ws,
                   geom.translate(cx, cy, 0);
                   A.children[8].geometry.dispose();
                   A.children[8].geometry = geom;
-                  A.children[8].scale.set(1, 1, 1);
                   A.children[8].rotation.set(0, 0, 0);
+                  // Narrow portrait screens see less of the scene horizontally;
+                  // shrink the "2026" so it never runs off the edge (desktop: 1).
+                  const x2026 = A.children[8].position.x;
+                  const fit2026 = () => {
+                    const k = Math.min(1, window.innerWidth / window.innerHeight / 0.85);
+                    A.children[8].scale.set(k, k, k);
+                    // Its small x offset reads as off-centre on a narrow screen.
+                    A.children[8].position.x = k < 1 ? 0 : x2026;
+                  };
+                  fit2026();
+                  window.removeEventListener("resize", window.__fit2026 || fit2026);
+                  window.addEventListener("resize", (window.__fit2026 = fit2026));
                 }),
                 (A.children[8].material = new Zt({
                   color: 0,

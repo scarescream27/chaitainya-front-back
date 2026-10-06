@@ -414,14 +414,14 @@ export function openEventDossier(eventId) {
   panel.innerHTML = `
     <button type="button" class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     <div>
-      <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)} // ${e(ev.badge)}</span>
+      <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}${ev.badge && ev.badge !== ev.categoryName ? ` // ${e(ev.badge)}` : ""}</span>
       <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
       <p class="event-dossier-tagline">${e(ev.tagline)}</p>
     </div>
 
     <div class="event-dossier-specs">
-      <div class="event-spec-item"><span class="event-spec-k">DATE & TIME</span><span class="event-spec-v">${e(ev.date)} · ${e(ev.time)}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">VENUE</span><span class="event-spec-v">${e(ev.venue)}</span></div>
+      <div class="event-spec-item wide"><span class="event-spec-k">DATE & TIME</span><span class="event-spec-v">${e(ev.date)} · ${e(ev.time)}</span></div>
+      <div class="event-spec-item wide"><span class="event-spec-k">VENUE</span><span class="event-spec-v">${e(ev.venue)}</span></div>
       <div class="event-spec-item"><span class="event-spec-k">FEE</span><span class="event-spec-v">${e(feeLabel(ev))}</span></div>
       <div class="event-spec-item"><span class="event-spec-k">REGISTER BY</span><span class="event-spec-v">${e(formatDeadline(ev))}</span></div>
       <div class="event-spec-item"><span class="event-spec-k">REGISTRATION</span><span class="event-spec-v">${e(typeLabel)}</span></div>
@@ -463,8 +463,14 @@ export function openEventDossier(eventId) {
   `;
 
   const wasOpen = isDossierOpen && activeDialog === "dossier";
-  if (!wasOpen) panel.scrollTop = 0;
   overlay.classList.add("active");
+  // A new event always starts at its title. Reset once the panel is shown
+  // (and again on its first frame: iOS can carry momentum from a fling that
+  // was still running when the previous event was closed).
+  if (!wasOpen) {
+    panel.scrollTop = 0;
+    requestAnimationFrame(() => panel.isConnected && (panel.scrollTop = 0));
+  }
   isDossierOpen = true;
   panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
   // Fresh open: focus the title. Re-render after ADD TO CART: stay on the action.
@@ -1500,6 +1506,8 @@ export function initEventsPage() {
   outside.forEach(([id, close]) => {
     const el = document.getElementById(id);
     el?.addEventListener("click", (evt) => evt.target === el && close());
+    // Wheel on the dimmed backdrop would scroll the page behind the dialog.
+    el?.addEventListener("wheel", (evt) => evt.target === el && evt.preventDefault(), { passive: false });
   });
 
   setCartOwner(getCurrentUser()?.uid);

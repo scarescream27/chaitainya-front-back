@@ -1545,6 +1545,10 @@ html.not-home header {
   box-shadow: var(--shadow-soft);
   padding: 24px;
   box-sizing: border-box;
+  min-width: 0;
+  /* Emails and long names wrap instead of widening the card (it is a flex
+     item, so an unbreakable address pushed it past a 320px screen). */
+  overflow-wrap: anywhere;
   scroll-margin-top: 90px;
 }
 
