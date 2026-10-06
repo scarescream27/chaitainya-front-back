@@ -4,7 +4,8 @@
  * ============================================================================
  * Matches the original Noomo Labs / Chaitanya 2k26 aesthetic:
  * - Frosted ethereal glassmorphism with subtle noise texture
- * - Poppins throughout: bold display headers, uppercase bracketed tags
+ * - Bold black DrukMedium display headers
+ * - Crisp IBM Plex Mono uppercase monospace typography & bracketed tags
  * - High-contrast black/white pill buttons and circular accents
  * - Clean pill form inputs with fine borders and bold focus states
  */
@@ -114,7 +115,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .chaitanya-modal-card .corner {
   position: absolute;
   color: color-mix(in srgb, var(--ink) 28%, transparent);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 600;
   user-select: none;
@@ -132,7 +133,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--surface);
   border: 1.5px solid var(--ink);
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -158,7 +159,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .chaitanya-modal-tag {
   display: inline-block;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.8px;
@@ -168,7 +169,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .chaitanya-modal-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 48px;
   line-height: 0.88;
   letter-spacing: -0.5px;
@@ -178,7 +179,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .chaitanya-modal-subtitle {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   letter-spacing: 0.3px;
   color: var(--ink-muted);
@@ -197,7 +198,7 @@ html.pp-open .chaitanya-modal-backdrop {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   color: color-mix(in srgb, var(--ink) 93.3%, var(--surface)); /* #111 in light */
   line-height: 1.45;
@@ -235,7 +236,7 @@ html.pp-open .chaitanya-modal-backdrop {
   color: var(--ink-on-dark);
   border: 2px solid var(--ink);
   border-radius: 50px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.6px;
@@ -274,7 +275,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .chaitanya-form-label {
   display: block;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
@@ -290,7 +291,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 50px;
   padding: 13px 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
@@ -327,7 +328,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .chaitanya-divider span {
   padding: 0 14px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink-muted);
@@ -339,7 +340,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .chaitanya-modal-footer {
   margin-top: 24px;
   text-align: center;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: var(--ink-muted);
 }
@@ -348,7 +349,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: transparent;
   border: none;
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -385,7 +386,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .profile-name {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 38px;
   line-height: 0.92;
   text-transform: uppercase;
@@ -395,7 +396,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .profile-email {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: var(--ink-muted);
   margin: 0 0 10px;
@@ -405,7 +406,7 @@ html.pp-open .chaitanya-modal-backdrop {
   display: inline-block;
   padding: 4px 14px;
   border-radius: 30px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
@@ -437,7 +438,7 @@ html.pp-open .chaitanya-modal-backdrop {
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
 }
 
@@ -468,7 +469,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border: 1.5px solid var(--ink);
   border-radius: 30px;
   padding: 5px 14px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -483,7 +484,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border: 1.5px solid var(--ink);
   border-radius: 50px;
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -519,7 +520,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-stat-num {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 46px;
   color: var(--ink);
   line-height: 0.95;
@@ -527,7 +528,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-stat-label {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink-muted);
@@ -547,7 +548,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   text-align: left;
 }
@@ -583,7 +584,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-tab-btn {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 6px 14px;
@@ -613,7 +614,7 @@ html.pp-open .chaitanya-modal-backdrop {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: var(--fs-label);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -657,7 +658,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--ok);
   color: var(--ink-on-dark);
   border: none;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 4px 8px;
@@ -674,7 +675,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--danger-ink);
   color: var(--ink-on-dark);
   border: none;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 4px 8px;
@@ -719,7 +720,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .admin-note,
 .admin-progress,
 .profile-empty {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   color: var(--ink-muted);
 }
@@ -757,7 +758,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border-radius: 8px;
   padding: 18px;
   margin-bottom: 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   line-height: 1.5;
 }
@@ -799,7 +800,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border: 1px solid var(--ink);
   border-radius: 6px;
   padding: 6px 12px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   cursor: pointer;
 }
@@ -927,7 +928,7 @@ html:not(.is-fest-admin) a[href="/admin"] {
   border: 2px solid var(--surface);
   border-radius: 26px;
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   color: var(--ink);
   overflow: hidden;
   transform: translateY(-10px) scale(0.97);
@@ -965,7 +966,7 @@ html.pp-open {
 }
 
 .pp-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 26px;
   line-height: 1;
   margin: 2px 0;
@@ -1389,7 +1390,7 @@ html.pp-open {
 }
 
 .mono {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   letter-spacing: 0.5px;
 }
 
@@ -1530,7 +1531,7 @@ html.not-home header {
   background-repeat: repeat;
   background-size: var(--page-bg-size);
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   color: var(--ink);
 }
 
@@ -1573,7 +1574,7 @@ html.not-home header {
 }
 
 .prof-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: clamp(28px, 6vw, 44px);
   font-weight: 500;
   line-height: 1;
@@ -1584,7 +1585,7 @@ html.not-home header {
 }
 
 .prof-h2 {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 26px;
   font-weight: 500;
   line-height: 1.05;
@@ -1774,7 +1775,7 @@ html.not-home header {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   text-align: center;
 }

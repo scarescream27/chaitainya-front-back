@@ -79,7 +79,7 @@ html.site-loading {
   margin: 0;
   padding: 0 16px;
   white-space: nowrap;
-  font-family: "Poppins", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "DrukMedium", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: clamp(56px, 11vw, 168px);
   font-weight: 500;
   line-height: 1;
@@ -117,7 +117,7 @@ html.site-loading {
   padding: 4px 10px;
   background-color: #f7faff;
   text-align: center;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.6px;

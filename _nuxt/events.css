@@ -4,7 +4,8 @@
  * ============================================================================
  * High-impact brutalist glassmorphic aesthetic matching the main site & /contact:
  * - Frosted ethereal glassmorphism with subtle noise texture
- * - Poppins throughout: display headers, tags, brackets and badges
+ * - Bold display headers in DrukMedium
+ * - Monospace tags, brackets, and badges in IBM Plex Mono
  * - High-contrast responsive card grid and slide-in dossier drawer
  */
 
@@ -56,7 +57,7 @@ body:has(.events-page-root) .transition-component,
 
 .events-hero-tag {
   display: inline-block;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 1.2px;
@@ -70,7 +71,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .events-hero-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: clamp(42px, 7vw, 92px);
   line-height: 0.85;
   letter-spacing: -1.5px;
@@ -80,7 +81,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .events-hero-subtitle {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 500;
   color: color-mix(in srgb, var(--ink) 75%, transparent);
@@ -101,7 +102,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .events-stat-pill {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -179,7 +180,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .events-cat-btn {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -234,7 +235,7 @@ body:has(.events-page-root) .transition-component,
   border: 1.5px solid color-mix(in srgb, var(--ink) 15%, transparent);
   border-radius: 30px;
   padding: 8px 36px 8px 16px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 500;
   color: var(--ink);
@@ -330,7 +331,7 @@ body:has(.events-page-root) .transition-component,
 /* Corner plus glyphs */
 .event-card .corner {
   position: absolute;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: color-mix(in srgb, var(--ink) 25%, transparent);
@@ -352,7 +353,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-badge-category {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
@@ -363,7 +364,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-badge-format {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.4px;
@@ -376,7 +377,7 @@ body:has(.events-page-root) .transition-component,
 
 /* Card Titles */
 .event-card-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 28px;
   line-height: 0.95;
   letter-spacing: -0.4px;
@@ -386,7 +387,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-card-tagline {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 500;
   color: color-mix(in srgb, var(--ink) 70%, transparent);
@@ -411,7 +412,7 @@ body:has(.events-page-root) .transition-component,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   letter-spacing: 0.3px;
 }
@@ -447,7 +448,7 @@ body:has(.events-page-root) .transition-component,
   background: var(--surface);
   border: 1.5px solid var(--line-strong);
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -469,7 +470,7 @@ body:has(.events-page-root) .transition-component,
   background: var(--ink);
   border: 1.5px solid var(--line-strong);
   color: var(--ink-on-dark);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -498,13 +499,13 @@ body:has(.events-page-root) .transition-component,
 .events-empty {
   text-align: center;
   padding: 60px 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   color: var(--ink-muted);
   grid-column: 1 / -1;
 }
 
 .events-empty h3 {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 32px;
   color: var(--ink);
   margin-bottom: 8px;
@@ -576,7 +577,7 @@ body:has(.events-page-root) .transition-component,
   background: var(--surface);
   border: 1.5px solid var(--line-strong);
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 6px 14px;
@@ -595,7 +596,7 @@ body:has(.events-page-root) .transition-component,
 /* Dossier Header */
 .event-dossier-badge {
   display: inline-block;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 3px 8px;
@@ -606,7 +607,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-dossier-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 38px;
   line-height: 0.92;
   letter-spacing: -0.5px;
@@ -616,7 +617,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-dossier-tagline {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 500;
   color: color-mix(in srgb, var(--ink) 73%, var(--surface));
@@ -651,7 +652,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-spec-k {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink-muted);
@@ -659,7 +660,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-spec-v {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   color: var(--ink);
@@ -672,7 +673,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-dossier-heading {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.8px;
@@ -684,7 +685,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-dossier-text {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: color-mix(in srgb, var(--ink) 87%, var(--surface));
   line-height: 1.6;
@@ -700,7 +701,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-dossier-list li {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   line-height: 1.5;
   color: color-mix(in srgb, var(--ink) 93%, var(--surface));
@@ -737,14 +738,14 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-coord-name {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   color: var(--ink);
 }
 
 .event-coord-role {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
   text-transform: none;
@@ -756,7 +757,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-coord-btn {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -837,7 +838,7 @@ body:has(.events-page-root) .transition-component,
   background: var(--surface);
   border: 1.5px solid var(--line-strong);
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 5px 12px;
@@ -865,7 +866,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-label {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -878,7 +879,7 @@ body:has(.events-page-root) .transition-component,
   border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 12px;
   padding: 10px 14px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: var(--ink);
   outline: none;
@@ -925,7 +926,7 @@ body:has(.events-page-root) .transition-component,
   background: color-mix(in srgb, var(--ink) 6%, var(--surface));
   padding: 6px 12px;
   border-radius: 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
@@ -937,7 +938,7 @@ body:has(.events-page-root) .transition-component,
   border: none;
   padding: 3px 8px;
   border-radius: 12px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   cursor: pointer;
   text-transform: uppercase;
@@ -949,7 +950,7 @@ body:has(.events-page-root) .transition-component,
   border: none;
   border-radius: 30px;
   padding: 12px 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -988,7 +989,7 @@ body:has(.events-page-root) .transition-component,
 /* Hero Ambient Parallax Coordinates */
 .events-hero-coords {
   display: block;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
   letter-spacing: 0.02em;
@@ -1030,7 +1031,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .events-scroll-metric {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 700;
   color: var(--ink);
@@ -1055,7 +1056,7 @@ body:has(.events-page-root) .transition-component,
   border: none;
   padding: 6px 14px;
   border-radius: 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -1092,7 +1093,7 @@ body:has(.events-page-root) .transition-component,
    Registration modal & entry pass (v2)
    ========================================================================== */
 .events-hero-note {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   /* Sits on the gradient's darker band + dot pattern; muted ink fell to ~4.1:1. */
   color: var(--ink);
@@ -1106,7 +1107,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-kicker {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 700;
   color: var(--ok);
@@ -1114,7 +1115,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-title {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: clamp(26px, 6vw, 34px);
   line-height: 1;
   margin: 6px 0;
@@ -1123,7 +1124,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-sub {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
   line-height: 1.5;
@@ -1142,7 +1143,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-mode label {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -1152,7 +1153,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-hint {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
 }
@@ -1184,7 +1185,7 @@ body:has(.events-page-root) .transition-component,
 .event-reg-closed-note {
   border-radius: 12px;
   padding: 12px 14px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   line-height: 1.5;
 }
@@ -1207,7 +1208,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-upi-amount {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1218,14 +1219,14 @@ body:has(.events-page-root) .transition-component,
   color: var(--ink-on-dark);
   border-radius: 30px;
   padding: 10px 18px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 700;
   text-decoration: none;
 }
 
 .event-upi-help {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: color-mix(in srgb, var(--ink) 73%, var(--surface));
   line-height: 1.5;
@@ -1243,7 +1244,7 @@ body:has(.events-page-root) .transition-component,
   border: 1px solid #f5c2c7;
   border-radius: 10px;
   padding: 8px 12px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
 }
 
@@ -1263,7 +1264,7 @@ body:has(.events-page-root) .transition-component,
 .event-pass,
 .event-pass-loading {
   text-align: center;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
 }
 
 .event-pass-loading {
@@ -1346,7 +1347,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-pass-code strong {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 30px;
   letter-spacing: 2px;
   color: var(--ink);
@@ -1474,7 +1475,7 @@ body:has(.events-page-root) .transition-component,
   border: none;
   background: none;
   padding: 4px 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink);
   text-decoration: underline;
@@ -1496,7 +1497,7 @@ body:has(.events-page-root) .transition-component,
   border: 2px solid var(--line-strong);
   background: var(--surface);
   color: var(--ink);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1553,7 +1554,7 @@ body:has(.events-page-root) .transition-component,
   color: var(--ink);
   border-left: 2px solid var(--surface);
   box-shadow: -20px 0 60px rgba(15, 23, 42, 0.12);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   transform: translateX(100%);
   transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -1570,7 +1571,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .cart-head h3 {
-  font-family: "Poppins", sans-serif;
+  font-family: "DrukMedium", sans-serif;
   font-size: 30px;
   margin: 0;
   letter-spacing: 0.04em;
@@ -1635,7 +1636,7 @@ body:has(.events-page-root) .transition-component,
   border: none;
   background: none;
   padding: 2px 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--danger);
   text-decoration: underline;
@@ -1707,7 +1708,7 @@ body:has(.events-page-root) .transition-component,
   pointer-events: none;
   background: var(--ink);
   color: var(--ink-on-dark);
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   padding: 10px 18px;
   border-radius: 30px;
@@ -1728,7 +1729,7 @@ body:has(.events-page-root) .transition-component,
   list-style: none;
   margin: 18px 0 14px;
   padding: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 700;
 }
@@ -1783,7 +1784,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .co-team legend {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 700;
   padding: 0 6px;
@@ -1795,7 +1796,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .co-leader {
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   padding: 10px 14px;
   border-radius: 12px;
@@ -1814,7 +1815,7 @@ body:has(.events-page-root) .transition-component,
   list-style: none;
   margin: 0;
   padding: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
 }
 
@@ -1836,7 +1837,7 @@ body:has(.events-page-root) .transition-component,
 .checkout-total {
   display: flex;
   justify-content: space-between;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 700;
   margin: 12px 0 14px;
@@ -1854,7 +1855,7 @@ body:has(.events-page-root) .transition-component,
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
 }
 
@@ -1906,7 +1907,7 @@ select.event-reg-input {
   border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   border-radius: 12px;
   padding: 10px 12px;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
 }
 
 .event-round-head {
@@ -1941,7 +1942,7 @@ select.event-reg-input {
   justify-content: space-between;
   gap: 10px;
   padding: 5px 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   border-bottom: 1px dashed color-mix(in srgb, var(--ink) 10%, transparent);
 }
