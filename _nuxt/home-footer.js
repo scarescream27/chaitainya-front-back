@@ -13,7 +13,6 @@ import {
   L,
   J as N,
   u as n,
-  W as B,
   X as b,
 } from "./vue-runtime.js";
 let M,
@@ -80,7 +79,20 @@ let M,
                         32,
                       ),
                     ]),
-                    e("div", f, [v, B("", !0)]),
+                    e("div", f, [
+                      v,
+                      e(
+                        "a",
+                        {
+                          href: "/contact",
+                          onClick: (t) => {
+                            const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+                            if (router) (t.preventDefault(), router.push("/contact"));
+                          },
+                        },
+                        "[Contact Us]",
+                      ),
+                    ]),
                   ]),
                   y,
                 ]),

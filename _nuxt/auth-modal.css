@@ -1968,3 +1968,9 @@ header .header .right-menu a.nav-cta {
   color: var(--ink-on-dark);
   border-radius: 30px;
 }
+
+/* Account (avatar, or Login/Register) is its own group at the far right. */
+header .header .right-menu > a.nav-profile,
+header .header .right-menu > a[href="#login"] {
+  margin-inline-start: 16px !important;
+}

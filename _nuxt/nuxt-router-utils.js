@@ -36,21 +36,16 @@ import {
   a2 as jt,
 } from "./vue-runtime.js";
 import { initAuthModal, openAuthModal, syncNavbarAuthState } from "./auth-modal.js";
-import { initFirebase, subscribeAuthState, signOutUser, getCurrentUser } from "./auth-service.js";
+import { initFirebase, subscribeAuthState, getCurrentUser } from "./auth-service.js";
 function goTo(path) {
   const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
   if (router) router.push(path);
   else window.location.href = path;
 }
 
-async function logOutAndLeave() {
-  await signOutUser();
-  if (window.location.pathname.replace(/\/$/, "") === "/profile") goTo("/");
-}
-
 /**
  * The two auth slots of the nav: [Login] [Register] when signed out,
- * [Profile] [Logout] when signed in.
+ * the profile avatar when signed in (log out lives on the profile page).
  *
  * Each link is its own keyed block (openBlock + createElementBlock): the
  * surrounding compiled template is static, and Vue only re-renders the
@@ -96,7 +91,6 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
       { class: "nav-profile", "aria-label": "Your profile", title: "Profile" },
       [avatar],
     ),
-    link("nav-logout", "#logout", "Logout", logOutAndLeave),
   ];
 }
 
@@ -121,7 +115,6 @@ let st,
       tabRegister = d("span", null, "Register", -1),
       tabLogin = d("span", null, "Login", -1),
       tabAdmin = d("span", null, "Admin", -1),
-      tabContact = d("span", null, "Contact Us", -1),
       gt = at(
         '<div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
         6,
@@ -133,7 +126,6 @@ let st,
       mRegister = d("span", null, "Register", -1),
       mLogin = d("span", null, "Login", -1),
       mAdmin = d("span", null, "Admin", -1),
-      mContact = d("span", null, "Contact Us", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
         1,
@@ -299,7 +291,6 @@ let st,
                           { to: "/events", class: "nav-cta" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
-                        ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),
                         d(
                           "a",
                           {
@@ -311,11 +302,8 @@ let st,
                           },
                           [O("["), tabAdmin, O("]")],
                         ),
-                        Y(
-                          z,
-                          { to: "/contact" },
-                          { default: Z(() => [O("["), tabContact, O("]")]), _: 1 },
-                        ),
+                        // Account sits last, at the far right.
+                        ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),
                         d(
                           "div",
                           {
@@ -365,13 +353,6 @@ let st,
                                   ),
                                 ],
                               ),
-                              ...authNavLinks(authCurrentUser.value, {
-                                openBlock: we,
-                                block: ot,
-                                h: d,
-                                text: O,
-                                before: () => w(n).openMobileMenu(!1),
-                              }),
                               d(
                                 "a",
                                 {
@@ -384,30 +365,13 @@ let st,
                                 },
                                 [O("["), mAdmin, O("]")],
                               ),
-                              d(
-                                "span",
-                                {
-                                  // o[10], not o[8]: o[8] is the nav's
-                                  // mouseleave handler, which made this
-                                  // link run that instead of closing the menu.
-                                  onClick:
-                                    o[10] ||
-                                    (o[10] = (_) =>
-                                      w(n).openMobileMenu(
-                                        !w(n).getMobileMenuOpen,
-                                      )),
-                                },
-                                [
-                                  Y(
-                                    z,
-                                    { to: "/contact" },
-                                    {
-                                      default: Z(() => [O("["), mContact, O("]")]),
-                                      _: 1,
-                                    },
-                                  ),
-                                ],
-                              ),
+                              ...authNavLinks(authCurrentUser.value, {
+                                openBlock: we,
+                                block: ot,
+                                h: d,
+                                text: O,
+                                before: () => w(n).openMobileMenu(!1),
+                              }),
                             ]),
                             _t,
                           ],
