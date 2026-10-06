@@ -44,8 +44,8 @@ function goTo(path) {
 }
 
 /**
- * The two auth slots of the nav: [Login] [Register] when signed out,
- * the profile avatar when signed in (log out lives on the profile page).
+ * The account slot of the nav: [Sign In/Up] when signed out, the profile
+ * avatar when signed in (log out lives on the profile page).
  *
  * Each link is its own keyed block (openBlock + createElementBlock): the
  * surrounding compiled template is static, and Vue only re-renders the
@@ -70,11 +70,13 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
       children || [text("["), h("span", null, label), text("]")],
     )
   );
+  // The header patches these links pairwise, so both states return two
+  // blocks: the visible link plus the same hidden slot. A different count
+  // mixes up the links after them on sign-in / sign-out.
+  const slot = () => (openBlock(), block("span", { key: "nav-account-slot", hidden: true }));
   if (!user) {
-    return [
-      link("nav-login", "#login", "Login", () => openAuthModal("login")),
-      link("nav-register", "#register", "Register", () => openAuthModal("register")),
-    ];
+    // Google sign-in also creates the account, so one entry point covers both.
+    return [link("nav-signin", "#login", "Sign In/Up", () => openAuthModal("login")), slot()];
   }
   const initials = (user.displayName || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
   const avatar = user.photoURL
@@ -91,10 +93,7 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
       { class: "nav-profile", "aria-label": "Your profile", title: "Profile" },
       [avatar],
     ),
-    // Hidden second slot: the header patches these links pairwise, so the
-    // count must stay two (Login + Register) in both states, or the links
-    // after them get mixed up on sign-in.
-    (openBlock(), block("span", { key: "nav-account-slot", hidden: true })),
+    slot(),
   ];
 }
 
@@ -116,8 +115,6 @@ let st,
       ut = d("img", { src: lt, alt: "Logo" }, null, -1),
       tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
-      tabRegister = d("span", null, "Register", -1),
-      tabLogin = d("span", null, "Login", -1),
       tabAdmin = d("span", null, "Admin", -1),
       gt = at(
         '<div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
@@ -127,8 +124,6 @@ let st,
       mt = { class: "top" },
       mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
-      mRegister = d("span", null, "Register", -1),
-      mLogin = d("span", null, "Login", -1),
       mAdmin = d("span", null, "Admin", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
