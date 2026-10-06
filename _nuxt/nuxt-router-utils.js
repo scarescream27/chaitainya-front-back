@@ -37,6 +37,69 @@ import {
 } from "./vue-runtime.js";
 import { initAuthModal, openAuthModal, syncNavbarAuthState } from "./auth-modal.js";
 import { initFirebase, subscribeAuthState, signOutUser, getCurrentUser } from "./auth-service.js";
+function goTo(path) {
+  const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+  if (router) router.push(path);
+  else window.location.href = path;
+}
+
+async function logOutAndLeave() {
+  await signOutUser();
+  if (window.location.pathname.replace(/\/$/, "") === "/profile") goTo("/");
+}
+
+/**
+ * The two auth slots of the nav: [Login] [Register] when signed out,
+ * [Profile] [Logout] when signed in.
+ *
+ * Each link is its own keyed block (openBlock + createElementBlock): the
+ * surrounding compiled template is static, and Vue only re-renders the
+ * dynamic blocks of a static tree, so plain vnodes here would never update
+ * after sign-in.
+ */
+function authNavLinks(user, { openBlock, block, h, text, before }) {
+  const link = (key, href, label, onClick, extra = {}, children = null) => (
+    openBlock(),
+    block(
+      "a",
+      {
+        key,
+        href,
+        ...extra,
+        onClick: (e) => {
+          e.preventDefault();
+          before?.();
+          onClick();
+        },
+      },
+      children || [text("["), h("span", null, label), text("]")],
+    )
+  );
+  if (!user) {
+    return [
+      link("nav-login", "#login", "Login", () => openAuthModal("login")),
+      link("nav-register", "#register", "Register", () => openAuthModal("register")),
+    ];
+  }
+  const initials = (user.displayName || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
+  const avatar = user.photoURL
+    ? h("img", { class: "nav-avatar", src: user.photoURL, alt: "", referrerpolicy: "no-referrer" })
+    : h("span", { class: "nav-avatar nav-avatar-initials", "aria-hidden": "true" }, initials);
+  return [
+    // Keyed on the avatar so a name/photo change re-mounts the link.
+    // Avatar only; the label stays available to screen readers and as a tooltip.
+    link(
+      `nav-profile:${initials}:${user.photoURL || ""}`,
+      "/profile",
+      "Profile",
+      () => goTo("/profile"),
+      { class: "nav-profile", "aria-label": "Your profile", title: "Profile" },
+      [avatar],
+    ),
+    link("nav-logout", "#logout", "Logout", logOutAndLeave),
+  ];
+}
+
 let st,
   Jt = Promise.all([
     (() => {
@@ -53,6 +116,7 @@ let st,
     const lt = Nt("/images/icons/Logo.svg?v=2k26"),
       ct = { class: "header" },
       ut = d("img", { src: lt, alt: "Logo" }, null, -1),
+      tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
       tabRegister = d("span", null, "Register", -1),
       tabLogin = d("span", null, "Login", -1),
@@ -64,6 +128,7 @@ let st,
       ),
       ht = [gt],
       mt = { class: "top" },
+      mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
       mRegister = d("span", null, "Register", -1),
       mLogin = d("span", null, "Login", -1),
@@ -83,12 +148,32 @@ let st,
             N = nt(null),
             authCurrentUser = nt(getCurrentUser());
 
+          // The menu button is a <div> in the server markup, and Vue only
+          // patches its class, so its button semantics are added in the DOM
+          // after mount. The closed mobile menu is made inert so its links
+          // aren't reachable by Tab while invisible.
+          const syncMenuA11y = (open) => {
+            const sw = document.querySelector("header .header .menu-switch");
+            sw && sw.setAttribute("aria-expanded", open ? "true" : "false");
+            N.value && (N.value.inert = !open);
+          };
+          const onMenuKey = (e) => {
+            if (e.key === "Escape" && n.getMobileMenuOpen) {
+              n.openMobileMenu(!1);
+              document.querySelector("header .header .menu-switch")?.focus();
+            }
+          };
+
           subscribeAuthState((u) => {
-            authCurrentUser.value = u;
+            // A fresh object: profile edits mutate the same user in place.
+            authCurrentUser.value = u ? { ...u } : null;
             syncNavbarAuthState(u);
           });
           return (
             n.$onAction(({ name: m, args: o }) => {
+              // Keep the menu button's state and the hidden menu's
+              // focusability in step with the store (see syncMenuA11y).
+              m === "openMobileMenu" && syncMenuA11y(!!o[0]);
               (m === "openMobileMenu" &&
                 (o[0]
                   ? (f.play(), k.play())
@@ -104,6 +189,30 @@ let st,
                   }));
             }),
             rt(() => {
+              // The header fades in at the end of the home 3D intro; on any
+              // other page (direct links to /events, /contact, ...) show it now.
+              const markRoute = (path) =>
+                document.documentElement.classList.toggle("not-home", (path || "/").replace(/\/$/, "") !== "");
+              markRoute(window.location.pathname);
+              try {
+                document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to) => markRoute(to.path));
+              } catch (e) {}
+              const sw = document.querySelector("header .header .menu-switch");
+              if (sw && !sw.hasAttribute("role")) {
+                N.value && (N.value.id = N.value.id || "mobile-menu");
+                sw.setAttribute("role", "button");
+                sw.setAttribute("tabindex", "0");
+                sw.setAttribute("aria-label", "Menu");
+                sw.setAttribute("aria-controls", "mobile-menu");
+                sw.addEventListener("keydown", (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    n.openMobileMenu(!n.getMobileMenuOpen);
+                  }
+                });
+                document.addEventListener("keydown", onMenuKey);
+              }
+              syncMenuA11y(!!n.getMobileMenuOpen);
               initAuthModal();
               initFirebase();
               syncNavbarAuthState(authCurrentUser.value);
@@ -176,60 +285,28 @@ let st,
                           o[9] ||
                           (o[9] = (_) => w(n).blendCursor("difference")),
                         class: "right-menu",
+                        role: "navigation",
+                        "aria-label": "Main",
                       },
                       [
                         Y(
                           z,
-                          { to: "/events" },
+                          { to: "/" },
+                          { default: Z(() => [O("["), tabHome, O("]")]), _: 1 },
+                        ),
+                        Y(
+                          z,
+                          { to: "/events", class: "nav-cta" },
                           { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
                         ),
+                        ...authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O }),
                         d(
                           "a",
                           {
-                            href: authCurrentUser.value ? "#profile" : "#register",
+                            href: "/admin",
                             onClick: (e) => {
                               e.preventDefault();
-                              openAuthModal(authCurrentUser.value ? "profile" : "register");
-                            },
-                          },
-                          [
-                            O("["),
-                            d(
-                              "span",
-                              null,
-                              authCurrentUser.value
-                                ? authCurrentUser.value.displayName.split(" ")[0].toUpperCase()
-                                : "Register",
-                            ),
-                            O("]"),
-                          ],
-                        ),
-                        d(
-                          "a",
-                          {
-                            href: authCurrentUser.value ? "#logout" : "#login",
-                            onClick: (e) => {
-                              e.preventDefault();
-                              if (authCurrentUser.value) {
-                                signOutUser();
-                              } else {
-                                openAuthModal("login");
-                              }
-                            },
-                          },
-                          [
-                            O("["),
-                            d("span", null, authCurrentUser.value ? "LOGOUT" : "Login"),
-                            O("]"),
-                          ],
-                        ),
-                        d(
-                          "a",
-                          {
-                            href: "#admin",
-                            onClick: (e) => {
-                              e.preventDefault();
-                              openAuthModal("admin");
+                              goTo("/admin");
                             },
                           },
                           [O("["), tabAdmin, O("]")],
@@ -272,6 +349,14 @@ let st,
                                 [
                                   Y(
                                     z,
+                                    { to: "/" },
+                                    {
+                                      default: Z(() => [O("["), mHome, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  Y(
+                                    z,
                                     { to: "/events" },
                                     {
                                       default: Z(() => [O("["), mEvents, O("]")]),
@@ -280,56 +365,21 @@ let st,
                                   ),
                                 ],
                               ),
+                              ...authNavLinks(authCurrentUser.value, {
+                                openBlock: we,
+                                block: ot,
+                                h: d,
+                                text: O,
+                                before: () => w(n).openMobileMenu(!1),
+                              }),
                               d(
                                 "a",
                                 {
-                                  href: authCurrentUser.value ? "#profile" : "#register",
+                                  href: "/admin",
                                   onClick: (e) => {
                                     e.preventDefault();
                                     w(n).openMobileMenu(!1);
-                                    openAuthModal(authCurrentUser.value ? "profile" : "register");
-                                  },
-                                },
-                                [
-                                  O("["),
-                                  d(
-                                    "span",
-                                    null,
-                                    authCurrentUser.value
-                                      ? authCurrentUser.value.displayName.split(" ")[0].toUpperCase()
-                                      : "Register",
-                                  ),
-                                  O("]"),
-                                ],
-                              ),
-                              d(
-                                "a",
-                                {
-                                  href: authCurrentUser.value ? "#logout" : "#login",
-                                  onClick: (e) => {
-                                    e.preventDefault();
-                                    w(n).openMobileMenu(!1);
-                                    if (authCurrentUser.value) {
-                                      signOutUser();
-                                    } else {
-                                      openAuthModal("login");
-                                    }
-                                  },
-                                },
-                                [
-                                  O("["),
-                                  d("span", null, authCurrentUser.value ? "LOGOUT" : "Login"),
-                                  O("]"),
-                                ],
-                              ),
-                              d(
-                                "a",
-                                {
-                                  href: "#admin",
-                                  onClick: (e) => {
-                                    e.preventDefault();
-                                    w(n).openMobileMenu(!1);
-                                    openAuthModal("admin");
+                                    goTo("/admin");
                                   },
                                 },
                                 [O("["), mAdmin, O("]")],
@@ -337,9 +387,12 @@ let st,
                               d(
                                 "span",
                                 {
+                                  // o[10], not o[8]: o[8] is the nav's
+                                  // mouseleave handler, which made this
+                                  // link run that instead of closing the menu.
                                   onClick:
-                                    o[8] ||
-                                    (o[8] = (_) =>
+                                    o[10] ||
+                                    (o[10] = (_) =>
                                       w(n).openMobileMenu(
                                         !w(n).getMobileMenuOpen,
                                       )),
@@ -1251,9 +1304,36 @@ let st,
       (window.ScrollSmoother = J),
       Le() && u.registerPlugin(J));
     let Fe, He, Ie;
+    // "Skip to content" link (WCAG 2.4.1). Added after mount, not in the
+    // server markup: anything before #__nuxt in <body> breaks hydration.
+    // Styled in default-layout.css (.skip-link).
+    const addSkipLink = () => {
+      const main = document.getElementById("smooth-content");
+      main && !main.hasAttribute("tabindex") && main.setAttribute("tabindex", "-1");
+      if (document.querySelector("body > a.skip-link")) return;
+      const a = document.createElement("a");
+      a.className = "skip-link";
+      a.href = "#smooth-content";
+      a.textContent = "Skip to content";
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = document.getElementById("smooth-content");
+        if (!target) return;
+        // ScrollSmoother moves #smooth-content with a transform, so scroll
+        // through it rather than relying on the browser's anchor jump.
+        const smoother = J.get();
+        // (Paused on the home scene, which doesn't scroll: leave it be.)
+        smoother
+          ? smoother.paused() || smoother.scrollTo(0, !1)
+          : window.scrollTo(0, 0);
+        target.hasAttribute("tabindex") || target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: !0 });
+      });
+      document.body.insertBefore(a, document.body.firstChild);
+    };
     ((Fe = { class: "def" }),
       (He = { id: "smooth-wrapper" }),
-      (Ie = { id: "smooth-content" }),
+      (Ie = { id: "smooth-content", role: "main" }),
       (st = {
         __name: "default",
         setup(l) {
@@ -1269,13 +1349,19 @@ let st,
               o === "finishProgress" && m.paused(!1);
             }),
             rt(() => {
+              // Visitors who ask for reduced motion get native, unsmoothed scrolling.
+              const reduceMotion =
+                !!window.matchMedia &&
+                window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              addSkipLink();
               ((k.value = window.innerWidth < 1024 && window.innerWidth > 767),
                 (m = J.create({
-                  smooth: 0.8,
+                  // How far (seconds) the page trails the scroll input; 0.8 felt sluggish.
+                  smooth: reduceMotion ? 0 : 0.4,
                   effects: !1,
                   normalizeScroll: g,
                   ignoreMobileResize: !0,
-                  smoothTouch: 0.1,
+                  smoothTouch: reduceMotion ? 0 : 0.1,
                   onUpdate: (o) => {
                     (N.updateScrollVelocity(o.getVelocity()),
                       N.setScrollProgress(o.progress));

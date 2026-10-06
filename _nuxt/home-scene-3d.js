@@ -59,7 +59,6 @@ import {
   a4 as El,
   __tla as Sl,
 } from "./app-main.js";
-import { G as zl } from "./lil-gui-customizer.js";
 import {
   a as et,
   j as Si,
@@ -81,6 +80,119 @@ import {
 } from "./vue-runtime.js";
 import { H as Tl, __tla as Ml } from "./home-footer.js";
 import { __tla as Pl } from "./nuxt-link.js";
+// lil-gui is a debug-only tweak panel (and it was always hidden). Production
+// gets a no-op stand-in with the same chainable API, so lil-gui is never
+// downloaded or built. With ?debug in the URL the real library is imported
+// lazily and every recorded call is replayed into it (and applied directly
+// once it has loaded), so the panel works exactly as before.
+const GUI_DEBUG =
+  typeof location !== "undefined" &&
+  /[?&]debug(?:[=&]|$)/.test(location.search);
+class zl {
+  constructor(parent = null, title = "") {
+    this._title = title;
+    this._ops = [];
+    this._target = null;
+    this._dead = !1;
+    GUI_DEBUG &&
+      !parent &&
+      import("./lil-gui-customizer.js")
+        .then(({ G }) => {
+          this._dead || this._bind(new G());
+        })
+        .catch(() => {});
+  }
+  _bind(target) {
+    this._target = target;
+    this._ops.splice(0).forEach((op) => this._apply(op));
+  }
+  _apply(op) {
+    const t = this._target;
+    if (op.folder) return op.folder._bind(t.addFolder(op.folder._title));
+    if (!t[op.kind]) return;
+    const res = t[op.kind](...op.args);
+    op.ctrl && op.ctrl._bind(res);
+  }
+  _do(op) {
+    this._target ? this._apply(op) : this._ops.push(op);
+  }
+  addFolder(title) {
+    const f = new zl(this, title);
+    return this._do({ folder: f }), f;
+  }
+  _ctrl(kind, args) {
+    if (this._target) return this._target[kind](...args);
+    const ctrl = new zlCtrl();
+    return this._do({ kind, args, ctrl }), ctrl;
+  }
+  add(...args) {
+    return this._ctrl("add", args);
+  }
+  addColor(...args) {
+    return this._ctrl("addColor", args);
+  }
+  open() {
+    return this._do({ kind: "open", args: [] }), this;
+  }
+  close() {
+    return this._do({ kind: "close", args: [] }), this;
+  }
+  // The scene always hid the panel; with ?debug it stays visible on purpose.
+  hide() {
+    return this;
+  }
+  show() {
+    return this;
+  }
+  destroy() {
+    this._dead = !0;
+    this._target && this._target.destroy && this._target.destroy();
+    this._target = null;
+    this._ops.length = 0;
+  }
+}
+// Chainable controller stand-in: name()/onChange()/min()/listen()... all
+// return the stub; calls are replayed onto the real controller in debug mode.
+class zlCtrl {
+  constructor() {
+    this._calls = [];
+    this._target = null;
+    return new Proxy(this, {
+      get: (t, k, proxy) =>
+        k in t
+          ? t[k]
+          : typeof k === "symbol" || k === "then"
+            ? void 0
+            : (...a) => (
+                t._target ? t._target[k]?.(...a) : t._calls.push([k, a]),
+                proxy
+              ),
+    });
+  }
+  _bind(target) {
+    this._target = target;
+    target &&
+      this._calls.splice(0).forEach(([k, a]) => target[k] && target[k](...a));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Device performance tier. Phones, tablets, low-core/low-memory machines and
+// users who prefer reduced motion get a lighter render path so the scene stays
+// smooth instead of dropping frames.
+// ---------------------------------------------------------------------------
+const PERF_LOW = (() => {
+  if (typeof window === "undefined") return false;
+  const mq = (q) => window.matchMedia && window.matchMedia(q).matches;
+  return (
+    mq("(pointer: coarse)") ||
+    mq("(prefers-reduced-motion: reduce)") ||
+    (navigator.hardwareConcurrency || 8) <= 4 ||
+    (navigator.deviceMemory || 8) <= 4 ||
+    window.innerWidth < 900
+  );
+})();
+let perfFrame = 0;
 let Ws,
   Bl = Promise.all([
     (() => {
@@ -6125,6 +6237,9 @@ let Ws,
                 }),
                 (Kt = !0),
                 c.add(() => {
+                  // The scene can be torn down (deep link to another page)
+                  // before the model has loaded.
+                  if (!ke) return;
                   (V.to(ke.scale, {
                     x: 1,
                     y: 1,
@@ -6250,6 +6365,7 @@ let Ws,
             Si(() => {
               (window.removeEventListener("mousemove", zs),
                 window.removeEventListener("resize", Ss),
+                Ss.__raf && (cancelAnimationFrame(Ss.__raf), (Ss.__raf = 0)),
                 window.removeEventListener("mousedown", Cs),
                 r.destroy(),
                 c.revert(),
@@ -6259,43 +6375,42 @@ let Ws,
                     (N.geometry.dispose(), N.material.dispose());
                 }),
                 V.ticker.remove(Ms));
+              // Free the GPU: each visit to the home page creates a new WebGL
+              // renderer, and browsers drop (and stall on) leaked contexts.
+              // Models load asynchronously; if the visitor leaves before they
+              // finish, the loader must not start the render loop afterwards.
+              Ms.__disposed = !0;
+              // The 60fps cap is only for this scene; give other pages back
+              // full-rate GSAP (smooth scroll) on 120Hz screens.
+              V.ticker.fps();
+              try {
+                [E, R, P, F].forEach((t) => t && t.dispose && t.dispose());
+                m.environment && m.environment.dispose && m.environment.dispose();
+                y.dispose();
+                y.forceContextLoss();
+                y.domElement.remove();
+              } catch (err) {}
             }),
             we(() => {
-              (Bt.value.addEventListener(
-                "ended",
-                () => {
-                  ((Bt.value.currentTime = 0), Bt.value.play());
-                },
-                !1,
-              ),
-                Fa());
+              Fa();
             }));
           const Es = (N) => {
-              (N ? (Bt.value.volume = 0) : (Bt.value.volume = 1),
-                c.add(() => {
-                  V.to(Bt.value, {
-                    volume: N ? 1 : 0,
-                    duration: 0.5,
-                    ease: "none",
-                  });
-                }),
-                N ? Bt.value.play() : Bt.value.pause());
+              Bt.value && Bt.value.pause();
             },
-            Ba = (N) => {
-              i.getSoundOn && (N ? pi.value.play() : pi.value.pause());
-            },
+            Ba = (N) => {},
             Fa = () => {
               (r.hide(),
                 (v = document.getElementById("home-scene")),
                 (m = new rl()),
                 (y = new al({
-                  powerPreference: "high-performance",
-                  antialias: !0,
+                  powerPreference: PERF_LOW ? "default" : "high-performance",
+                  // High-DPI phones don't need MSAA; it is the costliest pass there.
+                  antialias: !PERF_LOW,
                   stencil: !1,
                   depth: !0,
                   alpha: !0,
                 })));
-              let N = Math.min(window.devicePixelRatio || 1, 1.5);
+              let N = Math.min(window.devicePixelRatio || 1, PERF_LOW ? 1.25 : 1.5);
               (window.innerWidth > 1920 && (N = Math.min(N, 1.25)),
                 y.setPixelRatio(N),
                 (y.toneMapping = ll),
@@ -6330,10 +6445,17 @@ let Ws,
                 Ia(),
                 window.addEventListener("resize", Ss, !1));
             },
+            // Coalesce resize bursts to one renderer resize per frame
+            // (setSize reallocates the drawing buffer each call).
             Ss = () => {
-              ((f.aspect = window.innerWidth / window.innerHeight),
-                f.updateProjectionMatrix(),
-                y.setSize(window.innerWidth, window.innerHeight));
+              Ss.__raf ||
+                (Ss.__raf = requestAnimationFrame(() => {
+                  ((Ss.__raf = 0),
+                    Ms.__disposed ||
+                      ((f.aspect = window.innerWidth / window.innerHeight),
+                      f.updateProjectionMatrix(),
+                      y.setSize(window.innerWidth, window.innerHeight)));
+                }));
             },
             zs = (N) => {
               (t &&
@@ -6349,17 +6471,38 @@ let Ws,
             },
             Ra = async () => {
               try {
-                const N = await o.loadAsync("/hdri/photo_studio_01_1k.hdr");
+                // Static hosts may answer a missing file with the HTML page;
+                // only hand the loader a real HDR, otherwise use the fallback.
+                // One GET (was HEAD + GET): validate the response, then hand
+                // the already-downloaded bytes to the loader via a blob URL.
+                const res = await fetch("/hdri/photo_studio_01_1k.hdr");
+                const type = res.headers.get("content-type") || "";
+                if (!res.ok || type.includes("text/html")) throw new Error("HDR missing");
+                const blobUrl = URL.createObjectURL(await res.blob());
+                let N;
+                try {
+                  N = await o.loadAsync(blobUrl);
+                } finally {
+                  URL.revokeObjectURL(blobUrl);
+                }
+                if (Ms.__disposed) return N.dispose();
                 ((N.mapping = Ve),
                   (m.environment = N));
-              } catch (e) {}
+              } catch (e) {
+                // HDR missing: fall back to the bundled light studio texture so
+                // the glass bubbles still get bright reflections instead of black.
+                try {
+                  const F = await new Ye().loadAsync("/hdri/sphere5.webp");
+                  ((F.mapping = Ve), (m.environment = F));
+                } catch (e2) {}
+              }
               i.setPreloaderPercentage(12);
             },
             Na = () => {
               const N = t && window.innerWidth > 1024 ? 1 : 0.5;
               (new ul().load("/fonts/Druk_Regular.json", function (A) {
                 const G = new Zt({
-                    color: 0,
+                    color: 0, // black title
                     transparent: !0,
                     opacity: 1,
                     side: He,
@@ -6801,8 +6944,11 @@ let Ws,
                   A.children[6].scale.y * 1.2,
                   A.children[6].scale.z * 1.2,
                 ),
-                V.ticker.lagSmoothing(500, 33),
-                V.ticker.add(Ms),
+                Ms.__disposed ||
+                  (V.ticker.lagSmoothing(500, 33),
+                  // Cap at 60fps: on 120Hz screens this halves GPU work with no visible loss.
+                  V.ticker.fps(60),
+                  V.ticker.add(Ms)),
                 i.setPreloaderPercentage(90),
                 La());
             },
@@ -6828,11 +6974,13 @@ let Ws,
               });
             },
             ja = async () => {
-              const N = await new Ye().loadAsync("/hdri/sphere5.png"),
-                A = await new Ye().loadAsync(
-                  "/textures/paternWhiteBlackBack.jpg",
-                ),
-                G = await new Ye().loadAsync("/textures/whiteTexture.jpg");
+              // Fetched in parallel (were three sequential round trips); WebP
+              // copies of the original PNG/JPG at the same dimensions.
+              const [N, A, G] = await Promise.all([
+                new Ye().loadAsync("/hdri/sphere5.webp"),
+                new Ye().loadAsync("/textures/paternWhiteBlackBack.webp"),
+                new Ye().loadAsync("/textures/whiteTexture.webp"),
+              ]);
               ((N.mapping = Ve),
                 (N.colorSpace = Ei),
                 (A.mapping = Ve),
@@ -7085,7 +7233,7 @@ let Ws,
                 });
               }
             });
-            await new Ye().load("/textures/cross.jpg", (U) => {
+            await new Ye().load("/textures/cross.webp", (U) => {
               for (let W = 0; W < lo; W++) {
                 const Q = Ha();
                 c.add(() => {
@@ -7220,13 +7368,16 @@ let Ws,
                 }));
             },
             Ms = () => {
+              if (Ms.__disposed) return void V.ticker.remove(Ms);
               const N = rt.getDelta();
               (fs && qa(),
                 Kt && Ka(N),
                 ms && !Kt && $a(),
                 p._actions && p.update(N),
-                Oa(),
-                ws ? As() : Wa(),
+                // The glass refraction buffers re-render the whole scene; on
+                // low-power devices refresh them every other frame.
+                (perfFrame = (perfFrame + 1) % 2),
+                (!PERF_LOW || perfFrame === 0) && (Oa(), ws ? As() : Wa()),
                 g.update(),
                 y.render(m, f));
             };
@@ -7244,14 +7395,13 @@ let Ws,
                 {
                   ref_key: "audioGlass",
                   ref: pi,
-                  src: "/audio/Sphere-collision.mp3",
                 },
                 null,
                 512,
               ),
               O(
                 "audio",
-                { ref_key: "audioBg", ref: Bt, src: "/audio/BG5.mp3" },
+                { ref_key: "audioBg", ref: Bt },
                 null,
                 512,
               ),
@@ -7270,6 +7420,7 @@ let Ws,
           Lt(),
           O("span", null, "Click and hold"),
           O("span", null, "Tap and hold"),
+          O("span", { class: "hold-key-hint" }, "or hold Space"),
         ],
         -1,
       )),
@@ -7292,8 +7443,33 @@ let Ws,
               d === "holdGlass" && c(),
               d === "stopGlass" && u());
           }),
-            we(() => {}),
-            Si(() => {}));
+            // Keyboard path: holding Space/Enter works like click-and-hold
+            // (the intro otherwise locks keyboard users out of the page).
+            we(() => {
+              window.addEventListener("keydown", hk), window.addEventListener("keyup", hu);
+            }),
+            Si(() => {
+              window.removeEventListener("keydown", hk), window.removeEventListener("keyup", hu);
+            }));
+          const isHoldKey = (ev) =>
+              (ev.key === " " || ev.key === "Enter") &&
+              !s.value &&
+              !ev.target.closest?.("input, textarea, select, a, button:not(.skip-intro), [contenteditable]") &&
+              !document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"),
+            hk = (ev) => {
+              if (!isHoldKey(ev)) return;
+              ev.preventDefault();
+              ev.repeat || t.holdGlass();
+            },
+            hu = (ev) => {
+              if (!isHoldKey(ev)) return;
+              ev.preventDefault();
+              t.stopGlass();
+            },
+            skip = () => {
+              // Jump straight to the end; the timeline's onComplete reveals the site.
+              s.value || !n.duration() || (t.startProgress(), n.progress(1));
+            };
           const a = () => {
               r.add(() => {
                 V.to(i.value, { duration: 0.5, opacity: 1 });
@@ -7311,13 +7487,13 @@ let Ws,
                     t.updateProgress(this.progress());
                   },
                   onComplete: () => {
-                    (t.getSoundOn && o.value.play(),
+                    (
                       t.finishProgress(),
-                      V.to(".click-and-hold", {
+                      V.to(".click-and-hold, .skip-intro", {
                         duration: 0.5,
                         opacity: 0,
                         onComplete: () => {
-                          V.set(".click-and-hold", { display: "none" });
+                          V.set(".click-and-hold, .skip-intro", { display: "none" });
                         },
                       }));
                   },
@@ -7350,11 +7526,15 @@ let Ws,
                   ]),
                 ]),
                 O(
+                  "button",
+                  { type: "button", class: "skip-intro", onClick: skip },
+                  "[ Skip intro ]",
+                ),
+                O(
                   "audio",
                   {
                     ref_key: "audio",
                     ref: o,
-                    src: "/audio/ParticleScattering.mp3",
                   },
                   null,
                   512,
@@ -7372,32 +7552,28 @@ let Ws,
       (ni = Xe("/images/icons/rightBar.svg")),
       (bo = { class: "wrapper" }),
       (Eo = { class: "bottom-texts" }),
-      (So = O("img", { alt: "icon", src: go }, null, -1)),
-      (zo = O("img", { alt: "icon", src: wo }, null, -1)),
-      (Co = O("img", { alt: "icon", src: xo }, null, -1)),
+      (So = O("img", { alt: "", src: go }, null, -1)),
+      (zo = O("img", { alt: "", src: wo }, null, -1)),
+      (Co = O("img", { alt: "", src: xo }, null, -1)),
       (Ao = O(
         "p",
         null,
-        " Each project at Chaitanya 2k26 serves as a testament to our commitment to innovation and excellence ",
+        " Twenty events across coding, design, business, esports and culture ",
         -1,
       )),
       (To = [Ao]),
       (Mo = O(
         "p",
         null,
-        " Browse our portfolio to see the magic we create with cutting-edge technologies including XR, AR, AI and 3D. ",
+        " Browse the events, build your team and register online before seats fill up. ",
         -1,
       )),
       (Po = [Mo]),
-      (Bo = Ls(
-        '<div class="left-bar"><div class="parent"><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">AR</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">3D</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">AI</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="value">XR</div><div class="cross"></div><div class="cross"></div><div class="cross"></div><div class="cross"></div></div></div>',
-        1,
-      )),
       (Fo = { class: "right-bar" }),
       (Ro = { class: "parent" }),
-      (No = O("img", { alt: "icon", src: ni }, null, -1)),
+      (No = O("img", { alt: "", src: ni }, null, -1)),
       (Io = { class: "progress" }),
-      (ko = O("img", { alt: "icon", src: ni }, null, -1)),
+      (ko = O("img", { alt: "", src: ni }, null, -1)),
       (qo = {
         __name: "sceneTextsComponent",
         setup(b) {
@@ -7416,6 +7592,11 @@ let Ws,
           }),
             we(() => {
               ((a = V.context(() => {})), u());
+            }),
+            // Without this, every return to Home stacked another set of
+            // scroll triggers on top of the old ones.
+            Si(() => {
+              a && a.revert();
             }));
           const u = () => {
             a.add(() => {
@@ -7453,7 +7634,7 @@ let Ws,
                   .fromTo(
                     o.value,
                     { opacity: 1 },
-                    { opacity: 0, duration: 400, ease: "none" },
+                    { opacity: 0, duration: 400, ease: "none", immediateRender: !1 },
                   ));
               const isLarge = window.innerWidth > 1024;
               V.fromTo(
@@ -7487,7 +7668,7 @@ let Ws,
                   .fromTo(
                     n.value,
                     { opacity: 1 },
-                    { opacity: 0, duration: 500, ease: "none" },
+                    { opacity: 0, duration: 500, ease: "none", immediateRender: !1 },
                   ));
               const cRight = V.timeline({
                 scrollTrigger: {
@@ -7506,7 +7687,7 @@ let Ws,
                 .fromTo(
                   r.value,
                   { opacity: 1 },
-                  { opacity: 0, duration: 400, ease: "none" },
+                  { opacity: 0, duration: 400, ease: "none", immediateRender: !1 },
                 );
             });
           };
@@ -7528,7 +7709,7 @@ let Ws,
                       [
                         So,
                         Lt(
-                          " Welcome to a Creative space showcasing groundbreaking projects that blend creativity and technology ",
+                          " Welcome to Chaitanya 2k26, the annual technical and cultural fest of HPTU Hamirpur ",
                         ),
                       ],
                       512,
@@ -7543,7 +7724,7 @@ let Ws,
                       [
                         zo,
                         Lt(
-                          " Follow us into the future of interactive and immersive digital experiences ",
+                          " Three days of hackathons, CTF, esports, debates, design challenges and cultural events ",
                         ),
                       ],
                       512,
@@ -7558,7 +7739,7 @@ let Ws,
                       [
                         Co,
                         Lt(
-                          " Engage with us at Chaitanya 2k26, where technology meets creativity, and every interaction is an opportunity for innovation ",
+                          " Compete, learn and perform alongside students from colleges across Himachal and beyond ",
                         ),
                       ],
                       512,
@@ -7577,7 +7758,6 @@ let Ws,
                     512,
                   ),
                 ]),
-                Bo,
                 O("div", Fo, [
                   O("div", Ro, [
                     No,
@@ -7648,7 +7828,10 @@ let Ws,
             c = et(null),
             u = et(null);
           (t.$onAction(({ name: m }) => {
-            (m === "setPreloaderDone" && d(),
+            // No loading screen: reveal the scene as soon as assets are ready.
+            // The site loader (index.html) waits for this before lifting.
+            (m === "setPreloaderDone" &&
+              (p(), (window.__chSceneReady = !0), window.dispatchEvent(new Event("ch:scene-ready"))),
               m === "setSceneStartingPosition" &&
                 e.add(() => {
                   V.to(l.value, { display: "none", pointerEvents: "none" });
@@ -7658,14 +7841,7 @@ let Ws,
               e.revert();
             }),
             we(() => {
-              e.add(() => {
-                V.to(l.value, {
-                  opacity: 1,
-                  pointerEvents: "auto",
-                  duration: 0.5,
-                  ease: "power2.inOut",
-                });
-              });
+              if (l.value) l.value.style.display = "none";
             }));
           const d = () => {
               e.add(() => {

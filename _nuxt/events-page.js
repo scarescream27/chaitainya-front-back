@@ -2,39 +2,203 @@
  * ============================================================================
  * Chaitanya 2k26 — Events Page Component & Interactive Controller
  * ============================================================================
- * Provides:
- * - Dedicated /events page layout with brutalist hero & sticky toolbar
- * - Real-time category filtering & live search
- * - Interactive Rules & Regulations Dossier Drawer
- * - Solo & Team Registration Modal with University SBI UPI QR & UTR submission
- * - Reactive button state synchronization with Firebase Auth
+ * - /events layout with hero, sticky category toolbar and live search
+ * - Event details drawer (fee, deadline, registration type, team size, heads)
+ * - Cart: add several events, pick solo/team, see the total, remove items
+ * - Checkout: confirm details → team names/members → review & pay → done
+ * - Join an existing team with a code
  */
 
 import {
-  getEventCatalog,
   getEventById,
   getCategories,
   filterEvents,
+  isRegistrationOpen,
+  isPastDeadline,
+  formatDeadline,
+  feeLabel,
 } from "./events-data.js";
 
 import {
   getCurrentUser,
   subscribeAuthState,
-  registerSoloForEvent,
-  createTeamForEvent,
+  checkoutCart,
   joinTeamWithCode,
   isEventRegistered,
-  unregisterFromEvent,
+  YEAR_OPTIONS,
 } from "./auth-service.js";
 
+import {
+  getCartItems,
+  getCartTotal,
+  addToCart,
+  removeFromCart,
+  setCartItemMode,
+  clearCart,
+  isInCart,
+  setCartOwner,
+  subscribeCart,
+} from "./cart.js";
+
 import { openAuthModal } from "./auth-modal.js";
+import { registrationQrHtml } from "./profile-panel.js";
+
+import {
+  FEST_CONFIG,
+  getFestDatesLabel,
+  isPaymentConfigured,
+  buildUpiLink,
+  escapeHtml as e,
+} from "./fest-config.js";
+
+const UTR_PATTERN = /^\d{12}$/;
 
 let activeCategory = "all";
 let activeSearchQuery = "";
 let isDossierOpen = false;
-let activeDossierEvent = null;
-let isRegModalOpen = false;
-let activeRegEvent = null;
+let isCartOpen = false;
+let isCheckoutOpen = false;
+let resumeCheckoutUntil = 0; // resume checkout only if sign-in completes soon after "Done"
+let globalListenersBound = false;
+
+// Checkout wizard state
+let checkout = null;
+// Survives the tab reload phones do while the student is away in a UPI app.
+const CHECKOUT_DRAFT_KEY = "chaitanya-checkout-draft";
+
+// ----------------------------------------------------------------------------
+// DIALOG PLUMBING (details drawer, cart drawer, checkout modal)
+// One dialog is open at a time. Opening one: remember what had focus, make the
+// rest of the page inert, move focus inside. Tab/Shift+Tab wrap inside it
+// (see bindGlobalListeners). Closing: un-inert and give focus back.
+// ----------------------------------------------------------------------------
+const DIALOGS = {
+  dossier: { overlay: "event-dossier-overlay", panel: "event-dossier-panel", title: "#event-dossier-title" },
+  cart: { overlay: "events-cart-overlay", panel: "events-cart-panel", title: "#events-cart-title" },
+  checkout: { overlay: "event-reg-modal", panel: "event-reg-card", title: "#co-title" },
+};
+let activeDialog = null; // key of DIALOGS
+const dialogReturnFocus = {};
+let inertedEls = [];
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusablesIn(el) {
+  return Array.from(el.querySelectorAll(FOCUSABLE)).filter((n) => !n.closest("[hidden]") && n.getClientRects().length > 0);
+}
+
+// Inert every other child of <body> (the page under #__nuxt, the cart button,
+// the HUD, other overlays). The toast stays live so it is still announced.
+function setBackgroundInert(overlay) {
+  inertedEls.forEach((el) => el.removeAttribute("inert"));
+  inertedEls = [];
+  if (!overlay || overlay.parentElement !== document.body) return;
+  Array.from(document.body.children).forEach((el) => {
+    if (el === overlay || el.id === "events-toast" || el.hasAttribute("inert")) return;
+    if (/^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(el.tagName)) return;
+    el.setAttribute("inert", "");
+    inertedEls.push(el);
+  });
+}
+
+function focusInto(panel, preferred) {
+  let target = null;
+  try {
+    target = (preferred && panel.querySelector(preferred)) || null;
+  } catch {}
+  target = target || focusablesIn(panel)[0] || panel;
+  if (target === panel && !panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+  try {
+    target.focus({ preventScroll: true });
+  } catch {
+    target.focus();
+  }
+}
+
+// A selector for the focused control inside `panel`, so it can be refocused
+// after the panel's HTML is re-rendered.
+function focusedSelector(panel) {
+  const a = document.activeElement;
+  if (!a || a === panel || !panel.contains(a)) return null;
+  if (a.id) return `#${CSS.escape(a.id)}`;
+  const d = a.dataset || {};
+  if (!d.action) return null;
+  let sel = `[data-action="${CSS.escape(d.action)}"]`;
+  if (d.eventId) sel += `[data-event-id="${CSS.escape(d.eventId)}"]`;
+  if (d.mode) sel += `[data-mode="${CSS.escape(d.mode)}"]`;
+  if (d.index) sel += `[data-index="${CSS.escape(d.index)}"]`;
+  return sel;
+}
+
+function activateDialog(key, preferredFocus) {
+  const cfg = DIALOGS[key];
+  const overlay = document.getElementById(cfg.overlay);
+  const panel = document.getElementById(cfg.panel);
+  if (!overlay || !panel) return;
+  if (activeDialog !== key) {
+    const prev = document.activeElement;
+    dialogReturnFocus[key] = prev && prev !== document.body && !overlay.contains(prev) ? prev : null;
+    activeDialog = key;
+  }
+  setBackgroundInert(overlay);
+  focusInto(panel, preferredFocus || cfg.title);
+}
+
+function deactivateDialog(key) {
+  if (activeDialog !== key) return;
+  activeDialog = null;
+  setBackgroundInert(null);
+  const back = dialogReturnFocus[key];
+  dialogReturnFocus[key] = null;
+  let target = back && back.isConnected && !back.closest("[inert]") ? back : null;
+  // The opener may have been re-rendered (e.g. a card's ADD TO CART button).
+  if (!target && back?.dataset?.eventId) {
+    target = document.querySelector(
+      `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] [data-action="view-details"]`
+    );
+  }
+  if (!target) target = document.getElementById("events-cart-fab");
+  try {
+    target?.focus({ preventScroll: true });
+  } catch {}
+}
+
+function trapTab(evt) {
+  const panel = document.getElementById(DIALOGS[activeDialog]?.panel);
+  if (!panel) return;
+  const items = focusablesIn(panel);
+  const cur = document.activeElement;
+  if (!items.length) {
+    evt.preventDefault();
+    focusInto(panel);
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (!panel.contains(cur)) {
+    evt.preventDefault();
+    (evt.shiftKey ? last : first).focus();
+  } else if (evt.shiftKey) {
+    if (cur === first || first.compareDocumentPosition(cur) & Node.DOCUMENT_POSITION_PRECEDING) {
+      evt.preventDefault();
+      last.focus();
+    }
+  } else if (cur === last || last.compareDocumentPosition(cur) & Node.DOCUMENT_POSITION_FOLLOWING) {
+    evt.preventDefault();
+    first.focus();
+  }
+}
+
+function isOtherOverlayOpen() {
+  // The profile overlay / auth modal (other modules) handle their own keys.
+  return (
+    document.documentElement.classList.contains("pp-open") ||
+    Boolean(document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"))
+  );
+}
+
+const totalEvents = () => getCategories().find((c) => c.id === "all")?.count || "";
 
 /**
  * Generate HTML for the complete Events Page
@@ -46,600 +210,880 @@ export function renderEventsPageHtml() {
   const categoriesHtml = categories
     .map(
       (cat) => `
-      <button class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" data-cat="${cat.id}">
-        ${cat.name}
+      <button type="button" class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" aria-pressed="${activeCategory === cat.id}" data-cat="${e(cat.id)}">
+        ${e(cat.name)}
         <span class="cat-count">(${cat.count})</span>
       </button>
     `
     )
     .join("");
 
-  const eventsHtml = events.length > 0
-    ? events.map((ev) => renderEventCardHtml(ev)).join("")
-    : `
-      <div class="events-empty">
-        <h3>No Arenas Found</h3>
-        <p>No competitions match your current search or category filter. Try clearing your search.</p>
-      </div>
-    `;
-
   return `
     <div class="events-page-root" id="chaitanya-events-page">
-      <!-- Top Scroll Progress Bar -->
       <div id="events-scroll-progress"></div>
 
       <div class="events-container">
-        <!-- 1. Hero Section -->
         <div class="events-hero">
           <span class="events-hero-coords">[ 31.7088° N, 76.5273° E // HPTU HAMIRPUR ]</span>
           <span class="events-hero-tag">CHAITANYA 2K26 // SCHEDULE & COMPETITIONS</span>
-          <h1 class="events-hero-title">ARENAS & SHOWCASE</h1>
+          <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
           <p class="events-hero-subtitle">
-            EXPLORE 12 HIGH-OCTANE COMPETITIONS ACROSS CODING, ROBOTICS, ESPORTS & PERFORMING ARTS.
-            REGISTER YOUR SQUAD, CLAIM CASH PRIZES & DOMINATE THE ARENA.
+            Explore ${e(totalEvents())} events across coding, design, business, esports &amp; culture.
+            Register for one, or pick several and register for all of them in one go.
           </p>
           <div class="events-stats-strip">
-            <span class="events-stat-pill highlight">[ 12 ARENAS ]</span>
-            <span class="events-stat-pill">[ ₹3,00,000+ CASH POOL ]</span>
-            <span class="events-stat-pill">[ 2 DAYS // MARCH 26-27 ]</span>
-            <span class="events-stat-pill">[ SBI UPI QR // 0% FEE ]</span>
+            <span class="events-stat-pill highlight">[ ${e(totalEvents())} EVENTS ]</span>
+            <span class="events-stat-pill">[ ${e(FEST_CONFIG.festDays || 2)} DAYS // ${e(getFestDatesLabel())} ]</span>
+            <span class="events-stat-pill">[ HPTU HAMIRPUR ]</span>
           </div>
+          <p class="events-hero-note">Prizes and rules will be notified soon. Timings and venues may change.</p>
         </div>
 
-        <!-- 2. Sticky Category Toolbar & Search -->
         <div class="events-toolbar">
-          <div class="events-categories" id="events-cat-bar">
-            ${categoriesHtml}
-          </div>
+          <div class="events-categories" id="events-cat-bar">${categoriesHtml}</div>
           <div class="events-search-wrap">
-            <input 
-              type="text" 
-              class="events-search-input" 
-              id="events-search-box" 
-              placeholder="SEARCH COMPETITIONS, VENUES, PRIZES..." 
-              value="${activeSearchQuery}"
-            />
-            <button class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn">✕</button>
+            <input type="text" class="events-search-input" id="events-search-box"
+              placeholder="Search events, venues, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
+            <button type="button" class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
           </div>
         </div>
 
-        <!-- 3. Event Cards Grid -->
-        <div class="events-grid" id="events-card-grid">
-          ${eventsHtml}
-        </div>
+        <div class="events-grid" id="events-card-grid">${renderGridHtml(events)}</div>
       </div>
 
-      <!-- 4. Floating Brutalist Scroll HUD -->
       <div class="events-scroll-hud" id="events-scroll-hud">
         <div class="events-scroll-metric">
           <span class="pulse-dot"></span>
-          <span id="events-scroll-counter">12 ARENAS</span>
+          <span id="events-scroll-counter">${e(totalEvents())} EVENTS</span>
         </div>
-        <button class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">
-          [ ↑ TOP ]
-        </button>
+        <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Return to Top">[ ↑ TOP ]</button>
       </div>
 
-      <!-- 5. Interactive Event Dossier Drawer -->
+      <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog">
+        <span class="events-cart-fab-label">[ SELECTED ]</span>
+        <span class="events-cart-fab-count" id="events-cart-count">0</span>
+      </button>
+
       <div class="event-dossier-overlay" id="event-dossier-overlay">
-        <div class="event-dossier-panel" id="event-dossier-panel">
-          <!-- Populated dynamically -->
-        </div>
+        <div class="event-dossier-panel" id="event-dossier-panel" role="dialog" aria-modal="true" aria-labelledby="event-dossier-title"></div>
       </div>
 
-      <!-- 6. Registration & Payment Modal -->
+      <div class="events-cart-overlay" id="events-cart-overlay">
+        <aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-labelledby="events-cart-title"></aside>
+      </div>
+
       <div class="event-reg-modal" id="event-reg-modal">
-        <div class="event-reg-card" id="event-reg-card">
-          <!-- Populated dynamically -->
-        </div>
+        <div class="event-reg-card" id="event-reg-card" role="dialog" aria-modal="true" aria-labelledby="co-title"></div>
       </div>
     </div>
   `;
 }
 
+function renderGridHtml(events) {
+  return events.length
+    ? events.map((ev) => renderEventCardHtml(ev)).join("")
+    : `
+      <div class="events-empty">
+        <h3>No Events Found</h3>
+        <p>No events match your search or category filter. Try clearing your search.</p>
+      </div>
+    `;
+}
+
 /**
- * Render single event card
+ * The main action button for an event, by state.
  */
+function actionButtonHtml(ev, { large = false } = {}) {
+  const cls = large ? "event-submit-btn event-action-large" : "event-btn-register";
+  if (isEventRegistered(ev.id)) {
+    return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`;
+  }
+  if (isInCart(ev.id)) {
+    return `<button type="button" class="${cls} in-cart" data-action="open-cart" data-event-id="${e(ev.id)}">[ ✓ SELECTED ]</button>`;
+  }
+  if (isRegistrationOpen(ev)) {
+    return `<button type="button" class="${cls}" data-action="add-to-cart" data-event-id="${e(ev.id)}">[ REGISTER ]</button>`;
+  }
+  const label = isPastDeadline(ev) ? "REGISTRATION CLOSED" : "REGISTRATION SOON";
+  return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
+}
+
 function renderEventCardHtml(ev) {
-  const isRegistered = isEventRegistered(ev.title) || isEventRegistered(ev.id);
   const catObj = getCategories().find((c) => c.id === ev.category);
-  const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
+  const accentColor = catObj?.accent || "var(--ink)";
 
   return `
-    <div class="event-card" data-event-id="${ev.id}">
-      <span class="corner corner-tl">+</span>
-      <span class="corner corner-tr">+</span>
-      <span class="corner corner-bl">+</span>
-      <span class="corner corner-br">+</span>
+    <div class="event-card" data-event-id="${e(ev.id)}">
+      <span class="corner corner-tl" aria-hidden="true">+</span>
+      <span class="corner corner-tr" aria-hidden="true">+</span>
+      <span class="corner corner-bl" aria-hidden="true">+</span>
+      <span class="corner corner-br" aria-hidden="true">+</span>
 
       <div class="event-card-header">
-        <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">
-          ${ev.categoryName}
-        </span>
-        <span class="event-badge-format">${ev.format}</span>
+        <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}</span>
+        <span class="event-badge-format">${e(ev.format)}</span>
       </div>
 
-      <h2 class="event-card-title">${ev.title}</h2>
-      <p class="event-card-tagline">${ev.tagline}</p>
+      <h2 class="event-card-title">${e(ev.title)}</h2>
+      <p class="event-card-tagline">${e(ev.tagline)}</p>
 
       <div class="event-card-meta">
-        <div class="event-meta-row">
-          <span class="event-meta-label">SCHEDULE:</span>
-          <span class="event-meta-val">${ev.date} | ${ev.time}</span>
-        </div>
-        <div class="event-meta-row">
-          <span class="event-meta-label">VENUE:</span>
-          <span class="event-meta-val">${ev.venue}</span>
-        </div>
-        <div class="event-meta-row">
-          <span class="event-meta-label">PRIZE POOL:</span>
-          <span class="event-meta-val prize">${ev.prizePool}</span>
-        </div>
-        <div class="event-meta-row">
-          <span class="event-meta-label">ENTRY FEE:</span>
-          <span class="event-meta-val">${ev.entryFee}</span>
-        </div>
+        <div class="event-meta-row"><span class="event-meta-label">WHEN:</span><span class="event-meta-val">${e(ev.date)} | ${e(ev.time)}</span></div>
+        <div class="event-meta-row"><span class="event-meta-label">VENUE:</span><span class="event-meta-val">${e(ev.venue)}</span></div>
+        <div class="event-meta-row"><span class="event-meta-label">FEE:</span><span class="event-meta-val">${e(feeLabel(ev))}</span></div>
+        <div class="event-meta-row"><span class="event-meta-label">REGISTER BY:</span><span class="event-meta-val">${e(formatDeadline(ev))}</span></div>
       </div>
 
       <div class="event-card-actions">
-        <button class="event-btn-details" data-action="view-details" data-event-id="${ev.id}">
-          [ VIEW DETAILS ]
-        </button>
-        <button class="event-btn-register ${isRegistered ? "registered" : ""}" data-action="register-event" data-event-id="${ev.id}">
-          ${isRegistered ? "[ ✓ REGISTERED ]" : "[ REGISTER NOW ]"}
-        </button>
+        <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
+        ${actionButtonHtml(ev)}
       </div>
     </div>
   `;
 }
 
-/**
- * Open Event Details Dossier Drawer
- */
+// ----------------------------------------------------------------------------
+// DETAILS DRAWER
+// ----------------------------------------------------------------------------
+
 export function openEventDossier(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
-
-  activeDossierEvent = ev;
   const overlay = document.getElementById("event-dossier-overlay");
   const panel = document.getElementById("event-dossier-panel");
   if (!overlay || !panel) return;
 
-  const isRegistered = isEventRegistered(ev.title) || isEventRegistered(ev.id);
   const catObj = getCategories().find((c) => c.id === ev.category);
-  const accentColor = catObj ? catObj.accent || "#000000" : "#000000";
+  const accentColor = catObj?.accent || "var(--ink)";
+  const rulesHtml = (ev.rules || []).map((r) => `<li>${e(r)}</li>`).join("");
+  const typeLabel = { solo: "Solo", team: "Team", both: "Solo or team" }[ev.registrationType] || "Solo";
 
-  const rulesHtml = ev.rules.map((r) => `<li>${r}</li>`).join("");
+  const coordinators = ev.coordinators || [];
+  const coordinatorsHtml = coordinators.length
+    ? coordinators
+        .map(
+          (c) => `
+      <div class="event-coordinator-card">
+        <div class="event-coord-info">
+          <span class="event-coord-name">${e(c.name)}</span>
+          <span class="event-coord-role">${e(c.role)}</span>
+        </div>
+        <div class="event-coord-actions">
+          <a href="mailto:${e(FEST_CONFIG.contactEmail)}?subject=${encodeURIComponent(`${ev.title} (attn: ${c.name})`)}" class="event-coord-btn">✉ EMAIL</a>
+        </div>
+      </div>`
+        )
+        .join("")
+    : `
+      <div class="event-coordinator-card">
+        <div class="event-coord-info">
+          <span class="event-coord-name">Chaitanya 2k26 Organising Committee</span>
+          <span class="event-coord-role">Student heads will be announced soon</span>
+        </div>
+        <div class="event-coord-actions">
+          <a href="mailto:${e(FEST_CONFIG.contactEmail)}?subject=${encodeURIComponent(`Query: ${ev.title}`)}" class="event-coord-btn">✉ EMAIL</a>
+        </div>
+      </div>`;
+
+  const canJoin = ev.registrationType !== "solo" && isRegistrationOpen(ev) && !isEventRegistered(ev.id);
 
   const roundsHtml = (ev.rounds || [])
     .map(
-      (rnd) => `
-      <div style="background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#000;">${rnd.name}</div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#666; margin-bottom:4px;">${rnd.time}</div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#333;">${rnd.description}</div>
-      </div>
-    `
+      (r) => `
+      <div class="event-round">
+        <div class="event-round-head"><strong>${e(r.name)}</strong><span>${e(r.time)}</span></div>
+        <p>${e(r.description)}</p>
+      </div>`
     )
     .join("");
-
-  const rubricHtml = (ev.judgingCriteria || [])
-    .map(
-      (jc) => `
-      <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 0; border-bottom:1px dashed rgba(0,0,0,0.1);">
-        <span>${jc.name}</span>
-        <span style="font-weight:700;">${jc.weight}</span>
-      </div>
-    `
-    )
+  const scoringHtml = (ev.judgingCriteria || [])
+    .map((c) => `<div class="event-score-row"><span>${e(c.name)}</span><strong>${e(c.weight)}</strong></div>`)
     .join("");
-
-  const coordinatorsHtml = (ev.coordinators || [])
-    .map(
-      (c) => `
-      <div class="event-coordinator-card">
-        <div class="event-coord-info">
-          <span class="event-coord-name">${c.name}</span>
-          <span class="event-coord-role">${c.role}</span>
-        </div>
-        <div class="event-coord-actions">
-          <a href="tel:${c.phone}" class="event-coord-btn">📞 CALL</a>
-          ${c.whatsapp ? `<a href="${c.whatsapp}" target="_blank" class="event-coord-btn" style="background:#25D366; color:#fff; border-color:#25D366;">💬 WHATSAPP</a>` : ""}
-        </div>
-      </div>
-    `
-    )
-    .join("");
+  let sectionCount = 2;
+  const sectionNo = () => String(++sectionCount).padStart(2, "0");
 
   panel.innerHTML = `
-    <button class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
-    
+    <button type="button" class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     <div>
-      <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">
-        ${ev.categoryName} // ${ev.badge}
-      </span>
-      <h2 class="event-dossier-title">${ev.title}</h2>
-      <p class="event-dossier-tagline">${ev.tagline}</p>
+      <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)} // ${e(ev.badge)}</span>
+      <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
+      <p class="event-dossier-tagline">${e(ev.tagline)}</p>
     </div>
 
-    <!-- Key Specs -->
     <div class="event-dossier-specs">
-      <div class="event-spec-item">
-        <span class="event-spec-k">PRIZE POOL</span>
-        <span class="event-spec-v" style="color:#005a3c; font-weight:700;">${ev.prizePool}</span>
-      </div>
-      <div class="event-spec-item">
-        <span class="event-spec-k">ENTRY FEE</span>
-        <span class="event-spec-v">${ev.entryFee}</span>
-      </div>
-      <div class="event-spec-item">
-        <span class="event-spec-k">SCHEDULE</span>
-        <span class="event-spec-v">${ev.date} | ${ev.time}</span>
-      </div>
-      <div class="event-spec-item">
-        <span class="event-spec-k">VENUE</span>
-        <span class="event-spec-v">${ev.venue}</span>
-      </div>
-      <div class="event-spec-item">
-        <span class="event-spec-k">TEAM FORMAT</span>
-        <span class="event-spec-v">${ev.format}</span>
-      </div>
-      <div class="event-spec-item">
-        <span class="event-spec-k">STATUS</span>
-        <span class="event-spec-v" style="color:#005a3c;">${ev.status}</span>
-      </div>
+      <div class="event-spec-item"><span class="event-spec-k">DATE & TIME</span><span class="event-spec-v">${e(ev.date)} · ${e(ev.time)}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">VENUE</span><span class="event-spec-v">${e(ev.venue)}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">FEE</span><span class="event-spec-v">${e(feeLabel(ev))}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">REGISTER BY</span><span class="event-spec-v">${e(formatDeadline(ev))}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">REGISTRATION</span><span class="event-spec-v">${e(typeLabel)}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">TEAM SIZE</span><span class="event-spec-v">${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</span></div>
+      <div class="event-spec-item"><span class="event-spec-k">PRIZES</span><span class="event-spec-v">${e(ev.prizePool)}</span></div>
     </div>
 
-    <!-- Section: Overview -->
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 01. OVERVIEW & OBJECTIVE ]</h4>
-      <p class="event-dossier-text">${ev.overview}</p>
+      <h3 class="event-dossier-heading">[ 01. ABOUT ]</h3>
+      <p class="event-dossier-text">${e(ev.overview)}</p>
     </div>
 
-    <!-- Section: Rules -->
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 02. RULES & GUIDELINES ]</h4>
-      <ul class="event-dossier-list">
-        ${rulesHtml}
-      </ul>
+      <h3 class="event-dossier-heading">[ 02. RULES ]</h3>
+      <ul class="event-dossier-list">${rulesHtml}</ul>
     </div>
 
-    <!-- Section: Rounds -->
     ${roundsHtml ? `
-      <div class="event-dossier-section">
-        <h4 class="event-dossier-heading">[ 03. ROUNDS & SCHEDULE TIMELINE ]</h4>
-        <div>${roundsHtml}</div>
-      </div>
-    ` : ""}
-
-    <!-- Section: Rubric -->
-    ${rubricHtml ? `
-      <div class="event-dossier-section">
-        <h4 class="event-dossier-heading">[ 04. JUDGING CRITERIA & SCORING ]</h4>
-        <div style="background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:12px;">
-          ${rubricHtml}
-        </div>
-      </div>
-    ` : ""}
-
-    <!-- Section: Coordinators -->
     <div class="event-dossier-section">
-      <h4 class="event-dossier-heading">[ 05. EVENT COORDINATORS & CONTACT ]</h4>
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. FORMAT & ROUNDS ]</h3>
+      <div class="event-rounds">${roundsHtml}</div>
+    </div>` : ""}
+
+    ${scoringHtml ? `
+    <div class="event-dossier-section">
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. ${ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA"} ]</h3>
+      <div class="event-scoring">${scoringHtml}</div>
+    </div>` : ""}
+
+    <div class="event-dossier-section">
+      <h3 class="event-dossier-heading">[ ${sectionNo()}. STUDENT HEADS & CONTACT ]</h3>
       <div>${coordinatorsHtml}</div>
     </div>
 
-    <!-- Direct CTA -->
-    <button class="event-submit-btn" id="dossier-action-btn" data-event-id="${ev.id}" style="width:100%; margin-top:20px;">
-      ${isRegistered ? "[ ✓ ALREADY REGISTERED // VIEW TICKET ]" : `[ REGISTER FOR ${ev.title} ]`}
-    </button>
+    <div class="event-dossier-cta">
+      ${actionButtonHtml(ev, { large: true })}
+      ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Already in a team? Join with a team code →</button>` : ""}
+    </div>
   `;
 
+  const wasOpen = isDossierOpen && activeDialog === "dossier";
+  if (!wasOpen) panel.scrollTop = 0;
   overlay.classList.add("active");
   isDossierOpen = true;
-
-  // Bind close buttons
-  const closeBtn = panel.querySelector("#dossier-close-btn");
-  if (closeBtn) closeBtn.onclick = closeEventDossier;
-
-  const actionBtn = panel.querySelector("#dossier-action-btn");
-  if (actionBtn) {
-    actionBtn.onclick = () => {
-      closeEventDossier();
-      openEventRegistration(ev.id);
-    };
-  }
+  panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
+  // Fresh open: focus the title. Re-render while open: stay on the action.
+  activateDialog("dossier", wasOpen ? ".event-action-large" : "#event-dossier-title");
 }
 
 export function closeEventDossier() {
-  const overlay = document.getElementById("event-dossier-overlay");
-  if (overlay) overlay.classList.remove("active");
+  document.getElementById("event-dossier-overlay")?.classList.remove("active");
   isDossierOpen = false;
-  activeDossierEvent = null;
+  deactivateDialog("dossier");
 }
 
-/**
- * Open Event Registration & Payment Modal
- */
-export function openEventRegistration(eventId) {
-  const user = getCurrentUser();
+// ----------------------------------------------------------------------------
+// CART
+// ----------------------------------------------------------------------------
+
+function renderCartPanel() {
+  const panel = document.getElementById("events-cart-panel");
+  if (!panel) return;
+  const keepFocus = focusedSelector(panel);
+  const items = getCartItems();
+  const total = getCartTotal(items);
+
+  const rows = items
+    .map(({ event: ev, mode, amount }) => {
+      const typeControl =
+        ev.registrationType === "both"
+          ? `<div class="cart-mode" role="group" aria-label="Entry type for ${e(ev.title)}">
+               <button type="button" class="${mode === "solo" ? "active" : ""}" data-action="cart-mode" data-mode="solo" data-event-id="${e(ev.id)}">SOLO</button>
+               <button type="button" class="${mode === "team" ? "active" : ""}" data-action="cart-mode" data-mode="team" data-event-id="${e(ev.id)}">TEAM</button>
+             </div>`
+          : `<span class="cart-type">${ev.registrationType === "team" ? `TEAM · ${e(ev.minTeam)}–${e(ev.maxTeam)}` : "SOLO"}</span>`;
+      return `
+        <li class="cart-item">
+          <div class="cart-item-main">
+            <strong>${e(ev.title)}</strong>
+            <span>${e(ev.date)} · ${e(ev.time)}</span>
+            ${typeControl}
+          </div>
+          <div class="cart-item-side">
+            <span class="cart-amount">${amount ? `₹${e(amount)}` : "FREE"}</span>
+            <button type="button" class="cart-remove" data-action="cart-remove" data-event-id="${e(ev.id)}" aria-label="Remove ${e(ev.title)}">REMOVE</button>
+          </div>
+        </li>`;
+    })
+    .join("");
+
+  panel.innerHTML = `
+    <div class="cart-head">
+      <h3 id="events-cart-title" tabindex="-1">REGISTER FOR</h3>
+      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close">[ CLOSE ]</button>
+    </div>
+    ${items.length
+      ? `<ul class="cart-list">${rows}</ul>
+         <div class="cart-foot">
+           <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
+           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ CONTINUE → ]</button>
+           <button type="button" class="event-submit-btn secondary cart-done" data-action="cart-close">[ + ADD ANOTHER EVENT ]</button>
+         </div>`
+      : `<div class="cart-empty"><p>No events selected.</p><p>Open an event and tap <strong>REGISTER</strong>.</p></div>`}
+  `;
+  // Re-rendered while open (remove / solo-team switch): keep keyboard focus.
+  if (activeDialog === "cart" && !panel.contains(document.activeElement)) focusInto(panel, keepFocus || DIALOGS.cart.title);
+}
+
+function updateCartFab(items = getCartItems()) {
+  const count = document.getElementById("events-cart-count");
+  const fab = document.getElementById("events-cart-fab");
+  if (count) count.textContent = String(items.length);
+  if (fab) fab.classList.toggle("has-items", items.length > 0);
+}
+
+export function openCart() {
+  renderCartPanel();
+  const overlay = document.getElementById("events-cart-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  isCartOpen = true;
+  activateDialog("cart");
+}
+
+export function closeCart() {
+  document.getElementById("events-cart-overlay")?.classList.remove("active");
+  isCartOpen = false;
+  deactivateDialog("cart");
+}
+
+function handleAddToCart(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
+  try {
+    addToCart(ev.id);
+    closeEventDossier();
+    openCart();
+  } catch (err) {
+    flashToast(err.message);
+  }
+  refreshEventsGrid();
+}
 
-  // If not logged in, prompt Google Sign-In with event pre-selected
+// The toast is a polite live region. It is created (empty) when the page
+// mounts so screen readers are already watching it before the first message.
+function ensureToast() {
+  let toast = document.getElementById("events-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "events-toast";
+    toast.className = "events-toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.setAttribute("aria-atomic", "true");
+    document.body.appendChild(toast);
+  }
+  return toast;
+}
+
+function flashToast(message) {
+  const toast = ensureToast();
+  // Clear first so the same message twice in a row is announced again.
+  toast.textContent = "";
+  clearTimeout(flashToast._a);
+  flashToast._a = setTimeout(() => (toast.textContent = message), 50);
+  toast.classList.add("show");
+  clearTimeout(flashToast._t);
+  flashToast._t = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+// ----------------------------------------------------------------------------
+// CHECKOUT (details → teams → review & pay → done)
+// ----------------------------------------------------------------------------
+
+function startCheckout() {
+  const items = getCartItems();
+  if (!items.length) return;
+  const user = getCurrentUser();
   if (!user) {
-    openAuthModal("register", { pendingEvent: ev.title });
+    resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
+    closeCart();
+    openAuthModal("login");
     return;
   }
+  const teams = {};
+  items
+    .filter((i) => i.mode === "team")
+    .forEach((i) => {
+      teams[i.eventId] = { teamName: "", members: Array.from({ length: Math.max(i.event.minTeam - 1, 0) }, () => ({ name: "", email: "" })) };
+    });
+  checkout = {
+    step: "details",
+    items,
+    teams,
+    details: {
+      displayName: user.displayName || "",
+      college: user.college || "",
+      year: user.year || "",
+      phone: user.phone || "",
+    },
+    utr: "",
+    result: null,
+    joinEventId: null,
+  };
+  const draft = readCheckoutDraft();
+  if (draft?.cartKey === cartKey(items)) {
+    Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
+  }
+  closeCart();
+  openCheckoutModal();
+}
 
-  // If already registered, show confirmed ticket pass
-  if (isEventRegistered(ev.title) || isEventRegistered(ev.id)) {
-    activeRegEvent = ev;
-    const modal = document.getElementById("event-reg-modal");
-    const card = document.getElementById("event-reg-card");
-    if (modal && card) {
-      renderRegistrationPass(card, ev);
-      modal.classList.add("active");
-      isRegModalOpen = true;
-    }
+function openJoinTeam(eventId) {
+  const user = getCurrentUser();
+  if (!user) {
+    // Close the drawer first: it makes the rest of the page (and the sign-in
+    // modal) inert while open.
+    closeEventDossier();
+    openAuthModal("login");
     return;
   }
+  const ev = getEventById(eventId);
+  if (!ev) return;
+  checkout = {
+    step: "join",
+    items: [],
+    teams: {},
+    details: { displayName: user.displayName || "", college: user.college || "", year: user.year || "", phone: user.phone || "" },
+    joinEventId: ev.id,
+  };
+  closeEventDossier();
+  openCheckoutModal();
+}
 
-  activeRegEvent = ev;
+function openCheckoutModal() {
   const modal = document.getElementById("event-reg-modal");
-  const card = document.getElementById("event-reg-card");
-  if (!modal || !card) return;
-
-  const isTeam = ev.maxTeam > 1;
-
-  card.innerHTML = `
-    <button class="event-reg-close" id="reg-modal-close-btn">[ ESC / CLOSE ]</button>
-    <div style="text-align:center; margin-bottom:16px;">
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; color:#005a3c; text-transform:uppercase;">
-        CHAITANYA 2K26 // EVENT ENROLLMENT
-      </span>
-      <h3 style="font-family:'DrukMedium',sans-serif; font-size:32px; margin:4px 0 6px; text-transform:uppercase;">
-        ${ev.title}
-      </h3>
-      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#555;">
-        ${isTeam ? `Format: ${ev.format} | Max ${ev.maxTeam} Members` : "Individual Solo Registration"}
-      </p>
-    </div>
-
-    <form class="event-reg-form" id="event-reg-form" novalidate>
-      ${isTeam ? `
-        <div class="event-reg-group">
-          <label class="event-reg-label">Registration Mode</label>
-          <div style="display:flex; gap:10px;">
-            <label style="font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="radio" name="team_mode" value="create" checked /> Create New Team
-            </label>
-            <label style="font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="radio" name="team_mode" value="join" /> Join with Team Code
-            </label>
-          </div>
-        </div>
-
-        <div id="create-team-fields">
-          <div class="event-reg-group">
-            <label class="event-reg-label">Team Name *</label>
-            <input type="text" class="event-reg-input" id="reg-team-name" placeholder="e.g. ByteBusters" required />
-          </div>
-          <div class="event-reg-group" style="margin-top:10px;">
-            <label class="event-reg-label">Team Leader WhatsApp / Phone *</label>
-            <input type="tel" class="event-reg-input" id="reg-leader-phone" value="${user.phone || ""}" placeholder="+91 98160 XXXXX" required />
-          </div>
-          <div class="event-reg-group" style="margin-top:10px;">
-            <label class="event-reg-label">College / Institute *</label>
-            <input type="text" class="event-reg-input" id="reg-college" value="${user.college || ""}" placeholder="e.g. HPTU Hamirpur" required />
-          </div>
-        </div>
-
-        <div id="join-team-fields" style="display:none;">
-          <div class="event-reg-group">
-            <label class="event-reg-label">Enter 6-Digit Team Code *</label>
-            <input type="text" class="event-reg-input" id="reg-team-code" placeholder="e.g. BYTE-408" style="text-transform:uppercase; letter-spacing:1.5px; font-weight:700;" />
-            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#777; margin-top:4px;">
-              Ask your team leader for the unique team code generated upon team creation.
-            </span>
-          </div>
-        </div>
-      ` : `
-        <div class="event-reg-group">
-          <label class="event-reg-label">Participant Name</label>
-          <input type="text" class="event-reg-input" value="${user.displayName || ""}" readonly style="background:#f9f9f9;" />
-        </div>
-        <div class="event-reg-group">
-          <label class="event-reg-label">WhatsApp Contact Number *</label>
-          <input type="tel" class="event-reg-input" id="reg-solo-phone" value="${user.phone || ""}" placeholder="+91 98160 XXXXX" required />
-        </div>
-        <div class="event-reg-group">
-          <label class="event-reg-label">College / Institute *</label>
-          <input type="text" class="event-reg-input" id="reg-solo-college" value="${user.college || ""}" placeholder="e.g. HPTU Hamirpur" required />
-        </div>
-      `}
-
-      <!-- Payment Section -->
-      ${ev.entryFeeNum > 0 ? `
-        <div class="event-upi-payment-box">
-          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#000;">
-            ENTRY FEE DUE: ₹${ev.entryFeeNum}
-          </div>
-          <div class="event-qr-display">
-            <!-- Simulated High-Res SBI UPI QR Code -->
-            <img src="/images/icons/Logo.svg" alt="SBI UPI QR Code" style="filter:none;" />
-          </div>
-          <div class="event-upi-id-copy">
-            <span>UPI ID: <strong>chaitanyahptu@sbi</strong></span>
-            <button type="button" class="event-upi-copy-btn" id="copy-upi-btn">[ COPY ]</button>
-          </div>
-          <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#555; line-height:1.4;">
-            Scan via GPay, PhonePe or Paytm. Submit the 12-digit UPI UTR reference number below for instant verification.
-          </p>
-          <div class="event-reg-group" style="width:100%; text-align:left;">
-            <label class="event-reg-label">12-Digit UPI Transaction / UTR Number *</label>
-            <input 
-              type="text" 
-              class="event-reg-input" 
-              id="reg-utr-number" 
-              placeholder="e.g. 408192837192" 
-              maxlength="16" 
-              required 
-              style="letter-spacing:1px; font-weight:600;"
-            />
-          </div>
-        </div>
-      ` : `
-        <div style="background:#eafaf1; border:1.5px solid #2ecc71; border-radius:12px; padding:12px; text-align:center;">
-          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; color:#27ae60;">
-            ✓ FREE REGISTRATION FOR CHAITANYA 2K26 ATTENDEES
-          </span>
-        </div>
-      `}
-
-      <div id="reg-error-msg" style="color:red; font-family:'IBM Plex Mono',monospace; font-size:11px; display:none;"></div>
-
-      <button type="submit" class="event-submit-btn" id="reg-submit-btn">
-        [ COMPLETE REGISTRATION & CONFIRM ]
-      </button>
-    </form>
-  `;
-
+  if (!modal) return;
   modal.classList.add("active");
-  isRegModalOpen = true;
+  isCheckoutOpen = true;
+  renderCheckout();
+  activateDialog("checkout");
+}
 
-  // Bind close
-  const closeBtn = card.querySelector("#reg-modal-close-btn");
-  if (closeBtn) closeBtn.onclick = closeEventRegistration;
+export function closeCheckout() {
+  document.getElementById("event-reg-modal")?.classList.remove("active");
+  isCheckoutOpen = false;
+  checkout = null;
+  saveCheckoutDraft();
+  deactivateDialog("checkout");
+}
 
-  // Bind Team Mode toggle
-  const createFields = card.querySelector("#create-team-fields");
-  const joinFields = card.querySelector("#join-team-fields");
-  const teamRadios = card.querySelectorAll('input[name="team_mode"]');
-  teamRadios.forEach((r) => {
-    r.onchange = () => {
-      if (r.value === "join") {
-        if (createFields) createFields.style.display = "none";
-        if (joinFields) joinFields.style.display = "block";
-      } else {
-        if (createFields) createFields.style.display = "block";
-        if (joinFields) joinFields.style.display = "none";
-      }
-    };
-  });
-
-  // Bind Copy UPI ID
-  const copyBtn = card.querySelector("#copy-upi-btn");
-  if (copyBtn) {
-    copyBtn.onclick = () => {
-      navigator.clipboard.writeText("chaitanyahptu@sbi");
-      copyBtn.textContent = "[ COPIED! ]";
-      setTimeout(() => (copyBtn.textContent = "[ COPY ]"), 2000);
-    };
+// Esc, backdrop and the close button: past the details step the student may
+// have typed team names or already paid, so don't drop that on one keystroke.
+function requestCloseCheckout() {
+  const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
+  if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
+    if (!confirm("Leave registration? What you entered here will be cleared. Your selected events stay.")) return;
   }
+  closeCheckout();
+}
 
-  // Handle Form Submit
-  const form = card.querySelector("#event-reg-form");
-  if (form) {
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const submitBtn = card.querySelector("#reg-submit-btn");
-      const errBox = card.querySelector("#reg-error-msg");
-      if (errBox) errBox.style.display = "none";
+const cartKey = (items) => items.map((i) => `${i.eventId}:${i.mode}`).join(",");
 
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "[ PROCESSING ENROLLMENT... ]";
-      }
-
-      try {
-        const utr = (card.querySelector("#reg-utr-number")?.value || "").trim();
-        const isJoinMode = card.querySelector('input[name="team_mode"]:checked')?.value === "join";
-
-        if (isTeam && isJoinMode) {
-          const teamCode = (card.querySelector("#reg-team-code")?.value || "").trim();
-          if (!teamCode) throw new Error("Please enter your team code.");
-          await joinTeamWithCode(teamCode);
-        } else if (isTeam) {
-          const teamName = (card.querySelector("#reg-team-name")?.value || "").trim();
-          const leaderPhone = (card.querySelector("#reg-leader-phone")?.value || "").trim();
-          const college = (card.querySelector("#reg-college")?.value || "").trim();
-          if (!teamName) throw new Error("Please enter your team name.");
-          if (!leaderPhone) throw new Error("Please enter team leader phone number.");
-          if (ev.entryFeeNum > 0 && !utr) throw new Error("Please provide your 12-digit UPI UTR number.");
-          await createTeamForEvent(ev, { teamName, leaderPhone, college }, { utr });
-        } else {
-          const phone = (card.querySelector("#reg-solo-phone")?.value || "").trim();
-          const college = (card.querySelector("#reg-solo-college")?.value || "").trim();
-          if (!phone) throw new Error("Please enter contact phone number.");
-          if (ev.entryFeeNum > 0 && !utr) throw new Error("Please provide your 12-digit UPI UTR number.");
-          user.phone = phone;
-          user.college = college;
-          await registerSoloForEvent(ev, { utr, phone });
-        }
-
-        // Show Success Pass Card
-        renderRegistrationPass(card, ev);
-        refreshEventsGrid();
-      } catch (err) {
-        if (errBox) {
-          errBox.textContent = err.message || "Failed to complete registration.";
-          errBox.style.display = "block";
-        }
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "[ COMPLETE REGISTRATION & CONFIRM ]";
-        }
-      }
-    };
+function readCheckoutDraft() {
+  try {
+    return JSON.parse(sessionStorage.getItem(CHECKOUT_DRAFT_KEY));
+  } catch {
+    return null;
   }
 }
 
-function renderRegistrationPass(card, ev) {
-  card.innerHTML = `
-    <button class="event-reg-close" id="pass-close-btn">[ ESC / CLOSE ]</button>
-    <div style="text-align:center; padding:10px 0;">
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:#005a3c; background:#eafaf1; padding:4px 12px; border-radius:20px;">
-        ✓ REGISTRATION CONFIRMED
-      </span>
-      <h3 style="font-family:'DrukMedium',sans-serif; font-size:36px; margin:12px 0 6px; text-transform:uppercase;">
-        ${ev.title}
-      </h3>
-      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#666; margin-bottom:18px;">
-        CHAITANYA 2K26 OFFICIAL ENTRY PASS
-      </p>
+// Saves the open cart checkout, or clears the draft once it's closed or done.
+function saveCheckoutDraft() {
+  try {
+    if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
+      const { step, teams, details, utr, items } = checkout;
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items) }));
+    } else {
+      sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+    }
+  } catch {}
+}
 
-      <div style="background:#ffffff; border:2px dashed #000000; border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;">
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; color:#000; margin-bottom:4px;">
-          VENUE: ${ev.venue}
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#555; margin-bottom:12px;">
-          DATE & TIME: ${ev.date} // ${ev.time}
-        </div>
-        <div style="width:120px; height:120px; margin:0 auto 12px; border:1px solid #000; padding:6px; border-radius:8px;">
-          <img src="/images/icons/Logo.svg" alt="Pass QR Code" style="width:100%; height:100%; object-fit:contain;" />
-        </div>
-        <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#888; letter-spacing:1px;">
-          PASS ID: CH26-${ev.id.toUpperCase().slice(0, 4)}-${Math.floor(1000 + Math.random() * 9000)}
-        </span>
-      </div>
+function stepList() {
+  const steps = ["details"];
+  if (checkout.items.some((i) => i.mode === "team")) steps.push("teams");
+  steps.push("review");
+  return steps;
+}
 
-      <button class="event-submit-btn" id="pass-done-btn" style="width:100%;">
-        [ RETURN TO ARENAS ]
-      </button>
+function stepperHtml() {
+  if (checkout.step === "done" || checkout.step === "join") return "";
+  const names = { details: "DETAILS", teams: "TEAMS", review: "CONFIRM" };
+  const steps = stepList();
+  const current = steps.indexOf(checkout.step);
+  return `<ol class="checkout-steps">${steps
+    .map((s, i) => `<li class="${i === current ? "current" : i < current ? "done" : ""}"${i === current ? ' aria-current="step"' : ""}>${i + 1}. ${names[s]}</li>`)
+    .join("")}</ol>`;
+}
+
+function yearOptionsHtml(selected) {
+  return [`<option value="">Select year</option>`, ...YEAR_OPTIONS.map((y) => `<option ${y === selected ? "selected" : ""}>${e(y)}</option>`)].join("");
+}
+
+function detailsFieldsHtml(d, user) {
+  return `
+    <div class="event-reg-group">
+      <label class="event-reg-label" for="co-name">Full name *</label>
+      <input type="text" class="event-reg-input" id="co-name" maxlength="120" value="${e(d.displayName)}" autocomplete="name" />
     </div>
-  `;
-
-  const closeBtn = card.querySelector("#pass-close-btn");
-  if (closeBtn) closeBtn.onclick = closeEventRegistration;
-  const doneBtn = card.querySelector("#pass-done-btn");
-  if (doneBtn) doneBtn.onclick = closeEventRegistration;
+    <div class="event-reg-group">
+      <label class="event-reg-label" for="co-email">Email</label>
+      <input type="email" class="event-reg-input" id="co-email" value="${e(user.email)}" readonly />
+    </div>
+    <div class="event-reg-group">
+      <label class="event-reg-label" for="co-college">College / institute *</label>
+      <input type="text" class="event-reg-input" id="co-college" maxlength="120" value="${e(d.college)}" autocomplete="organization" placeholder="e.g. HPTU Hamirpur" />
+    </div>
+    <div class="checkout-row">
+      <div class="event-reg-group">
+        <label class="event-reg-label" for="co-year">Year *</label>
+        <select class="event-reg-input" id="co-year">${yearOptionsHtml(d.year)}</select>
+      </div>
+      <div class="event-reg-group">
+        <label class="event-reg-label" for="co-phone">Phone (WhatsApp) *</label>
+        <input type="tel" class="event-reg-input" id="co-phone" maxlength="20" value="${e(d.phone)}" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
+      </div>
+    </div>`;
 }
 
-export function closeEventRegistration() {
-  const modal = document.getElementById("event-reg-modal");
-  if (modal) modal.classList.remove("active");
-  isRegModalOpen = false;
-  activeRegEvent = null;
+function readDetails(card) {
+  checkout.details = {
+    displayName: card.querySelector("#co-name").value.trim(),
+    college: card.querySelector("#co-college").value.trim(),
+    year: card.querySelector("#co-year").value,
+    phone: card.querySelector("#co-phone").value.trim(),
+  };
+  const d = checkout.details;
+  if (!d.displayName) throw new Error("Please enter your name.");
+  if (!d.college) throw new Error("Please enter your college / institute.");
+  if (!d.year) throw new Error("Please select your year.");
+  if (d.phone.replace(/\D/g, "").length < 10) throw new Error("Please enter a valid phone number.");
+}
+
+function readTeams(card) {
+  card.querySelectorAll("[data-team-event]").forEach((block) => {
+    const eventId = block.dataset.teamEvent;
+    const t = checkout.teams[eventId];
+    t.teamName = block.querySelector(".co-team-name").value.trim();
+    t.members = Array.from(block.querySelectorAll(".co-member")).map((row) => ({
+      name: row.querySelector(".co-member-name").value.trim(),
+      email: row.querySelector(".co-member-email").value.trim(),
+    }));
+  });
+}
+
+function validateTeams() {
+  checkout.items
+    .filter((i) => i.mode === "team")
+    .forEach(({ event: ev }) => {
+      const t = checkout.teams[ev.id];
+      const size = t.members.filter((m) => m.name).length + 1;
+      if (!t.teamName) throw new Error(`Enter a team name for ${ev.title}.`);
+      if (size < ev.minTeam) throw new Error(`${ev.title} needs at least ${ev.minTeam} members including you.`);
+      if (size > ev.maxTeam) throw new Error(`${ev.title} allows at most ${ev.maxTeam} members including you.`);
+    });
+}
+
+function renderCheckout(focusSel) {
+  const card = document.getElementById("event-reg-card");
+  if (!card || !checkout) return;
+  const prevStep = card.dataset.step;
+  const keepFocus = focusedSelector(card);
+  const user = getCurrentUser();
+  const step = checkout.step;
+  let body = "";
+
+  if (step === "details") {
+    body = `
+      <div class="event-reg-head">
+        <span class="event-reg-kicker">STEP 1 // CONFIRM YOUR DETAILS</span>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Your details</h3>
+        <p class="event-reg-sub">These appear on your registrations and Digital ID.</p>
+      </div>
+      <form class="event-reg-form" id="co-form" novalidate>
+        ${detailsFieldsHtml(checkout.details, user)}
+        <div class="event-reg-error" id="co-error" role="alert" hidden></div>
+        <div class="checkout-nav">
+          <button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← BACK ]</button>
+          <button type="submit" class="event-submit-btn">[ NEXT → ]</button>
+        </div>
+      </form>`;
+  } else if (step === "teams") {
+    const blocks = checkout.items
+      .filter((i) => i.mode === "team")
+      .map(({ event: ev }) => {
+        const t = checkout.teams[ev.id];
+        const members = t.members
+          .map(
+            (m, idx) => `
+            <div class="co-member">
+              <input type="text" class="event-reg-input co-member-name" maxlength="120" placeholder="Member ${idx + 2} name" value="${e(m.name)}" aria-label="Member ${idx + 2} name" />
+              <input type="email" class="event-reg-input co-member-email" maxlength="120" placeholder="Email (optional)" value="${e(m.email)}" aria-label="Member ${idx + 2} email" />
+              <button type="button" class="cart-remove" data-action="co-remove-member" data-event-id="${e(ev.id)}" data-index="${idx}" aria-label="Remove member ${idx + 2}">✕</button>
+            </div>`
+          )
+          .join("");
+        const canAdd = t.members.length + 1 < ev.maxTeam;
+        return `
+          <fieldset class="co-team" data-team-event="${e(ev.id)}">
+            <legend>${e(ev.title)} <span>· ${e(ev.minTeam)}–${e(ev.maxTeam)} members</span></legend>
+            <div class="event-reg-group">
+              <label class="event-reg-label" for="co-team-name-${e(ev.id)}">Team name *</label>
+              <input type="text" class="event-reg-input co-team-name" id="co-team-name-${e(ev.id)}" maxlength="60" value="${e(t.teamName)}" placeholder="e.g. ByteBusters" />
+            </div>
+            <div class="event-reg-group">
+              <span class="event-reg-label">Team leader</span>
+              <div class="co-leader">${e(checkout.details.displayName)} (you)</div>
+            </div>
+            <div class="event-reg-group">
+              <span class="event-reg-label">Team members</span>
+              ${members || `<p class="event-reg-hint">No other members yet.</p>`}
+              ${canAdd ? `<button type="button" class="event-link-btn" data-action="co-add-member" data-event-id="${e(ev.id)}">+ Add member</button>` : ""}
+            </div>
+          </fieldset>`;
+      })
+      .join("");
+    body = `
+      <div class="event-reg-head">
+        <span class="event-reg-kicker">STEP 2 // TEAMS</span>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Team details</h3>
+        <p class="event-reg-sub">You'll get a team code to share. Teammates can use it to link their own accounts.</p>
+      </div>
+      <form class="event-reg-form" id="co-form" novalidate>
+        ${blocks}
+        <div class="event-reg-error" id="co-error" role="alert" hidden></div>
+        <div class="checkout-nav">
+          <button type="button" class="event-submit-btn secondary" data-action="co-prev">[ ← BACK ]</button>
+          <button type="submit" class="event-submit-btn">[ NEXT → ]</button>
+        </div>
+      </form>`;
+  } else if (step === "review") {
+    const total = getCartTotal(checkout.items);
+    const rows = checkout.items
+      .map(
+        ({ event: ev, mode, amount }) => `
+        <li><span>${e(ev.title)} <em>${mode === "team" ? `TEAM · ${e(checkout.teams[ev.id]?.teamName || "")}` : "SOLO"}</em></span><strong>${amount ? `₹${e(amount)}` : "FREE"}</strong></li>`
+      )
+      .join("");
+    const payReady = isPaymentConfigured();
+    const upiLink = total > 0 ? buildUpiLink(total, `${FEST_CONFIG.name} registration`) : null;
+    const paymentHtml =
+      total <= 0
+        ? `<div class="event-reg-free-note">✓ NO PAYMENT NEEDED</div>`
+        : payReady
+          ? `<div class="event-upi-payment-box">
+              <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
+              ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
+              ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">[ PAY ₹${e(total)} WITH A UPI APP ]</a>` : ""}
+              <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
+              <p class="event-upi-help">After paying, come back here and enter the 12-digit UTR from the payment receipt. The fest team checks it against the bank statement before your booking shows as confirmed.</p>
+              <details class="event-upi-where">
+                <summary>Where do I find the UTR?</summary>
+                <p>Open the payment in your UPI app's history. Google Pay calls it <strong>UPI transaction ID</strong>, PhonePe calls it <strong>UTR</strong>, Paytm calls it <strong>UPI Ref No.</strong> It is always 12 digits.</p>
+              </details>
+              <div class="event-reg-group">
+                <label class="event-reg-label" for="co-utr">12-digit UTR *</label>
+                <input type="text" class="event-reg-input event-reg-utr" id="co-utr" inputmode="numeric" maxlength="12" autocomplete="off" value="${e(checkout.utr || "")}" />
+              </div>
+            </div>`
+          : `<div class="event-reg-closed-note"><strong>TOTAL: ₹${e(total)}</strong><span>Online payment opens soon. Paid registrations will be enabled once the official UPI details are published.</span></div>`;
+    body = `
+      <div class="event-reg-head">
+        <span class="event-reg-kicker">STEP ${stepList().length} // CONFIRM & PAY</span>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">Confirm registration</h3>
+        <p class="event-reg-sub">${e(checkout.details.displayName)} · ${e(checkout.details.college)} · ${e(checkout.details.year)}</p>
+      </div>
+      <ul class="checkout-summary">${rows}</ul>
+      <div class="checkout-total"><span>TOTAL</span><strong>${total ? `₹${e(total)}` : "FREE"}</strong></div>
+      <form class="event-reg-form" id="co-form" novalidate>
+        ${paymentHtml}
+        <div class="event-reg-error" id="co-error" role="alert" hidden></div>
+        <div class="checkout-nav">
+          <button type="button" class="event-submit-btn secondary" data-action="co-prev">[ ← BACK ]</button>
+          <button type="submit" class="event-submit-btn" id="co-submit" ${total > 0 && !payReady ? "disabled" : ""}>[ CONFIRM REGISTRATION ]</button>
+        </div>
+      </form>`;
+  } else if (step === "done") {
+    const r = checkout.result;
+    const pending = r.total > 0 || r.teamPending;
+    const codes = Object.entries(r.teamCodes || {})
+      .map(([id, code]) => `<li><span>${e(getEventById(id)?.title || id)}</span><strong class="mono">${e(code)}</strong></li>`)
+      .join("");
+    const qrs = (r.registrations || [])
+      .map((reg) => `<li><strong>${e(reg.event_title)}</strong>${registrationQrHtml(reg, { size: "small" })}</li>`)
+      .join("");
+    body = `
+      <div class="event-reg-head">
+        <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">${pending ? "Registration received" : "You're in!"}</h3>
+        <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.total > 0 ? " Your bookings will show as confirmed once the fest team verifies your payment." : r.teamPending ? " Your booking is confirmed once the fest team verifies your leader's payment." : ""}</p>
+      </div>
+      ${pending ? `<p class="event-upi-help">Payment question? Email <a href="mailto:${e(FEST_CONFIG.contactEmail)}">${e(FEST_CONFIG.contactEmail)}</a> with your UTR.</p>` : ""}
+      ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
+      ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
+      <div class="checkout-nav">
+        <button type="button" class="event-submit-btn secondary" data-action="co-close">[ BACK TO EVENTS ]</button>
+        <button type="button" class="event-submit-btn" data-action="co-my-registrations">[ MY REGISTRATIONS ]</button>
+      </div>`;
+  } else if (step === "join") {
+    const ev = getEventById(checkout.joinEventId);
+    body = `
+      <div class="event-reg-head">
+        <span class="event-reg-kicker">JOIN A TEAM</span>
+        <h3 class="event-reg-title" id="co-title" tabindex="-1">${e(ev.title)}</h3>
+        <p class="event-reg-sub">Enter the code your team leader received after registering.</p>
+      </div>
+      <form class="event-reg-form" id="co-form" novalidate>
+        <div class="event-reg-group">
+          <label class="event-reg-label" for="co-code">Team code *</label>
+          <input type="text" class="event-reg-input event-reg-code" id="co-code" maxlength="11" autocomplete="off" placeholder="e.g. BYTE-4F8K" />
+        </div>
+        ${detailsFieldsHtml(checkout.details, user)}
+        <div class="event-reg-error" id="co-error" role="alert" hidden></div>
+        <div class="checkout-nav">
+          <button type="button" class="event-submit-btn secondary" data-action="co-close">[ CANCEL ]</button>
+          <button type="submit" class="event-submit-btn" id="co-submit">[ JOIN TEAM ]</button>
+        </div>
+      </form>`;
+  }
+
+  card.innerHTML = `
+    <button type="button" class="event-reg-close" data-action="co-close">[ ESC / CLOSE ]</button>
+    ${stepperHtml()}
+    <div class="checkout-step" key="${step}">${body}</div>
+  `;
+  card.dataset.step = step;
+  // New step: focus its title. Same step re-rendered (add/remove member):
+  // keep focus where it was, or on what the caller asked for.
+  if (activeDialog === "checkout") {
+    if (prevStep !== step) card.scrollTop = 0;
+    focusInto(card, focusSel || (prevStep === step ? keepFocus : null) || DIALOGS.checkout.title);
+  }
+
+  const form = card.querySelector("#co-form");
+  const utr = card.querySelector("#co-utr");
+  if (utr)
+    utr.oninput = () => {
+      utr.value = checkout.utr = utr.value.replace(/\D/g, "").slice(0, 12);
+      saveCheckoutDraft();
+    };
+  if (form) form.onsubmit = (evt) => onCheckoutSubmit(evt, card);
+  saveCheckoutDraft();
+}
+
+async function onCheckoutSubmit(evt, card) {
+  evt.preventDefault();
+  const errBox = card.querySelector("#co-error");
+  errBox.hidden = true;
+  errBox.textContent = "";
+  const steps = stepList();
+  try {
+    if (checkout.step === "details") {
+      readDetails(card);
+      checkout.step = steps[steps.indexOf("details") + 1];
+      return renderCheckout();
+    }
+    if (checkout.step === "teams") {
+      readTeams(card);
+      validateTeams();
+      checkout.step = "review";
+      return renderCheckout();
+    }
+    if (checkout.step === "review") {
+      const total = getCartTotal(checkout.items);
+      checkout.utr = card.querySelector("#co-utr")?.value.trim() || "";
+      if (total > 0 && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
+      const btn = card.querySelector("#co-submit");
+      btn.disabled = true;
+      btn.textContent = "[ SAVING... ]";
+      const result = await checkoutCart(
+        checkout.items.map((i) => ({ eventId: i.eventId, mode: i.mode })),
+        checkout.details,
+        checkout.teams,
+        checkout.utr
+      );
+      clearCart(result.eventIds);
+      checkout.result = result;
+      checkout.step = "done";
+      refreshEventsGrid();
+      return renderCheckout();
+    }
+    if (checkout.step === "join") {
+      readDetails(card);
+      const code = card.querySelector("#co-code").value.trim();
+      if (!code) throw new Error("Please enter your team code.");
+      const btn = card.querySelector("#co-submit");
+      btn.disabled = true;
+      btn.textContent = "[ JOINING... ]";
+      const joined = await joinTeamWithCode(code, getEventById(checkout.joinEventId), checkout.details);
+      removeFromCart(checkout.joinEventId);
+      const teamPaid = ["free", "paid", "verified"].includes(joined.team?.paymentStatus || "free");
+      checkout.result = {
+        total: 0,
+        eventIds: [checkout.joinEventId],
+        teamCodes: {},
+        joinedTeam: joined.team?.teamName,
+        teamPending: !teamPaid,
+        registrations: joined.registration ? [joined.registration] : [],
+      };
+      checkout.step = "done";
+      refreshEventsGrid();
+      return renderCheckout();
+    }
+  } catch (err) {
+    // role="alert": show it a beat after hiding so a repeated message is
+    // announced again.
+    const message = err.message || "Something went wrong. Please try again.";
+    setTimeout(() => {
+      errBox.textContent = message;
+      errBox.hidden = false;
+    }, 50);
+    const btn = card.querySelector("#co-submit");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = checkout.step === "join" ? "[ JOIN TEAM ]" : "[ CONFIRM REGISTRATION ]";
+    }
+  }
+}
+
+function onCheckoutClick(evt) {
+  const card = document.getElementById("event-reg-card");
+  const btn = evt.target.closest("[data-action]");
+  if (!btn || !checkout || !card?.contains(btn)) return;
+  const action = btn.dataset.action;
+  const steps = stepList();
+
+  if (action === "co-close") return requestCloseCheckout();
+  if (action === "co-copy-upi") {
+    navigator.clipboard?.writeText(FEST_CONFIG.upiId).then(
+      () => flashToast("UPI ID copied"),
+      () => flashToast(`Couldn't copy. The UPI ID is ${FEST_CONFIG.upiId}`)
+    );
+    return;
+  }
+  if (action === "co-back-cart") {
+    closeCheckout();
+    return openCart();
+  }
+  if (action === "co-prev") {
+    if (checkout.step === "teams") readTeams(card);
+    if (checkout.step === "review") checkout.utr = card.querySelector("#co-utr")?.value || "";
+    checkout.step = steps[Math.max(steps.indexOf(checkout.step) - 1, 0)];
+    return renderCheckout();
+  }
+  if (action === "co-add-member" || action === "co-remove-member") {
+    readTeams(card);
+    const t = checkout.teams[btn.dataset.eventId];
+    if (action === "co-add-member") t.members.push({ name: "", email: "" });
+    else t.members.splice(Number(btn.dataset.index), 1);
+    // Adding: focus the new member's name field.
+    return renderCheckout(
+      action === "co-add-member"
+        ? `[data-team-event="${CSS.escape(btn.dataset.eventId)}"] .co-member:last-of-type .co-member-name`
+        : `[data-team-event="${CSS.escape(btn.dataset.eventId)}"] .co-team-name`
+    );
+  }
+  if (action === "co-my-registrations") {
+    closeCheckout();
+    if (typeof window.openProfilePanel === "function") window.openProfilePanel("registrations");
+  }
 }
 
 /**
@@ -683,11 +1127,14 @@ export function initScrollMotion() {
   const heroTitle = document.querySelector(".events-hero-title");
   const grid = document.getElementById("events-card-grid");
 
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
   // Smooth Scroll-to-Top Button
   if (scrollTopBtn) {
     scrollTopBtn.onclick = (e) => {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
     };
   }
 
@@ -702,7 +1149,7 @@ export function initScrollMotion() {
 
         // Top edge progress accent
         if (progressBar) {
-          progressBar.style.width = `${progress.toFixed(1)}%`;
+          progressBar.style.transform = `scaleX(${(progress / 100).toFixed(4)})`;
         }
 
         // Pinned sticky toolbar morphing state
@@ -727,10 +1174,10 @@ export function initScrollMotion() {
         }
 
         // Hero Ambient Parallax (fade & subtle vertical shift)
-        if (heroCoords && scrollTop < 600) {
+        if (!reduceMotion && heroCoords && scrollTop < 600) {
           heroCoords.style.transform = `translate3d(0, ${scrollTop * 0.15}px, 0)`;
         }
-        if (heroTitle && scrollTop < 600) {
+        if (!reduceMotion && heroTitle && scrollTop < 600) {
           const scale = Math.max(1 - scrollTop / 1200, 0.9);
           const opacity = Math.max(1 - scrollTop / 500, 0.4);
           heroTitle.style.transform = `scale(${scale})`;
@@ -747,9 +1194,17 @@ export function initScrollMotion() {
   onScroll();
 
   // 2. Card In-View Scroll Reveal
+  // Kept so cleanup can kill them: cards never scrolled into view would
+  // otherwise leave a ScrollTrigger behind on every visit to /events.
+  const cardTriggers = [];
   const setupCardAnimations = () => {
     const cards = Array.from(document.querySelectorAll(".event-card"));
     if (!cards.length) return;
+
+    if (reduceMotion) {
+      cards.forEach((c) => c.classList.add("is-revealed"));
+      return;
+    }
 
     // Check for GSAP + ScrollTrigger
     const gsap = window.gsap;
@@ -761,17 +1216,17 @@ export function initScrollMotion() {
         cards.forEach((card, index) => {
           if (card.classList.contains("is-revealed")) return;
 
-          ScrollTrigger.create({
+          cardTriggers.push(ScrollTrigger.create({
             trigger: card,
             start: "top 88%",
             once: true,
             onEnter: () => {
-              const delay = (index % 3) * 0.08;
+              const delay = (index % 3) * 0.06;
               gsap.to(card, {
                 opacity: 1,
                 y: 0,
                 scale: 1,
-                duration: 0.55,
+                duration: finePointer ? 0.5 : 0.35,
                 delay: delay,
                 ease: "power2.out",
                 onComplete: () => {
@@ -780,7 +1235,7 @@ export function initScrollMotion() {
                 },
               });
             },
-          });
+          }));
         });
         return;
       } catch (e) {
@@ -838,14 +1293,17 @@ export function initScrollMotion() {
     }
   };
 
-  if (grid) {
+  // Tilt only for mouse users: on touch it never resets and just costs repaints.
+  const enableTilt = grid && finePointer && !reduceMotion;
+  if (enableTilt) {
     grid.addEventListener("mousemove", onMouseMove, { passive: true });
     grid.addEventListener("mouseout", onMouseLeave, { passive: true });
   }
 
   scrollMotionCleanup = () => {
     window.removeEventListener("scroll", onScroll);
-    if (grid) {
+    cardTriggers.forEach((t) => t.kill());
+    if (enableTilt) {
       grid.removeEventListener("mousemove", onMouseMove);
       grid.removeEventListener("mouseout", onMouseLeave);
     }
@@ -858,137 +1316,244 @@ export function initScrollMotion() {
 export function refreshEventsGrid() {
   const grid = document.getElementById("events-card-grid");
   if (!grid) return;
-  const events = filterEvents(activeCategory, activeSearchQuery);
-  grid.innerHTML = events.length > 0
-    ? events.map((ev) => renderEventCardHtml(ev)).join("")
-    : `
-      <div class="events-empty">
-        <h3>No Arenas Found</h3>
-        <p>No competitions match your current search or category filter. Try clearing your search.</p>
-      </div>
-    `;
-
-  // Animate newly mounted cards
+  // Keep keyboard focus on the same card when its buttons are re-rendered
+  // (e.g. ADD TO CART becomes IN CART).
+  const focused = grid.contains(document.activeElement) ? document.activeElement : null;
+  const focusEventId = focused?.dataset?.eventId;
+  const focusAction = focused?.dataset?.action;
+  grid.innerHTML = renderGridHtml(filterEvents(activeCategory, activeSearchQuery));
+  if (focusEventId) {
+    const card = grid.querySelector(`.event-card[data-event-id="${CSS.escape(focusEventId)}"]`);
+    const target =
+      card &&
+      ((focusAction && card.querySelector(`[data-action="${CSS.escape(focusAction)}"]`)) ||
+        card.querySelector(".event-btn-register:not([disabled])") ||
+        card.querySelector('[data-action="view-details"]'));
+    try {
+      target?.focus({ preventScroll: true });
+    } catch {}
+  }
   triggerCardsReveal();
 }
 
 /**
- * Mount and attach events listeners to the DOM
+ * Global (document-level) listeners are bound once, no matter how many times
+ * the /events page is mounted.
+ */
+function bindGlobalListeners() {
+  if (globalListenersBound) return;
+  globalListenersBound = true;
+
+  document.addEventListener("click", (evt) => {
+    const btn = evt.target.closest("[data-action]");
+    if (!btn) return;
+    const id = btn.dataset.eventId;
+    switch (btn.dataset.action) {
+      case "view-details":
+        return id && openEventDossier(id);
+      case "add-to-cart":
+        return id && handleAddToCart(id);
+      case "open-cart":
+        closeEventDossier();
+        return openCart();
+      case "view-booking":
+        closeEventDossier();
+        if (typeof window.openProfilePanel === "function") window.openProfilePanel("registrations");
+        return;
+      case "join-team":
+        return id && openJoinTeam(id);
+      case "cart-close":
+        return closeCart();
+      case "cart-remove":
+        removeFromCart(id);
+        renderCartPanel();
+        return refreshEventsGrid();
+      case "cart-mode":
+        setCartItemMode(id, btn.dataset.mode);
+        return renderCartPanel();
+      case "cart-done":
+        return startCheckout();
+      default:
+        return onCheckoutClick(evt);
+    }
+  });
+
+  document.addEventListener("keydown", (evt) => {
+    if (evt.defaultPrevented) return;
+    if (evt.key === "Tab") {
+      if (activeDialog && !isOtherOverlayOpen()) trapTab(evt);
+      return;
+    }
+    if (evt.key !== "Escape") return;
+    // The profile overlay / auth modal handle their own Escape.
+    if (isOtherOverlayOpen()) return;
+    if (isCheckoutOpen) requestCloseCheckout();
+    else if (isCartOpen) closeCart();
+    else if (isDossierOpen) closeEventDossier();
+  });
+
+  subscribeAuthState((user) => {
+    setCartOwner(user?.uid);
+    pruneRegisteredFromCart();
+    if (document.getElementById("events-card-grid")) refreshEventsGrid();
+    if (user && resumeCheckoutUntil > Date.now()) {
+      resumeCheckoutUntil = 0;
+      setTimeout(() => {
+        if (document.getElementById("event-reg-modal")) startCheckout();
+      }, 300);
+    }
+  });
+
+  subscribeCart((items) => {
+    updateCartFab(items);
+    if (isCartOpen) renderCartPanel();
+  });
+}
+
+// Drop cart items the user has since registered for (e.g. on another device).
+function pruneRegisteredFromCart() {
+  const done = getCartItems().filter((i) => isEventRegistered(i.eventId)).map((i) => i.eventId);
+  if (done.length) clearCart(done);
+}
+
+const BODY_LEVEL_IDS = [
+  "event-dossier-overlay",
+  "event-reg-modal",
+  "events-cart-overlay",
+  "events-cart-fab",
+  "events-scroll-hud",
+  "events-scroll-progress",
+];
+
+/**
+ * Mount the events page: move overlays to <body> (replacing any left over
+ * from a previous visit) and wire up toolbar, search and overlays.
  */
 export function initEventsPage() {
   const root = document.getElementById("chaitanya-events-page");
-  if (!root) return;
+  if (!root || root.dataset.bound === "1") return;
+  root.dataset.bound = "1";
 
-  const dossierOverlay = document.getElementById("event-dossier-overlay");
-  if (dossierOverlay && dossierOverlay.parentElement !== document.body) {
-    document.body.appendChild(dossierOverlay);
-  }
+  BODY_LEVEL_IDS.forEach((id) => {
+    const fresh = root.querySelector(`#${id}`);
+    if (!fresh) return;
+    document.querySelectorAll(`body > #${id}`).forEach((stale) => stale !== fresh && stale.remove());
+    document.body.appendChild(fresh);
+  });
 
-  const regModal = document.getElementById("event-reg-modal");
-  if (regModal && regModal.parentElement !== document.body) {
-    document.body.appendChild(regModal);
-  }
+  bindGlobalListeners();
+  isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  activeDialog = null;
+  setBackgroundInert(null);
+  ensureToast();
 
-  const scrollHud = document.getElementById("events-scroll-hud");
-  if (scrollHud && scrollHud.parentElement !== document.body) {
-    document.body.appendChild(scrollHud);
-  }
-
-  const progressBar = document.getElementById("events-scroll-progress");
-  if (progressBar && progressBar.parentElement !== document.body) {
-    document.body.appendChild(progressBar);
-  }
-
-  // Category toolbar clicks
   const catBar = document.getElementById("events-cat-bar");
-  if (catBar) {
-    catBar.addEventListener("click", (e) => {
-      const btn = e.target.closest(".events-cat-btn");
-      if (!btn) return;
-      const cat = btn.getAttribute("data-cat");
-      if (cat) {
-        activeCategory = cat;
-        catBar.querySelectorAll(".events-cat-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        refreshEventsGrid();
-      }
+  catBar?.addEventListener("click", (evt) => {
+    const btn = evt.target.closest(".events-cat-btn");
+    if (!btn?.dataset.cat) return;
+    activeCategory = btn.dataset.cat;
+    catBar.querySelectorAll(".events-cat-btn").forEach((b) => {
+      b.classList.toggle("active", b === btn);
+      b.setAttribute("aria-pressed", String(b === btn));
     });
-  }
-
-  // Search Box input
-  const searchBox = document.getElementById("events-search-box");
-  const clearBtn = document.getElementById("events-search-clear-btn");
-  if (searchBox) {
-    searchBox.addEventListener("input", (e) => {
-      activeSearchQuery = e.target.value || "";
-      if (clearBtn) {
-        if (activeSearchQuery) clearBtn.classList.add("active");
-        else clearBtn.classList.remove("active");
-      }
-      refreshEventsGrid();
-    });
-  }
-
-  if (clearBtn && searchBox) {
-    clearBtn.addEventListener("click", () => {
-      searchBox.value = "";
-      activeSearchQuery = "";
-      clearBtn.classList.remove("active");
-      refreshEventsGrid();
-    });
-  }
-
-  // Delegated clicks on Event Cards
-  document.addEventListener("click", (e) => {
-    const detailsBtn = e.target.closest('button[data-action="view-details"]');
-    if (detailsBtn) {
-      const evId = detailsBtn.getAttribute("data-event-id");
-      if (evId) openEventDossier(evId);
-      return;
-    }
-
-    const regBtn = e.target.closest('button[data-action="register-event"]');
-    if (regBtn) {
-      const evId = regBtn.getAttribute("data-event-id");
-      if (evId) openEventRegistration(evId);
-      return;
-    }
-  });
-
-  // Global keydown (Escape closes drawer & modal)
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (isRegModalOpen) closeEventRegistration();
-      else if (isDossierOpen) closeEventDossier();
-    }
-  });
-
-  // Click outside closes
-  if (dossierOverlay) {
-    dossierOverlay.addEventListener("click", (e) => {
-      if (e.target === dossierOverlay) closeEventDossier();
-    });
-  }
-
-  if (regModal) {
-    regModal.addEventListener("click", (e) => {
-      if (e.target === regModal) closeEventRegistration();
-    });
-  }
-
-  // Subscribe to auth state so buttons update automatically
-  subscribeAuthState(() => {
     refreshEventsGrid();
   });
 
-  // Initialize Scroll Motion UI
+  const searchBox = document.getElementById("events-search-box");
+  const clearBtn = document.getElementById("events-search-clear-btn");
+  searchBox?.addEventListener("input", (evt) => {
+    activeSearchQuery = evt.target.value || "";
+    clearBtn?.classList.toggle("active", Boolean(activeSearchQuery));
+    refreshEventsGrid();
+  });
+  clearBtn?.addEventListener("click", () => {
+    if (searchBox) searchBox.value = "";
+    activeSearchQuery = "";
+    clearBtn.classList.remove("active");
+    refreshEventsGrid();
+    searchBox?.focus(); // the clear button hides itself, so don't drop focus
+  });
+
+  document.getElementById("events-cart-fab")?.addEventListener("click", openCart);
+
+  const outside = [
+    ["event-dossier-overlay", closeEventDossier],
+    ["events-cart-overlay", closeCart],
+    ["event-reg-modal", requestCloseCheckout],
+  ];
+  outside.forEach(([id, close]) => {
+    const el = document.getElementById(id);
+    el?.addEventListener("click", (evt) => evt.target === el && close());
+  });
+
+  setCartOwner(getCurrentUser()?.uid);
+  pruneRegisteredFromCart();
+  updateCartFab();
+  refreshEventsGrid();
   initScrollMotion();
+  watchForUnmount(root);
+
+  // Deep link from the profile overlay: /events?cart=1 opens the cart.
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("cart") === "1") {
+    url.searchParams.delete("cart");
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+    setTimeout(openCart, 400);
+  }
+
+  // Reloaded mid-checkout (e.g. the phone dropped the tab during the UPI
+  // payment): reopen it where the student left off once they're signed in.
+  if (readCheckoutDraft()) {
+    if (getCurrentUser()) setTimeout(startCheckout, 400);
+    else resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
+  }
 }
 
-// Window global hooks for smooth router integration
+/**
+ * The events view has no Vue unmount hook, so watch for its root leaving the
+ * DOM and remove everything it moved to <body> (cart button, HUD, overlays),
+ * plus the body class that hides the site's page transition.
+ */
+function watchForUnmount(root) {
+  const observer = new MutationObserver(() => {
+    if (root.isConnected) return;
+    observer.disconnect();
+    destroyEventsPage();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+export function destroyEventsPage() {
+  BODY_LEVEL_IDS.forEach((id) => document.querySelectorAll(`body > #${id}`).forEach((el) => el.remove()));
+  document.getElementById("events-toast")?.remove();
+  document.body.classList.remove("has-events-page");
+  const trans = document.querySelector(".transition-component");
+  if (trans) ["display", "opacity", "clipPath", "webkitClipPath"].forEach((k) => (trans.style[k] = ""));
+  if (scrollMotionCleanup) {
+    try {
+      scrollMotionCleanup();
+    } catch {}
+    scrollMotionCleanup = null;
+  }
+  isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  checkout = null;
+  // Leaving /events with a drawer open must not leave the site inert.
+  activeDialog = null;
+  setBackgroundInert(null);
+}
+
+// Compatibility: older code paths call openEventRegistration(eventId).
+export function openEventRegistration(eventId) {
+  const ev = getEventById(eventId);
+  if (!ev) return;
+  if (isEventRegistered(ev.id)) return window.openProfilePanel?.("registrations");
+  if (isRegistrationOpen(ev)) handleAddToCart(ev.id);
+}
+
 if (typeof window !== "undefined") {
   window.openEventDossier = openEventDossier;
   window.openEventRegistration = openEventRegistration;
+  window.openEventsCart = openCart;
   window.initEventsPage = initEventsPage;
   window.initScrollMotion = initScrollMotion;
   window.triggerCardsReveal = triggerCardsReveal;

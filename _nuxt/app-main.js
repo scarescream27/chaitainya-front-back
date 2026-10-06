@@ -4039,7 +4039,7 @@ let At,
           path: "/cases/:id()",
           meta: {},
           alias: [],
-          redirect: Qh == null ? void 0 : Qh.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4053,7 +4053,7 @@ let At,
           path: "/cases/3d-configurator",
           meta: {},
           alias: [],
-          redirect: ed == null ? void 0 : ed.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4067,7 +4067,7 @@ let At,
           path: "/cases/intel-ai-io",
           meta: {},
           alias: [],
-          redirect: td == null ? void 0 : td.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4081,7 +4081,7 @@ let At,
           path: "/cases/noomo-beat",
           meta: {},
           alias: [],
-          redirect: id == null ? void 0 : id.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4095,7 +4095,7 @@ let At,
           path: "/cases/the-silly-bunny",
           meta: {},
           alias: [],
-          redirect: nd == null ? void 0 : nd.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4109,7 +4109,7 @@ let At,
           path: (qi == null ? void 0 : qi.path) ?? "/configurator",
           meta: qi || {},
           alias: (qi == null ? void 0 : qi.alias) || [],
-          redirect: qi == null ? void 0 : qi.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4137,7 +4137,7 @@ let At,
           path: "/fwa",
           meta: {},
           alias: [],
-          redirect: sd == null ? void 0 : sd.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -4156,7 +4156,7 @@ let At,
             Si(
               () =>
                 import("./home-scene-3d.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([19, 3, 4, 5, 20, 13, 21, 22]),
+              __vite__mapDeps([19, 4, 5, 20, 13, 21, 22]), // lil-gui (3) loads only with ?debug
               import.meta.url,
             ).then((t) => t.default || t),
         },
@@ -4198,11 +4198,29 @@ let At,
             import("./events-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
+          name: "profile",
+          path: "/profile",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./profile-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
+          name: "admin",
+          path: "/admin",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./admin-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
           name: "work",
           path: "/work",
           meta: {},
           alias: [],
-          redirect: ld == null ? void 0 : ld.redirect,
+          redirect: "/events", // Agency case-study pages removed
           component: () =>
             Si(
               () =>
@@ -5693,7 +5711,7 @@ let At,
           cursorBlendMode: "none",
           mobileMenuOpen: !1,
           positionSceneStart: !1,
-          soundOn: !0,
+          soundOn: !1,
           jelColor: "#e392fe",
           jelColor2: "#d357fe",
           jelMaterialOpacity: 1,
@@ -5758,7 +5776,8 @@ let At,
             this.jelColor2 = t;
           },
           toggleSound(t) {
-            this.soundOn = t;
+            // Music and sound effects are removed; sound always stays off.
+            this.soundOn = !1;
           },
           setSceneStartingPosition() {
             this.positionSceneStart = !0;
@@ -45148,15 +45167,7 @@ void main() {
           H;
         const z = vt(null),
           W = (U) => {
-            (U ? (z.value.volume = 0) : (z.value.volume = 1),
-              l.add(() => {
-                pt.to(z.value, {
-                  volume: U ? 1 : 0,
-                  duration: 0.5,
-                  ease: "none",
-                });
-              }),
-              U ? z.value.play() : z.value.pause());
+            z.value && z.value.pause();
           };
         (e.$onAction(({ name: U, args: X }) => {
           (U === "setJelMaterialOpacity" &&
@@ -45420,7 +45431,6 @@ void main() {
                   loop: "",
                   ref_key: "audioBg",
                   ref: z,
-                  src: "/audio/BG-music.mp3",
                 },
                 null,
                 512,
@@ -45443,7 +45453,7 @@ void main() {
       (Nb = { class: "lines" }),
       (Ob = Be("div", { class: "back-left" }, null, -1)),
       (Ub = Be("div", { class: "back-right" }, null, -1)),
-      (Db = Be("img", { alt: "icon", class: "jel-icon", src: Ab }, null, -1)),
+      (Db = Be("img", { alt: "", class: "jel-icon", src: Ab }, null, -1)),
       (kb = { class: "colors" }),
       (Fb = ["onClick"]),
       (Bb = { class: "colors" }),
@@ -45998,7 +46008,7 @@ void main() {
                               "img",
                               {
                                 onMousedown: g,
-                                alt: "icon",
+                                alt: "",
                                 class: "restart",
                                 src: Pb,
                               },
@@ -46048,10 +46058,27 @@ void main() {
                   duration: 0.1,
                   ease: "power1.out",
                 })),
-                window.addEventListener("mousemove", a, !1));
+                window.addEventListener("mousemove", a, !1),
+                window.__customCursorBound ||
+                  ((window.__customCursorBound = !0),
+                  document.addEventListener("mouseleave", m),
+                  document.addEventListener("mouseover", (d) => {
+                    d.target && d.target.tagName === "IFRAME" && m();
+                  })));
             }));
-          const a = (d) => {
-              (n(d.clientY), i(d.clientX));
+          const m = () =>
+              document.documentElement.classList.remove("custom-cursor-active"),
+            a = (d) => {
+              const h = document.documentElement;
+              if (!r.value || !r.value.isConnected) {
+                m();
+                return;
+              }
+              (h.classList.contains("custom-cursor-active") ||
+                (pt.set(r.value, { x: d.clientX, y: d.clientY }),
+                h.classList.add("custom-cursor-active")),
+                n(d.clientY),
+                i(d.clientX));
             },
             o = (d) => {
               (pt.to(r.value, {

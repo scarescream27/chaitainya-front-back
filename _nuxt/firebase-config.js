@@ -18,39 +18,14 @@ export const DEFAULT_FIREBASE_CONFIG = {
   measurementId: "G-1JS13R6GY0"
 };
 
-// Allows runtime override via window or localStorage for immediate testing
+// window.__FIREBASE_CONFIG__ can override the project for local testing.
+// (A persistent localStorage override was removed: it let any script that
+// ran once redirect all future sign-ins to another Firebase project.)
 export function getFirebaseConfig() {
-  if (typeof window !== "undefined") {
-    if (window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.apiKey) {
-      return window.__FIREBASE_CONFIG__;
-    }
-    try {
-      const saved = localStorage.getItem("chaitanya_firebase_config");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.apiKey && !parsed.apiKey.includes("YOUR_FIREBASE_API_KEY")) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn("Could not parse saved firebase config from localStorage", e);
-    }
+  if (typeof window !== "undefined" && window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.apiKey) {
+    return window.__FIREBASE_CONFIG__;
   }
   return DEFAULT_FIREBASE_CONFIG;
-}
-
-export function saveFirebaseConfig(config) {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem("chaitanya_firebase_config", JSON.stringify(config));
-      window.__FIREBASE_CONFIG__ = config;
-      return true;
-    } catch (e) {
-      console.error("Failed to save firebase config:", e);
-      return false;
-    }
-  }
-  return false;
 }
 
 export function isFirebaseConfigured(config = getFirebaseConfig()) {
@@ -62,10 +37,12 @@ export function isFirebaseConfigured(config = getFirebaseConfig()) {
   );
 }
 
-// Admin emails with exclusive privileges to access fest registrant dashboards
+// Admin emails (UI only). Access is enforced by isAdmin() in firestore.rules;
+// keep both lists in sync.
 export const ADMIN_EMAILS = [
   "chaitanyahptu@gmail.com",
   "adityaverma200911@gmail.com",
+  "manaskapoor033@gmail.com",
   "admin@chaitanya2k26.org",
 ];
 

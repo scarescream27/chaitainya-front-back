@@ -1,0 +1,537 @@
+/* ==========================================================================
+   Admin dashboard (/admin) — sidebar + content, same palette as /profile
+   ========================================================================== */
+
+.admin-page-root {
+  min-height: 100vh;
+  width: 100%;
+  padding: 96px 24px 72px;
+  background-image: var(--page-bg);
+  background-repeat: repeat;
+  background-size: var(--page-bg-size);
+  box-sizing: border-box;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ink);
+}
+
+body:has(.admin-page-root) .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body:has(.admin-page-root) header {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sky-top) 96%, transparent) 70%, color-mix(in srgb, var(--sky-top) 0%, transparent));
+}
+
+.adm-shell {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.adm-gate {
+  max-width: 560px;
+  margin: 40px auto 0;
+  text-align: center;
+}
+
+.adm-gate .prof-actions {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Top bar */
+.adm-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface-raised);
+  border: 2px solid var(--surface);
+  border-radius: 26px;
+  box-shadow: var(--shadow-soft);
+  padding: 22px 24px;
+}
+
+.adm-top .pp-hint {
+  margin: 4px 0 0;
+}
+
+.adm-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Sidebar + content */
+.adm-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.adm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: var(--surface-raised);
+  border: 2px solid var(--surface);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.1);
+}
+
+.adm-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  text-align: left;
+  color: color-mix(in srgb, var(--ink) 86.7%, var(--surface)); /* #222 in light */
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.adm-nav-btn:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.adm-nav-btn.active {
+  background: var(--ink);
+  color: var(--ink-on-dark);
+}
+
+.adm-nav-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.adm-count {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-size: var(--fs-label);
+  text-align: center;
+}
+
+.adm-nav-btn.active .adm-count {
+  background: color-mix(in srgb, var(--ink-on-dark) 20%, transparent);
+}
+
+.adm-count.alert {
+  background: var(--danger);
+  color: var(--ink-on-dark);
+}
+
+.adm-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--surface-raised);
+  border: 2px solid var(--surface);
+  border-radius: 26px;
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+}
+
+/* #adm-main takes programmatic focus (tabindex="-1") after table actions. */
+.adm-main:focus {
+  outline: none;
+}
+
+.adm-main .prof-section-head {
+  margin-bottom: 0;
+}
+
+/* Stat cards */
+.adm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.adm-stat {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.adm-stat-num {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.adm-stat.alert {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  background: var(--danger-bg);
+}
+
+.adm-stat.alert .adm-stat-num {
+  color: var(--danger);
+}
+
+.adm-stat-label {
+  margin-top: 6px;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.adm-stat-hint {
+  margin-top: 2px;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
+}
+
+/* Cards inside the main panel */
+.adm-card {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 18px 20px;
+}
+
+.adm-h3 {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.adm-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adm-attention,
+.adm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.adm-attention li,
+.adm-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.adm-attention li:first-child,
+.adm-list li:first-child {
+  border-top: none;
+}
+
+ol.adm-list {
+  counter-reset: rank;
+}
+
+ol.adm-list li span::before {
+  counter-increment: rank;
+  content: counter(rank) ". ";
+  color: var(--ink-muted);
+}
+
+/* Registrations-by-event bars */
+.adm-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-bar-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(140px, 260px) minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--fs-label);
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.adm-bar-row:hover {
+  background: var(--surface-sunken);
+}
+
+.adm-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.adm-bar-track {
+  height: 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sky-bottom) 32%, var(--surface)); /* ≈ #e7edf8 in light */
+  overflow: hidden;
+}
+
+.adm-bar-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 10px;
+  background: var(--ink);
+}
+
+.adm-bar-value {
+  text-align: right;
+  font-weight: 700;
+}
+
+.adm-bar-value small {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+/* Table toolbar */
+.adm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.adm-search {
+  flex: 1 1 260px;
+}
+
+.adm-search input,
+.adm-select select,
+.adm-checkin-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.adm-select {
+  flex: 0 1 240px;
+}
+
+.adm-search input:focus-visible,
+.adm-select select:focus-visible,
+.adm-checkin-form input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.adm-result-count {
+  margin: 0 0 8px;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
+}
+
+.adm-empty {
+  text-align: center;
+  padding: 24px !important;
+  color: var(--ink-muted);
+}
+
+.adm-message {
+  max-width: 420px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.adm-main .admin-table td .pp-action {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+}
+
+/* Check-in */
+.adm-checkin-form {
+  display: flex;
+  gap: 10px;
+}
+
+.adm-checkin-form input {
+  flex: 1;
+  font-size: 15px;
+  padding: 14px 16px;
+}
+
+.adm-checkin-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-checkin {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 2px solid;
+  background: var(--surface);
+}
+
+.adm-checkin.ok {
+  border-color: var(--ok);
+}
+
+.adm-checkin.bad {
+  border-color: var(--danger);
+}
+
+.adm-checkin-verdict {
+  font-family: "DrukMedium", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.adm-checkin.ok .adm-checkin-verdict {
+  color: var(--ok);
+}
+
+.adm-checkin.bad .adm-checkin-verdict {
+  color: var(--danger);
+}
+
+.adm-checkin-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.adm-checkin-body strong {
+  font-size: 15px;
+}
+
+/* Tablet / phone: sidebar becomes a scrollable row of section buttons */
+@media (max-width: 900px) {
+  .admin-page-root {
+    padding: 80px 12px 56px;
+  }
+
+  .adm-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adm-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 18px;
+  }
+
+  .adm-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adm-nav-btn {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .adm-main {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .adm-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adm-bar-row {
+    grid-template-columns: minmax(0, 1fr) 70px;
+  }
+
+  .adm-bar-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .adm-checkin {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .adm-checkin-form {
+    flex-direction: column;
+  }
+}
+
+/* Inline "reject payment" reason form inside a table row */
+.adm-reject-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.adm-reject-form .pp-field input {
+  font-size: var(--fs-label);
+}
+
+/* Error line for the reject reason (an always-present role="alert" region). */
+.adm-reject-form .pp-msg {
+  margin: 0;
+}
+
+.adm-reject-form .pp-msg:empty {
+  margin-top: -8px; /* cancel the flex gap while there is no message */
+}

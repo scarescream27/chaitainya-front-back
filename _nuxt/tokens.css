@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Chaitanya 2k26 — design tokens and base defaults
+   Loaded first; every other stylesheet may use these variables.
+
+   Light is the default. Dark follows the visitor's device setting
+   (prefers-color-scheme) on every page except the home 3D scene, which is
+   art-directed for light and always stays light (see html:not(.not-home) below).
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Type: 12px is the floor for labels and controls, 14px for body copy. */
+  --fs-label: 12px;
+  --fs-body: 14px;
+  --fs-lead: 16px;
+
+  /* Ink and surfaces (contrast measured on white unless noted). */
+  --ink: #000000;
+  --ink-muted: #4a5160; /* 7.9:1 on white, 4.8:1 on the sky gradient's darkest stop */
+  --ink-on-dark: #ffffff; /* text/icons on an --ink fill (black pills, badges) */
+  --surface: #ffffff;
+  --surface-raised: rgba(255, 255, 255, 0.9); /* cards over the page gradient */
+  --surface-sunken: rgba(0, 0, 0, 0.04); /* read-only inputs, tracks, chips */
+  --sky-top: #f7faff;
+  --sky-bottom: #b4cbf5;
+  /* Full page background (pattern + gradient) for page roots. */
+  --page-bg: url(/images/footerPatern.png), linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
+  --page-bg-size: 80px, auto;
+
+  /* Status */
+  --ok: #005a3c;
+  --ok-bg: #eafaf1;
+  --warn-ink: #6b4a00;
+  --warn-bg: #fff3cd;
+  --danger: #b00020;
+  --danger-bg: #fdf3f4;
+  --danger-ink: #8a1020; /* error text on --danger-bg chips/notices */
+
+  /* Hairline divider/card border on surfaces; --line-strong for the black
+     outlines used on pills, inputs and cards. */
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: #000000;
+  --shadow-soft: 0 20px 60px rgba(15, 23, 42, 0.10);
+
+  /* Event categories: darkened so 12px labels pass WCAG AA (≥4.5:1) on
+     white; keep in sync with EVENT_CATEGORIES in events-data.js. */
+  --cat-tech: #0062d6;
+  --cat-innovation: #c2410c;
+  --cat-business: #005a3c;
+  --cat-esports: #7a2fd0;
+  --cat-cultural: #be1d5c;
+
+  /* Interaction */
+  --tap: 44px;
+  --focus-ring: 2px solid var(--ink);
+  --focus-offset: 3px;
+}
+
+/* Dark: a deep navy version of the sky, light ink, inverted pills. Every
+   text/background pair below is ≥4.5:1 (most ≥7:1). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --ink: #eef2f8;
+    --ink-muted: #a7b0c2;
+    --ink-on-dark: #0b101a;
+    --surface: #131b2b;
+    --surface-raised: rgba(19, 27, 43, 0.92);
+    --surface-sunken: rgba(255, 255, 255, 0.06);
+    --sky-top: #0b1120;
+    --sky-bottom: #17233d;
+    /* The dot pattern is dark-on-light art, so dark mode uses the gradient only. */
+    --page-bg: linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
+    --page-bg-size: auto;
+
+    --ok: #5fd3a0;
+    --ok-bg: #0f2c22;
+    --warn-ink: #f2c45a;
+    --warn-bg: #2d2410;
+    --danger: #ff7686;
+    --danger-bg: #2e1318;
+    --danger-ink: #ffa3ae;
+
+    --line: rgba(255, 255, 255, 0.12);
+    --line-strong: #eef2f8;
+    --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+    --cat-tech: #7cb2ff;
+    --cat-innovation: #ff9a70;
+    --cat-business: #5fd3a0;
+    --cat-esports: #bbaee0; /* muted lavender, 8.4:1 on --surface */
+    --cat-cultural: #ff8db5;
+  }
+
+  /* The 3D scenes (home and the 404 page) stay light: re-declare the light
+     palette there. */
+  html:not(.not-home),
+  html:has(.error-page) {
+    color-scheme: light;
+    --ink: #000000;
+    --ink-muted: #4a5160;
+    --ink-on-dark: #ffffff;
+    --surface: #ffffff;
+    --surface-raised: rgba(255, 255, 255, 0.9);
+    --surface-sunken: rgba(0, 0, 0, 0.04);
+    --sky-top: #f7faff;
+    --sky-bottom: #b4cbf5;
+    --page-bg: url(/images/footerPatern.png), linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
+    --page-bg-size: 80px, auto;
+    --ok: #005a3c;
+    --ok-bg: #eafaf1;
+    --warn-ink: #6b4a00;
+    --warn-bg: #fff3cd;
+    --danger: #b00020;
+    --danger-bg: #fdf3f4;
+    --danger-ink: #8a1020;
+    --line: rgba(0, 0, 0, 0.08);
+    --line-strong: #000000;
+    --shadow-soft: 0 20px 60px rgba(15, 23, 42, 0.10);
+    --cat-tech: #0062d6;
+    --cat-innovation: #c2410c;
+    --cat-business: #005a3c;
+    --cat-esports: #7a2fd0;
+    --cat-cultural: #be1d5c;
+    --focus-ring: 2px solid #000000;
+  }
+}
+
+/* Visible keyboard focus everywhere. Zero specificity (:where) so any
+   component with its own focus style still wins. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* The 404 page's "go home" button removed its outline entirely. */
+.error-page .go-home:focus-visible {
+  outline: var(--focus-ring) !important;
+  outline-offset: 6px;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--ink-on-dark);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

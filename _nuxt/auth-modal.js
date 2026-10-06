@@ -8,16 +8,19 @@ import {
   signInWithGoogle,
   signOutUser,
   getCurrentUser,
-  getRegisteredAttendees,
-  getDemoAttendees,
+  YEAR_OPTIONS,
   subscribeAuthState,
-  getAllTeams,
-  getAllPayments,
-  approvePayment,
-  rejectPayment,
 } from "./auth-service.js";
-import { isFirebaseConfigured, getFirebaseConfig, isAdminUser } from "./firebase-config.js";
-import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
+import { isFirebaseConfigured, isAdminUser } from "./firebase-config.js";
+import { escapeHtml as e } from "./fest-config.js";
+import { openProfilePanel } from "./profile-panel.js";
+
+const DEMO_BANNER = `
+  <div class="chaitanya-modal-banner">
+    <span aria-hidden="true">⚡</span>
+    <div><strong>Demo mode:</strong> Firebase is not configured, so data is stored only in this browser.</div>
+  </div>
+`;
 
 // Google G SVG logo
 const GOOGLE_ICON_SVG = `
@@ -31,6 +34,59 @@ const GOOGLE_ICON_SVG = `
 
 let modalBackdrop = null;
 let currentMode = "login"; // "login" | "register" | "profile" | "admin"
+let afterSignIn = null; // e.g. open the profile once a signed-out visitor signs in
+let lastFocus = null; // element that opened the dialog; focus returns there on close
+
+// ----------------------------------------------------------------------------
+// DIALOG ACCESSIBILITY (focus in / trap / restore, background inert)
+// ----------------------------------------------------------------------------
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Keep Tab / Shift+Tab cycling inside `container`. */
+function trapTab(evt, container) {
+  const items = [...container.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length > 0);
+  if (!items.length) {
+    evt.preventDefault();
+    container.focus();
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  const active = document.activeElement;
+  if (!container.contains(active)) {
+    evt.preventDefault();
+    (evt.shiftKey ? last : first).focus();
+  } else if (evt.shiftKey && (active === first || active === container)) {
+    evt.preventDefault();
+    last.focus();
+  } else if (!evt.shiftKey && active === last) {
+    evt.preventDefault();
+    first.focus();
+  }
+}
+
+/**
+ * The page app (#__nuxt) is inert while the sign-in dialog or the organiser
+ * verify overlay is open (both live outside it, on <body>). The data flag
+ * means we only ever remove an inert that one of these dialogs set.
+ */
+function syncAppInert() {
+  const app = document.getElementById("__nuxt");
+  if (!app) return;
+  const anyOpen = document.querySelector("#chaitanya-auth-backdrop.active, #profile-overlay.active");
+  if (anyOpen) {
+    // Leave an inert set by someone else (e.g. an events-page drawer) alone.
+    if (!app.inert) {
+      app.inert = true;
+      app.dataset.dialogInert = "1";
+    }
+  } else if (app.dataset.dialogInert) {
+    app.inert = false;
+    delete app.dataset.dialogInert;
+  }
+}
 
 /**
  * Initialize DOM nodes and attach global listeners
@@ -49,16 +105,17 @@ export function initAuthModal() {
     modalBackdrop.className = "chaitanya-modal-backdrop";
     modalBackdrop.id = "chaitanya-auth-backdrop";
     modalBackdrop.innerHTML = `
-      <div class="chaitanya-modal-card" id="chaitanya-modal-content">
-        <span class="corner corner-tl">+</span>
-        <span class="corner corner-tr">+</span>
-        <span class="corner corner-bl">+</span>
-        <span class="corner corner-br">+</span>
-        <button class="chaitanya-modal-close" id="chaitanya-modal-close-btn">[ ESC / CLOSE ]</button>
+      <div class="chaitanya-modal-card" id="chaitanya-modal-content" role="dialog" aria-modal="true" aria-labelledby="chaitanya-modal-title" aria-describedby="chaitanya-modal-subtitle" tabindex="-1">
+        <span class="corner corner-tl" aria-hidden="true">+</span>
+        <span class="corner corner-tr" aria-hidden="true">+</span>
+        <span class="corner corner-bl" aria-hidden="true">+</span>
+        <span class="corner corner-br" aria-hidden="true">+</span>
+        <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn">[ ESC / CLOSE ]</button>
         <div id="chaitanya-modal-body"></div>
       </div>
     `;
 
+    modalBackdrop.inert = true; // closed: nothing inside is focusable
     document.body.appendChild(modalBackdrop);
 
     // Close listeners
@@ -74,8 +131,13 @@ export function initAuthModal() {
     }
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modalBackdrop.classList.contains("active")) {
+      if (!modalBackdrop.classList.contains("active")) return;
+      if (e.key === "Escape") {
+        e.preventDefault(); // tells other Escape handlers this press was used
         closeAuthModal();
+      } else if (e.key === "Tab") {
+        const card = modalBackdrop.querySelector(".chaitanya-modal-card");
+        if (card) trapTab(e, card);
       }
     });
 
@@ -99,7 +161,9 @@ export function initAuthModal() {
         openAuthModal("profile");
       } else if (href === "#logout") {
         e.preventDefault();
-        signOutUser();
+        signOutUser().then(() => {
+          if (window.location.pathname.replace(/\/$/, "") === "/profile") goToPage("/");
+        });
       }
     });
 
@@ -115,40 +179,9 @@ export function initAuthModal() {
 
 export function syncNavbarAuthState(user) {
   if (typeof document === "undefined") return;
-
-  const registerLinks = document.querySelectorAll('a[href="#register"], a[href="#profile"], a[href="/register"], a[href="/profile"]');
-  const loginLinks = document.querySelectorAll('a[href="#login"], a[href="#logout"], a[href="/login"], a[href="/logout"]');
-
-  if (user) {
-    const firstName = user.displayName ? user.displayName.split(" ")[0].toUpperCase() : "PROFILE";
-    registerLinks.forEach((link) => {
-      link.setAttribute("href", "#profile");
-      const span = link.querySelector("span");
-      if (span) span.textContent = firstName;
-      else link.textContent = `[${firstName}]`;
-    });
-
-    loginLinks.forEach((link) => {
-      link.setAttribute("href", "#logout");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "LOGOUT";
-      else link.textContent = "[LOGOUT]";
-    });
-  } else {
-    registerLinks.forEach((link) => {
-      link.setAttribute("href", "#register");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "Register";
-      else link.textContent = "[Register]";
-    });
-
-    loginLinks.forEach((link) => {
-      link.setAttribute("href", "#login");
-      const span = link.querySelector("span");
-      if (span) span.textContent = "Login";
-      else link.textContent = "[Login]";
-    });
-  }
+  // Nav labels/avatars are rendered by the header component; here we only
+  // reveal admin links for admins (hidden by CSS otherwise).
+  document.documentElement.classList.toggle("is-fest-admin", Boolean(user && isAdminUser(user.email)));
 }
 
 function checkUrlRoute() {
@@ -158,9 +191,9 @@ function checkUrlRoute() {
     openAuthModal("login");
   } else if (hash === "#register" || path === "/register") {
     openAuthModal("register");
-  } else if (hash === "#admin" || path === "/admin") {
+  } else if (hash === "#admin") {
     openAuthModal("admin");
-  } else if (hash === "#profile" || path === "/profile") {
+  } else if (hash === "#profile") {
     openAuthModal("profile");
   }
 }
@@ -169,6 +202,26 @@ function checkUrlRoute() {
  * Open modal in specific mode
  */
 export function openAuthModal(mode = "login", options = {}) {
+  // The organiser dashboard is its own page now.
+  if (mode === "admin") {
+    closeAuthModal();
+    goToPage("/admin");
+    return;
+  }
+  const user = getCurrentUser();
+  // Signed-in users never see Login/Register: send them to their profile.
+  if (user && (mode === "profile" || mode === "login" || mode === "register")) {
+    closeAuthModal();
+    openProfilePanel(options.section || "profile");
+    return;
+  }
+  // Profile requested while signed out: sign in first, then open it.
+  if (mode === "profile") {
+    afterSignIn = () => openProfilePanel(options.section || "profile");
+    mode = "login";
+  } else if (mode !== "admin" && !options.keepAfterSignIn) {
+    afterSignIn = options.afterSignIn || null;
+  }
   initAuthModal();
   currentMode = mode;
   if (typeof window !== "undefined") {
@@ -187,17 +240,18 @@ export function openAuthModal(mode = "login", options = {}) {
     modalBackdrop = document.getElementById("chaitanya-auth-backdrop");
   }
 
-  const card = modalBackdrop?.querySelector("#chaitanya-modal-content");
-  if (card) {
-    if (mode === "admin") {
-      card.classList.add("admin-wide");
-    } else {
-      card.classList.remove("admin-wide");
-    }
-  }
 
+  const wasOpen = Boolean(modalBackdrop?.classList.contains("active"));
+  if (!wasOpen) lastFocus = document.activeElement;
   renderModalContent();
-  if (modalBackdrop) modalBackdrop.classList.add("active");
+  if (!modalBackdrop) return;
+  modalBackdrop.inert = false;
+  modalBackdrop.classList.add("active");
+  syncAppInert();
+  // Move focus into the dialog (also after switching Sign in <-> Register,
+  // which replaces the button that had focus). The card is labelled by the
+  // visible title, so screen readers announce it.
+  modalBackdrop.querySelector(".chaitanya-modal-card")?.focus({ preventScroll: true });
 }
 
 /**
@@ -205,7 +259,20 @@ export function openAuthModal(mode = "login", options = {}) {
  */
 export function closeAuthModal() {
   if (modalBackdrop) {
+    const wasOpen = modalBackdrop.classList.contains("active");
     modalBackdrop.classList.remove("active");
+    modalBackdrop.inert = true;
+    syncAppInert();
+    if (wasOpen) {
+      const target = lastFocus;
+      lastFocus = null;
+      if (target?.isConnected && typeof target.focus === "function" && target !== document.body) {
+        target.focus({ preventScroll: true });
+      } else {
+        // Opener was re-rendered away (e.g. the verify overlay's sign-in button).
+        document.querySelector("#profile-overlay.active .pp-panel")?.focus({ preventScroll: true });
+      }
+    }
     // Clear hash if it matches modal trigger
     if (
       window.location.hash === "#login" ||
@@ -231,15 +298,6 @@ async function renderModalContent() {
   const user = getCurrentUser();
   const isConfigured = isFirebaseConfigured();
 
-  if (currentMode === "profile" && user) {
-    renderProfileView(body, user);
-    return;
-  }
-
-  if (currentMode === "admin") {
-    await renderAdminView(body, user);
-    return;
-  }
 
   if (currentMode === "register") {
     renderRegisterView(body, isConfigured);
@@ -254,109 +312,81 @@ async function renderModalContent() {
  * 1. Login View
  */
 function renderLoginView(container, isConfigured) {
-  const bannerHtml = isConfigured
-    ? ""
-    : `
-      <div class="chaitanya-modal-banner">
-        <span>⚡</span>
-        <div><strong>Firebase Config Notice:</strong> Running in Demo Mode. Connect your Firebase credentials in <code>_nuxt/firebase-config.js</code> for live Cloud Firestore sync.</div>
-      </div>
-    `;
-
   container.innerHTML = `
     <div class="chaitanya-modal-header">
       <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Portal ]</div>
-      <h2 class="chaitanya-modal-title">Sign In</h2>
-      <p class="chaitanya-modal-subtitle">Access your fest pass, registered hackathons, and event schedule.</p>
+      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Sign In</h2>
+      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to register for events and view your entry passes.</p>
     </div>
 
-    ${bannerHtml}
+    ${isConfigured ? "" : DEMO_BANNER}
 
-    <div id="auth-error-box" style="display:none;" class="chaitanya-modal-banner warning"></div>
+    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
 
     <button type="button" class="btn-google-auth" id="btn-do-google-login">
       ${GOOGLE_ICON_SVG}
       <span>[ Continue with Google ]</span>
     </button>
 
-    <div class="chaitanya-divider">
-      <span>New Attendee?</span>
-    </div>
+    <div class="chaitanya-divider"><span>New here?</span></div>
 
     <div class="chaitanya-modal-footer">
-      Need to register for events? 
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Register Here ]</button>
+      First time? Signing in creates your account.
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Add college & phone ]</button>
     </div>
   `;
 
   const btnLogin = container.querySelector("#btn-do-google-login");
-  const btnSwitch = container.querySelector("#btn-switch-to-register");
+  btnLogin.addEventListener("click", async () => {
+    setBusy(btnLogin, true, "Connecting to Google...");
+    try {
+      const res = await signInWithGoogle();
+      closeAuthModal();
+      if (!res?.redirect) runAfterSignIn();
+    } catch (err) {
+      showAuthError(err.message || "Google sign-in failed.");
+      setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`);
+    }
+  });
 
-  if (btnLogin) {
-    btnLogin.addEventListener("click", async () => {
-      btnLogin.innerHTML = `<span>Connecting to Google...</span>`;
-      btnLogin.style.pointerEvents = "none";
-      try {
-        await signInWithGoogle();
-        closeAuthModal();
-      } catch (err) {
-        showAuthError(err.message || "Google Authentication failed");
-        btnLogin.innerHTML = `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`;
-        btnLogin.style.pointerEvents = "auto";
-      }
-    });
-  }
-
-  if (btnSwitch) {
-    btnSwitch.addEventListener("click", () => {
-      openAuthModal("register");
-    });
-  }
+  container.querySelector("#btn-switch-to-register").addEventListener("click", () => openAuthModal("register", { keepAfterSignIn: true }));
 }
 
 /**
  * 2. Register View
  */
 function renderRegisterView(container, isConfigured) {
-  const bannerHtml = isConfigured
-    ? ""
-    : `
-      <div class="chaitanya-modal-banner">
-        <span>⚡</span>
-        <div><strong>Demo Mode Active:</strong> You can test registration instantly. Attendee records sync directly to Firestore when live keys are configured.</div>
-      </div>
-    `;
-
   container.innerHTML = `
     <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Fest Enrollment ]</div>
-      <h2 class="chaitanya-modal-title">Register</h2>
-      <p class="chaitanya-modal-subtitle">Enroll as a participant for technical, cultural, and esports events.</p>
+      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Create Account ]</div>
+      <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Register</h2>
+      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Create your fest account, then pick events on the Events page.</p>
     </div>
 
-    ${bannerHtml}
+    ${isConfigured ? "" : DEMO_BANNER}
 
-    <div id="auth-error-box" style="display:none;" class="chaitanya-modal-banner warning"></div>
+    <div id="auth-error-box" hidden class="chaitanya-modal-banner warning" role="alert"></div>
 
-    <form id="attendee-register-form">
+    <form id="attendee-register-form" novalidate>
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">College / University</label>
-        <input type="text" id="reg-college" class="chaitanya-form-input" placeholder="e.g. HPTU Hamirpur / NIT / UIIT" required />
-      </div>
-
-      <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">Contact No</label>
-        <input type="tel" id="reg-phone" class="chaitanya-form-input" placeholder="e.g. +91 98765 43210" required />
+        <label class="chaitanya-form-label" for="reg-college">College / University *</label>
+        <input type="text" id="reg-college" class="chaitanya-form-input" maxlength="120" autocomplete="organization" placeholder="e.g. HPTU Hamirpur" />
       </div>
 
       <div class="chaitanya-form-group">
-        <label class="chaitanya-form-label">Event Category Interest</label>
-        <input type="text" id="reg-events" class="chaitanya-form-input" placeholder="e.g. Technical AI Hackathon, Esports" />
+        <label class="chaitanya-form-label" for="reg-year">Year *</label>
+        <select id="reg-year" class="chaitanya-form-input">
+          <option value="">Select year</option>
+          ${YEAR_OPTIONS.map((y) => `<option>${e(y)}</option>`).join("")}
+        </select>
       </div>
 
-      <div class="chaitanya-divider">
-        <span>Verify & Link Identity</span>
+      <div class="chaitanya-form-group">
+        <label class="chaitanya-form-label" for="reg-phone">Contact No (WhatsApp) *</label>
+        <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
       </div>
+
+      <div class="chaitanya-divider"><span>Verify with Google</span></div>
 
       <button type="submit" class="btn-google-auth" id="btn-do-google-register">
         ${GOOGLE_ICON_SVG}
@@ -365,1086 +395,62 @@ function renderRegisterView(container, isConfigured) {
     </form>
 
     <div class="chaitanya-modal-footer">
-      Already registered? 
+      Already registered?
       <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">[ Sign In ]</button>
     </div>
   `;
 
   const form = container.querySelector("#attendee-register-form");
-  const btnSwitch = container.querySelector("#btn-switch-to-login");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const college = container.querySelector("#reg-college").value.trim();
+    const phone = container.querySelector("#reg-phone").value.trim();
+    const year = container.querySelector("#reg-year").value;
+    if (!college) return showAuthError("Please enter your college / university.");
+    if (!year) return showAuthError("Please select your year.");
+    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Please enter a valid contact number.");
 
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const college = container.querySelector("#reg-college")?.value || "";
-      const phone = container.querySelector("#reg-phone")?.value || "";
-      const eventsStr = container.querySelector("#reg-events")?.value || "";
-      const registeredEvents = eventsStr ? [eventsStr] : ["Chaitanya Fest General Pass"];
-
-      const btn = container.querySelector("#btn-do-google-register");
-      btn.innerHTML = `<span>Registering via Google...</span>`;
-      btn.style.pointerEvents = "none";
-
-      try {
-        await signInWithGoogle({ college, phone, registeredEvents });
-        closeAuthModal();
-      } catch (err) {
-        showAuthError(err.message || "Registration failed");
-        btn.innerHTML = `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`;
-        btn.style.pointerEvents = "auto";
-      }
-    });
-  }
-
-  if (btnSwitch) {
-    btnSwitch.addEventListener("click", () => {
-      openAuthModal("login");
-    });
-  }
-}
-
-/**
- * 3. User Profile View
- */
-function renderProfileView(container, user) {
-  const eventsHtml = (user.registeredEvents && user.registeredEvents.length > 0)
-    ? user.registeredEvents.map((ev) => `<span class="profile-event-chip">${ev}</span>`).join("")
-    : `<span style="font-family:IBM Plex Mono; font-size:11px; color:#888;">No events registered yet</span>`;
-
-  const roleClass = user.role === "admin" ? "admin" : "";
-
-  container.innerHTML = `
-    <div class="profile-avatar-row">
-      <img src="${user.photoURL || '/images/icons/textFace.svg'}" alt="Avatar" class="profile-avatar" />
-      <h3 class="profile-name">${user.displayName || "Participant"}</h3>
-      <p class="profile-email">${user.email}</p>
-      <span class="profile-role-badge ${roleClass}">[ ${user.role || 'ATTENDEE'} ]</span>
-    </div>
-
-    <div class="profile-meta-card">
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">College</span>
-        <span class="profile-meta-val">${user.college || "Himachal Pradesh Technical University"}</span>
-      </div>
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">Phone</span>
-        <span class="profile-meta-val">${user.phone || "+91 Contact Verified"}</span>
-      </div>
-      <div class="profile-meta-row">
-        <span class="profile-meta-label">Status</span>
-        <span class="profile-meta-val">✓ Active Fest Pass</span>
-      </div>
-    </div>
-
-    <div class="chaitanya-form-group">
-      <label class="chaitanya-form-label">Registered Fest Events</label>
-      <div class="profile-events-list">
-        ${eventsHtml}
-      </div>
-    </div>
-
-    ${user.role === "admin" ? `
-      <button type="button" class="btn-google-auth" id="btn-open-admin-from-profile" style="margin-top:16px;">
-        <span>[ Open Admin Dashboard ]</span>
-      </button>
-    ` : ''}
-
-    <button type="button" class="btn-secondary-action" id="btn-do-sign-out">
-      [ Sign Out of Account ]
-    </button>
-  `;
-
-  const btnSignOut = container.querySelector("#btn-do-sign-out");
-  if (btnSignOut) {
-    btnSignOut.addEventListener("click", async () => {
-      await signOutUser();
+    const btn = container.querySelector("#btn-do-google-register");
+    setBusy(btn, true, "Registering via Google...");
+    try {
+      const res = await signInWithGoogle({ college, phone, year });
       closeAuthModal();
-    });
-  }
+      if (!res?.redirect) runAfterSignIn();
+    } catch (err) {
+      showAuthError(err.message || "Registration failed.");
+      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Register with Google ]</span>`);
+    }
+  });
 
-  const btnAdmin = container.querySelector("#btn-open-admin-from-profile");
-  if (btnAdmin) {
-    btnAdmin.addEventListener("click", () => {
-      openAuthModal("admin");
-    });
-  }
+  container.querySelector("#btn-switch-to-login").addEventListener("click", () => openAuthModal("login", { keepAfterSignIn: true }));
 }
 
-/**
- * 4. Admin Panel View
- */
-async function renderAdminView(container, user) {
-  const card = document.getElementById("chaitanya-modal-content");
+// ----------------------------------------------------------------------------
+// HELPERS
+// ----------------------------------------------------------------------------
 
-  // 1. Not signed in: Prompt specifically for chaitanyahptu@gmail.com
-  if (!user) {
-    if (card) card.classList.remove("admin-wide");
-    container.innerHTML = `
-      <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ 401 • Security Verification ]</div>
-        <h2 class="chaitanya-modal-title">Admin Access</h2>
-        <p class="chaitanya-modal-subtitle">Administrator dashboard is restricted exclusively to chaitanyahptu@gmail.com</p>
-      </div>
-      <div class="chaitanya-modal-banner warning">
-        <span>🔒</span>
-        <div>Fest administrative tools require signing in with <strong>chaitanyahptu@gmail.com</strong>.</div>
-      </div>
-      <button type="button" class="btn-google-auth" id="btn-admin-signin">
-        ${GOOGLE_ICON_SVG}
-        <span>[ Sign In with chaitanyahptu@gmail.com ]</span>
-      </button>
-      <div class="chaitanya-modal-footer">
-        Not an administrator? 
-        <button type="button" class="chaitanya-link-btn" id="btn-admin-to-login">[ Attendee Sign In ]</button>
-      </div>
-    `;
-
-    const btn = container.querySelector("#btn-admin-signin");
-    if (btn) {
-      btn.addEventListener("click", async () => {
-        try {
-          await signInWithGoogle({
-            email: "chaitanyahptu@gmail.com",
-            displayName: "Fest Administrator",
-          });
-          renderAdminView(container, getCurrentUser());
-        } catch (e) {
-          showAuthError(e.message);
-        }
-      });
-    }
-
-    const btnLogin = container.querySelector("#btn-admin-to-login");
-    if (btnLogin) {
-      btnLogin.addEventListener("click", () => {
-        openAuthModal("login");
-      });
-    }
-    return;
-  }
-
-  // 2. Signed in, but NOT authorized as chaitanyahptu@gmail.com -> 403 Access Denied
-  if (!isAdminUser(user.email)) {
-    if (card) card.classList.remove("admin-wide");
-    container.innerHTML = `
-      <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ 403 • ACCESS RESTRICTED ]</div>
-        <h2 class="chaitanya-modal-title">Access Denied</h2>
-        <p class="chaitanya-modal-subtitle">Administrator privileges are restricted exclusively to chaitanyahptu@gmail.com</p>
-      </div>
-
-      <div class="chaitanya-modal-banner danger">
-        <span>⛔</span>
-        <div>
-          Currently signed in as <strong>${user.email}</strong>. This account does not possess fest administrator privileges.
-        </div>
-      </div>
-
-      <div class="profile-meta-card" style="margin-bottom:20px;">
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Active Account</span>
-          <span class="profile-meta-val">${user.displayName || "Attendee"}</span>
-        </div>
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Account Role</span>
-          <span class="profile-meta-val">${(user.role || 'ATTENDEE').toUpperCase()}</span>
-        </div>
-        <div class="profile-meta-row">
-          <span class="profile-meta-label">Authorized Admin</span>
-          <span class="profile-meta-val">chaitanyahptu@gmail.com</span>
-        </div>
-      </div>
-
-      <button type="button" class="btn-google-auth" id="btn-switch-admin-account">
-        ${GOOGLE_ICON_SVG}
-        <span>[ Switch to chaitanyahptu@gmail.com ]</span>
-      </button>
-
-      <button type="button" class="btn-secondary-action" id="btn-denied-return-profile" style="margin-top:12px;">
-        [ Return to My Profile ]
-      </button>
-    `;
-
-    const btnSwitch = container.querySelector("#btn-switch-admin-account");
-    if (btnSwitch) {
-      btnSwitch.addEventListener("click", async () => {
-        try {
-          await signOutUser();
-          await signInWithGoogle({
-            email: "chaitanyahptu@gmail.com",
-            displayName: "Fest Administrator",
-          });
-          renderAdminView(container, getCurrentUser());
-        } catch (e) {
-          showAuthError(e.message);
-        }
-      });
-    }
-
-    const btnReturn = container.querySelector("#btn-denied-return-profile");
-    if (btnReturn) {
-      btnReturn.addEventListener("click", () => {
-        openAuthModal("profile");
-      });
-    }
-    return;
-  }
-
-  // 3. Authorized Admin: render wide administrative dashboard
-  if (card) card.classList.add("admin-wide");
-
-  container.innerHTML = `
-    <div class="chaitanya-modal-header">
-      <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
-      <h2 class="chaitanya-modal-title">Fest Command Center</h2>
-      <p class="chaitanya-modal-subtitle">Authorized Admin: ${user.email}</p>
-    </div>
-    <div style="text-align:center; padding: 20px; font-family:IBM Plex Mono;">
-      Loading fest database...
-    </div>
-  `;
-
-  let attendees = [];
-  let teams = [];
-  let payments = [];
-
-  try {
-    const [attRes, teamRes, payRes] = await Promise.all([
-      getRegisteredAttendees().catch(() => []),
-      getAllTeams().catch(() => []),
-      getAllPayments().catch(() => []),
-    ]);
-    attendees = attRes && attRes.length ? attRes : getDemoAttendees();
-    teams = teamRes && teamRes.length ? teamRes : [];
-    payments = payRes && payRes.length ? payRes : [];
-  } catch (err) {
-    console.warn("Could not load admin data:", err);
-    attendees = getDemoAttendees();
-  }
-
-  let adminActiveTab = "attendees";
-
-  function renderAdminTabContent() {
-    let statsHtml = "";
-    let tableHtml = "";
-    const pendingPayments = payments.filter((p) => (p.status || "").toLowerCase().includes("pending"));
-
-    if (adminActiveTab === "attendees") {
-      const totalUsers = attendees.length;
-      const colleges = new Set(attendees.map((a) => a.college).filter(Boolean)).size;
-      const totalEvents = attendees.reduce(
-        (acc, a) => acc + (a.registeredEvents?.length || 0),
-        0,
-      );
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalUsers}</div>
-            <div class="admin-stat-label">Registered Attendees</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${colleges || 1}</div>
-            <div class="admin-stat-label">Colleges Represented</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalEvents}</div>
-            <div class="admin-stat-label">Event Entries</div>
-          </div>
-        </div>
-      `;
-
-      const rows = attendees
-        .map(
-          (a) => `
-          <tr>
-            <td><strong>${a.displayName || "Unknown"}</strong></td>
-            <td>${a.email || "-"}</td>
-            <td>${a.college || "HPTU"}</td>
-            <td>${a.phone || "-"}</td>
-            <td><span class="profile-role-badge ${a.role === "admin" ? "admin" : ""}" style="font-size:9px; padding:2px 8px;">${a.role || "attendee"}</span></td>
-            <td>${(a.registeredEvents || []).join(", ") || "General Pass"}</td>
-          </tr>
-        `,
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>College</th>
-                <th>Contact</th>
-                <th>Role</th>
-                <th>Events</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No attendees registered yet</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "teams") {
-      const totalTeams = teams.length;
-      const totalMembers = teams.reduce((acc, t) => acc + (t.members ? t.members.length : 1), 0);
-      const eventsCount = new Set(teams.map((t) => t.eventName).filter(Boolean)).size;
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalTeams}</div>
-            <div class="admin-stat-label">Registered Squads</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalMembers}</div>
-            <div class="admin-stat-label">Total Squad Members</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${eventsCount}</div>
-            <div class="admin-stat-label">Active Arenas</div>
-          </div>
-        </div>
-      `;
-
-      const rows = teams
-        .map(
-          (t) => `
-          <tr>
-            <td><strong>${t.teamName || "Squad"}</strong></td>
-            <td><code style="background:#000; color:#fff; padding:2px 6px; border-radius:4px;">${t.teamCode || "-"}</code></td>
-            <td>${t.eventName || "-"}</td>
-            <td>${t.leaderName || "-"} (${t.leaderEmail || "-"})</td>
-            <td>${t.members ? t.members.length : 1} / ${t.maxTeamSize || 4}</td>
-            <td><span class="badge-status ${t.paymentStatus || "free"}">${(t.paymentStatus || "free").toUpperCase()}</span></td>
-          </tr>
-        `,
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Squad Name</th>
-                <th>Team Code</th>
-                <th>Arena / Event</th>
-                <th>Leader (Contact)</th>
-                <th>Size</th>
-                <th>Payment</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No squads registered yet</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "payments") {
-      const totalPay = payments.length;
-      const pendingCount = pendingPayments.length;
-      const totalVolume = payments
-        .filter((p) => (p.status || "").toLowerCase() === "verified")
-        .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
-
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">₹${totalVolume.toLocaleString()}</div>
-            <div class="admin-stat-label">Verified Collections</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" style="color:${pendingCount > 0 ? '#b30000' : '#000'}">${pendingCount}</div>
-            <div class="admin-stat-label">Pending Verifications</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">${totalPay}</div>
-            <div class="admin-stat-label">Total Submissions</div>
-          </div>
-        </div>
-      `;
-
-      const rows = payments
-        .map(
-          (p) => {
-            const isPending = (p.status || "").toLowerCase().includes("pending");
-            return `
-          <tr data-payment-row="${p.paymentId}">
-            <td><strong>${p.eventTitle || p.eventName || "Arena Pass"}</strong></td>
-            <td>${p.payerName || p.userName || p.leaderName || "Participant"}<br/><small style="color:#666;">${p.payerEmail || p.userEmail || "-"}</small></td>
-            <td><strong>₹${p.amount || 0}</strong></td>
-            <td><code style="font-size:11px; background:#f0f0f0; padding:2px 4px; border-radius:3px;">${p.transactionRef || p.utrNumber || "N/A"}</code></td>
-            <td><span class="badge-status ${isPending ? "pending" : (p.status || "verified")}" id="status-badge-${p.paymentId}">${(p.status || "pending").toUpperCase()}</span></td>
-            <td id="actions-${p.paymentId}">
-              ${
-                isPending
-                  ? `
-                  <div class="admin-action-btn-group">
-                    <button type="button" class="btn-action-approve" data-id="${p.paymentId}" title="Approve SBI UPI UTR">✓ Approve</button>
-                    <button type="button" class="btn-action-reject" data-id="${p.paymentId}" title="Reject invalid UTR">✕ Reject</button>
-                  </div>
-                `
-                  : `<small style="color:#666;">${p.verifiedBy ? "By " + p.verifiedBy.split("@")[0] : "Completed"}</small>`
-              }
-            </td>
-          </tr>
-        `;
-          },
-        )
-        .join("");
-
-      tableHtml = `
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Arena</th>
-                <th>Registrant</th>
-                <th>Amount</th>
-                <th>UPI UTR / Ref</th>
-                <th>Status</th>
-                <th>Verification</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="6" style="text-align:center;">No payment records found</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "schema") {
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">9</div>
-            <div class="admin-stat-label">Mapped SQL Tables</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num">12</div>
-            <div class="admin-stat-label">Flagship Arenas</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" style="color:#0070f3;">v1.0.0</div>
-            <div class="admin-stat-label">Schema Standard</div>
-          </div>
-        </div>
-      `;
-
-      tableHtml = `
-        <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-family: IBM Plex Mono, monospace;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
-            <div>
-              <h4 style="margin:0 0 4px 0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">SQL to Cloud Firestore Schema Engine</h4>
-              <p style="margin:0; font-size:11px; color:#666;">Source: <code>chaitanya_schema.sql</code> • Project: <code>chaitainya-hptu</code></p>
-            </div>
-            <button type="button" class="btn-google-auth" id="btn-run-schema-seed" style="width:auto; padding:8px 16px; font-size:11px; background:#000; color:#fff; border-color:#000;">
-              <span>[ ⚡ Apply Schema & Seed Events/FAQs to Firebase ]</span>
-            </button>
-          </div>
-          <div id="schema-sync-progress" style="font-size:11px; color:#222; margin-top:8px; display:none; padding:8px 12px; background:#e8f4fd; border-radius:4px;"></div>
-        </div>
-
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>SQL Table</th>
-                <th>Firestore Collection</th>
-                <th>Schema Mapping & Purpose</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>users</code></td>
-                <td><strong><code>/users/{uid}</code></strong></td>
-                <td>Attendee & Admin profiles, university, category, student_id</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>events</code></td>
-                <td><strong><code>/events/{eventId}</code></strong></td>
-                <td>12 Competitions, workshops, timelines, capacity & rules</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>teams</code></td>
-                <td><strong><code>/teams/{teamId}</code></strong></td>
-                <td>Squads with codes (e.g. BYTE-408), leader uid, capacity</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>team_members</code></td>
-                <td><strong><code>/team_members/{id}</code></strong></td>
-                <td>Member mappings with 'leader' or 'member' role</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>registrations</code></td>
-                <td><strong><code>/registrations/{regId}</code></strong></td>
-                <td>Official entry tickets with QR IDs & attendance tracking</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>event_analytics</code></td>
-                <td><strong><code>/event_analytics/{id}</code></strong></td>
-                <td>Real-time registration counters for solo & team events</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>event_daily_analytics</code></td>
-                <td><strong><code>/event_daily_analytics/{id}</code></strong></td>
-                <td>Daily participant registration velocity</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>faqs</code></td>
-                <td><strong><code>/faqs/{faqId}</code></strong></td>
-                <td>Official fest FAQs with publish status and ordering</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-              <tr>
-                <td><code>queries</code></td>
-                <td><strong><code>/queries/{queryId}</code></strong></td>
-                <td>Contact form inquiries with status ('open' / 'resolved')</td>
-                <td><span class="badge-status verified">ACTIVE</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (adminActiveTab === "redis") {
-      statsHtml = `
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-engine" style="color:#00c853; font-size:18px;">Connecting...</div>
-            <div class="admin-stat-label">Cache Engine</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-ratio" style="color:#0070f3;">0.0%</div>
-            <div class="admin-stat-label">Cache Hit Ratio</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-hits">0</div>
-            <div class="admin-stat-label">Total Cache Hits</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="redis-stat-keys">0</div>
-            <div class="admin-stat-label">Cached Keys in RAM</div>
-          </div>
-        </div>
-      `;
-
-      tableHtml = `
-        <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-family: IBM Plex Mono, monospace;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
-            <div>
-              <h4 style="margin:0 0 4px 0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">⚡ Redis High-Speed Asset & API Accelerator</h4>
-              <p style="margin:0; font-size:11px; color:#666;" id="redis-stat-meta">Fetching metrics from /api/cache/stats...</p>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" class="btn-action-view" id="btn-refresh-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ 🔄 Refresh Stats ]
-              </button>
-              <button type="button" class="btn-action-view" id="btn-benchmark-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ 🚀 Test Latency ]
-              </button>
-              <button type="button" class="btn-action-reject" id="btn-purge-redis" style="padding:6px 12px; font-size:11px; cursor:pointer;">
-                [ ⚡ Purge Cache ]
-              </button>
-            </div>
-          </div>
-          <div id="redis-benchmark-result" style="display:none; font-size:11px; padding:10px 14px; background:#111; color:#00ff66; border-radius:4px; font-family:IBM Plex Mono; margin-top:8px;"></div>
-        </div>
-
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Caching Layer</th>
-                <th>Target Assets / Endpoints</th>
-                <th>Header / Mechanism</th>
-                <th>Speed Gain</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Layer 1: Browser Cache</strong></td>
-                <td>3D Models (<code>.glb</code>), Audio, HDRI, Textures</td>
-                <td><code>Cache-Control: public, max-age=31536000, immutable</code></td>
-                <td><span class="badge-status verified">INSTANT (0ms)</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 2: HTTP 304 Validation</strong></td>
-                <td>HTML (<code>/index.html</code>), Scripts, Stylesheets</td>
-                <td><code>ETag: SHA-256</code> + <code>If-None-Match</code> (304 Not Modified)</td>
-                <td><span class="badge-status verified">ZERO BYTES</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 3: Redis RAM Cache</strong></td>
-                <td>Hot Static Assets, Wasm, Draco Decoders</td>
-                <td><code>X-Cache: HIT (Redis)</code> binary memory transfer</td>
-                <td><span class="badge-status verified">&lt; 1ms LATENCY</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 4: Dynamic API Cache</strong></td>
-                <td><code>/api/events</code>, <code>/api/cache/stats</code></td>
-                <td>JSON pre-serialized in Redis with 10m TTL</td>
-                <td><span class="badge-status verified">SUB-MILLISECOND</span></td>
-              </tr>
-              <tr>
-                <td><strong>Layer 5: Gzip Compression</strong></td>
-                <td>JS bundles, CSS styles, SVG icons, JSON</td>
-                <td><code>Content-Encoding: gzip</code> pre-compressed in Redis</td>
-                <td><span class="badge-status verified">70-80% SMALLER</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    const pendingPaymentsCount = pendingPayments.length;
-
-    return `
-      <div class="admin-tabs-nav">
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "attendees" ? "active" : ""}" data-tab="attendees">
-          [ 01. ATTENDEES (${attendees.length}) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "teams" ? "active" : ""}" data-tab="teams">
-          [ 02. SQUADS & TEAMS (${teams.length}) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "payments" ? "active" : ""}" data-tab="payments">
-          [ 03. UPI PAYMENTS & UTR (${pendingPaymentsCount} PENDING) ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "schema" ? "active" : ""}" data-tab="schema">
-          [ 04. SCHEMA & FIREBASE SYNC ]
-        </button>
-        <button type="button" class="admin-tab-btn ${adminActiveTab === "redis" ? "active" : ""}" data-tab="redis">
-          [ ⚡ 05. REDIS ACCELERATION ]
-        </button>
-      </div>
-      ${statsHtml}
-      ${tableHtml}
-    `;
-  }
-
-  function renderFullAdmin() {
-    container.innerHTML = `
-      <div class="chaitanya-modal-header">
-        <div class="chaitanya-modal-tag">[ Chaitanya 2k26 • Admin Portal ]</div>
-        <h2 class="chaitanya-modal-title">Fest Command Center</h2>
-        <p class="chaitanya-modal-subtitle">Participant database, squad rosters & UPI verification (Admin: ${user.email})</p>
-      </div>
-
-      <div id="admin-tab-container">
-        ${renderAdminTabContent()}
-      </div>
-
-      <div class="admin-export-bar">
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button type="button" class="btn-google-auth" id="btn-export-excel" style="width:auto; padding:8px 16px; font-size:11px; background:#107c41; color:#fff; border-color:#107c41;">
-            <span>[ 📊 Download Master Excel (.xls) ]</span>
-          </button>
-          <button type="button" class="btn-google-auth" id="btn-export-csv" style="width:auto; padding:8px 14px; font-size:11px;">
-            <span>[ 📄 Export CSV ]</span>
-          </button>
-        </div>
-        <button type="button" class="chaitanya-link-btn" id="btn-back-to-profile">
-          [ Return to Profile ]
-        </button>
-      </div>
-    `;
-
-    async function fetchAndRenderRedisStats(rootEl) {
-      if (!rootEl) return;
-      try {
-        const res = await fetch("/api/cache/stats");
-        if (!res.ok) throw new Error("Status " + res.status);
-        const data = await res.json();
-        
-        const elEngine = rootEl.querySelector("#redis-stat-engine");
-        const elRatio = rootEl.querySelector("#redis-stat-ratio");
-        const elHits = rootEl.querySelector("#redis-stat-hits");
-        const elKeys = rootEl.querySelector("#redis-stat-keys");
-        const elMeta = rootEl.querySelector("#redis-stat-meta");
-
-        if (elEngine) {
-          elEngine.textContent = data.redis_connected ? "Redis Server" : "In-Memory";
-          elEngine.style.color = data.redis_connected ? "#00c853" : "#f59e0b";
-        }
-        if (elRatio) elRatio.textContent = (data.hit_ratio_percent || 0) + "%";
-        if (elHits) elHits.textContent = `${data.hits || 0} / ${data.total_requests || 0}`;
-        if (elKeys) elKeys.textContent = data.cached_keys || 0;
-        if (elMeta) {
-          elMeta.innerHTML = `<strong>Engine:</strong> ${data.engine} (${data.redis_connected ? "Connected: " + data.redis_url : "Local Memory Fallback"}) • <strong>Hits:</strong> ${data.hits || 0} • <strong>304 Not-Modified:</strong> ${data.revalidations_304 || 0}`;
-        }
-      } catch (err) {
-        const elMeta = rootEl.querySelector("#redis-stat-meta");
-        if (elMeta) elMeta.textContent = "Could not fetch /api/cache/stats (" + err.message + ")";
-      }
-    }
-
-    // Attach Tab switching listener
-    const tabContainer = container.querySelector("#admin-tab-container");
-    if (tabContainer) {
-      tabContainer.addEventListener("click", async (e) => {
-        const tabBtn = e.target.closest(".admin-tab-btn");
-        if (tabBtn) {
-          const tab = tabBtn.getAttribute("data-tab");
-          if (tab && tab !== adminActiveTab) {
-            adminActiveTab = tab;
-            tabContainer.innerHTML = renderAdminTabContent();
-            if (tab === "redis") {
-              fetchAndRenderRedisStats(tabContainer);
-            }
-          }
-          return;
-        }
-
-        const refreshRedisBtn = e.target.closest("#btn-refresh-redis");
-        if (refreshRedisBtn) {
-          fetchAndRenderRedisStats(tabContainer);
-          return;
-        }
-
-        const purgeRedisBtn = e.target.closest("#btn-purge-redis");
-        if (purgeRedisBtn) {
-          if (!confirm("Are you sure you want to purge all Redis cached assets and API datasets?")) return;
-          purgeRedisBtn.disabled = true;
-          purgeRedisBtn.textContent = "[ ⏳ Purging... ]";
-          try {
-            await fetch("/api/cache/purge", { method: "POST" });
-            await fetchAndRenderRedisStats(tabContainer);
-            alert("✓ Redis cache successfully cleared!");
-          } catch (err) {
-            alert("Cache purge notice: " + err.message);
-          } finally {
-            purgeRedisBtn.disabled = false;
-            purgeRedisBtn.textContent = "[ ⚡ Purge Cache ]";
-          }
-          return;
-        }
-
-        const benchRedisBtn = e.target.closest("#btn-benchmark-redis");
-        if (benchRedisBtn) {
-          const resBox = tabContainer.querySelector("#redis-benchmark-result");
-          if (resBox) {
-            resBox.style.display = "block";
-            resBox.textContent = "⚡ Running 5 concurrent requests against /api/events and static assets...";
-            try {
-              const times = [];
-              for (let i = 0; i < 5; i++) {
-                const t0 = performance.now();
-                await fetch("/api/events?bench=" + Date.now());
-                const t1 = performance.now();
-                times.push(t1 - t0);
-              }
-              const avg = (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1);
-              resBox.innerHTML = `<strong>✓ Cache Speed Benchmark:</strong> 5 requests averaged <strong>${avg}ms</strong>.<br/><small>Cache layer served payload directly with zero database/disk overhead!</small>`;
-              fetchAndRenderRedisStats(tabContainer);
-            } catch (err) {
-              resBox.textContent = "Benchmark error: " + err.message;
-            }
-          }
-          return;
-        }
-
-        const approveBtn = e.target.closest(".btn-action-approve");
-        if (approveBtn) {
-          const id = approveBtn.getAttribute("data-id");
-          approveBtn.disabled = true;
-          approveBtn.textContent = "Verifying...";
-          try {
-            await approvePayment(id);
-            const badge = tabContainer.querySelector(`#status-badge-${id}`);
-            if (badge) {
-              badge.className = "badge-status verified";
-              badge.textContent = "VERIFIED";
-            }
-            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
-            if (actionsCell) {
-              actionsCell.innerHTML = `<span style="color:#155724; font-weight:600; font-size:11px;">✓ Verified</span>`;
-            }
-          } catch (err) {
-            alert("Approval failed: " + err.message);
-            approveBtn.disabled = false;
-            approveBtn.textContent = "✓ Approve";
-          }
-          return;
-        }
-
-        const rejectBtn = e.target.closest(".btn-action-reject");
-        if (rejectBtn) {
-          const id = rejectBtn.getAttribute("data-id");
-          const reason = prompt("Enter rejection reason (or leave default):", "Invalid UTR / Payment Not Received");
-          if (reason === null) return;
-          rejectBtn.disabled = true;
-          rejectBtn.textContent = "Rejecting...";
-          try {
-            await rejectPayment(id, reason);
-            const badge = tabContainer.querySelector(`#status-badge-${id}`);
-            if (badge) {
-              badge.className = "badge-status rejected";
-              badge.textContent = "REJECTED";
-            }
-            const actionsCell = tabContainer.querySelector(`#actions-${id}`);
-            if (actionsCell) {
-              actionsCell.innerHTML = `<span style="color:#721c24; font-weight:600; font-size:11px;">✕ Rejected</span>`;
-            }
-          } catch (err) {
-            alert("Rejection failed: " + err.message);
-            rejectBtn.disabled = false;
-            rejectBtn.textContent = "✕ Reject";
-          }
-          return;
-        }
-
-        const seedBtn = e.target.closest("#btn-run-schema-seed");
-        if (seedBtn) {
-          const progressEl = tabContainer.querySelector("#schema-sync-progress");
-          seedBtn.disabled = true;
-          seedBtn.innerHTML = `<span>[ ⏳ Applying Schema... ]</span>`;
-          if (progressEl) {
-            progressEl.style.display = "block";
-            progressEl.style.background = "#e8f4fd";
-            progressEl.style.color = "#004085";
-            progressEl.textContent = "Connecting to Firebase Cloud Firestore...";
-          }
-          try {
-            const res = await applySchemaToFirestore((p) => {
-              if (progressEl) progressEl.textContent = p.message;
-            });
-            if (progressEl) {
-              progressEl.style.background = "#e6f4ea";
-              progressEl.style.color = "#137333";
-              progressEl.innerHTML = `<strong>✓ Schema Applied Successfully!</strong> Synced ${res.eventsCreated} events, ${res.faqsCreated} FAQs, ${res.analyticsCreated} analytics counters.`;
-            }
-            seedBtn.innerHTML = `<span>[ ✓ Schema Applied ]</span>`;
-          } catch (err) {
-            console.error("Schema sync notice:", err);
-            if (progressEl) {
-              progressEl.style.background = "#fce8e6";
-              progressEl.style.color = "#c5221f";
-              progressEl.innerHTML = `<strong>Notice:</strong> ${err.message}<br/><small style="display:inline-block; margin-top:4px;">If Cloud Firestore is not enabled yet in your Firebase console, visit <a href="https://console.firebase.google.com/project/chaitainya-hptu/firestore" target="_blank" style="color:#000; text-decoration:underline;">Firebase Console > Firestore Database > Create Database</a>.</small>`;
-            }
-            seedBtn.disabled = false;
-            seedBtn.innerHTML = `<span>[ ⚠️ Retry Schema Apply ]</span>`;
-          }
-          return;
-        }
-      });
-    }
-
-    // Export Excel button
-    const btnExcel = container.querySelector("#btn-export-excel");
-    if (btnExcel) {
-      btnExcel.addEventListener("click", () => {
-        exportMasterExcel(attendees, teams, payments);
-      });
-    }
-
-    // Export CSV button
-    const btnCsv = container.querySelector("#btn-export-csv");
-    if (btnCsv) {
-      btnCsv.addEventListener("click", () => {
-        if (adminActiveTab === "teams") exportTeamsCSV(teams);
-        else if (adminActiveTab === "payments") exportPaymentsCSV(payments);
-        else exportAttendeesCSV(attendees);
-      });
-    }
-
-    // Return to Profile button
-    const btnBack = container.querySelector("#btn-back-to-profile");
-    if (btnBack) {
-      btnBack.addEventListener("click", () => {
-        openAuthModal("profile");
-      });
-    }
-  }
-
-  renderFullAdmin();
+function runAfterSignIn() {
+  const next = afterSignIn;
+  afterSignIn = null;
+  if (typeof next === "function") next();
 }
 
-function exportMasterExcel(attendees, teams, payments) {
-  const escapeXml = (str) =>
-    String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
-
-  const buildSheet = (name, headers, rows) => `
-    <Worksheet ss:Name="${escapeXml(name)}">
-      <Table>
-        <Row>
-          ${headers.map((h) => `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("")}
-        </Row>
-        ${rows
-          .map(
-            (r) => `
-          <Row>
-            ${r.map((cell) => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("")}
-          </Row>`
-          )
-          .join("")}
-      </Table>
-    </Worksheet>
-  `;
-
-  const attendeeHeaders = ["Name", "Email", "College", "Phone", "Role", "Registered Events"];
-  const attendeeRows = attendees.map((a) => [
-    a.displayName || "Unknown",
-    a.email || "-",
-    a.college || "HPTU",
-    a.phone || "-",
-    a.role || "attendee",
-    (a.registeredEvents || []).join("; "),
-  ]);
-
-  const teamHeaders = ["Team Name", "Team Code", "Arena / Event", "Leader Name", "Leader Email", "Leader Phone", "College", "Members Count", "Payment Status", "Registered At"];
-  const teamRows = teams.map((t) => [
-    t.teamName || "-",
-    t.teamCode || "-",
-    t.eventName || "-",
-    t.leaderName || "-",
-    t.leaderEmail || "-",
-    t.leaderPhone || "-",
-    t.college || "-",
-    t.teamSize || (t.members ? t.members.length : 1),
-    (t.paymentStatus || "free").toUpperCase(),
-    t.registeredAt ? new Date(t.registeredAt).toLocaleString() : "-",
-  ]);
-
-  const paymentHeaders = ["Payment ID", "Arena / Event", "Registrant", "Email", "Phone", "Amount (INR)", "12-Digit UTR", "Status", "Verified By", "Timestamp"];
-  const paymentRows = payments.map((p) => [
-    p.paymentId || "-",
-    p.eventName || "-",
-    p.userName || p.leaderName || "-",
-    p.userEmail || "-",
-    p.userPhone || "-",
-    p.amount || 0,
-    p.utrNumber || "-",
-    (p.status || "pending").toUpperCase(),
-    p.verifiedBy || "-",
-    p.submittedAt ? new Date(p.submittedAt).toLocaleString() : "-",
-  ]);
-
-  const xmlContent = `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Styles>
-  <Style ss:ID="HeaderStyle">
-   <Font ss:Bold="1" ss:Color="#FFFFFF"/>
-   <Interior ss:Color="#000000" ss:Pattern="Solid"/>
-  </Style>
- </Styles>
- ${buildSheet("Attendees", attendeeHeaders, attendeeRows)}
- ${buildSheet("Teams & Squads", teamHeaders, teamRows)}
- ${buildSheet("Payments & UTRs", paymentHeaders, paymentRows)}
-</Workbook>`;
-
-  const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `chaitanya_2k26_master_database_${Date.now()}.xls`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+function goToPage(path) {
+  const router = document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+  if (router) router.push(path);
+  else window.location.href = path;
 }
 
-function exportTeamsCSV(teams) {
-  const headers = ["TeamName,TeamCode,EventName,LeaderName,LeaderEmail,LeaderPhone,College,TeamSize,PaymentStatus,RegisteredAt"];
-  const rows = teams.map((t) =>
-    [
-      `"${t.teamName || ""}"`,
-      `"${t.teamCode || ""}"`,
-      `"${t.eventName || ""}"`,
-      `"${t.leaderName || ""}"`,
-      `"${t.leaderEmail || ""}"`,
-      `"${t.leaderPhone || ""}"`,
-      `"${t.college || ""}"`,
-      `"${t.teamSize || (t.members ? t.members.length : 1)}"`,
-      `"${t.paymentStatus || "free"}"`,
-      `"${t.registeredAt || ""}"`,
-    ].join(","),
-  );
-
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_squads_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function exportPaymentsCSV(payments) {
-  const headers = ["PaymentId,EventName,UserName,UserEmail,UserPhone,Amount,UTRNumber,Status,VerifiedBy,SubmittedAt"];
-  const rows = payments.map((p) =>
-    [
-      `"${p.paymentId || ""}"`,
-      `"${p.eventName || ""}"`,
-      `"${p.userName || p.leaderName || ""}"`,
-      `"${p.userEmail || ""}"`,
-      `"${p.userPhone || ""}"`,
-      `"${p.amount || 0}"`,
-      `"${p.utrNumber || ""}"`,
-      `"${p.status || "pending"}"`,
-      `"${p.verifiedBy || ""}"`,
-      `"${p.submittedAt || ""}"`,
-    ].join(","),
-  );
-
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_payments_utr_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function exportAttendeesCSV(attendees) {
-  const headers = ["Name,Email,College,Phone,Role,RegisteredEvents"];
-  const rows = attendees.map((a) =>
-    [
-      `"${a.displayName || ""}"`,
-      `"${a.email || ""}"`,
-      `"${a.college || ""}"`,
-      `"${a.phone || ""}"`,
-      `"${a.role || "attendee"}"`,
-      `"${(a.registeredEvents || []).join("; ")}"`,
-    ].join(","),
-  );
-
-  const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `chaitanya_2k26_registrations_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function setBusy(btn, busy, html) {
+  btn.innerHTML = busy ? `<span>${e(html)}</span>` : html;
+  btn.disabled = busy;
 }
 
 function showAuthError(msg) {
   const box = document.getElementById("auth-error-box");
   if (box) {
-    box.style.display = "block";
+    box.hidden = false;
+    box.style.display = "";
     box.textContent = msg;
   }
 }

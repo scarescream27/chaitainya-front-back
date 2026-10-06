@@ -20,39 +20,6 @@ if (typeof window !== "undefined") {
   window.__submitToWeb3Forms = submitToWeb3Forms;
 }
 
-let audioCtx = null;
-
-function playKeystrokeSound() {
-  try {
-    const soundStatus = document.querySelector(".social-links-global .volume .status p, .home-preloader .bottom .volume .status p");
-    const isSoundOn = !soundStatus || soundStatus.textContent.trim().toLowerCase() === "on";
-    if (!isSoundOn) return;
-
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
-
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(500 + Math.random() * 220, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.04);
-
-    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
-  } catch (e) {}
-}
-
 function enhanceBubble(wrapper, labelText = "FIELD") {
   if (!wrapper || wrapper.querySelector(".bubble-progress-svg")) return;
 
@@ -67,16 +34,28 @@ function enhanceBubble(wrapper, labelText = "FIELD") {
 
   const hud = document.createElement("div");
   hud.className = "bubble-hud-badge";
+  hud.id = `contact-hud-${wrapper.dataset.field || "field"}`;
   hud.textContent = `[ ${labelText} ]`;
   wrapper.appendChild(hud);
 
   const inputEl = wrapper.querySelector("input, textarea");
   if (inputEl) {
+    // The badge carries live status text, so it describes the field; the
+    // stable accessible name comes from the field's own aria-label.
+    inputEl.setAttribute("aria-describedby", hud.id);
     inputEl.addEventListener("focus", () => {
       wrapper.classList.add("is-active");
     });
     inputEl.addEventListener("blur", () => {
       wrapper.classList.remove("is-active");
+    });
+    // Keeps the badge (the visible label) shown once the field has content.
+    inputEl.addEventListener("input", () => {
+      wrapper.classList.toggle("has-value", inputEl.value.length > 0);
+    });
+    // Only the text line inside the bubble took taps; let the whole bubble focus it.
+    wrapper.addEventListener("click", (e) => {
+      if (e.target !== inputEl) inputEl.focus();
     });
   }
 }
@@ -86,7 +65,7 @@ function triggerRipple(wrapper, isError = false) {
   const ripple = document.createElement("div");
   ripple.className = "keystroke-ripple";
   if (isError) {
-    ripple.style.borderColor = "#ff3333";
+    ripple.style.borderColor = "var(--danger)";
   }
   wrapper.appendChild(ripple);
   setTimeout(() => ripple.remove(), 700);
@@ -121,31 +100,32 @@ export function initContactForm5Fields() {
 
   // Build the 5 fields + Send + Heart HTML
   wrapper.innerHTML = `
-    <form class="contact-chaitanya-form" onsubmit="return false;">
+    <form class="contact-chaitanya-form" onsubmit="return false;" novalidate>
       <div class="input-wrapper" data-field="name">
-        <input type="text" name="name" placeholder="[YOUR NAME]" autocomplete="off" spellcheck="false" />
+        <input type="text" name="name" aria-label="Your name" placeholder="[YOUR NAME]" autocomplete="name" autocapitalize="words" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="team_name">
-        <input type="text" name="team_name" placeholder="[TEAM NAME]" autocomplete="off" spellcheck="false" />
+        <input type="text" name="team_name" aria-label="Team name" placeholder="[TEAM NAME]" autocomplete="organization" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="email">
-        <input type="email" name="email" placeholder="[YOUR EMAIL]" autocomplete="off" spellcheck="false" />
+        <input type="email" name="email" aria-label="Your email" placeholder="[YOUR EMAIL]" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="contact_no">
-        <input type="tel" name="contact_no" placeholder="[CONTACT NO]" autocomplete="off" spellcheck="false" />
+        <input type="tel" name="contact_no" aria-label="Contact number" placeholder="[CONTACT NO]" autocomplete="tel" inputmode="tel" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper input-wrapper-text" data-field="query">
-        <textarea name="query" placeholder="[YOUR QUERY]" rows="1" spellcheck="false"></textarea>
+        <textarea name="query" aria-label="Your query" placeholder="[YOUR QUERY]" rows="1" autocomplete="off" spellcheck="false"></textarea>
         <div class="outline"></div>
       </div>
-      <div class="input-wrapper send" data-field="send">
+      <div class="input-wrapper send" data-field="send" role="button" tabindex="0" aria-label="Send message">
         <p>SEND →</p>
       </div>
       <div class="input-wrapper heart"></div>
+      <p class="contact-status sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     </form>
   `;
 
@@ -169,6 +149,30 @@ export function initContactForm5Fields() {
   const emailInput = emailWrap.querySelector("input");
   const contactInput = contactWrap.querySelector("input");
   const queryInput = queryWrap.querySelector("textarea");
+  const statusEl = form.querySelector(".contact-status");
+
+  // One polite live region for the whole form (WCAG 4.1.3). Clearing first and
+  // writing on the next frame makes a repeated message announce again.
+  let announceTimer = 0;
+  function announce(message) {
+    if (!statusEl) return;
+    clearTimeout(announceTimer);
+    statusEl.textContent = "";
+    announceTimer = setTimeout(() => {
+      statusEl.textContent = message;
+    }, 60);
+  }
+
+  // Flags the failing field for assistive tech; cleared as soon as it is edited.
+  function markInvalid(inputEl) {
+    if (inputEl) inputEl.setAttribute("aria-invalid", "true");
+  }
+  [nameInput, teamInput, emailInput, contactInput, queryInput].forEach((el) => {
+    if (el) el.addEventListener("input", () => el.removeAttribute("aria-invalid"));
+  });
+
+  const escapeHtml = (str) =>
+    String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
   const heroH1 = document.querySelector(".contact-hero h1");
   const originalH1 = heroH1 ? heroH1.textContent : "LET'S CREATE SOMETHING AMAZING TOGETHER";
@@ -186,7 +190,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(nameWrap);
-      playKeystrokeSound();
 
       if (heroH1) {
         if (val.length > 0) {
@@ -211,7 +214,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(teamWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -225,11 +227,10 @@ export function initContactForm5Fields() {
       updateProgress(
         emailWrap,
         pct,
-        valid ? `[ EMAIL VERIFIED ✓ ]` : (val.length > 0 ? `[ ${val.length} CHARS • INVALID FORMAT ]` : `[ ENTER EMAIL ]`),
+        valid ? `[ EMAIL VERIFIED ✓ ]` : (val.length > 0 ? `[ ${val.length} CHARS • INVALID EMAIL ]` : `[ ENTER EMAIL ]`),
         valid
       );
       triggerRipple(emailWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -247,7 +248,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(contactWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -264,7 +264,6 @@ export function initContactForm5Fields() {
         valid
       );
       triggerRipple(queryWrap);
-      playKeystrokeSound();
     });
   }
 
@@ -276,7 +275,7 @@ export function initContactForm5Fields() {
         <span class="heart-check">✓</span>
         <h3 class="heart-success-title">MESSAGE DISPATCHED</h3>
         <p class="heart-success-subtitle">
-          Thank you, <strong>${nameVal || "Friend"}</strong>${teamVal ? " (Team: <strong>" + teamVal + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitanyahptu@gmail.com</strong>.
+          Thank you, <strong>${escapeHtml(nameVal || "Friend")}</strong>${teamVal ? " (Team: <strong>" + escapeHtml(teamVal) + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitanyahptu@gmail.com</strong>.
         </p>
         <button type="button" class="heart-reset-btn" id="btn-contact-reset">[ SEND ANOTHER MESSAGE ]</button>
       </div>
@@ -298,9 +297,23 @@ export function initContactForm5Fields() {
     }
 
     const resetBtn = heartWrap.querySelector("#btn-contact-reset");
+
+    // The faded-out bubbles stay in the DOM: take them out of the tab order and
+    // the accessibility tree, and put focus on the card's only control.
+    const hiddenBubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];
+    hiddenBubbles.forEach((el) => el && el.setAttribute("inert", ""));
+    if (resetBtn) {
+      setTimeout(() => {
+        try { resetBtn.focus({ preventScroll: true }); } catch (_) { resetBtn.focus(); }
+      }, 200);
+    }
+
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {
+        hiddenBubbles.forEach((el) => el && el.removeAttribute("inert"));
         form.reset();
+        form.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
+        form.querySelectorAll(".has-value").forEach((el) => el.classList.remove("has-value"));
         if (heroH1) heroH1.textContent = originalH1;
         const bubbles = [nameWrap, teamWrap, emailWrap, contactWrap, queryWrap, sendWrap];
         if (activeGsap) {
@@ -332,20 +345,32 @@ export function initContactForm5Fields() {
         }
         sendWrap.classList.remove("transmitting");
         sendWrap.innerHTML = `<p>SEND →</p>`;
+        sendWrap.setAttribute("aria-label", "Send message");
         updateProgress(nameWrap, 0, "[ ENTER NAME ]");
         updateProgress(teamWrap, 0, "[ ENTER TEAM NAME ]");
         updateProgress(emailWrap, 0, "[ ENTER EMAIL ]");
         updateProgress(contactWrap, 0, "[ ENTER CONTACT NO ]");
         updateProgress(queryWrap, 0, "[ ENTER YOUR QUERY ]");
+        announce("Form cleared. You can send another message.");
+        if (nameInput) nameInput.focus();
       });
     }
   }
 
   // 6. Send Button & Submission Handler
   if (sendWrap) {
+    // The SEND pill is a div with role="button": make Enter/Space work too.
+    sendWrap.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        sendWrap.click();
+      }
+    });
+
     sendWrap.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (sendWrap.classList.contains("transmitting")) return;
 
       const nameVal = nameInput ? nameInput.value.trim() : "";
       const teamVal = teamInput ? teamInput.value.trim() : "";
@@ -355,49 +380,61 @@ export function initContactForm5Fields() {
 
       // Validation 1: Name
       if (!nameVal || nameVal.length < 2) {
-        if (nameInput) nameInput.focus();
         updateProgress(nameWrap, 0, "[ ERROR: ENTER NAME ]");
+        markInvalid(nameInput);
+        if (nameInput) nameInput.focus();
         triggerRipple(nameWrap, true);
+        announce("Please enter your name, at least 2 characters.");
         return;
       }
 
       // Validation 2: Team Name
       if (!teamVal || teamVal.length < 2) {
-        if (teamInput) teamInput.focus();
         updateProgress(teamWrap, 0, "[ ERROR: ENTER TEAM NAME ]");
+        markInvalid(teamInput);
+        if (teamInput) teamInput.focus();
         triggerRipple(teamWrap, true);
+        announce("Please enter your team name, at least 2 characters.");
         return;
       }
 
       // Validation 3: Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailVal || !emailRegex.test(emailVal)) {
-        if (emailInput) emailInput.focus();
         updateProgress(emailWrap, 0, "[ ERROR: VALID EMAIL REQUIRED ]");
+        markInvalid(emailInput);
+        if (emailInput) emailInput.focus();
         triggerRipple(emailWrap, true);
+        announce("Please enter a valid email address.");
         return;
       }
 
       // Validation 4: Contact No
       const digits = contactVal.replace(/[^0-9]/g, "");
       if (!contactVal || digits.length < 10) {
-        if (contactInput) contactInput.focus();
         updateProgress(contactWrap, 0, "[ ERROR: 10-DIGIT PHONE REQUIRED ]");
+        markInvalid(contactInput);
+        if (contactInput) contactInput.focus();
         triggerRipple(contactWrap, true);
+        announce("Please enter a contact number with at least 10 digits.");
         return;
       }
 
       // Validation 5: Query
       if (!queryVal || queryVal.length < 3) {
-        if (queryInput) queryInput.focus();
         updateProgress(queryWrap, 0, "[ ERROR: ENTER YOUR QUERY ]");
+        markInvalid(queryInput);
+        if (queryInput) queryInput.focus();
         triggerRipple(queryWrap, true);
+        announce("Please enter your query, at least 3 characters.");
         return;
       }
 
       // Enter Transmitting Radar State
       sendWrap.classList.add("transmitting");
-      sendWrap.innerHTML = `<p><span class="radar-spinner"></span> TRANSMITTING...</p>`;
+      sendWrap.innerHTML = `<p><span class="radar-spinner" aria-hidden="true"></span> TRANSMITTING...</p>`;
+      sendWrap.setAttribute("aria-disabled", "true");
+      announce("Sending your message…");
 
       try {
         await submitToWeb3Forms({
@@ -430,11 +467,16 @@ export function initContactForm5Fields() {
             ease: "power2.inOut",
           });
         }
+        sendWrap.removeAttribute("aria-disabled");
         showSuccessCard(nameVal, teamVal);
+        announce("Message sent. Thank you, we will get back to you soon.");
       } catch (err) {
         console.error("Submission error:", err);
         sendWrap.classList.remove("transmitting");
         sendWrap.innerHTML = `<p>RETRY →</p>`;
+        sendWrap.removeAttribute("aria-disabled");
+        sendWrap.setAttribute("aria-label", "Retry sending message");
+        announce("Your message could not be sent. Check your connection and press Retry.");
         alert("Transmission error: " + (err.message || "Failed to deliver. Please check connection."));
       }
     });

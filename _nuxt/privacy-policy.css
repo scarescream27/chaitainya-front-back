@@ -4,12 +4,18 @@
  * ============================================================================ */
 
 .privacy-page-root {
-  background-image: url(/images/footerPatern.png), linear-gradient(0deg, #b4cbf5, #f7faff), linear-gradient(0deg, #96bbff, #edf4ff);
+  /* CTA hover accent: ink text on it is 9.8:1 (light) / 8.1:1 (dark). */
+  --privacy-accent: #e392fe;
+  /* Shared page background (pattern + sky gradient in light, gradient only in
+     dark). The pattern keeps its page-specific 5% tile. The old third layer
+     (#96bbff/#edf4ff) sat under the opaque sky gradient and never showed. */
+  background-color: var(--sky-top);
+  background-image: var(--page-bg);
   background-repeat: repeat;
   background-size: 5%;
   min-height: 100vh;
   padding: 110px 24px 60px;
-  color: #000000;
+  color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
   z-index: 25;
@@ -31,7 +37,8 @@ body:has(.privacy-page-root) .transition-component,
 @media (max-width: 767px) {
   .privacy-page-root {
     background-size: 10%;
-    padding: 90px 12px 40px;
+    /* 16px gutters: text never sits closer than 16px to the phone edge. */
+    padding: 90px 16px 40px;
   }
 }
 
@@ -57,11 +64,10 @@ body:has(.privacy-page-root) .transition-component,
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1.5px solid #000000;
-  color: #000000;
+  /* Opaque: the dot pattern must not bleed through behind the label text. */
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  color: var(--ink);
   padding: 10px 20px;
   border-radius: 30px;
   font-family: "IBM Plex Mono", monospace;
@@ -77,15 +83,15 @@ body:has(.privacy-page-root) .transition-component,
 
 .privacy-back-btn:hover,
 .privacy-contact-btn:hover {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 /* Hero Section */
 .privacy-hero {
-  border-bottom: 2px solid #000000;
+  border-bottom: 2px solid var(--line-strong);
   padding-bottom: 30px;
   margin-bottom: 36px;
   position: relative;
@@ -98,15 +104,16 @@ body:has(.privacy-page-root) .transition-component,
 
 .privacy-tag-badge {
   display: inline-block;
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   padding: 5px 14px;
   border-radius: 20px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  /* A 36-character phrase, so it reads in its written case, not all-caps. */
+  text-transform: none;
   margin-bottom: 16px;
 }
 
@@ -114,10 +121,12 @@ body:has(.privacy-page-root) .transition-component,
   font-family: DrukMedium, sans-serif;
   font-size: 72px;
   line-height: 0.9;
-  letter-spacing: -1.5px;
+  /* Relative, so the tightening scales down with the font (a fixed -1.5px
+     made the letters collide at the 32px phone size). */
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   margin-bottom: 12px;
-  color: #000000;
+  color: var(--ink);
 }
 
 @media (max-width: 991px) {
@@ -128,18 +137,22 @@ body:has(.privacy-page-root) .transition-component,
 
 @media (max-width: 767px) {
   .privacy-hero h1 {
-    font-size: 32px;
+    font-size: 40px;
   }
+
 }
 
+/* Sentence-length lines stay in sentence case; all-caps is kept for short labels. */
 .privacy-hero .subtitle {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 500;
-  letter-spacing: 0.5px;
-  color: #222222;
+  letter-spacing: 0.2px;
+  color: var(--ink);
   margin-bottom: 10px;
-  text-transform: uppercase;
+  text-transform: none;
+  /* IBM Plex Mono: 1ch is a full glyph, so 65ch is 65 characters. */
+  max-width: 65ch;
 }
 
 .privacy-meta-row {
@@ -147,10 +160,31 @@ body:has(.privacy-page-root) .transition-component,
   gap: 24px;
   flex-wrap: wrap;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: #555555;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
+  text-transform: none;
+  letter-spacing: 0.2px;
+  /* Keep the row within ~64 characters; it wraps to a second line. */
+  max-width: 64ch;
+  column-gap: 0;
+  row-gap: 4px;
+}
+
+/* The literal "•" spans dangled at line ends when the row wrapped. Hide them
+   and draw the separator in front of each following item instead, so a
+   wrapped line starts with "•" rather than ending with one. */
+.privacy-meta-row span:nth-child(even) {
+  display: none;
+}
+
+.privacy-meta-row span:nth-child(odd) {
+  margin-right: 12px;
+}
+
+.privacy-meta-row span:nth-child(odd):not(:first-child)::before {
+  content: "\2022";
+  content: "\2022" / "";
+  margin-right: 12px;
 }
 
 /* Quick Nav Pills */
@@ -160,30 +194,30 @@ body:has(.privacy-page-root) .transition-component,
   gap: 8px;
   margin-bottom: 36px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.45);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: var(--surface);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 16px;
 }
 
 .quick-nav-pill {
-  background: #ffffff;
-  border: 1px solid #000000;
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   padding: 6px 14px;
   border-radius: 20px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
-  color: #000000;
+  color: var(--ink);
   text-decoration: none;
   transition: all 0.25s ease;
   cursor: pointer;
 }
 
 .quick-nav-pill:hover {
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   transform: translateY(-2px);
 }
 
@@ -195,13 +229,13 @@ body:has(.privacy-page-root) .transition-component,
 }
 
 .privacy-card {
-  background: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border: 1.5px solid #000000;
+  /* Opaque (was 72% white + blur): the pattern showed through and pulled body
+     text below 4.5:1. Solid --surface keeps every pixel of text at AA. */
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
   border-radius: 20px;
   padding: 32px 36px;
-  box-shadow: 0 10px 30px rgba(0, 30, 80, 0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -214,7 +248,7 @@ body:has(.privacy-page-root) .transition-component,
 
 .privacy-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0, 30, 80, 0.08);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
 .privacy-card-header {
@@ -230,9 +264,9 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
-  background: #ffffff;
-  border: 1.5px solid #000000;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
   padding: 2px 8px;
   border-radius: 8px;
 }
@@ -243,7 +277,7 @@ body:has(.privacy-page-root) .transition-component,
   line-height: 1;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--ink);
   margin: 0;
 }
 
@@ -253,10 +287,14 @@ body:has(.privacy-page-root) .transition-component,
   }
 }
 
+/* Cap the reading measure (~68 characters) without narrowing the cards.
+   This is proportional system sans, whose "0" (1ch) is wider than an average
+   letter, so 70ch ran ~90 characters; 34em is ~68 characters of running text. */
 .privacy-card p {
-  font-size: 14.5px;
+  max-width: 34em;
+  font-size: max(var(--fs-body), 14.5px);
   line-height: 1.65;
-  color: #222222;
+  color: var(--ink);
   margin-bottom: 14px;
 }
 
@@ -270,35 +308,37 @@ body:has(.privacy-page-root) .transition-component,
 }
 
 .privacy-card li {
-  font-size: 14px;
+  max-width: 34em;
+  font-size: var(--fs-body);
   line-height: 1.6;
-  color: #333333;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
 .privacy-card li strong {
   font-family: "IBM Plex Mono", monospace;
-  color: #000000;
+  color: var(--ink);
 }
 
+/* Flat rule-led note, not a card inside the card: the left bar alone groups it. */
 .privacy-callout {
-  background: #ffffff;
-  border-left: 4px solid #000000;
-  padding: 16px 20px;
-  border-radius: 0 12px 12px 0;
-  margin: 16px 0;
+  /* Monospace: 65ch is 65 characters. */
+  max-width: 65ch;
+  background: none;
+  border-left: 4px solid var(--line-strong);
+  padding: 4px 0 4px 16px;
+  margin: 18px 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #111111;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--ink);
 }
 
 /* Call to Action Footer Card */
 .privacy-cta-box {
   margin-top: 48px;
-  background: #000000;
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--ink-on-dark);
   border-radius: 24px;
   padding: 40px;
   text-align: center;
@@ -328,17 +368,20 @@ body:has(.privacy-page-root) .transition-component,
 
 .privacy-cta-box p {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: var(--fs-body);
   color: #b6b6b6;
-  max-width: 600px;
+  /* 71.4% of the on-dark ink over the --ink fill: #b6b6b6 in light (10.4:1),
+     7.1:1 in dark. */
+  color: color-mix(in srgb, var(--ink-on-dark) 71.4%, var(--ink));
+  max-width: 65ch;
   margin: 0 auto 24px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .privacy-cta-btn {
   display: inline-block;
-  background: #ffffff;
-  color: #000000;
+  background: var(--surface);
+  color: var(--ink);
   padding: 14px 32px;
   border-radius: 40px;
   font-family: "IBM Plex Mono", monospace;
@@ -352,18 +395,98 @@ body:has(.privacy-page-root) .transition-component,
 }
 
 .privacy-cta-btn:hover {
-  background: #e392fe;
-  color: #000000;
+  background: var(--privacy-accent);
+  color: var(--ink);
   transform: scale(1.05);
 }
 
-/* Footer info */
+/* The --focus-ring is drawn in --ink, which matches the CTA box fill; flip it. */
+.privacy-cta-box :focus-visible {
+  outline-color: var(--ink-on-dark);
+}
+
+/* Footer info (a plain div, not a second contentinfo landmark) */
 .privacy-footer-credits {
   margin-top: 40px;
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: #444444;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-size: var(--fs-label);
+  color: var(--ink-muted);
+  letter-spacing: 0.2px;
+  text-transform: none;
+}
+
+.privacy-footer-credits p {
+  max-width: 65ch;
+  margin-inline: auto;
+}
+
+
+@media (max-width: 767px) {
+  /* Druk is already condensed; at phone size any negative tracking collides. */
+  .privacy-hero h1 {
+    letter-spacing: 0;
+  }
+
+  /* Stack the details and drop the "•" separators that dangled at line ends.
+     (Kept at the end of the file so it wins over the base .privacy-meta-row.) */
+  .privacy-meta-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .privacy-meta-row span:nth-child(odd) {
+    margin-right: 0;
+  }
+
+  .privacy-meta-row span:nth-child(odd):not(:first-child)::before {
+    content: none;
+  }
+}
+
+/* Touch: every control gets a full 44px target; text stays centred so the
+   pills and buttons keep their look. */
+@media (max-width: 767px), (pointer: coarse) {
+  .privacy-back-btn,
+  .privacy-contact-btn,
+  .quick-nav-pill,
+  .privacy-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap);
+  }
+}
+
+/* Dark: opaque token surface (no translucent wash, no backdrop blur) and the
+   black-alpha hairlines become --line. */
+@media (prefers-color-scheme: dark) {
+  .privacy-page-root {
+    --privacy-accent: #6a2a8a;
+  }
+
+  .privacy-back-btn,
+  .privacy-contact-btn,
+  .privacy-quick-nav,
+  .privacy-card {
+    background: var(--surface);
+  }
+
+  .privacy-back-btn:hover,
+  .privacy-contact-btn:hover {
+    background: var(--ink);
+  }
+
+  .privacy-quick-nav {
+    border-color: var(--line);
+  }
+
+  .privacy-card-header {
+    border-bottom-color: var(--line);
+  }
+
+  .privacy-card,
+  .privacy-card:hover {
+    box-shadow: var(--shadow-soft);
+  }
 }

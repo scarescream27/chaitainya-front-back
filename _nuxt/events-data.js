@@ -1,759 +1,439 @@
 /**
  * ============================================================================
- * Chaitanya 2k26 — Official Event Catalog & Competition Dataset
+ * Chaitanya 2k26 — Official Event Catalog
  * ============================================================================
- * 12 Curated Flagship Competitions for HPTU Hamirpur's Annual Fest:
- * - Coding & AI (3)
- * - Robotics & IoT (3)
- * - Esports & Gaming (2)
- * - Workshops & Keynotes (2)
- * - Cultural & Arts (2)
+ * Source: "Event Student Heads" list from the organising committee.
+ * Fest days: Day 1 = 30 Oct, Day 2 = 31 Oct, Day 3 = 1 Nov 2026.
+ *
+ * Fields the committee has not confirmed yet (entry fee, prizes, rules) are
+ * marked "To be notified". Team limits below are PROVISIONAL.
+ *
+ * To open registration for an event: set `entryFeeNum` (0 = free) and
+ * `registrationOpen: true`. Set FEST_REGISTRATION_OPEN below to open all.
+ *
+ * registrationType: "solo" | "team" | "both" (solo or team).
+ * startsAt / endsAt: ISO times in IST, used for "Add to Google Calendar".
  */
 
+// Master switch: true opens every event that doesn't set registrationOpen itself.
+export const FEST_REGISTRATION_OPEN = true;
+export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
+
+const TBN = "To be notified";
+
+// Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours),
+// so they switch with light/dark mode; both palettes pass WCAG AA (4.5:1) for
+// 12px labels on the cards. Change the hues in tokens.css, not here.
 export const EVENT_CATEGORIES = [
-  { id: "all", name: "ALL ARENAS", shortCode: "ALL", count: 12 },
-  { id: "coding", name: "CODING & AI", shortCode: "TECH", count: 3, accent: "#00d2ff" },
-  { id: "robotics", name: "ROBOTICS & IOT", shortCode: "ROBO", count: 3, accent: "#ff6b35" },
-  { id: "esports", name: "ESPORTS & GAMING", shortCode: "PLAY", count: 2, accent: "#a048fe" },
-  { id: "workshops", name: "WORKSHOPS & TALKS", shortCode: "LEARN", count: 2, accent: "#f5a623" },
-  { id: "cultural", name: "CULTURAL & ARTS", shortCode: "CULTURE", count: 2, accent: "#e63b7a" },
+  { id: "all", name: "ALL EVENTS", shortCode: "ALL", count: 20 },
+  { id: "tech", name: "CODING & TECH", shortCode: "TECH", count: 6, accent: "var(--cat-tech)" },
+  { id: "innovation", name: "DESIGN & INNOVATION", shortCode: "BUILD", count: 3, accent: "var(--cat-innovation)" },
+  { id: "business", name: "BUSINESS & DEBATE", shortCode: "PITCH", count: 3, accent: "var(--cat-business)" },
+  { id: "esports", name: "ESPORTS", shortCode: "PLAY", count: 3, accent: "var(--cat-esports)" },
+  { id: "cultural", name: "CULTURAL & FUN", shortCode: "CULTURE", count: 5, accent: "var(--cat-cultural)" },
 ];
+
+const CATEGORY_NAMES = Object.fromEntries(EVENT_CATEGORIES.map((c) => [c.id, c.name]));
+
+function heads(...names) {
+  return names.map((name) => ({ name, role: "Student Head" }));
+}
+
+function formatLabel(type, min, max) {
+  const size = min === max ? `${max}` : `${min}–${max}`;
+  if (type === "solo") return "Solo";
+  if (type === "team") return `Team (${size} members)`;
+  return `Solo or team (up to ${max})`;
+}
+
+function event(e) {
+  const type = e.registrationType || "solo";
+  const minTeam = e.minTeam || 1;
+  const maxTeam = type === "solo" ? 1 : e.maxTeam || 4;
+  return {
+    badge: CATEGORY_NAMES[e.category],
+    categoryName: CATEGORY_NAMES[e.category],
+    registrationType: type,
+    minTeam,
+    maxTeam,
+    format: formatLabel(type, minTeam, maxTeam),
+    teamSize: type === "solo" ? "1" : `${minTeam}–${maxTeam}`,
+    deadline: REGISTRATION_DEADLINE,
+    startsAt: null,
+    endsAt: null,
+    entryFee: TBN,
+    entryFeeNum: 0,
+    prizePool: TBN,
+    venue: TBN,
+    date: "Day TBA",
+    time: TBN,
+    status: "REGISTRATION: TO BE NOTIFIED",
+    rules: ["Detailed rules and eligibility will be announced soon."],
+    rounds: [],
+    judgingCriteria: [],
+    coordinators: [],
+    ...e,
+    registrationType: type,
+    minTeam,
+    maxTeam,
+    registrationOpen: e.registrationOpen ?? FEST_REGISTRATION_OPEN,
+  };
+}
 
 export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
-  // 1. CODING & AI
+  // CODING & TECH
   // --------------------------------------------------------------------------
-  {
-    id: "ai-hackathon",
-    title: "AI INNOVATION HACKATHON",
-    tagline: "36-Hour Continuous Sprint Building Autonomous AI & Agentic Systems",
-    category: "coding",
-    categoryName: "CODING & AI",
-    badge: "FLAGSHIP TECH",
-    format: "Team (2 - 4 Members)",
-    teamSize: "2 - 4 Members",
-    minTeam: 2,
-    maxTeam: 4,
-    entryFee: "₹400 / Team",
-    entryFeeNum: 400,
-    prizePool: "₹50,000 CASH + CLOUD CREDITS",
-    prizeBreakdown: {
-      first: "₹25,000 Cash + ₹50,000 Cloud Credits + Trophy",
-      second: "₹15,000 Cash + ₹25,000 Cloud Credits",
-      third: "₹10,000 Cash + Swag Kit",
-    },
-    date: "26 - 27 MARCH 2026",
-    time: "10:00 AM (36 Hours)",
-    venue: "Main CS Innovation Centre & Lab 1",
-    status: "REGISTRATION OPEN",
+  event({
+    id: "codeforge-reforged",
+    registrationType: "team", minTeam: 2, maxTeam: 4, startsAt: "2026-10-30T18:00:00+05:30", endsAt: "2026-10-31T18:00:00+05:30",
+    title: "CODEFORGE: REFORGED 2.0",
+    tagline: "24-hour open-source hackathon: build something real from scratch",
+    category: "tech",
+    badge: "FLAGSHIP HACKATHON",
+    date: "DAY 1 – 2",
+    time: "30 Oct, 6:00 PM – 31 Oct, 6:00 PM (24 hrs)",
+    venue: "Electrical Labs 307 & 308, 3rd floor",
     overview:
-      "A 36-hour non-stop hackathon challenging developers to build groundbreaking AI agents, multimodal LLM applications, or autonomous systems solving critical problems in healthcare, education, agriculture, and spatial computing.",
+      "The flagship 24-hour open-source hackathon of Chaitanya 2k26. Teams ideate, design and build a working open-source project overnight and present it to the judges at the end of the sprint.",
+    coordinators: heads("Priyanshu"),
+  }),
+  event({
+    id: "capture-the-flag",
+    registrationType: "both", maxTeam: 3, startsAt: "2026-11-01T08:00:00+05:30", endsAt: "2026-11-01T16:00:00+05:30",
+    title: "CTF: CAPTURE THE FLAG",
+    tagline: "Cybersecurity challenges: find the flags, climb the scoreboard",
+    category: "tech",
+    date: "DAY 3",
+    time: "1 Nov, 8:00 AM – 4:00 PM (8 hrs)",
+    venue: "3 computer labs (rooms to be announced)",
+    overview:
+      "An 8-hour capture-the-flag contest with challenges across web security, cryptography, forensics and reverse engineering. Solve challenges to capture flags and score points.",
+    coordinators: heads("Ritik Chauhan", "Paras Rana"),
+  }),
+  event({
+    id: "competitive-programming",
+    registrationType: "solo", startsAt: "2026-10-31T10:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
+    title: "COMPETITIVE PROGRAMMING",
+    tagline: "Algorithms against the clock",
+    category: "tech",
+    date: "DAY 2",
+    time: "31 Oct, 10:00 AM – 1:00 PM (3 hrs)",
+    venue: "2 computer labs (rooms to be announced)",
+    overview:
+      "A 3-hour algorithmic programming contest. Solve as many problems as you can, as efficiently as you can, before time runs out.",
+    coordinators: heads("Manas Kapoor"),
+  }),
+  event({
+    id: "error-404",
+    registrationType: "solo", startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
+    title: "ERROR 404",
+    tagline: "Code not found. Find it. Fix it. Finish it.",
+    category: "tech",
+    badge: "C++ DEBUGGING",
+    date: "DAY 3",
+    time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs, all rounds)",
+    venue: "Rooms 207 & 208 (computer lab)",
+    prizePool: "Top 3 win · prizes to be announced",
+    overview:
+      "A C++ debugging and code-completion contest (also listed as Glitch Code). Code is shown on a large screen: spot the bug, fix the logic or finish the missing part, faster and more accurately than everyone else. Individual entry, C++ only, three rounds of rising difficulty.",
     rules: [
-      "Teams must consist of 2 to 4 eligible college/university students with valid college ID cards.",
-      "All code, design, and assets must be developed during the 36-hour hackathon period. Open-source libraries and APIs are permitted.",
-      "Projects must be hosted on a public GitHub repository with a comprehensive README and working live demo.",
-      "Plagiarism, pre-built proprietary codebases, or copyright infringement will result in immediate disqualification.",
-      "High-speed university Wi-Fi, power outlets, snacks, beverages, and rest bays will be provided throughout the night.",
+      "Individual event: one participant per entry, no teams.",
+      "Only C++ may be used in every round.",
+      "Mobile phones are strictly not allowed during the event.",
+      "No internet, AI tools or outside help of any kind.",
+      "Do not talk to or copy from other participants.",
+      "Time limits are strict. Once time is up, no answers are accepted.",
+      "Code and questions shown on screen are confidential. Do not note them down or share them.",
+      "The decision of the judges and coordinators is final and binding.",
+      "Any malpractice leads to immediate disqualification.",
+      "Be on time and follow the coordinators' instructions at all times.",
     ],
     rounds: [
       {
-        name: "Round 1: Problem Pitch & Architecture Check",
-        time: "Day 1 // 02:00 PM",
-        description: "Submit solution blueprint, tech stack, and workflow architecture to mentor panel.",
+        name: "Round 1: Bug Hunt (easy)",
+        time: "1 min",
+        description:
+          "A C++ program with multiple errors is shown on screen. Find as many errors as possible and submit them through the Google Form shared at the venue. Top ~50% advance; ties at the cut-off are broken with a harder 30-second code.",
       },
       {
-        name: "Round 2: Midnight Mentor Checkpoint",
-        time: "Day 2 // 01:00 AM",
-        description: "Live progress review, code inspection, and API integration mentoring.",
+        name: "Round 2: Fix & Run (medium)",
+        time: "2 min",
+        description: "Find the error in a new program, correct it and show the correct output. Faster correct answers rank higher. Top ~50% of the remaining advance.",
       },
       {
-        name: "Round 3: Grand Finale Showcase & Q&A",
-        time: "Day 2 // 04:00 PM",
-        description: "5-minute live stage demo before industry AI researchers and VC judges.",
+        name: "Round 3: Complete the Code (hard)",
+        time: "3 min",
+        description: "Complete an unfinished C++ pattern program (the code itself is the hint) and show the output. The top 3 are declared winners.",
       },
     ],
-    judgingCriteria: [
-      { name: "Innovation & Originality", weight: "30%" },
-      { name: "Technical Execution & AI Depth", weight: "30%" },
-      { name: "UI/UX & Interactive Design", weight: "20%" },
-      { name: "Real-world Practical Utility", weight: "20%" },
-    ],
-    coordinators: [
-      {
-        name: "Er. Amit Chandel",
-        role: "Faculty Advisor",
-        phone: "+91 98160 54321",
-        email: "amit.chandel@hptu.ac.in",
-        whatsapp: "https://wa.me/919816054321",
-      },
-      {
-        name: "Aditya Sharma",
-        role: "Student Lead",
-        phone: "+91 98160 11223",
-        email: "aditya.sharma@hptu.ac.in",
-        whatsapp: "https://wa.me/919816011223",
-      },
-    ],
-  },
-  {
-    id: "code-golf",
-    title: "CODE GOLF: ALGO SPEEDRUN",
-    tagline: "Shortest, Most Optimal Byte-Count Algorithmic Showdown Under Pressure",
-    category: "coding",
-    categoryName: "CODING & AI",
-    badge: "SOLO SPEEDRUN",
-    format: "Solo (1 Participant)",
-    teamSize: "Solo",
-    minTeam: 1,
-    maxTeam: 1,
-    entryFee: "₹100 / Person",
-    entryFeeNum: 100,
-    prizePool: "₹15,000 CASH",
-    prizeBreakdown: {
-      first: "₹8,000 Cash + Winner Trophy",
-      second: "₹4,500 Cash + Certificate",
-      third: "₹2,500 Cash",
-    },
-    date: "26 MARCH 2026",
-    time: "02:30 PM — 05:00 PM",
-    venue: "Computer Centre Lab 2",
-    status: "REGISTRATION OPEN",
-    overview:
-      "A fast-paced algorithmic programming contest where standard efficiency is only half the battle. In Code Golf, competitors must solve complex logic puzzles using the minimum possible character and byte count in Python, C++, or JavaScript.",
-    rules: [
-      "Individual participation only. No internet browsing or external communication allowed during competition.",
-      "Permitted languages: Python 3, C++, JavaScript (Node.js), or Rust.",
-      "Scoring formula considers both test cases passed (correctness) and source code character/byte count (conciseness).",
-      "Standard test harness runs in sandboxed terminal environments with strict CPU time limits (1.0s) and memory caps.",
-    ],
-    rounds: [
-      {
-        name: "Round 1: Rapid Algorithmic Qualifier",
-        time: "02:30 PM — 03:30 PM",
-        description: "5 classic algorithms (dynamic programming, graphs, math logic) under strict time pressure.",
-      },
-      {
-        name: "Round 2: Extreme Code Golf Crucible",
-        time: "04:00 PM — 05:00 PM",
-        description: "Top 12 finalists compete on obfuscated mini-problems where every byte counts.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Correctness & Hidden Testcases", weight: "50%" },
-      { name: "Code Minification & Byte Count", weight: "35%" },
-      { name: "Submission Speed Bonus", weight: "15%" },
-    ],
-    coordinators: [
-      {
-        name: "Priya Thakur",
-        role: "Student Coordinator",
-        phone: "+91 94180 55443",
-        email: "priya.thakur@hptu.ac.in",
-        whatsapp: "https://wa.me/919418055443",
-      },
-    ],
-  },
-  {
-    id: "ctf-crucible",
-    title: "WEB3 & CTF SECURITY CRUCIBLE",
-    tagline: "Offensive Security, Binary Exploitation & Smart Contract Auditing",
-    category: "coding",
-    categoryName: "CODING & AI",
-    badge: "CYBERSECURITY",
-    format: "Team (1 - 3 Members)",
-    teamSize: "1 - 3 Members",
-    minTeam: 1,
-    maxTeam: 3,
-    entryFee: "₹300 / Team",
-    entryFeeNum: 300,
-    prizePool: "₹25,000 CASH + BADGES",
-    prizeBreakdown: {
-      first: "₹14,000 Cash + Gold Hacker Badge",
-      second: "₹7,500 Cash + Silver Hacker Badge",
-      third: "₹3,500 Cash",
-    },
-    date: "27 MARCH 2026",
-    time: "11:00 AM — 04:00 PM",
-    venue: "Seminar Hall B & Cybersecurity Lab",
-    status: "REGISTRATION OPEN",
-    overview:
-      "A Jeopardy-style Capture the Flag competition pitting cybersecurity enthusiasts against realistic attack vectors, cryptographic challenges, reverse engineering puzzles, web vulnerabilities, and Solidity smart contract reentrancy hacks.",
-    rules: [
-      "Teams can comprise 1 to 3 members. Bring your own laptops configured with Kali Linux or preferred pentesting tools.",
-      "Attacking the competition scoring server, DoS/DDoS attacks, or sharing flags with rival teams will result in an immediate permanent ban.",
-      "All flags follow the standard format: CHAITANYA{flag_string_here}.",
-      "Hint penalties apply dynamically depending on challenge tier.",
-    ],
-    rounds: [
-      {
-        name: "Jeopardy Phase: 5 Domain Tracks",
-        time: "11:00 AM — 03:00 PM",
-        description: "Concurrent categories: Web Exploitation, Cryptography, Reverse Engineering, Forensics, and Web3 Smart Contracts.",
-      },
-      {
-        name: "King of the Hill Sprint",
-        time: "03:15 PM — 04:00 PM",
-        description: "Top 5 teams battle to capture and defend a vulnerable simulated university server box.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Total Flag Points Accumulated", weight: "70%" },
-      { name: "Time to First Blood (Bonus)", weight: "20%" },
-      { name: "Exploit Methodology Writeup", weight: "10%" },
-    ],
-    coordinators: [
-      {
-        name: "Rohan Verma",
-        role: "Security Lead",
-        phone: "+91 98162 11223",
-        email: "rohan.v@hptu.ac.in",
-        whatsapp: "https://wa.me/919816211223",
-      },
-    ],
-  },
+    coordinators: heads("Rohit", "Gourav", "Sourav"),
+  }),
+  event({
+    id: "prompt-engineering",
+    registrationType: "solo",
+    title: "PROMPT ENGINEERING",
+    tagline: "Get the best out of AI with the right prompt",
+    category: "tech",
+    time: "3 hrs (date to be announced)",
+    overview: "A 3-hour challenge where participants craft prompts to get AI tools to solve the given tasks as accurately as possible.",
+    coordinators: heads("Karan"),
+  }),
+  event({
+    id: "ui-ux-designathon",
+    registrationType: "both", maxTeam: 2, startsAt: "2026-11-01T14:00:00+05:30", endsAt: "2026-11-01T17:00:00+05:30",
+    title: "UI/UX DESIGNATHON",
+    tagline: "Design the interface, own the experience",
+    category: "tech",
+    date: "DAY 3",
+    time: "1 Nov, 2:00 PM – 5:00 PM (3 hrs)",
+    venue: "Room 108",
+    overview: "A design sprint to create user interfaces and experiences for a given problem statement. Details will be announced soon.",
+  }),
 
   // --------------------------------------------------------------------------
-  // 2. ROBOTICS & HARDWARE
+  // DESIGN & INNOVATION
   // --------------------------------------------------------------------------
-  {
-    id: "robowars-30kg",
-    title: "ROBOWARS: 30KG METAL CLASH",
-    tagline: "Heavyweight Battlebots Combat Inside Reinforced Steel Enclosure",
-    category: "robotics",
-    categoryName: "ROBOTICS & IOT",
-    badge: "HEAVY COMBAT",
-    format: "Team (2 - 5 Members)",
-    teamSize: "2 - 5 Members",
-    minTeam: 2,
-    maxTeam: 5,
-    entryFee: "₹500 / Team",
-    entryFeeNum: 500,
-    prizePool: "₹45,000 CASH + TROPHY",
-    prizeBreakdown: {
-      first: "₹25,000 Cash + Grand Champion Trophy",
-      second: "₹12,000 Cash + Runner Up Shield",
-      third: "₹8,000 Cash",
-    },
-    date: "26 MARCH 2026",
-    time: "03:00 PM — 07:00 PM",
-    venue: "Outdoor Central Combat Arena",
-    status: "REGISTRATION OPEN",
+  event({
+    id: "cadcraft",
+    registrationType: "solo", startsAt: "2026-10-30T13:00:00+05:30", endsAt: "2026-10-30T17:00:00+05:30",
+    title: "CADCRAFT",
+    tagline: "CAD modelling: model it, engineer it, nail the design",
+    category: "innovation",
+    date: "DAY 1",
+    time: "30 Oct, 1:00 PM – 5:00 PM (4 hrs)",
+    venue: "2 computer labs (rooms to be announced)",
+    overview: "A 4-hour CAD modelling competition: turn the given problem into a precise, well-engineered 3D design.",
+    coordinators: heads("Mahek", "Gargi"),
+  }),
+  event({
+    id: "cube-conquest",
+    registrationType: "solo", startsAt: "2026-10-31T09:00:00+05:30", endsAt: "2026-10-31T10:00:00+05:30",
+    title: "CUBE CONQUEST",
+    tagline: "Speedcubing: three rounds, one Mirror Cube final",
+    category: "innovation",
+    badge: "SPEED CUBING",
+    date: "DAY 2",
+    time: "31 Oct, 9:00 AM – 10:00 AM (1 hr)",
+    venue: "Open Air Theatre (OAT)",
     overview:
-      "The premier mechanical warfare spectacle of Himachal Pradesh! Custom-built remote-controlled combat robots clash inside a poly-carbonate and steel enclosed arena. Weapons allowed: vertical/horizontal spinners, high-pressure flippers, drums, and wedges.",
+      "A three-round speedcubing competition. Each round has two sub-rounds, and cubers advance round by round until the Mirror Cube final decides the winners. The organisers provide all competition puzzles, timers and scramble cards.",
     rules: [
-      "Maximum weight limit: 30.0 kg (5% tolerance allowed). Bots will be weighed and safety-inspected prior to bout.",
-      "Power source: DC batteries only (max 36V). Internal combustion engines, liquids, projectiles, and radio jammers strictly forbidden.",
-      "Matches last 3 minutes. Elimination by knockout (incapacitation for 10 seconds) or judge scorecards based on Damage, Aggression, and Control.",
-      "All bots must feature a fail-safe kill switch accessible from outside the chassis.",
+      "Each cuber gets 1 attempt per sub-round.",
+      "15 seconds of inspection before every solve: you may hold and turn the puzzle in your hands, but make no moves.",
+      "Scrambles are made by the organisers and are identical for all cubers in the same group.",
+      "The timer starts when you lift both hands off the cube/timer pad and stops when you place both hands back.",
+      "The puzzle must be fully solved (or fully in the required pattern) when the timer stops; any visible error is a DNF.",
+      "Ranking in each sub-round is by best single time.",
+      "Penalties: inspection over 15 s = +2 s; over 17 s = DNF; turning the cube during inspection = DNF.",
+      "Cheating, using an unauthorised puzzle or disrupting others leads to disqualification.",
+      "Organisers provide all competition puzzles; bring your own cube only if the judges approve it in advance.",
+      "No talking to or coaching a cuber while they are competing. Spectators stay behind the marked line.",
+      "The judges' decision is final.",
     ],
     rounds: [
-      {
-        name: "Technical Safety & Weigh-In Scrutiny",
-        time: "10:00 AM — 01:00 PM",
-        description: "Weapons test, radio failsafe validation, and arena mobility check.",
-      },
-      {
-        name: "Knockout Elimination Brackets",
-        time: "03:00 PM — 05:30 PM",
-        description: "1-on-1 battle rounds inside the heavy reinforced combat cage.",
-      },
-      {
-        name: "Grand Finale Clash",
-        time: "06:00 PM — 07:00 PM",
-        description: "Top contenders clash in final sudden-death combat bouts for the trophy.",
-      },
+      { name: "Round 1", time: "2x2 cube · Pyramid", description: "Opening round. Cubers who beat the time cutoff move to Round 2." },
+      { name: "Round 2", time: "3x3 cube · Pattern on 3x3", description: "Solve the Rubik's Cube, then create the announced pattern (e.g. a checkerboard) from a solved cube. Time cutoff decides who advances." },
+      { name: "Round 3 (Final)", time: "Mirror Cube", description: "Solved by shape, not colour. Finalists attempt the same scramble; the fastest valid time wins." },
     ],
-    judgingCriteria: [
-      { name: "Structural Damage Inflicted", weight: "40%" },
-      { name: "Aggression & Arena Ring Dominance", weight: "35%" },
-      { name: "Bot Control & Driver Strategy", weight: "25%" },
-    ],
-    coordinators: [
-      {
-        name: "Dr. Rajesh Sharma",
-        role: "Faculty Convener",
-        phone: "+91 94181 88990",
-        email: "rajesh.me@hptu.ac.in",
-        whatsapp: "https://wa.me/919418188990",
-      },
-      {
-        name: "Vikas Rana",
-        role: "Robotics Club Lead",
-        phone: "+91 98050 44556",
-        email: "vikas.rana@hptu.ac.in",
-        whatsapp: "https://wa.me/919805044556",
-      },
-    ],
-  },
-  {
-    id: "line-follower",
-    title: "AUTONOMOUS LINE FOLLOWER",
-    tagline: "PID Microcontroller Micro-Bots Tackling Speed Inversions & Mazes",
-    category: "robotics",
-    categoryName: "ROBOTICS & IOT",
-    badge: "AUTONOMOUS",
-    format: "Team (2 - 4 Members)",
-    teamSize: "2 - 4 Members",
-    minTeam: 2,
-    maxTeam: 4,
-    entryFee: "₹300 / Team",
-    entryFeeNum: 300,
-    prizePool: "₹20,000 CASH",
-    prizeBreakdown: {
-      first: "₹10,000 Cash + Trophy",
-      second: "₹6,000 Cash",
-      third: "₹4,000 Cash",
-    },
-    date: "27 MARCH 2026",
-    time: "10:30 AM — 01:30 PM",
-    venue: "Robotics Workshop Bay (Ground Floor)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "Engineers design and tune high-speed autonomous wheeled robots to navigate a challenging 30-meter track featuring acute 90-degree corners, loop-de-loops, inverted line crossings, and surprise dead-ends in minimal time.",
-    rules: [
-      "Maximum bot dimensions: 25cm x 25cm x 20cm. No manual intervention once the bot crosses the start threshold.",
-      "The track consists of 25mm black line on white surface and white line on black surface.",
-      "Microcontroller choice is open (Arduino, STM32, ESP32, Raspberry Pi Pico, Teensy).",
-      "Each team gets two official timed runs; the fastest clean run counts towards rankings.",
-    ],
-    rounds: [
-      {
-        name: "Track Calibration & Practice Run",
-        time: "10:30 AM — 11:30 AM",
-        description: "Teams tune IR array sensor thresholds and motor PWM coefficients.",
-      },
-      {
-        name: "Official Grand Prix Timed Runs",
-        time: "11:45 AM — 01:30 PM",
-        description: "Official laser-timed competition runs with live trackside leaderboards.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Clean Track Completion Time", weight: "70%" },
-      { name: "Smoothness & Zero Track Deviations", weight: "20%" },
-      { name: "Design Compactness & Elegance", weight: "10%" },
-    ],
-    coordinators: [
-      {
-        name: "Neha Sen",
-        role: "Student Coordinator",
-        phone: "+91 94182 33441",
-        email: "neha.sen@hptu.ac.in",
-        whatsapp: "https://wa.me/919418233441",
-      },
-    ],
-  },
-  {
-    id: "drone-gp",
-    title: "DRONE GRAND PRIX: FPV SKYRACER",
-    tagline: "High-Speed Obstacle Course Drone Racing With FPV Neon Gates",
-    category: "robotics",
-    categoryName: "ROBOTICS & IOT",
-    badge: "AEROMODELING",
-    format: "Solo / Duo",
-    teamSize: "1 - 2 Members",
-    minTeam: 1,
-    maxTeam: 2,
-    entryFee: "₹250 / Team",
-    entryFeeNum: 250,
-    prizePool: "₹30,000 CASH",
-    prizeBreakdown: {
-      first: "₹16,000 Cash + Ace Pilot Trophy",
-      second: "₹9,000 Cash",
-      third: "₹5,000 Cash",
-    },
-    date: "27 MARCH 2026",
-    time: "03:30 PM — 06:30 PM",
-    venue: "University Sports Arena (Illuminated Flight Zone)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "Pilots navigate custom FPV quadcopters through an illuminated obstacle track featuring illuminated air gates, hairpin vertical slalom towers, and speed tunnels inside the University Sports Arena.",
-    rules: [
-      "Quads must adhere to standard 3-inch or 5-inch prop class. Max battery cell count: 6S LiPo.",
-      "Video transmission: 5.8GHz analog or approved digital systems (DJI O3/Walksnail) on assigned race channels.",
-      "Pilots must wear FPV goggles and operate from the designated safety pilot box.",
-      "Safety nets enclose the entire racing perimeter. Propeller guards strongly recommended.",
-    ],
-    rounds: [
-      {
-        name: "Qualifying Time Trials (Hot Lap)",
-        time: "03:30 PM — 04:30 PM",
-        description: "Individual pilot 3-lap trials to seed the double elimination ladder.",
-      },
-      {
-        name: "4-Drone Heat Elimination Races",
-        time: "04:45 PM — 06:30 PM",
-        description: "Head-to-head supersonic 4-pack drone heats around the neon track.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Total Heat Race Position", weight: "80%" },
-      { name: "Fastest Single Lap Time Record", weight: "20%" },
-    ],
-    coordinators: [
-      {
-        name: "Abhishek Dhiman",
-        role: "Flight Coordinator",
-        phone: "+91 98051 77665",
-        email: "abhishek.d@hptu.ac.in",
-        whatsapp: "https://wa.me/919805177665",
-      },
-    ],
-  },
+    coordinators: heads("Sourav", "Ankita"),
+  }),
+  event({
+    id: "innovation-fair",
+    registrationType: "team", minTeam: 1, maxTeam: 4,
+    title: "INNOVATION FAIR",
+    tagline: "Project exhibition: showcase your projects and prototypes",
+    category: "innovation",
+    overview: "A project exhibition for student projects, prototypes and ideas. Display your work and present it to visitors and judges.",
+    coordinators: heads("Ankush", "Divyanshi"),
+  }),
 
   // --------------------------------------------------------------------------
-  // 3. ESPORTS & GAMING
+  // BUSINESS & DEBATE
   // --------------------------------------------------------------------------
-  {
-    id: "bgmi-champ",
-    title: "BGMI CAMPUS CHAMPIONSHIP",
-    tagline: "4-Man Tactical Squad Battle Royale on Erangel & Miramar",
+  event({
+    id: "pitch-sansad",
+    registrationType: "team", minTeam: 1, maxTeam: 4, startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
+    title: "PITCH SANSAD",
+    tagline: "Pitch competition: present your startup idea to the house",
+    category: "business",
+    date: "DAY 3",
+    time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",
+    venue: "Conference Hall & labs",
+    overview: "A startup pitch competition. Present your idea, defend it under questioning and convince the panel.",
+  }),
+  event({
+    id: "marketmind",
+    registrationType: "team", minTeam: 1, maxTeam: 3,
+    title: "MARKETMIND: THE PRODUCT CASE CHALLENGE",
+    tagline: "Product management & case studies: crack the case, present the strategy",
+    category: "business",
+    time: "2 hrs (date to be announced)",
+    venue: "Conference Hall",
+    overview: "A 2-hour product management and business case challenge. Analyse the case, build a strategy and present your solution.",
+  }),
+  event({
+    id: "model-lok-sabha",
+    registrationType: "both", maxTeam: 2, startsAt: "2026-10-31T14:00:00+05:30", endsAt: "2026-10-31T17:00:00+05:30",
+    title: "MODEL LOK SABHA",
+    tagline: "Indian Parliamentary MUN: debate, legislate and represent",
+    category: "business",
+    badge: "PARLIAMENTARY MUN",
+    date: "DAY 2",
+    time: "31 Oct, 2:00 PM – 5:00 PM (3 hrs)",
+    venue: "Open Air Theatre (OAT)",
+    prizePool: "Best Delegate · High Commendation · Special Mention · certificates for all delegates",
+    overview:
+      "Lok Sabha (House of the People) in an Indian Parliamentary MUN format. Delegates represent sitting MPs and follow Lok Sabha procedure. Agenda: The Public Examinations (Prevention of Unfair Means) Legislation: the crisis of paper leaks and cheating in national and state exams such as NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register individually or as a double delegation; MP portfolios are allotted by the secretariat.",
+    rules: [
+      "Address the Chair as \"Hon'ble Speaker\" or \"Mr./Madam Speaker\" and other members as \"Hon'ble Member\" or \"Hon'ble Minister\". All speeches go through the Chair.",
+      "Stand while speaking; stay seated while the Chair or another member speaks, unless raising a point.",
+      "Unparliamentary language is prohibited: personal attacks, abusive, communal, casteist, sexist or derogatory remarks, or disrespect to any religion, community, region or language.",
+      "Dress code: formal Indian or Western attire (Indian formals encouraged). Keep your portfolio placard visible; no party symbols, slogans or campaign material.",
+      "Standard speaking time is 60 seconds; repeated overruns may be penalised.",
+      "Points of Order, Information, Personal Privilege and Parliamentary Inquiry, and procedural motions, follow the rulebook. Procedural motions pass by simple majority.",
+      "Bills and resolutions must be typed, original and approved by the Secretariat before being introduced. Amendments need a proposer and a seconder.",
+      "Communication in the House is by chits through the Marshals; lobbying only during breaks or when the House is suspended.",
+      "Prohibited: plagiarism, fabricated facts or documents, unapproved pre-written bills, pre-formed unofficial blocs, and impersonating another delegate.",
+      "In situations not covered by the rulebook, the Chair's discretion, guided by Lok Sabha practice, prevails.",
+    ],
+    rounds: [
+      { name: "Order of business", time: "Each sitting", description: "Roll call & quorum → agenda & General Speakers' List → open debate → calling attention motions & special mentions → bills & resolutions → adjournment." },
+      { name: "Legislative procedure", time: "Bills", description: "First reading (introduction, no debate) → second reading (debate and clause-by-clause amendments) → third reading (final debate and vote)." },
+    ],
+    judgingCriteria: [
+      { name: "Content & Research", weight: "20" },
+      { name: "Oratory & Delivery", weight: "20" },
+      { name: "Rules of Procedure", weight: "15" },
+      { name: "Diplomacy & Decorum", weight: "15" },
+      { name: "Debate & questions asked", weight: "15" },
+      { name: "Document / Bill contribution", weight: "10" },
+      { name: "Consistency & participation", weight: "5" },
+    ],
+    coordinators: heads("Soummya Jamwal", "Ankush"),
+  }),
+
+  // --------------------------------------------------------------------------
+  // ESPORTS
+  // --------------------------------------------------------------------------
+  event({
+    id: "esports-cs2",
+    registrationType: "team", minTeam: 5, maxTeam: 6,
+    title: "ESPORTS: COUNTER-STRIKE 2",
+    tagline: "Tactical 5v5 on campus",
     category: "esports",
-    categoryName: "ESPORTS & GAMING",
+    overview: "A Counter-Strike 2 tournament. Format and schedule will be announced soon.",
+    coordinators: heads("Rhythm Rangra"),
+  }),
+  event({
+    id: "esports-bgmi",
+    registrationType: "team", minTeam: 4, maxTeam: 4, allDay: ["2026-10-30", "2026-10-31"],
+    title: "ESPORTS: BGMI",
+    tagline: "Battle royale squads: play smart, fight together, win together",
+    category: "esports",
     badge: "BATTLE ROYALE",
-    format: "Squad (4 Players)",
-    teamSize: "4 Players",
-    minTeam: 4,
-    maxTeam: 4,
-    entryFee: "₹400 / Squad",
-    entryFeeNum: 400,
-    prizePool: "₹35,000 CASH",
-    prizeBreakdown: {
-      first: "₹18,000 Cash + Champion Medals",
-      second: "₹10,000 Cash",
-      third: "₹5,000 Cash",
-      mvp: "₹2,000 Cash + MVP Trophy",
-    },
-    date: "26 MARCH 2026",
-    time: "01:00 PM — 06:00 PM",
-    venue: "E-Sports Lounge & Live Broadcast Arena",
-    status: "REGISTRATION OPEN",
+    date: "DAY 1 – 2",
+    time: "30 & 31 Oct, 12:00 PM – 4:00 PM each day",
     overview:
-      "The ultimate Battlegrounds Mobile India squad showdown. 24 collegiate squads battle across custom tournament rooms on dedicated high-speed low-ping fibre connections, projected on the main auditorium big screens with live caster commentary.",
+      "BGMI battle royale tournament (latest game version) for 4-player squads, on mobile devices only. Six matches per day across Rondo, Erangel and Miramar; earn placement and kill points for the highest overall score.",
     rules: [
-      "All squad members must be enrolled college students. Mobile devices only (tablets, iPads, emulators, or triggers strictly banned).",
-      "Official BGIS tournament scoring system (10 pts for Chicken Dinner, 1 pt per kill).",
-      "Matches played on custom HPTU tournament rooms. Screen recordings must be submitted on dispute.",
-      "Third-party crosshair tools, GFX modifiers, or teaming will result in immediate disqualification.",
+      "Squads of exactly 4 players. Mobile devices only; emulators and PC clients are not allowed.",
+      "Use your own BGMI account (no guest accounts) and the in-game name submitted at registration. Only registered players may play.",
+      "Charge your device fully and make sure you have a stable internet connection before every match.",
+      "Carry the event or university ID if organisers ask for it.",
+      "Voice chat only within your registered team. Abusive, threatening or toxic behaviour is not allowed.",
+      "Take a screenshot after every match showing the result/placement; the captain submits it to the organisers within the announced time.",
+      "Prohibited: hacks, cheats, mods, scripts, exploits, unauthorised third-party tools, account sharing, teaming with other squads, abusing glitches, and falsifying screenshots or results. Any of these can lead to disqualification.",
+      "A player who disconnects is treated as eliminated unless organisers announce a technical ruling. Report genuine technical issues to the referee immediately.",
+      "Organisers and referees have final authority on match conduct, disputes, scoring and discipline.",
     ],
     rounds: [
-      {
-        name: "Group Stage Knockouts (4 Matches)",
-        time: "01:00 PM — 03:30 PM",
-        description: "24 squads divided into 2 groups (Erangel + Miramar) to determine top 16.",
-      },
-      {
-        name: "Grand Finals: The Last Circle (4 Matches)",
-        time: "04:00 PM — 06:00 PM",
-        description: "Top 16 squads battle across Erangel, Miramar, and Sanhok for the championship.",
-      },
+      { name: "Qualifiers", time: "If more than 16 teams", description: "Teams are split into groups; qualifying teams advance on the announced criteria." },
+      { name: "Day 1 (30 Oct)", time: "6 matches", description: "Map rotation: 1 Rondo, 3 Erangel, 2 Miramar." },
+      { name: "Day 2 (31 Oct)", time: "6 matches", description: "Same map rotation, with the Smash Rule applied as announced by the organisers." },
     ],
     judgingCriteria: [
-      { name: "Total Placement Points", weight: "50%" },
-      { name: "Kill / Elimination Points", weight: "50%" },
+      { name: "Kill", weight: "1 pt each" },
+      { name: "1st place (Chicken Dinner)", weight: "10" },
+      { name: "2nd", weight: "6" },
+      { name: "3rd", weight: "5" },
+      { name: "4th", weight: "4" },
+      { name: "5th", weight: "3" },
+      { name: "6th", weight: "2" },
+      { name: "7th–8th", weight: "1" },
+      { name: "Below 8th", weight: "0 (kills still count)" },
     ],
-    coordinators: [
-      {
-        name: "Karan Singh",
-        role: "Esports Head",
-        phone: "+91 98165 99882",
-        email: "karan.esports@hptu.ac.in",
-        whatsapp: "https://wa.me/919816599882",
-      },
-    ],
-  },
-  {
-    id: "valorant-5v5",
-    title: "VALORANT 5V5 CAMPUS WARFARE",
-    tagline: "Double-Elimination LAN Tournament on 240Hz High-Refresh Rigs",
+    coordinators: heads("Praveen", "Anurag"),
+  }),
+  event({
+    id: "esports-free-fire",
+    registrationType: "team", minTeam: 4, maxTeam: 5, startsAt: "2026-11-01T11:00:00+05:30", endsAt: "2026-11-01T15:00:00+05:30",
+    title: "ESPORTS: FREE FIRE",
+    tagline: "Fast-paced battle royale",
     category: "esports",
-    categoryName: "ESPORTS & GAMING",
-    badge: "TACTICAL FPS",
-    format: "Team (5 Players + 1 Sub)",
-    teamSize: "5 - 6 Players",
-    minTeam: 5,
-    maxTeam: 6,
-    entryFee: "₹500 / Team",
-    entryFeeNum: 500,
-    prizePool: "₹35,000 CASH",
-    prizeBreakdown: {
-      first: "₹20,000 Cash + Trophy & Badges",
-      second: "₹10,000 Cash",
-      third: "₹5,000 Cash",
-    },
-    date: "27 MARCH 2026",
-    time: "01:00 PM — 07:00 PM",
-    venue: "Multimedia Hall A (Esports LAN Rig Zone)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "Tactical 5v5 FPS combat on custom Riot tournament server builds. Teams execute site retakes, line up utility flashes, and clutch high-stakes defusal rounds in double-elimination brackets with live casting.",
-    rules: [
-      "Standard competitive tournament rules. 5 players per team (1 optional substitute).",
-      "Map veto system: Ascent, Haven, Bind, Split, Sunset, Lotus, Icebox.",
-      "Quarterfinals and Semifinals: Best of 1 (BO1). Grand Finale: Best of 3 (BO3).",
-      "Players may bring their own mice, mechanical keyboards, mousepads, and headsets.",
-    ],
-    rounds: [
-      {
-        name: "Upper & Lower Bracket Elimination",
-        time: "01:00 PM — 04:30 PM",
-        description: "Double elimination BO1 matches with map pick and bans.",
-      },
-      {
-        name: "Grand Finale (Best of 3)",
-        time: "05:00 PM — 07:00 PM",
-        description: "Showcase finals played live before the auditorium audience.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Official Match Scoreboard", weight: "100%" },
-    ],
-    coordinators: [
-      {
-        name: "Sahil Jaswal",
-        role: "Tournament Director",
-        phone: "+91 94183 22110",
-        email: "sahil.val@hptu.ac.in",
-        whatsapp: "https://wa.me/919418322110",
-      },
-    ],
-  },
+    date: "DAY 3",
+    time: "1 Nov, 11:00 AM – 3:00 PM (4 hrs)",
+    overview: "A Free Fire tournament. Squad format and match schedule will be announced soon.",
+    coordinators: heads("Dhruv Rangra", "Ankush"),
+  }),
 
   // --------------------------------------------------------------------------
-  // 4. WORKSHOPS & TALKS
+  // CULTURAL & FUN
   // --------------------------------------------------------------------------
-  {
-    id: "genai-workshop",
-    title: "GENAI & AUTONOMOUS AGENTS MASTERCLASS",
-    tagline: "Hands-on Workshop: Building Autonomous LLM Agents & Multi-Agent Swarms",
-    category: "workshops",
-    categoryName: "WORKSHOPS & TALKS",
-    badge: "HANDS-ON LAB",
-    format: "Individual / Open to All",
-    teamSize: "Solo / Open",
-    minTeam: 1,
-    maxTeam: 1,
-    entryFee: "FREE",
-    entryFeeNum: 0,
-    prizePool: "CERTIFICATES + SWAG KIT",
-    prizeBreakdown: {
-      first: "Verified Certificate of Completion + HPTU AI Swag Bag + API Credits",
-    },
-    date: "26 MARCH 2026",
-    time: "11:30 AM — 02:00 PM",
-    venue: "Auditorium 1 (Main Hall)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "A hands-on intensive masterclass conducted by leading AI researchers and senior engineering leads. Attendees learn the architectural fundamentals of function-calling, autonomous reasoning loops (ReAct), multi-agent swarms, RAG pipelines, and local open-weight model deployment.",
-    rules: [
-      "Open to all registered attendees of Chaitanya 2k26 with zero entry fee.",
-      "Bring your own laptop with Python 3.10+ installed or a modern web browser for cloud notebook access.",
-      "Complimentary cloud GPU compute credits provided to all registered participants.",
-      "Digital certificates will be issued to all students who complete the hands-on lab exercise.",
-    ],
-    rounds: [
-      {
-        name: "Module 1: Agentic Reasoning & Tool Calling",
-        time: "11:30 AM — 12:30 PM",
-        description: "Understanding autonomous loops, structured outputs, and memory persistence.",
-      },
-      {
-        name: "Module 2: Live Multi-Agent Swarm Coding",
-        time: "12:45 PM — 02:00 PM",
-        description: "Build an autonomous code-review and debugging multi-agent workflow from scratch.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Workshop Attendance & Lab Exercise Submission", weight: "100%" },
-    ],
-    coordinators: [
-      {
-        name: "Dr. Sunita Rana",
-        role: "Faculty Incharge",
-        phone: "+91 94180 11998",
-        email: "sunita.cse@hptu.ac.in",
-        whatsapp: "https://wa.me/919418011998",
-      },
-    ],
-  },
-  {
-    id: "webxr-keynote",
-    title: "FUTURE OF SPATIAL COMPUTING & 3D WEB",
-    tagline: "Keynote & Interactive Showcase: WebGL, Three.js & Apple Vision Pro",
-    category: "workshops",
-    categoryName: "WORKSHOPS & TALKS",
-    badge: "KEYNOTE & DEMO",
-    format: "Individual / Open to All",
-    teamSize: "Solo / Open",
-    minTeam: 1,
-    maxTeam: 1,
-    entryFee: "FREE",
-    entryFeeNum: 0,
-    prizePool: "SWAG + MENTORSHIP",
-    prizeBreakdown: {
-      first: "Direct 1-on-1 Studio Mentorship Session + XR Developer Swag",
-    },
-    date: "27 MARCH 2026",
-    time: "02:00 PM — 04:00 PM",
-    venue: "Auditorium 2 (Media Centre)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "Explore the frontiers of interactive web graphics and spatial computing. Industry creative technologists reveal how to build award-winning 60fps WebGL shaders, real-time physics simulations, and WebXR experiences optimized for spatial headsets.",
-    rules: [
-      "Open to all attendees. Pre-registration recommended as seats in Auditorium 2 are limited to 250 capacity.",
-      "Interactive VR/AR demo booth available in the foyer following the keynote presentation.",
-    ],
-    rounds: [
-      {
-        name: "Keynote Presentation & Case Studies",
-        time: "02:00 PM — 03:15 PM",
-        description: "Demystifying shader math, lighting, Draco compression, and WebXR APIs.",
-      },
-      {
-        name: "Interactive Hardware Demo & Audience Q&A",
-        time: "03:15 PM — 04:00 PM",
-        description: "Hands-on demo stations with VR/AR headsets and portfolio review.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Active Participation & Q&A Engagement", weight: "100%" },
-    ],
-    coordinators: [
-      {
-        name: "Er. Deepak Gautam",
-        role: "Tech Talk Coordinator",
-        phone: "+91 98166 77889",
-        email: "deepak.gautam@hptu.ac.in",
-        whatsapp: "https://wa.me/919816677889",
-      },
-    ],
-  },
-
-  // --------------------------------------------------------------------------
-  // 5. CULTURAL & ARTS
-  // --------------------------------------------------------------------------
-  {
-    id: "battle-bands",
-    title: "BATTLE OF THE BANDS: ROCK & FUSION",
-    tagline: "Live Musical Showdown Featuring Rock, Fusion & Indie Bands Under Open Sky",
+  event({
+    id: "nerd-wars",
+    registrationType: "team", minTeam: 2, maxTeam: 3, startsAt: "2026-10-31T11:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
+    title: "NERD WARS",
+    tagline: "The quiz: trivia, puzzles and pure nerd power",
     category: "cultural",
-    categoryName: "CULTURAL & ARTS",
-    badge: "LIVE MUSIC",
-    format: "Band (3 - 8 Members)",
-    teamSize: "3 - 8 Members",
-    minTeam: 3,
-    maxTeam: 8,
-    entryFee: "₹500 / Band",
-    entryFeeNum: 500,
-    prizePool: "₹40,000 CASH + STUDIO RECORDING",
-    prizeBreakdown: {
-      first: "₹25,000 Cash + Professional Single Studio Recording Session",
-      second: "₹10,000 Cash + Memento",
-      third: "₹5,000 Cash",
-    },
-    date: "26 MARCH 2026",
-    time: "06:30 PM — 10:00 PM",
-    venue: "Open Air Theatre (OAT - Main Stage)",
-    status: "REGISTRATION OPEN",
-    overview:
-      "Electric guitars, thunderous drums, soul-stirring vocals, and original musical compositions. College bands from across Northern India take the main festival stage to compete for the crown of Battle of the Bands Champion.",
-    rules: [
-      "Bands can have between 3 to 8 members. Time limit: 15 minutes (including 3 minutes stage setup & sound check).",
-      "At least one original composition is strongly encouraged alongside covers.",
-      "Standard 5-piece drum kit, bass amplifiers, guitar amplifiers, and monitor wedges provided on stage.",
-      "Bands must bring their own guitars, bass, keyboards, effect pedals, and drumsticks.",
-    ],
-    rounds: [
-      {
-        name: "Stage Sound Check & Acoustic Balancing",
-        time: "04:30 PM — 06:00 PM",
-        description: "Official sound engineers dial in audio levels and instrument balancing.",
-      },
-      {
-        name: "Main Stage Competition Performances",
-        time: "06:30 PM — 10:00 PM",
-        description: "Live open-air high-voltage performances judged by renowned indie artists.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Musicality & Tightness of Composition", weight: "35%" },
-      { name: "Vocal Dynamics & Technical Skill", weight: "25%" },
-      { name: "Stage Presence & Crowd Energy", weight: "25%" },
-      { name: "Originality & Arrangement", weight: "15%" },
-    ],
-    coordinators: [
-      {
-        name: "Prof. Arvind Dogra",
-        role: "Cultural Secretary",
-        phone: "+91 94184 66778",
-        email: "arvind.cultural@hptu.ac.in",
-        whatsapp: "https://wa.me/919418466778",
-      },
-      {
-        name: "Simran Kapoor",
-        role: "Band President",
-        phone: "+91 98055 11990",
-        email: "simran.music@hptu.ac.in",
-        whatsapp: "https://wa.me/919805511990",
-      },
-    ],
-  },
-  {
-    id: "nukkad-natak",
-    title: "NUKKAD NATAK: STREET PLAY SHOWCASE",
-    tagline: "Rhythmic Theatrical Performances Sparking Social Awareness & Thought",
+    date: "DAY 2",
+    time: "31 Oct, 11:00 AM – 1:00 PM (2 hrs)",
+    venue: "Open Air Theatre (OAT)",
+    overview: "The Chaitanya 2k26 quiz: a battle of wits for the biggest nerds on campus. Format will be announced soon.",
+    coordinators: heads("Shabnam Minhas", "Anshita", "Sourav"),
+  }),
+  event({
+    id: "treasure-hunt",
+    registrationType: "team", minTeam: 3, maxTeam: 4, startsAt: "2026-10-30T11:00:00+05:30", endsAt: "2026-10-30T14:00:00+05:30",
+    title: "TREASURE HUNT",
+    tagline: "Follow the clues across campus",
     category: "cultural",
-    categoryName: "CULTURAL & ARTS",
-    badge: "THEATRE",
-    format: "Team (8 - 20 Members)",
-    teamSize: "8 - 20 Members",
-    minTeam: 8,
-    maxTeam: 20,
-    entryFee: "FREE",
-    entryFeeNum: 0,
-    prizePool: "₹25,000 CASH",
-    prizeBreakdown: {
-      first: "₹15,000 Cash + Natak Ratna Trophy",
-      second: "₹7,000 Cash",
-      third: "₹3,000 Cash",
-    },
-    date: "27 MARCH 2026",
-    time: "05:00 PM — 07:30 PM",
-    venue: "Central University Courtyard",
-    status: "REGISTRATION OPEN",
-    overview:
-      "A powerful cultural celebration where theater troupes utilize powerful acoustics, dafli beats, choral chants, and physical theatre in the circular courtyard to deliver hard-hitting messages on social transformation.",
-    rules: [
-      "Team size: 8 to 20 actors. Time limit: 20 minutes maximum (bell at 18 minutes; negative marking for exceeding time).",
-      "Live acoustic instruments allowed: dafli, dholak, harmonium, flute, cymbals. No pre-recorded tracks or electronic amplification.",
-      "Plain clothes/kurtas with duppattas/scratches allowed. No elaborate backdrops or heavy stage props.",
-      "Vulgarity, direct political campaign slogans, or religious disrespect will result in immediate disqualification.",
-    ],
-    rounds: [
-      {
-        name: "Street Play Performances",
-        time: "05:00 PM — 07:30 PM",
-        description: "Back-to-back troupe showcases in the circular amphitheatre courtyard.",
-      },
-    ],
-    judgingCriteria: [
-      { name: "Message Clarity & Social Impact", weight: "35%" },
-      { name: "Voice Projection, Chants & Rhythmic Harmony", weight: "30%" },
-      { name: "Formation, Movement & Acting Delivery", weight: "25%" },
-      { name: "Script Originality & Time Discipline", weight: "10%" },
-    ],
-    coordinators: [
-      {
-        name: "Pooja Sharma",
-        role: "Theatre Society Lead",
-        phone: "+91 94185 88223",
-        email: "pooja.dramatics@hptu.ac.in",
-        whatsapp: "https://wa.me/919418588223",
-      },
-    ],
-  },
+    date: "DAY 1",
+    time: "30 Oct, 11:00 AM – 2:00 PM (3 hrs)",
+    overview: "A 3-hour campus-wide treasure hunt. Decode the clues, race between checkpoints and find the treasure first.",
+    coordinators: heads("Mahek", "Gargi", "Aparna Sharma"),
+  }),
+  event({
+    id: "capture-the-moment",
+    registrationType: "solo",
+    title: "CAPTURE THE MOMENT",
+    tagline: "Photography: tell the fest's story in a frame",
+    category: "cultural",
+    date: "DAY 1 – 3",
+    time: "Runs through the fest · final submission 4:00 PM",
+    venue: "Ground floor",
+    overview: "A photography competition running through the fest. Capture the best moments of Chaitanya 2k26 and submit your entries by the 4:00 PM final submission deadline.",
+    coordinators: heads("Dhruv Rangra", "Kartik"),
+  }),
+  event({
+    id: "cultural-walk",
+    registrationType: "both", maxTeam: 10,
+    title: "CULTURAL WALK",
+    tagline: "A walk through the cultures of India",
+    category: "cultural",
+    overview: "A cultural parade celebrating traditions, attire and heritage. Details will be announced soon.",
+    coordinators: heads("Ankita Thakur", "Dhruv", "Gargi"),
+  }),
+  event({
+    id: "dance-competition",
+    registrationType: "both", maxTeam: 12,
+    title: "DANCE COMPETITION",
+    tagline: "Own the stage",
+    category: "cultural",
+    overview: "Solo and group dance performances. Categories and rules will be announced soon.",
+    coordinators: heads("Ankita Thakur", "Gargi"),
+  }),
 ];
-
 export function getEventCatalog() {
   return EVENTS_DATA;
 }
@@ -767,6 +447,60 @@ export function getCategories() {
   return EVENT_CATEGORIES;
 }
 
+export function isPastDeadline(ev, now = Date.now()) {
+  return Boolean(ev?.deadline && now > Date.parse(ev.deadline));
+}
+
+export function isRegistrationOpen(ev) {
+  return Boolean(ev && ev.registrationOpen && !isPastDeadline(ev));
+}
+
+export function formatDeadline(ev) {
+  if (!ev?.deadline) return "To be notified";
+  return new Date(ev.deadline).toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
+}
+
+export function feeLabel(ev) {
+  if (!ev) return "";
+  if (!ev.registrationOpen && !ev.entryFeeNum) return ev.entryFee || "To be notified";
+  if (!ev.entryFeeNum) return "Free";
+  return `₹${ev.entryFeeNum}${ev.registrationType === "solo" ? "" : " per entry"}`;
+}
+
+/**
+ * Google Calendar "add event" link, or null when the time isn't known yet.
+ */
+export function googleCalendarLink(ev) {
+  if (!ev) return null;
+  const fmt = (iso) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  let dates = null;
+  if (ev.startsAt && ev.endsAt) {
+    dates = `${fmt(ev.startsAt)}/${fmt(ev.endsAt)}`;
+  } else if (Array.isArray(ev.allDay)) {
+    const [start, end] = ev.allDay;
+    const endDate = new Date(`${end}T00:00:00Z`);
+    endDate.setUTCDate(endDate.getUTCDate() + 1); // end date is exclusive
+    dates = `${start.replace(/-/g, "")}/${endDate.toISOString().slice(0, 10).replace(/-/g, "")}`;
+  }
+  if (!dates) return null;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${ev.title} — Chaitanya 2k26`,
+    dates,
+    details: `${ev.tagline}\n\n${ev.time}\nhttps://chaitanya2k26.hptu.ac.in/events`,
+    location: `${ev.venue !== "To be notified" ? ev.venue + ", " : ""}HPTU Hamirpur, Himachal Pradesh`,
+    ctz: "Asia/Kolkata",
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export function filterEvents(category = "all", searchQuery = "") {
   let list = EVENTS_DATA;
 
@@ -776,45 +510,12 @@ export function filterEvents(category = "all", searchQuery = "") {
 
   if (searchQuery && searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
-    list = list.filter((ev) => {
-      return (
-        ev.title.toLowerCase().includes(q) ||
-        ev.tagline.toLowerCase().includes(q) ||
-        ev.categoryName.toLowerCase().includes(q) ||
-        ev.venue.toLowerCase().includes(q) ||
-        ev.badge.toLowerCase().includes(q) ||
-        ev.format.toLowerCase().includes(q)
-      );
-    });
+    list = list.filter((ev) =>
+      [ev.title, ev.tagline, ev.categoryName, ev.venue, ev.badge, ev.format, ...(ev.coordinators || []).map((c) => c.name)]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q))
+    );
   }
 
   return list;
-}
-
-let eventsLoadedFromCache = false;
-
-export async function initCachedEvents() {
-  if (eventsLoadedFromCache || typeof window === "undefined") return;
-  try {
-    const res = await fetch("/api/events");
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.events) && data.events.length > 0) {
-        EVENTS_DATA.length = 0;
-        EVENTS_DATA.push(...data.events);
-        if (Array.isArray(data.categories) && data.categories.length > 0) {
-          EVENT_CATEGORIES.length = 0;
-          EVENT_CATEGORIES.push(...data.categories);
-        }
-        eventsLoadedFromCache = true;
-      }
-    }
-  } catch (e) {
-    // Non-blocking fallback to static dataset
-  }
-}
-
-// Automatically prefetch in browser environment
-if (typeof window !== "undefined") {
-  initCachedEvents();
 }

@@ -20,11 +20,32 @@
       "FIREBASE_SCHEMA_MAPPING.md",
       "FIREBASE_SETUP.md",
       "README.md",
-      "package-lock.json"
+      "package-lock.json",
+      "redis_cache.py",
+      "scripts/**",
+      "scratch/**",
+      "*.pdf",
+      "*.sql",
+      "*.md",
+      "package.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "events_catalog.json",
+      "chaitainya-front-back/**",
+      ".agent/**",
+      ".gemini/**",
+      ".claude/**",
+      ".git/**",
+      ".firebase/**",
+      "**/*.exe",
+      "**/*.cmd",
+      "**/*.sh",
+      "netlify.toml",
+      "vercel.json"
     ],
     "rewrites": [
       {
-        "source": "**",
+        "regex": "^/[^.]*$",
         "destination": "/index.html"
       }
     ],
@@ -43,6 +64,18 @@
           {
             "key": "X-Content-Type-Options",
             "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
           }
         ]
       },
@@ -82,6 +115,24 @@
           {
             "key": "Access-Control-Allow-Origin",
             "value": "*"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|mjs|css|json|html)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "regex": "^/[^.]*$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
           }
         ]
       }

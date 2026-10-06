@@ -35,7 +35,7 @@ let a,
           meta: [
             {
               name: "description",
-              content: "Official Competitions & Showcase Portal for Chaitanya 2k26 (HPTU Hamirpur). 12 flagship arenas, ₹3,00,000+ prize pool, rules dossier, and UPI registration.",
+              content: "All 20 events of Chaitanya 2k26 at HPTU Hamirpur, 30 Oct – 1 Nov 2026: coding, design, business, esports and cultural events. Details, student heads and registration.",
             },
           ],
         });

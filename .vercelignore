@@ -1,0 +1,16 @@
+# Keep server-side/dev files out of static deployments
+.env
+.env.*
+server.py
+redis_cache.py
+scripts/
+scratch/
+__pycache__/
+*.pdf
+*.sql
+*.md
+firestore.rules
+firestore.indexes.json
+.agent/
+.gemini/
+.claude/
