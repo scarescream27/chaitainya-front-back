@@ -26,6 +26,16 @@
   --page-bg: url(/images/footerPatern.png), linear-gradient(0deg, var(--sky-bottom), var(--sky-top));
   --page-bg-size: 80px, auto;
 
+  /* Motion (motion audit): only these durations; ease-out on enter,
+     ease-in on exit. Exceptions: the one-time site loader and the footer's
+     shutter-glyph signature animation (documented in their files). */
+  --motion-100: 100ms;
+  --motion-150: 150ms;
+  --motion-200: 200ms;
+  --motion-300: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+
   /* Status */
   --ok: #005a3c;
   --ok-bg: #eafaf1;
@@ -82,4 +92,19 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Reduced motion, site-wide: every CSS transition and animation becomes
+   instant and smooth scrolling is off. Components may add scoped opacity-only
+   fades (≤150ms) on top. JS motion (GSAP smoother, cursor, mobile menu, the 3D
+   scene's ambient animation) checks the same query in code. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

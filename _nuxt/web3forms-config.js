@@ -7,7 +7,7 @@
  *
  * To use a live key:
  * 1. Visit https://web3forms.com/ and generate a free access key for chaitanyahptu@gmail.com
- * 2. Paste your access key below or save it via localStorage.setItem('chaitanya_web3forms_key', 'YOUR_KEY')
+ * 2. Paste your access key below
  */
 
 export const DEFAULT_WEB3FORMS_CONFIG = {
@@ -19,15 +19,11 @@ export const DEFAULT_WEB3FORMS_CONFIG = {
 };
 
 /**
- * Retrieve active Web3Forms Access Key (supporting runtime localStorage override)
+ * Retrieve active Web3Forms Access Key (window.__WEB3FORMS_KEY__ override for local testing)
  */
 export function getWeb3FormsKey() {
   if (typeof window !== "undefined") {
     if (window.__WEB3FORMS_KEY__) return window.__WEB3FORMS_KEY__;
-    try {
-      const saved = localStorage.getItem("chaitanya_web3forms_key");
-      if (saved && saved.trim()) return saved.trim();
-    } catch (e) {}
   }
   return DEFAULT_WEB3FORMS_CONFIG.accessKey;
 }
@@ -67,6 +63,7 @@ export async function submitToWeb3Forms(formData) {
         Accept: "application/json",
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
     });
 
     const result = await response.json();

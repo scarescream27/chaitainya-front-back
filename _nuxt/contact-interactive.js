@@ -106,7 +106,7 @@ export function initContactForm5Fields() {
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="team_name">
-        <input type="text" name="team_name" aria-label="Team name" placeholder="[TEAM NAME]" autocomplete="organization" spellcheck="false" />
+        <input type="text" name="team_name" aria-label="Team name" placeholder="[TEAM NAME (optional)]" autocomplete="organization" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="email">
@@ -388,15 +388,8 @@ export function initContactForm5Fields() {
         return;
       }
 
-      // Validation 2: Team Name
-      if (!teamVal || teamVal.length < 2) {
-        updateProgress(teamWrap, 0, "[ ERROR: ENTER TEAM NAME ]");
-        markInvalid(teamInput);
-        if (teamInput) teamInput.focus();
-        triggerRipple(teamWrap, true);
-        announce("Please enter your team name, at least 2 characters.");
-        return;
-      }
+      // Team Name is optional: general queries (parents, sponsors, solo
+      // participants) have no team.
 
       // Validation 3: Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
