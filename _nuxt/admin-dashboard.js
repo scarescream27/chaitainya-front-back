@@ -149,17 +149,17 @@ function renderGate(user) {
   box.innerHTML = user
     ? `
       <section class="prof-card adm-gate">
-        <span class="pp-kicker">[ 403 • ACCESS RESTRICTED ]</span>
+        <span class="pp-kicker">403 • ACCESS RESTRICTED</span>
         <h1 class="prof-title">Organisers only</h1>
         <p class="pp-hint">${e(user.email)} isn't a fest organiser account. Sign in with an organiser Google account to open the dashboard.</p>
         <div class="prof-actions"><a class="pp-primary" href="/profile" data-adm="nav" data-path="/profile">Go to my profile</a></div>
       </section>`
     : `
       <section class="prof-card adm-gate">
-        <span class="pp-kicker">[ CHAITANYA 2K26 • ADMIN ]</span>
+        <span class="pp-kicker">CHAITANYA 2K26 • ADMIN</span>
         <h1 class="prof-title">Fest Command Center</h1>
         <p class="pp-hint">Sign in with an authorised organiser Google account.</p>
-        <div class="prof-actions"><button type="button" class="pp-primary" data-adm="login">[ Sign in ]</button></div>
+        <div class="prof-actions"><button type="button" class="pp-primary" data-adm="login">Sign in</button></div>
       </section>`;
   refreshScroll();
 }
@@ -298,7 +298,7 @@ function renderShell() {
   box.innerHTML = `
     <div class="adm-top">
       <div>
-        <span class="pp-kicker">[ CHAITANYA 2K26 • ADMIN ]</span>
+        <span class="pp-kicker">CHAITANYA 2K26 • ADMIN</span>
         <h1 class="prof-title">Fest Command Center</h1>
         <p class="pp-hint">Signed in as ${e(user.email)}${state.loadedAt ? ` · data loaded ${e(state.loadedAt.toLocaleTimeString("en-IN", { timeStyle: "short" }))}` : ""}</p>
       </div>

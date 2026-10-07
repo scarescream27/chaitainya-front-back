@@ -113,7 +113,7 @@ export function initAuthModal() {
         <span class="corner corner-bl" aria-hidden="true">+</span>
         <span class="corner corner-br" aria-hidden="true">+</span>
         <div class="chaitanya-modal-topbar">
-          <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn">[ ESC / CLOSE ]</button>
+          <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn" aria-label="Close"><span class="d-only">ESC / CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
         </div>
         <div id="chaitanya-modal-body"></div>
       </div>
@@ -341,14 +341,14 @@ function renderLoginView(container, isConfigured) {
 
     <button type="button" class="btn-google-auth" id="btn-do-google-login">
       ${GOOGLE_ICON_SVG}
-      <span>[ Continue with Google ]</span>
+      <span>Continue with Google</span>
     </button>
 
     <div class="chaitanya-divider"><span>New here</span></div>
 
     <div class="chaitanya-modal-footer">
       Add your college details before you sign in.
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">[ Create account ]</button>
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-register">Create account</button>
     </div>
   `;
 
@@ -361,7 +361,7 @@ function renderLoginView(container, isConfigured) {
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {
       showAuthError(err.message || "Google sign-in didn't finish. Please try again.");
-      setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>[ Continue with Google ]</span>`);
+      setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>Continue with Google</span>`);
     }
   });
 
@@ -405,13 +405,13 @@ function renderRegisterView(container, isConfigured) {
 
       <button type="submit" class="btn-google-auth" id="btn-do-google-register">
         ${GOOGLE_ICON_SVG}
-        <span>[ Create account with Google ]</span>
+        <span>Create account with Google</span>
       </button>
     </form>
 
     <div class="chaitanya-modal-footer">
       Have an account?
-      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">[ Sign in ]</button>
+      <button type="button" class="chaitanya-link-btn" id="btn-switch-to-login">Sign in</button>
     </div>
   `;
 
@@ -433,7 +433,7 @@ function renderRegisterView(container, isConfigured) {
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {
       showAuthError(err.message || "Couldn't create your account. Please try again.");
-      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>[ Create account with Google ]</span>`);
+      setBusy(btn, false, `${GOOGLE_ICON_SVG}<span>Create account with Google</span>`);
     }
   });
 

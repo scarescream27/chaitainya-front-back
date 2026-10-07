@@ -35,7 +35,7 @@ function enhanceBubble(wrapper, labelText = "FIELD") {
   const hud = document.createElement("div");
   hud.className = "bubble-hud-badge";
   hud.id = `contact-hud-${wrapper.dataset.field || "field"}`;
-  hud.textContent = `[ ${labelText} ]`;
+  hud.textContent = `${labelText}`;
   wrapper.appendChild(hud);
 
   const inputEl = wrapper.querySelector("input, textarea");
@@ -102,23 +102,23 @@ export function initContactForm5Fields() {
   wrapper.innerHTML = `
     <form class="contact-chaitanya-form" onsubmit="return false;" novalidate>
       <div class="input-wrapper" data-field="name">
-        <input type="text" name="name" aria-label="Your name" placeholder="[YOUR NAME]" autocomplete="name" autocapitalize="words" spellcheck="false" />
+        <input type="text" name="name" aria-label="Your name" placeholder="YOUR NAME" autocomplete="name" autocapitalize="words" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="team_name">
-        <input type="text" name="team_name" aria-label="Team name" placeholder="[TEAM NAME (optional)]" autocomplete="organization" spellcheck="false" />
+        <input type="text" name="team_name" aria-label="Team name" placeholder="TEAM NAME (optional)" autocomplete="organization" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="email">
-        <input type="email" name="email" aria-label="Your email" placeholder="[YOUR EMAIL]" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" />
+        <input type="email" name="email" aria-label="Your email" placeholder="YOUR EMAIL" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="contact_no">
-        <input type="tel" name="contact_no" aria-label="Contact number" placeholder="[CONTACT NO]" autocomplete="tel" inputmode="tel" spellcheck="false" />
+        <input type="tel" name="contact_no" aria-label="Contact number" placeholder="CONTACT NO" autocomplete="tel" inputmode="tel" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper input-wrapper-text" data-field="query">
-        <textarea name="query" aria-label="Your query" placeholder="[YOUR QUERY]" rows="1" autocomplete="off" spellcheck="false"></textarea>
+        <textarea name="query" aria-label="Your query" placeholder="YOUR QUERY" rows="1" autocomplete="off" spellcheck="false"></textarea>
         <div class="outline"></div>
       </div>
       <div class="input-wrapper send" data-field="send" role="button" tabindex="0" aria-label="Send message">
@@ -186,7 +186,7 @@ export function initContactForm5Fields() {
       updateProgress(
         nameWrap,
         pct,
-        valid ? `[ ${val.length} CHARS • NAME VERIFIED ✓ ]` : `[ ${val.length}/2 CHARS • TYPE NAME ]`,
+        valid ? `${val.length} CHARS • NAME VERIFIED ✓` : `${val.length}/2 CHARS • TYPE NAME`,
         valid
       );
       triggerRipple(nameWrap);
@@ -210,7 +210,7 @@ export function initContactForm5Fields() {
       updateProgress(
         teamWrap,
         pct,
-        valid ? `[ ${val.length} CHARS • TEAM READY ✓ ]` : `[ ${val.length}/2 CHARS • TYPE TEAM ]`,
+        valid ? `${val.length} CHARS • TEAM READY ✓` : `${val.length}/2 CHARS • TYPE TEAM`,
         valid
       );
       triggerRipple(teamWrap);
@@ -227,7 +227,7 @@ export function initContactForm5Fields() {
       updateProgress(
         emailWrap,
         pct,
-        valid ? `[ EMAIL VERIFIED ✓ ]` : (val.length > 0 ? `[ ${val.length} CHARS • INVALID EMAIL ]` : `[ ENTER EMAIL ]`),
+        valid ? `EMAIL VERIFIED ✓` : (val.length > 0 ? `${val.length} CHARS • INVALID EMAIL` : `ENTER EMAIL`),
         valid
       );
       triggerRipple(emailWrap);
@@ -244,7 +244,7 @@ export function initContactForm5Fields() {
       updateProgress(
         contactWrap,
         pct,
-        valid ? `[ ${digits.length} DIGITS • PHONE VERIFIED ✓ ]` : `[ ${digits.length}/10 DIGITS • ENTER PHONE ]`,
+        valid ? `${digits.length} DIGITS • PHONE VERIFIED ✓` : `${digits.length}/10 DIGITS • ENTER PHONE`,
         valid
       );
       triggerRipple(contactWrap);
@@ -260,7 +260,7 @@ export function initContactForm5Fields() {
       updateProgress(
         queryWrap,
         pct,
-        valid ? `[ ${val.length} CHARS • QUERY READY ✓ ]` : `[ ${val.length}/3 CHARS • TYPE QUERY ]`,
+        valid ? `${val.length} CHARS • QUERY READY ✓` : `${val.length}/3 CHARS • TYPE QUERY`,
         valid
       );
       triggerRipple(queryWrap);
@@ -277,7 +277,7 @@ export function initContactForm5Fields() {
         <p class="heart-success-subtitle">
           Thank you, <strong>${escapeHtml(nameVal || "Friend")}</strong>${teamVal ? " (Team: <strong>" + escapeHtml(teamVal) + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitanyahptu@gmail.com</strong>.
         </p>
-        <button type="button" class="heart-reset-btn" id="btn-contact-reset">[ SEND ANOTHER MESSAGE ]</button>
+        <button type="button" class="heart-reset-btn" id="btn-contact-reset">SEND ANOTHER MESSAGE</button>
       </div>
     `;
 
@@ -346,11 +346,11 @@ export function initContactForm5Fields() {
         sendWrap.classList.remove("transmitting");
         sendWrap.innerHTML = `<p>SEND →</p>`;
         sendWrap.setAttribute("aria-label", "Send message");
-        updateProgress(nameWrap, 0, "[ ENTER NAME ]");
-        updateProgress(teamWrap, 0, "[ ENTER TEAM NAME ]");
-        updateProgress(emailWrap, 0, "[ ENTER EMAIL ]");
-        updateProgress(contactWrap, 0, "[ ENTER CONTACT NO ]");
-        updateProgress(queryWrap, 0, "[ ENTER YOUR QUERY ]");
+        updateProgress(nameWrap, 0, "ENTER NAME");
+        updateProgress(teamWrap, 0, "ENTER TEAM NAME");
+        updateProgress(emailWrap, 0, "ENTER EMAIL");
+        updateProgress(contactWrap, 0, "ENTER CONTACT NO");
+        updateProgress(queryWrap, 0, "ENTER YOUR QUERY");
         announce("Form cleared. You can send another message.");
         if (nameInput) nameInput.focus();
       });
@@ -380,7 +380,7 @@ export function initContactForm5Fields() {
 
       // Validation 1: Name
       if (!nameVal || nameVal.length < 2) {
-        updateProgress(nameWrap, 0, "[ ERROR: ENTER NAME ]");
+        updateProgress(nameWrap, 0, "ERROR: ENTER NAME");
         markInvalid(nameInput);
         if (nameInput) nameInput.focus();
         triggerRipple(nameWrap, true);
@@ -394,7 +394,7 @@ export function initContactForm5Fields() {
       // Validation 3: Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailVal || !emailRegex.test(emailVal)) {
-        updateProgress(emailWrap, 0, "[ ERROR: VALID EMAIL REQUIRED ]");
+        updateProgress(emailWrap, 0, "ERROR: VALID EMAIL REQUIRED");
         markInvalid(emailInput);
         if (emailInput) emailInput.focus();
         triggerRipple(emailWrap, true);
@@ -405,7 +405,7 @@ export function initContactForm5Fields() {
       // Validation 4: Contact No
       const digits = contactVal.replace(/[^0-9]/g, "");
       if (!contactVal || digits.length < 10) {
-        updateProgress(contactWrap, 0, "[ ERROR: 10-DIGIT PHONE REQUIRED ]");
+        updateProgress(contactWrap, 0, "ERROR: 10-DIGIT PHONE REQUIRED");
         markInvalid(contactInput);
         if (contactInput) contactInput.focus();
         triggerRipple(contactWrap, true);
@@ -415,7 +415,7 @@ export function initContactForm5Fields() {
 
       // Validation 5: Query
       if (!queryVal || queryVal.length < 3) {
-        updateProgress(queryWrap, 0, "[ ERROR: ENTER YOUR QUERY ]");
+        updateProgress(queryWrap, 0, "ERROR: ENTER YOUR QUERY");
         markInvalid(queryInput);
         if (queryInput) queryInput.focus();
         triggerRipple(queryWrap, true);

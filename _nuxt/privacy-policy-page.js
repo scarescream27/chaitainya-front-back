@@ -49,7 +49,7 @@ let a,
               </a>
               <div style="display:flex; gap:12px;">
                 <a href="/contact" class="privacy-contact-btn" id="btn-privacy-contact">
-                  [ CONTACT FEST DESK ]
+                  CONTACT FEST DESK
                 </a>
               </div>
             </div>
@@ -70,18 +70,18 @@ let a,
 
             <!-- Quick Jump Nav -->
             <nav class="privacy-quick-nav" aria-label="On this page">
-              <a href="#sec-overview" class="quick-nav-pill">[ 01. Introduction ]</a>
-              <a href="#sec-collect" class="quick-nav-pill">[ 02. Data Collected ]</a>
-              <a href="#sec-registration" class="quick-nav-pill">[ 03. Registration ]</a>
-              <a href="#sec-usage" class="quick-nav-pill">[ 04. How We Use It ]</a>
-              <a href="#sec-cookies" class="quick-nav-pill">[ 05. Cookies & Analytics ]</a>
-              <a href="#sec-thirdparty" class="quick-nav-pill">[ 06. Third Parties ]</a>
-              <a href="#sec-security" class="quick-nav-pill">[ 07. Security ]</a>
-              <a href="#sec-intellectual" class="quick-nav-pill">[ 08. Media & Code IP ]</a>
-              <a href="#sec-retention" class="quick-nav-pill">[ 09. Retention ]</a>
-              <a href="#sec-rights" class="quick-nav-pill">[ 10. Your Rights ]</a>
-              <a href="#sec-changes" class="quick-nav-pill">[ 11. Changes ]</a>
-              <a href="#sec-grievance" class="quick-nav-pill">[ 12. Contact ]</a>
+              <a href="#sec-overview" class="quick-nav-pill">01. Introduction</a>
+              <a href="#sec-collect" class="quick-nav-pill">02. Data Collected</a>
+              <a href="#sec-registration" class="quick-nav-pill">03. Registration</a>
+              <a href="#sec-usage" class="quick-nav-pill">04. How We Use It</a>
+              <a href="#sec-cookies" class="quick-nav-pill">05. Cookies & Analytics</a>
+              <a href="#sec-thirdparty" class="quick-nav-pill">06. Third Parties</a>
+              <a href="#sec-security" class="quick-nav-pill">07. Security</a>
+              <a href="#sec-intellectual" class="quick-nav-pill">08. Media & Code IP</a>
+              <a href="#sec-retention" class="quick-nav-pill">09. Retention</a>
+              <a href="#sec-rights" class="quick-nav-pill">10. Your Rights</a>
+              <a href="#sec-changes" class="quick-nav-pill">11. Changes</a>
+              <a href="#sec-grievance" class="quick-nav-pill">12. Contact</a>
             </nav>
 
             <!-- Main Legal Content Sections (div, not <main>: the layout already provides the main landmark) -->
@@ -274,7 +274,7 @@ let a,
             <section class="privacy-cta-box">
               <h3>HAVE QUESTIONS OR NEED ASSISTANCE?</h3>
               <p>Our festival coordination and technical desk will respond to your questions by email as soon as possible.</p>
-              <a href="/contact" class="privacy-cta-btn" id="btn-privacy-cta-contact">[ OPEN CONTACT US DESK ]</a>
+              <a href="/contact" class="privacy-cta-btn" id="btn-privacy-cta-contact">OPEN CONTACT US DESK</a>
             </section>
 
             <!-- Footer Credits -->

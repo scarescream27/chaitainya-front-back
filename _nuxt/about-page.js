@@ -75,7 +75,7 @@ function buildHtml() {
     <div class="privacy-container about-container">
       <div class="privacy-top-bar d-only">
         <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
-        <a href="/events" class="privacy-contact-btn">[ EXPLORE EVENTS ]</a>
+        <a href="/events" class="privacy-contact-btn">EXPLORE EVENTS</a>
       </div>
 
       <div class="privacy-hero">
@@ -107,23 +107,23 @@ function buildHtml() {
             }),
             { label: "Events" }
           )}</div>
-          <a href="/events" class="privacy-contact-btn about-inline-cta">[ BROWSE ALL EVENTS ]</a>`)}
+          <a href="/events" class="privacy-contact-btn about-inline-cta">BROWSE ALL EVENTS</a>`)}
 
         ${card("03", "about-team", "Organising Team", `
           ${TEAMS.map(teamSectionHtml).join("")}
-          <a href="/organisers" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE ORGANISERS ]</a>`, "d-only")}
+          <a href="/organisers" class="privacy-contact-btn about-inline-cta about-org-link">MEET THE ORGANISERS</a>`, "d-only")}
 
         ${card(`<span class="d-only">04</span><span class="m-only">03</span>`, "about-sponsors", "Sponsors", `
           ${sponsorsBody}
-          <a href="mailto:${mail}?subject=${encodeURIComponent("Sponsorship: Chaitanya 2k26")}" class="privacy-contact-btn about-inline-cta">[ BECOME A SPONSOR ]</a>
-          <a href="/sponsors" class="privacy-contact-btn about-inline-cta m-only">[ SEE SPONSORS ]</a>`)}
+          <a href="mailto:${mail}?subject=${encodeURIComponent("Sponsorship: Chaitanya 2k26")}" class="privacy-contact-btn about-inline-cta">BECOME A SPONSOR</a>
+          <a href="/sponsors" class="privacy-contact-btn about-inline-cta m-only">SEE SPONSORS</a>`)}
       </div>
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
         <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
-        <a href="/contact" class="privacy-cta-btn d-only">[ CONTACT US ]</a>
-        <a href="/contact-us" class="privacy-cta-btn m-only">[ CONTACT US ]</a>
+        <a href="/contact" class="privacy-cta-btn d-only">CONTACT US</a>
+        <a href="/contact-us" class="privacy-cta-btn m-only">CONTACT US</a>
       </section>
     </div>`;
 }

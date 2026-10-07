@@ -67,7 +67,7 @@ function authNavLinks(user, { openBlock, block, h, text, before }) {
           onClick();
         },
       },
-      children || [text("["), h("span", null, label), text("]")],
+      children || [h("span", null, label)],
     )
   );
   // The header patches these links pairwise, so both states return two
@@ -208,8 +208,26 @@ let st,
               const markRoute = (path) =>
                 document.documentElement.classList.toggle("not-home", (path || "/").replace(/\/$/, "") !== "");
               markRoute(window.location.pathname);
+              // Every page opens at the top: on refresh (Nuxt sets the
+              // browser's restoration back to "auto" at start-up) and when
+              // switching sections (the smooth scroller keeps its offset).
+              // Not for #section links or event details (same page key).
+              const toTop = () => {
+                const sm = window.ScrollSmoother?.get?.();
+                sm && sm.scrollTo(0, false);
+                window.scrollTo(0, 0);
+              };
               try {
-                document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to) => markRoute(to.path));
+                "scrollRestoration" in history && (history.scrollRestoration = "manual");
+                window.location.hash || toTop();
+              } catch (e) {}
+              try {
+                document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to, from) => {
+                  markRoute(to.path);
+                  "scrollRestoration" in history && (history.scrollRestoration = "manual");
+                  if (to.hash || (to.meta?.key && to.meta.key === from.meta?.key) || window.__contactPending) return;
+                  requestAnimationFrame(() => requestAnimationFrame(toTop));
+                });
               } catch (e) {}
               const sw = document.querySelector("header .header .menu-switch");
               if (sw && !sw.hasAttribute("role")) {
@@ -312,22 +330,22 @@ let st,
                         Y(
                           z,
                           { to: "/" },
-                          { default: Z(() => [O("["), tabHome, O("]")]), _: 1 },
+                          { default: Z(() => [tabHome]), _: 1 },
                         ),
                         Y(
                           z,
                           { to: "/events" },
-                          { default: Z(() => [O("["), tabEvents, O("]")]), _: 1 },
+                          { default: Z(() => [tabEvents]), _: 1 },
                         ),
                         Y(
                           z,
                           { to: "/about" },
-                          { default: Z(() => [O("["), tabAbout, O("]")]), _: 1 },
+                          { default: Z(() => [tabAbout]), _: 1 },
                         ),
                         Y(
                           z,
                           { to: "/organisers" },
-                          { default: Z(() => [O("["), tabOrg, O("]")]), _: 1 },
+                          { default: Z(() => [tabOrg]), _: 1 },
                         ),
                         d(
                           "a",
@@ -338,7 +356,7 @@ let st,
                               goTo("/admin");
                             },
                           },
-                          [O("["), tabAdmin, O("]")],
+                          [tabAdmin],
                         ),
                         // Account sits last, at the far right.
                         d("span", { class: "nav-account" }, authNavLinks(authCurrentUser.value, { openBlock: we, block: ot, h: d, text: O })),
@@ -377,7 +395,7 @@ let st,
                                     z,
                                     { to: "/" },
                                     {
-                                      default: Z(() => [O("["), mHome, O("]")]),
+                                      default: Z(() => [mHome]),
                                       _: 1,
                                     },
                                   ),
@@ -385,7 +403,7 @@ let st,
                                     z,
                                     { to: "/events" },
                                     {
-                                      default: Z(() => [O("["), mEvents, O("]")]),
+                                      default: Z(() => [mEvents]),
                                       _: 1,
                                     },
                                   ),
@@ -393,7 +411,7 @@ let st,
                                     z,
                                     { to: "/about" },
                                     {
-                                      default: Z(() => [O("["), mAbout, O("]")]),
+                                      default: Z(() => [mAbout]),
                                       _: 1,
                                     },
                                   ),
@@ -401,7 +419,7 @@ let st,
                                     z,
                                     { to: "/organisers" },
                                     {
-                                      default: Z(() => [O("["), mOrg, O("]")]),
+                                      default: Z(() => [mOrg]),
                                       _: 1,
                                     },
                                   ),
@@ -410,7 +428,7 @@ let st,
                                     z,
                                     { to: "/sponsors" },
                                     {
-                                      default: Z(() => [O("["), mSponsors, O("]")]),
+                                      default: Z(() => [mSponsors]),
                                       _: 1,
                                     },
                                   ),
@@ -418,7 +436,7 @@ let st,
                                     z,
                                     { to: "/contact-us" },
                                     {
-                                      default: Z(() => [O("["), mContact, O("]")]),
+                                      default: Z(() => [mContact]),
                                       _: 1,
                                     },
                                   ),
@@ -434,7 +452,7 @@ let st,
                                     goTo("/admin");
                                   },
                                 },
-                                [O("["), mAdmin, O("]")],
+                                [mAdmin],
                               ),
                               d(
                                 "span",

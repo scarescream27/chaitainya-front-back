@@ -6843,7 +6843,9 @@ let Ws,
                     );
                 }),
                 A.children[1].children.forEach((W, Q) => {
-                  (gs.push(W),
+                  // Phones: the four category rings (esports, workshops,
+                  // entrepreneurship, technical) are hidden for good.
+                  (window.innerWidth < 768 || gs.push(W),
                     setTimeout(() => {
                       W.visible = !1;
                     }, 500),
@@ -6890,7 +6892,7 @@ let Ws,
                         },
                       );
                     }),
-                    ci.push(W.children[0]));
+                    window.innerWidth < 768 || ci.push(W.children[0]));
                 }),
                 A.children[5].children.forEach((W, Q) => {
                   if (

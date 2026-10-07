@@ -545,3 +545,546 @@
   line-height: normal;
   color: inherit;
 }
+
+/* ---- Phone /events: one-line header and compact cards with the basics ---- */
+
+.events-m-head {
+  margin: 8px 0 16px;
+}
+
+.events-m-head h1 {
+  margin: 0;
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.events-m-head p {
+  margin: 6px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* Phone event cards keep the 60/40 picture/text split from m-events.css. */
+
+/* Phone /events: no [ ↑ TOP ] button; the cart takes its bottom-right spot. */
+@media (max-width: 767px) {
+  .events-scroll-hud {
+    display: none !important;
+  }
+
+  .events-cart-fab {
+    left: auto;
+    right: 16px;
+  }
+}
+
+/* ---- Phone home: bigger event cards and the extra sections ---------------- */
+
+.sgfm-events .m-card {
+  width: 260px;
+  height: 340px;
+}
+
+.sgfm-events .m-card-event .m-card-mark {
+  font-size: 120px;
+}
+
+.m-home-extra {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 56px;
+  margin-top: 64px;
+}
+
+.m-home-sec .m-h {
+  margin-bottom: 16px;
+}
+
+.m-home-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.m-home-when {
+  margin: 12px 0 0;
+  font-size: 13px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.m-home-cats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.m-home-cats li {
+  margin: 0;
+}
+
+.m-home-cats li:first-child {
+  grid-column: 1 / -1;
+}
+
+.m-home-cats a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 120px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 45%, #000));
+}
+
+.m-home-cats strong {
+  position: relative;
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.m-home-cats a > span:last-child {
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.m-home-cat-mark {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  font-family: DrukMedium, sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.m-home-ctas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-bottom: 24px;
+}
+
+.m-home-cta {
+  display: grid;
+  gap: 6px;
+  padding: 18px 16px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  text-decoration: none;
+}
+
+.m-home-cta span {
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.m-home-cta strong {
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.m-home-cta:active,
+.m-home-cats a:active {
+  transform: scale(0.97);
+}
+
+/* Scroll-in animation (only when JS added .m-anim; reduced motion skips it). */
+.m-anim .m-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+
+.m-anim .m-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.m-anim .m-home-cats li {
+  opacity: 0;
+  transform: translateY(16px) scale(0.96);
+  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 80ms + 150ms);
+}
+
+.m-anim .is-in .m-home-cats li {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Phone menu: a compact numbered list instead of huge centred words ---- */
+@media (max-width: 767px) {
+  header .header .mobile-menu {
+    justify-content: flex-start;
+    gap: 24px;
+    padding: 88px 20px calc(24px + env(safe-area-inset-bottom));
+    counter-reset: mnav;
+  }
+
+  header .header .mobile-menu .top a {
+    display: flex !important;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 !important;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+    font-size: 34px;
+    line-height: 1;
+    text-align: left;
+  }
+
+  header .header .mobile-menu .top a::before {
+    counter-increment: mnav;
+    content: counter(mnav, decimal-leading-zero);
+    min-width: 22px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: var(--track-label);
+    color: var(--ink-muted);
+  }
+
+  header .header .mobile-menu .bottom {
+    margin-top: auto;
+  }
+
+  header .header .mobile-menu .bottom a,
+  header .header .mobile-menu .bottom a:last-child {
+    margin: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: var(--track-label);
+    text-transform: none;
+    text-align: left;
+  }
+}
+
+/* ---- Swipeable row (home events): no drift, snaps card by card ------------ */
+.m-swipe {
+  --gap: 12px;
+  margin: 0 -16px 8px;
+  padding: 8px 16px 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.m-swipe::-webkit-scrollbar {
+  display: none;
+}
+
+.m-swipe .m-marquee-track {
+  animation: none;
+}
+
+.m-swipe .m-marquee-track > li {
+  scroll-snap-align: start;
+}
+
+/* ---- Phone /events: no search, tinted category chips with count badges --- */
+@media (max-width: 767px) {
+  .events-search-wrap {
+    display: none !important;
+  }
+
+  /* No white card behind the chips; all chips in black, not category colours. */
+  .events-toolbar,
+  .events-toolbar.is-pinned {
+    padding: 6px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .events-categories {
+    gap: 6px;
+  }
+
+  .events-cat-btn {
+    gap: 8px;
+    padding: 6px 6px 6px 14px;
+    border: 1.5px solid var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .events-cat-btn .cat-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: var(--surface-sunken);
+    font-size: 11px;
+    opacity: 1;
+  }
+
+  .events-cat-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--ink-on-dark);
+  }
+
+  .events-cat-btn.active .cat-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--ink-on-dark);
+  }
+}
+
+/* ---- Close buttons on phones: a plain cross, no pill --------------------- */
+@media (max-width: 767px) {
+  .event-dossier-close,
+  .cart-close,
+  .event-reg-close,
+  .chaitanya-modal-close {
+    display: inline-grid !important;
+    place-items: center;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--ink) !important;
+  }
+
+  .m-x {
+    font-size: 24px;
+    line-height: 1;
+  }
+}
+
+/* No white fade at the ends of the moving rows. */
+.m-marquee {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Home events: more room between cards. */
+.sgfm-events .m-swipe .m-marquee-track > li {
+  padding-right: 20px;
+}
+
+/* ---- Contact page --------------------------------------------------------- */
+.m-quick-card {
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+}
+
+.m-quick-card svg {
+  grid-row: span 2;
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.m-quick-dark {
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border-color: var(--ink);
+}
+
+.m-quick-dark span {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.m-quick-dark svg {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.m-where {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 24px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--ink-on-dark);
+}
+
+.m-where span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.m-where strong {
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+/* ---- Sponsors page -------------------------------------------------------- */
+.m-sponsor-stats {
+  margin-bottom: 16px;
+}
+
+.m-sponsor-empty {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--ink);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.m-sponsor-empty strong {
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 30px;
+  text-transform: uppercase;
+}
+
+.privacy-card ol.m-kinds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.privacy-card .m-kinds li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  max-width: none;
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f1f2f4;
+}
+
+.m-kinds li > span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.privacy-card .m-kinds strong {
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.privacy-card .m-kinds p {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.m-sponsors-root .m-chips li {
+  background: var(--ink);
+}
+
+
+/* ---- Phone /organisers: two people per team, "View more" shows the rest --- */
+.m-people-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.m-people-grid li {
+  margin: 0;
+  min-width: 0;
+}
+
+.m-people-grid .m-card {
+  width: 100%;
+  height: 220px;
+  padding: 12px;
+}
+
+.m-people-grid .m-card-mark {
+  font-size: 96px;
+}
+
+.m-people-grid .m-card-body strong {
+  font-size: 22px;
+}
+
+.m-people-more {
+  display: none;
+}
+
+.m-people.is-open .m-people-more {
+  display: block;
+}
+
+.m-people-btn {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+}
