@@ -2426,3 +2426,378 @@ html:has(.event-dossier-overlay.active, .events-cart-overlay.active, .event-reg-
     padding: 8px 12px;
   }
 }
+
+/* ============================================================================
+ * VISUAL REFRESH (Oct 2026): compact hero with chips, visual cards with a
+ * category panel, one-line descriptions, scrollable filter rail on phones.
+ * Full details stay in the dossier drawer.
+ * ============================================================================ */
+
+/* Hero: title, one-line tagline, three chips. */
+.events-hero {
+  margin-bottom: 24px;
+}
+
+.events-hero-coords {
+  margin-bottom: 8px;
+}
+
+.events-hero-title {
+  font-size: clamp(40px, 6vw, 80px);
+  line-height: 1;
+  margin: 0 0 12px;
+}
+
+.events-hero-subtitle {
+  max-width: 520px;
+  margin: 0 auto 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.events-stats-strip {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  gap: 8px;
+}
+
+.events-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.events-stat-pill svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.events-hero-note {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* Filters: one compact row; counts read as small superscript badges. */
+.events-toolbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.events-cat-btn {
+  padding: 8px 14px;
+  min-height: 40px;
+}
+
+.events-cat-btn .cat-count {
+  font-size: 10px;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  opacity: 1;
+  text-align: center;
+}
+
+.events-search-wrap {
+  width: min(320px, 100%);
+}
+
+@media (min-width: 992px) {
+  .events-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 1199px) {
+  .events-search-wrap {
+    width: min(560px, 100%);
+  }
+}
+
+/* Cards: visual panel first, then name, category, one line, chips, CTAs. */
+.event-card {
+  padding: 0;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+.event-card-visual {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  min-height: 132px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-on-dark);
+  background-color: var(--cat, var(--ink));
+  background-image:
+    radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.22), transparent 55%),
+    radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1.2px);
+  background-size: auto, 14px 14px;
+  overflow: hidden;
+  text-align: left;
+  font: inherit;
+}
+
+.event-visual-num {
+  position: absolute;
+  right: 12px;
+  bottom: -14px;
+  font-family: "DrukMedium", sans-serif;
+  font-size: 112px;
+  line-height: 1;
+  letter-spacing: var(--track-display);
+  color: rgba(255, 255, 255, 0.92);
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.event-visual-icon {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.event-visual-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.event-visual-flag {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  max-width: calc(100% - 100px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-card.is-revealed:hover .event-visual-num {
+  transform: translateY(-6px);
+}
+
+.event-card-visual:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px 24px 24px;
+}
+
+.event-card .event-badge-category {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--cat, var(--ink));
+}
+
+.event-card-title {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+
+.event-card-tagline {
+  min-height: 0;
+  margin: 0 0 14px;
+  /* Two lines at most; the full overview lives in VIEW DETAILS. */
+  min-height: 2.8em;
+}
+
+.event-card-actions {
+  flex-wrap: wrap;
+}
+
+.event-card-actions > button {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
+.event-card-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0 0 18px;
+}
+
+.event-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.event-chip svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* Tablet and down: filters stack above a full-width search. */
+@media (max-width: 991px) {
+  .event-card-visual {
+    aspect-ratio: 16 / 6;
+  }
+
+  .events-toolbar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .events-search-wrap {
+    width: 100%;
+  }
+}
+
+/* Phones: short hero, filter rail scrolls sideways, full-width cards. */
+@media (max-width: 767px) {
+  .events-hero {
+    margin-bottom: 16px;
+  }
+
+  .events-hero-title {
+    font-size: clamp(36px, 11vw, 52px);
+    margin-bottom: 8px;
+  }
+
+  .events-hero-subtitle {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .events-hero-note {
+    font-size: 10px;
+  }
+
+  .events-stats-strip {
+    gap: 6px;
+  }
+
+  .events-stat-pill {
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .events-stat-pill svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .events-toolbar {
+    margin-bottom: 16px;
+  }
+
+  .events-categories {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    margin: 0 -12px;
+    padding: 2px 12px;
+    max-width: none;
+    /* Fade the right edge so the rail reads as scrollable. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  }
+
+  .events-cat-btn {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-card-visual {
+    aspect-ratio: 16 / 6;
+    min-height: 116px;
+  }
+
+  .event-visual-num {
+    font-size: 96px;
+  }
+
+  .event-card-body {
+    padding: 16px 20px 20px;
+  }
+
+  .event-card-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 379px) {
+  .event-card {
+    padding: 0;
+  }
+
+  .event-card-body {
+    padding: 14px 16px 16px;
+  }
+
+  .event-visual-icon {
+    left: 16px;
+    top: 16px;
+    width: 42px;
+    height: 42px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-visual-num {
+    transition: none;
+  }
+
+  .event-card.is-revealed:hover .event-visual-num {
+    transform: none;
+  }
+}

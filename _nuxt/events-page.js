@@ -11,6 +11,7 @@
 
 import {
   getEventById,
+  getEventCatalog,
   getCategories,
   filterEvents,
   isRegistrationOpen,
@@ -170,7 +171,7 @@ function deactivateDialog(key) {
   // The opener may have been re-rendered (e.g. a card's ADD TO CART button).
   if (!target && back?.dataset?.eventId) {
     target = document.querySelector(
-      `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] [data-action="view-details"]`
+      `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] .event-btn-details`
     );
   }
   if (!target) target = document.getElementById("events-cart-fab");
@@ -240,18 +241,14 @@ export function renderEventsPageHtml() {
       <div class="events-container">
         <div class="events-hero">
           <span class="events-hero-coords">[ 31.7088° N, 76.5273° E // HPTU HAMIRPUR ]</span>
-          <span class="events-hero-tag">CHAITANYA 2K26 // SCHEDULE & COMPETITIONS</span>
           <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
-          <p class="events-hero-subtitle">
-            All ${e(totalEvents())} events at Chaitanya 2k26, HPTU Hamirpur's technical and cultural fest (30 Oct – 1 Nov 2026):
-            coding, design, business, esports and cultural. Add events to your cart and register for them in one go.
-          </p>
-          <div class="events-stats-strip">
-            <span class="events-stat-pill highlight">[ ${e(totalEvents())} EVENTS ]</span>
-            <span class="events-stat-pill">[ ${e(FEST_CONFIG.festDays || 2)} DAYS // ${e(getFestDatesLabel())} ]</span>
-            <span class="events-stat-pill">[ HPTU HAMIRPUR ]</span>
-          </div>
-          <p class="events-hero-note">Entry fees, prizes and registration details are coming soon. Timings and venues may change.</p>
+          <p class="events-hero-subtitle">Code, build, pitch, play and perform. Pick your events and register in one go.</p>
+          <ul class="events-stats-strip" aria-label="Fest at a glance">
+            <li class="events-stat-pill highlight">${HERO_ICONS.events}${e(totalEvents())} EVENTS</li>
+            <li class="events-stat-pill">${HERO_ICONS.date}${e(getFestDatesLabel().replace(/\s*\d{4}$/, ""))}</li>
+            <li class="events-stat-pill">${HERO_ICONS.venue}HPTU HAMIRPUR</li>
+          </ul>
+          <p class="events-hero-note">Fees and prizes coming soon · timings may change</p>
         </div>
 
         <div class="events-toolbar">
@@ -324,31 +321,60 @@ function actionButtonHtml(ev, { large = false } = {}) {
   return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
 }
 
+const svg = (d) =>
+  `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+
+const HERO_ICONS = {
+  events: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>'),
+  date: svg('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  venue: svg('<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+};
+
+// One glyph per category: the card's visual identity (there are no event posters yet).
+const CATEGORY_ICONS = {
+  tech: svg('<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/>'),
+  innovation: svg('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/>'),
+  business: svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+  esports: svg('<path d="M7 9h4M9 7v4M15 10h.01M18 8h.01"/><path d="M6.5 5h11A4.5 4.5 0 0 1 22 9.5v4.3a3.2 3.2 0 0 1-5.6 2.1L15 14H9l-1.4 1.9A3.2 3.2 0 0 1 2 13.8V9.5A4.5 4.5 0 0 1 6.5 5Z"/>'),
+  cultural: svg('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+};
+
+const CHIP_ICONS = {
+  date: HERO_ICONS.date,
+  team: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>'),
+};
+
 function renderEventCardHtml(ev) {
   const catObj = getCategories().find((c) => c.id === ev.category);
   const accentColor = catObj?.accent || "var(--ink)";
+  // Stable number from the catalogue order, so a card keeps it under any filter.
+  const number = String(getEventCatalog().indexOf(ev) + 1).padStart(2, "0");
+  const flagship = ev.badge && ev.badge !== ev.categoryName ? ev.badge : "";
+  const teamChip = ev.registrationType === "solo" ? "SOLO" : ev.registrationType === "team" ? `TEAM ${ev.teamSize}` : `SOLO / TEAM`;
 
   return `
-    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}">
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
-      <div class="event-card-header">
-        <span class="event-badge-category" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}</span>
-        <span class="event-badge-format">${e(ev.format)}</span>
-      </div>
+      <button type="button" class="event-card-visual" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
+        <span class="event-visual-num" aria-hidden="true">${number}</span>
+        <span class="event-visual-icon">${CATEGORY_ICONS[ev.category] || ""}</span>
+        ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}
+      </button>
 
-      <h2 class="event-card-title" title="${e(ev.title)}">${e(ev.title)}</h2>
-      <p class="event-card-tagline">${e(ev.tagline)}</p>
+      <div class="event-card-body">
+        <span class="event-badge-category">${e(ev.categoryName)}</span>
+        <h2 class="event-card-title" title="${e(ev.title)}">${e(ev.title)}</h2>
+        <p class="event-card-tagline" title="${e(ev.tagline)}">${e(ev.tagline)}</p>
 
-      <div class="event-card-meta">
-        <div class="event-meta-row"><span class="event-meta-label">WHEN:</span><span class="event-meta-val">${e(ev.date)} | ${e(ev.time)}</span></div>
-        <div class="event-meta-row"><span class="event-meta-label">VENUE:</span><span class="event-meta-val">${e(ev.venue)}</span></div>
-        <div class="event-meta-row"><span class="event-meta-label">FEE:</span><span class="event-meta-val">${e(feeLabel(ev))}</span></div>
-        <div class="event-meta-row"><span class="event-meta-label">REGISTER BY:</span><span class="event-meta-val">${e(formatDeadline(ev))}</span></div>
-      </div>
+        <ul class="event-card-chips" aria-label="Key details">
+          <li class="event-chip">${CHIP_ICONS.date}${e(ev.date)}</li>
+          <li class="event-chip">${CHIP_ICONS.team}${e(teamChip)}</li>
+        </ul>
 
-      <div class="event-card-actions">
-        <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
-        ${actionButtonHtml(ev)}
+        <div class="event-card-actions">
+          <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
+          ${actionButtonHtml(ev)}
+        </div>
       </div>
     </div>
   `;
@@ -1375,7 +1401,7 @@ export function refreshEventsGrid() {
       card &&
       ((focusAction && card.querySelector(`[data-action="${CSS.escape(focusAction)}"]`)) ||
         card.querySelector(".event-btn-register:not([disabled])") ||
-        card.querySelector('[data-action="view-details"]'));
+        card.querySelector(".event-btn-details"));
     try {
       target?.focus({ preventScroll: true });
     } catch {}
