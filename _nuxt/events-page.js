@@ -1308,7 +1308,14 @@ export function initScrollMotion() {
   }
 
   // 1. Throttled RAF Scroll Handler
+  // Only touch the DOM when a value actually changes: rewriting the same
+  // class / text every frame still costs a style recalc (and the HUD's
+  // "active" class feeds an html:has() rule, which re-matches the page).
   let ticking = false;
+  let pinned = null;
+  let hudOn = null;
+  let counterText = "";
+  let heroDone = false;
   const onScroll = () => {
     if (!ticking) {
       window.requestAnimationFrame(() => {
@@ -1322,35 +1329,35 @@ export function initScrollMotion() {
         }
 
         // Pinned sticky toolbar morphing state
-        if (toolbar) {
-          if (scrollTop > 160) {
-            toolbar.classList.add("is-pinned");
-          } else {
-            toolbar.classList.remove("is-pinned");
-          }
+        if (toolbar && pinned !== scrollTop > 160) {
+          pinned = scrollTop > 160;
+          toolbar.classList.toggle("is-pinned", pinned);
         }
 
         // Floating Brutalist HUD
         if (scrollHud) {
-          if (scrollTop > 220) {
-            scrollHud.classList.add("active");
-            if (scrollCounter) {
-              scrollCounter.textContent = `${Math.round(progress)}% EXPLORED`;
-            }
-          } else {
-            scrollHud.classList.remove("active");
+          const on = scrollTop > 220;
+          if (hudOn !== on) {
+            hudOn = on;
+            scrollHud.classList.toggle("active", on);
+          }
+          const text = `${Math.round(progress)}% EXPLORED`;
+          if (on && scrollCounter && text !== counterText) {
+            counterText = text;
+            scrollCounter.textContent = text;
           }
         }
 
-        // Hero Ambient Parallax (fade & subtle vertical shift)
-        if (!reduceMotion && heroCoords && scrollTop < 600) {
-          heroCoords.style.transform = `translate3d(0, ${scrollTop * 0.15}px, 0)`;
-        }
-        if (!reduceMotion && heroTitle && scrollTop < 600) {
-          const scale = Math.max(1 - scrollTop / 1200, 0.9);
-          const opacity = Math.max(1 - scrollTop / 500, 0.4);
-          heroTitle.style.transform = `scale(${scale})`;
-          heroTitle.style.opacity = `${opacity}`;
+        // Hero Ambient Parallax (fade & subtle vertical shift). Past 600px
+        // write the end state once, then leave the hero alone.
+        if (!reduceMotion && (scrollTop < 600 || !heroDone)) {
+          heroDone = scrollTop >= 600;
+          const st = Math.min(scrollTop, 600);
+          if (heroCoords) heroCoords.style.transform = `translate3d(0, ${st * 0.15}px, 0)`;
+          if (heroTitle) {
+            heroTitle.style.transform = `scale(${Math.max(1 - st / 1200, 0.9)})`;
+            heroTitle.style.opacity = `${Math.max(1 - st / 500, 0.4)}`;
+          }
         }
 
         ticking = false;
@@ -1363,9 +1370,9 @@ export function initScrollMotion() {
   onScroll();
 
   // 2. Card In-View Scroll Reveal
-  // Kept so cleanup can kill them: cards never scrolled into view would
-  // otherwise leave a ScrollTrigger behind on every visit to /events.
-  const cardTriggers = [];
+  // IntersectionObserver + the CSS .is-revealed transition (no per-card
+  // ScrollTrigger: those re-measure every card on refresh/resize).
+  let observer = null;
   const setupCardAnimations = () => {
     const cards = Array.from(document.querySelectorAll(".event-card"));
     if (!cards.length) return;
@@ -1375,46 +1382,8 @@ export function initScrollMotion() {
       return;
     }
 
-    // Check for GSAP + ScrollTrigger
-    const gsap = window.gsap;
-    const ScrollTrigger = gsap?.core?.globals()?.ScrollTrigger || window.ScrollTrigger;
-
-    if (gsap && ScrollTrigger) {
-      try {
-        gsap.registerPlugin(ScrollTrigger);
-        cards.forEach((card, index) => {
-          if (card.classList.contains("is-revealed")) return;
-
-          cardTriggers.push(ScrollTrigger.create({
-            trigger: card,
-            start: "top 88%",
-            once: true,
-            onEnter: () => {
-              const delay = (index % 3) * 0.03;
-              gsap.to(card, {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: finePointer ? 0.3 : 0.2,
-                delay: delay,
-                ease: "power2.out",
-                onComplete: () => {
-                  card.classList.add("is-revealed");
-                  card.style.transform = "";
-                },
-              });
-            },
-          }));
-        });
-        return;
-      } catch (e) {
-        console.warn("GSAP ScrollTrigger fallback:", e);
-      }
-    }
-
-    // High performance IntersectionObserver fallback
     if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(
+      observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -1444,8 +1413,13 @@ export function initScrollMotion() {
   setupCardAnimations();
 
   // 3. Subtle 3D Card Perspective Tilt on Hover
-  const onMouseMove = (e) => {
-    const card = e.target.closest(".event-card.is-revealed");
+  // At most one measure + write per frame (mousemove fires faster than that).
+  let tiltEvt = null;
+  let tiltRaf = 0;
+  const tilt = () => {
+    tiltRaf = 0;
+    const e = tiltEvt;
+    const card = e && e.target.closest(".event-card.is-revealed");
     if (!card) return;
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
@@ -1454,10 +1428,16 @@ export function initScrollMotion() {
     const rotY = (x / (rect.width / 2)) * 3.5;
     card.style.transform = `perspective(1000px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-5px) scale(1.01)`;
   };
+  const onMouseMove = (e) => {
+    tiltEvt = e;
+    if (!tiltRaf) tiltRaf = requestAnimationFrame(tilt);
+  };
 
   const onMouseLeave = (e) => {
     const card = e.target.closest(".event-card.is-revealed");
     if (card) {
+      // A pending frame would re-tilt the card the pointer just left.
+      if (tiltEvt && card.contains(tiltEvt.target) && !card.contains(e.relatedTarget)) tiltEvt = null;
       card.style.transform = "";
     }
   };
@@ -1471,7 +1451,8 @@ export function initScrollMotion() {
 
   scrollMotionCleanup = () => {
     window.removeEventListener("scroll", onScroll);
-    cardTriggers.forEach((t) => t.kill());
+    observer?.disconnect();
+    cancelAnimationFrame(tiltRaf);
     if (enableTilt) {
       grid.removeEventListener("mousemove", onMouseMove);
       grid.removeEventListener("mouseout", onMouseLeave);

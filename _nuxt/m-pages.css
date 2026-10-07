@@ -49,6 +49,7 @@
   padding: 0 var(--gap) 0 0;
 }
 
+.m-marquee.is-offscreen .m-marquee-track,
 .m-marquee:hover .m-marquee-track,
 .m-marquee:active .m-marquee-track,
 .m-marquee:focus-within .m-marquee-track {

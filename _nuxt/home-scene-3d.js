@@ -6389,6 +6389,7 @@ let Ws,
                 })));
               let N = Math.min(window.devicePixelRatio || 1, PERF_LOW ? 1.25 : 1.5);
               (window.innerWidth > 1920 && (N = Math.min(N, 1.25)),
+                (prCap = prNow = N),
                 y.setPixelRatio(N),
                 (y.toneMapping = ll),
                 (y.shadowMap.enabled = !1),
@@ -7247,13 +7248,9 @@ let Ws,
             Pt.forEach(({ body: N }, A) => {
               let G;
               hi ? (G = vs[A]) : (G = N.attractorPoint);
-              const U = new h();
-              U.copy(G);
-              const $ = U.vsub(N.position);
-              ($.normalize(), $.scale(Vt, $));
-              const W = new ks()
-                .copy(N.quaternion)
-                .slerp(N.quaternionPoint, 0.4);
+              const $ = tmpF.copy(G);
+              ($.vsub(N.position, $), $.normalize(), $.scale(Vt, $));
+              const W = tmpQ.copy(N.quaternion).slerp(N.quaternionPoint, 0.4);
               (N.quaternion.copy(W), N.applyForce($));
             });
           };
@@ -7340,6 +7337,54 @@ let Ws,
               d.addBody(We));
           };
           let Ht, mi;
+          // Per-frame scratch (the physics loops used to allocate per body per frame).
+          const tmpF = new h(),
+            tmpQ = new ks();
+          // Adaptive resolution: rolling ~1s windows of frame intervals.
+          // ponytail: avg >22ms for 2 windows -> pixel ratio x0.85 (floor 0.6 low / 0.75), avg <18ms for 3 windows -> back up to the initial cap. (18 not 14: the ticker is capped at 60fps so ~16.7ms is the best case.)
+          let prCap = 1,
+            prNow = 1,
+            govLast = 0,
+            govStart = 0,
+            govSum = 0,
+            govN = 0,
+            govBad = 0,
+            govGood = 0,
+            govSteady = 0;
+          const setPR = (r) => {
+              r = Math.round(r * 100) / 100;
+              // setPixelRatio re-runs setSize at the current size; the glass
+              // render targets are fixed 256px so they are unaffected.
+              r !== prNow && ((prNow = r), y.setPixelRatio(r));
+            },
+            govFrame = (skipped) => {
+              const now = performance.now(),
+                dt = now - govLast;
+              govLast = now;
+              // Skipped/hidden frames and tab-switch gaps say nothing about GPU load.
+              if (skipped || dt > 250) return void ((govSum = govN = govSteady = 0), (govStart = now));
+              govSum += dt;
+              govN++;
+              // Frames at a steady ~33ms are a 30fps cap (iOS Low Power Mode,
+              // 30Hz screens), not lag: real lag is irregular.
+              dt > 30 && dt < 37 && govSteady++;
+              if (now - govStart < 1e3) return;
+              const avg = govSum / govN,
+                capped = govSteady >= govN * 0.8;
+              govSum = govN = govSteady = 0;
+              govStart = now;
+              capped
+                ? (govBad = govGood = 0)
+                : avg > 22
+                ? ((govGood = 0),
+                  ++govBad >= 2 &&
+                    ((govBad = 0),
+                    setPR(Math.max(Math.min(PERF_LOW ? 0.6 : 0.75, prCap), prNow * 0.85))))
+                : avg < 18
+                  ? ((govBad = 0),
+                    ++govGood >= 3 && ((govGood = 0), setPR(Math.min(prCap, prNow / 0.85))))
+                  : (govBad = govGood = 0);
+            };
           const Ua = () => {
               Gt.setFromCamera(ue, f);
               const N = Gt.intersectObject(me, !0);
@@ -7391,9 +7436,8 @@ let Ws,
                 !(Kt || !yi) &&
                   (d.step(1 / 60),
                   ys.forEach(({ mesh: N, body: A }) => {
-                    const G = new h();
-                    G.copy(ht);
-                    const U = G.vsub(A.position);
+                    const U = tmpF;
+                    ht.vsub(A.position, U);
                     (U.normalize(),
                       U.scale(xs.value, U),
                       A.applyForce(U),
@@ -7416,7 +7460,9 @@ let Ws,
               // The footer's solid area fills the screen: nothing of the scene
               // shows, so skip the frame (the clock still ticks, so physics
               // doesn't jump on return). Saves the GPU while people type.
-              if (window.__sgfCovers) return;
+              // Hidden tab: rAF normally stops, but guard any fallback ticks.
+              if (window.__sgfCovers || document.hidden) return void govFrame(!0);
+              govFrame(!1);
               (fs && qa(),
                 Kt && Ka(N),
                 ms && !Kt && $a(),

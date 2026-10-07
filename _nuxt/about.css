@@ -97,6 +97,10 @@
   position: relative;
   margin: 0 0 24px;
   padding: 8px 0;
+  /* Desktop-only photo grids: skip them until they near the viewport.
+     `auto` remembers the real height once rendered. */
+  content-visibility: auto;
+  contain-intrinsic-size: none auto 640px;
 }
 
 /* Faint 20px grid behind the section (the original's SVG pattern). */

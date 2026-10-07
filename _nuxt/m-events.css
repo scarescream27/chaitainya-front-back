@@ -12,6 +12,11 @@
   height: 580px;
   padding: 0;
   min-width: 0;
+  /* Off-screen cards skip style/layout/paint. The height is fixed above, so
+     skipping never changes the page length (anchors and scroll stay put);
+     overflow is already hidden, so paint containment clips nothing new. */
+  content-visibility: auto;
+  contain-intrinsic-size: none auto 580px;
 }
 
 .event-card .event-card-visual {
@@ -306,6 +311,7 @@
   .event-card {
     grid-template-rows: minmax(0, 3fr) minmax(min-content, 2fr);
     height: 560px;
+    contain-intrinsic-size: none auto 560px;
   }
 
   .event-card .event-card-body {

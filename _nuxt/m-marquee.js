@@ -62,3 +62,24 @@ export function eventCardHtml(ev, accent, mark) {
       </span>
     </a>`;
 }
+
+/**
+ * Drifting rows pause while off screen. Rows are inserted as HTML by several
+ * pages, so instead of each caller wiring this up, every track announces
+ * itself through `animationstart` (plus a sweep for rows already running).
+ * Hidden tabs need nothing: browsers stop CSS animations there on their own.
+ */
+if (typeof window !== "undefined" && "IntersectionObserver" in window) {
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      // ponytail: a row removed while already off screen stays observed (a few
+      // detached nodes per visit); add a route-change sweep if that ever matters.
+      if (!en.target.isConnected) io.unobserve(en.target);
+      else en.target.classList.toggle("is-offscreen", !en.isIntersecting);
+    }
+  });
+  document.addEventListener("animationstart", (e) => {
+    if (e.animationName === "m-drift" && e.target.parentElement) io.observe(e.target.parentElement);
+  });
+  document.querySelectorAll(".m-marquee").forEach((el) => io.observe(el));
+}

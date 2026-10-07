@@ -1422,7 +1422,14 @@ let st,
                   // drawers / dialogs was cancelled and scrolled the page instead.
                   normalizeScroll: g ? { debounce: !0, allowNestedScroll: !0 } : !1,
                   ignoreMobileResize: !0,
-                  smoothTouch: reduceMotion ? 0 : 0.1,
+                  // Low-end phones: normalizeScroll already drives touch;
+                  // adding smoothing on top double-smooths and lags.
+                  smoothTouch:
+                    reduceMotion ||
+                    (navigator.hardwareConcurrency || 8) <= 4 ||
+                    (navigator.deviceMemory || 8) <= 4
+                      ? 0
+                      : 0.1,
                   onUpdate: (o) => {
                     (N.updateScrollVelocity(o.getVelocity()),
                       N.setScrollProgress(o.progress));

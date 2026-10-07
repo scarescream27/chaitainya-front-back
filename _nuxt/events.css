@@ -307,7 +307,8 @@ body:has(.events-page-root) .transition-component,
     transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.3s ease,
     border-color 0.3s ease;
-  will-change: transform, opacity;
+  /* No will-change: the reveal is a CSS transform/opacity transition, which the
+     browser composites on its own; a permanent layer per card cost memory. */
   box-sizing: border-box;
 }
 
@@ -998,7 +999,8 @@ body:has(.events-page-root) .transition-component,
   background: var(--ink);
   z-index: 100001;
   pointer-events: none;
-  transition: transform 100ms ease-out;
+  /* Set every frame from a rAF: a transition here restarted a new animation
+     per scroll frame for no visible gain. */
   box-shadow: none;
 }
 
@@ -1011,7 +1013,6 @@ body:has(.events-page-root) .transition-component,
   letter-spacing: var(--track-label);
   margin-bottom: 8px;
   user-select: none;
-  transition: transform 0.1s linear;
 }
 
 /* Brutalist Floating Scroll HUD */

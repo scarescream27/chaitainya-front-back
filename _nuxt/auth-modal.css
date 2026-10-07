@@ -1889,8 +1889,10 @@ html body:has(.profile-page-root) header {
      header is indistinguishable from the page instead of a flat white band,
      and content scrolling underneath still doesn't collide with the logo. */
   background-image: var(--page-bg);
-  background-size: var(--page-bg-size);
-  background-attachment: fixed;
+  /* Was background-attachment: fixed, which makes every scroll frame repaint
+     on the main thread. The header is itself fixed at the top, so a
+     viewport-tall sky layer draws the same pixels. */
+  background-size: 80px, 100% 100vh;
 }
 
 /* Deregister / delete-profile confirmations */
