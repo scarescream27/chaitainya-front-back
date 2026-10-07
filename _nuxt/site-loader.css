@@ -86,7 +86,7 @@ html.site-loading {
   font-size: clamp(56px, 11vw, 168px);
   font-weight: 500;
   line-height: 1.1;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-display, 0.02em);
   text-transform: uppercase;
   opacity: 0;
   animation: site-loader-slot 150ms linear calc(450ms + var(--i) * 150ms);
@@ -112,7 +112,7 @@ html.site-loading {
 .site-loader-tag {
   position: absolute;
   left: 50%;
-  bottom: 28px;
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 32px);
@@ -121,10 +121,11 @@ html.site-loading {
   background-color: #f7faff;
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
-  /* One line down to 320px (it wrapped, leaving "]" alone on line two). */
-  font-size: clamp(10px, 3.4vw, 12px);
+  /* One line down to 320px (it wrapped, leaving "]" alone on line two);
+     sized with the 0.08em label tracking included. */
+  font-size: clamp(10px, 3.1vw, 12px);
   font-weight: 600;
-  letter-spacing: clamp(0px, 0.15vw, 0.6px);
+  letter-spacing: var(--track-label, 0.08em);
   white-space: nowrap;
   text-transform: uppercase;
   color: #005a3c;
@@ -173,5 +174,12 @@ html.site-loading {
   .site-loader-word:first-child {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* Small phones: the word never touches the screen edges (nowrap). */
+@media (max-width: 379px) {
+  .site-loader-word {
+    font-size: clamp(44px, 15vw, 56px);
   }
 }

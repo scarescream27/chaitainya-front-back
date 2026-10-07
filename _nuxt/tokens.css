@@ -63,6 +63,13 @@
   --tap: 44px;
   --focus-ring: 2px solid var(--ink);
   --focus-offset: 3px;
+
+  /* Letter-spacing. Display = big Druk headings, label = uppercase mono
+     nav/buttons/section labels, name = person names, body = running text. */
+  --track-display: 0.02em;
+  --track-label: 0.08em;
+  --track-name: 0.02em;
+  --track-body: 0.01em;
 }
 /* Visible keyboard focus everywhere. Zero specificity (:where) so any
    component with its own focus style still wins. */

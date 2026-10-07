@@ -60,7 +60,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 1.2px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-muted);
   margin-bottom: 12px;
@@ -70,7 +70,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "DrukMedium", sans-serif;
   font-size: clamp(42px, 7vw, 92px);
   line-height: 1.1;
-  letter-spacing: -1.5px;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 12px;
@@ -81,7 +81,7 @@ body:has(.events-page-root) .transition-component,
   font-size: 14px;
   font-weight: 500;
   color: color-mix(in srgb, var(--ink) 75%, transparent);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-body);
   text-transform: none;
   max-width: 680px;
   margin: 0 auto 24px;
@@ -107,7 +107,7 @@ body:has(.events-page-root) .transition-component,
   padding: 8px 16px;
   border-radius: 30px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
 }
 
@@ -139,7 +139,7 @@ body:has(.events-page-root) .transition-component,
 
 .events-toolbar.is-pinned {
   top: 70px;
-  background: var(--surface);saturate(180%);saturate(180%);
+  background: var(--surface);
   border-color: color-mix(in srgb, var(--ink) 18%, transparent);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
   transform: translateZ(0);
@@ -184,7 +184,7 @@ body:has(.events-page-root) .transition-component,
   white-space: nowrap;
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -237,7 +237,7 @@ body:has(.events-page-root) .transition-component,
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  letter-spacing: 0.3px;
+  letter-spacing: var(--track-body);
 }
 
 .events-search-input::-webkit-search-cancel-button {
@@ -348,7 +348,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   padding: 4px 8px;
   border-radius: 6px;
@@ -359,7 +359,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
   color: color-mix(in srgb, var(--ink) 80%, var(--surface));
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   padding: 4px 8px;
@@ -372,7 +372,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "DrukMedium", sans-serif;
   font-size: 28px;
   line-height: 1.1;
-  letter-spacing: -0.4px;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 8px;
@@ -420,13 +420,14 @@ body:has(.events-page-root) .transition-component,
   gap: 12px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
-  letter-spacing: 0.3px;
+  letter-spacing: var(--track-body);
 }
 
 .event-meta-label {
   color: var(--ink-muted);
   font-weight: 500;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   flex-shrink: 0;
 }
 
@@ -460,7 +461,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   padding: 12px;
   border-radius: 30px;
   cursor: pointer;
@@ -482,7 +483,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   padding: 12px;
   border-radius: 30px;
   cursor: pointer;
@@ -586,6 +587,7 @@ body:has(.events-page-root) .transition-component,
   border-radius: 30px;
   cursor: pointer;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   margin-bottom: 24px;
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
 }
@@ -606,13 +608,14 @@ body:has(.events-page-root) .transition-component,
   border: 1px solid currentColor;
   margin-bottom: 8px;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
 .event-dossier-title {
   font-family: "DrukMedium", sans-serif;
   font-size: 38px;
   line-height: 1.1;
-  letter-spacing: -0.5px;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 12px;
@@ -661,6 +664,7 @@ body:has(.events-page-root) .transition-component,
   font-weight: 600;
   color: var(--ink-muted);
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
 .event-spec-v {
@@ -680,7 +684,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.8px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink);
   border-bottom: 1.5px solid var(--line-strong);
@@ -745,6 +749,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
+  letter-spacing: var(--track-name);
   color: var(--ink);
 }
 
@@ -771,6 +776,7 @@ body:has(.events-page-root) .transition-component,
   border-radius: 20px;
   text-decoration: none;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
 }
 
@@ -835,7 +841,7 @@ body:has(.events-page-root) .transition-component,
 .event-reg-close {
   position: absolute;
   top: 16px;
-  right: 18px;
+  right: 16px;
   background: var(--surface);
   border: 1.5px solid var(--line-strong);
   color: var(--ink);
@@ -846,6 +852,7 @@ body:has(.events-page-root) .transition-component,
   border-radius: 30px;
   cursor: pointer;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
 .event-reg-close:hover {
@@ -872,7 +879,7 @@ body:has(.events-page-root) .transition-component,
   font-weight: 600;
   color: var(--ink);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
 }
 
 .event-reg-input {
@@ -950,6 +957,7 @@ body:has(.events-page-root) .transition-component,
   font-size: var(--fs-label);
   cursor: pointer;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
 .event-submit-btn {
@@ -961,7 +969,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   cursor: pointer;
   text-transform: uppercase;
   margin-top: 8px;
@@ -1000,7 +1008,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-label);
   margin-bottom: 8px;
   user-select: none;
   transition: transform 0.1s linear;
@@ -1041,7 +1049,7 @@ body:has(.events-page-root) .transition-component,
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ink);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1065,7 +1073,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1103,7 +1111,7 @@ body:has(.events-page-root) .transition-component,
   /* Sits on the gradient's darker band + dot pattern; muted ink fell to ~4.1:1. */
   color: var(--ink);
   margin-top: 16px;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-body);
 }
 
 .event-reg-head {
@@ -1116,7 +1124,7 @@ body:has(.events-page-root) .transition-component,
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ok);
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
 }
 
 .event-reg-title {
@@ -2053,7 +2061,7 @@ select.event-reg-input {
 /* Phones: keep the hero's small lines on one line each. */
 @media (max-width: 767px) {
   .events-hero-coords {
-    letter-spacing: 0.3px;
+    letter-spacing: var(--track-body);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2062,7 +2070,7 @@ select.event-reg-input {
   /* Fits on one line at 375px; wraps (rather than truncating) when text is
      enlarged or the screen is narrower. */
   .events-hero-tag {
-    letter-spacing: 0.3px;
+    letter-spacing: var(--track-body);
     max-width: 100%;
     box-sizing: border-box;
     text-wrap: balance;
@@ -2122,7 +2130,7 @@ select.event-reg-input {
     border: 0;
     /* Solid: phones drop the backdrop blur, so the 94% tint showed the page through. */
     background-color: var(--surface);
-    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
 
@@ -2157,7 +2165,7 @@ select.event-reg-input {
     bottom: 0;
     z-index: 2;
     margin: 24px -24px 0;
-    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   }
@@ -2245,4 +2253,176 @@ html:has(.event-dossier-overlay.active, .events-cart-overlay.active, .event-reg-
 .events-search-input:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Responsive pass: 320px floor, touch targets, iOS input zoom, safe areas
+   ========================================================================== */
+/* Nothing on the events page may widen the viewport (clip keeps the sticky
+   toolbar working, unlike overflow: hidden). */
+.events-page-root {
+  overflow-x: clip;
+}
+
+:where(.events-page-root, .event-dossier-panel, .event-reg-card, .events-cart-panel) img {
+  max-width: 100%;
+  height: auto;
+}
+
+.events-hero-title,
+.event-dossier-title,
+.cart-head h3,
+.cart-item-main strong,
+.co-team legend,
+.event-coord-info {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* Drawers and the cart: % of the overlay, not 100vw (which counts the
+   scrollbar), and the last row clears the home indicator. */
+.events-cart-panel {
+  width: min(420px, 100%);
+}
+
+.cart-foot {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Phones pin the CTA bar to the bottom (it adds its own inset). */
+@media (min-width: 768px) {
+  .event-dossier-panel {
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}
+
+.events-toast {
+  bottom: calc(84px + env(safe-area-inset-bottom));
+}
+
+/* Touch: remaining small controls reach the 44px target. */
+@media (pointer: coarse), (max-width: 767px) {
+  .event-dossier-close,
+  .event-coord-btn,
+  .event-upi-copy-btn,
+  .event-upi-app-btn,
+  .cart-close,
+  .cart-mode button,
+  .events-cart-fab,
+  .event-reg-mode label {
+    min-height: var(--tap);
+  }
+
+  .event-coord-btn,
+  .event-upi-copy-btn,
+  .event-upi-app-btn,
+  .cart-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cart-close {
+    min-width: var(--tap);
+  }
+
+  /* The clear (x) is a full 44px square at the input's right edge. */
+  .events-search-clear {
+    right: 0;
+    width: var(--tap);
+    height: var(--tap);
+  }
+
+  /* 16px stops iOS Safari zooming the page when a field takes focus. */
+  .events-search-input,
+  .event-reg-input {
+    font-size: 16px;
+  }
+}
+
+/* Tablet: two-up grid with a tighter gap; the drawer leaves some page visible. */
+@media (min-width: 768px) and (max-width: 991px) {
+  .events-grid {
+    gap: 16px;
+  }
+
+  .event-dossier-panel {
+    max-width: min(620px, 88%);
+  }
+}
+
+/* Phones: the floating cart button and scroll HUD share the bottom edge, so
+   the HUD drops its counter (the TOP button stays) and both clear the
+   home indicator. */
+@media (max-width: 480px) {
+  .events-scroll-hud {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    padding: 4px;
+  }
+
+  .events-scroll-metric {
+    display: none;
+  }
+
+  .events-cart-fab {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Small phones (≤379px): tighter card and sheet padding so content keeps
+   its width. */
+@media (max-width: 379px) {
+  .event-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .event-card-actions {
+    gap: 8px;
+  }
+
+  .event-dossier-panel {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .event-dossier-cta {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .event-dossier-specs {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .cart-head {
+    padding: 16px 16px 8px;
+  }
+
+  .cart-list {
+    padding: 0 16px;
+  }
+
+  .cart-foot {
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .checkout-steps li {
+    min-width: 0;
+    white-space: normal;
+    padding: 8px 4px;
+  }
+
+  .co-team {
+    padding: 12px;
+  }
+
+  .events-cart-fab {
+    gap: 8px;
+    padding: 8px 12px;
+  }
 }

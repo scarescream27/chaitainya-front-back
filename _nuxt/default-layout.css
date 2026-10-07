@@ -1,4 +1,4 @@
-header{height:65px;left:0;opacity:0;padding:0 24px;position:fixed;top:0;width:100%;z-index:20}@media (max-width:991px){header{height:58px;padding:0 8px}}header .header{align-content:center;align-items:center;display:flex;height:100%;justify-content:space-between;width:100%}header .header .vr{align-items:center;background:#fff;border:2px solid #fff;border-radius:50%;cursor:pointer;display:none;height:47px;justify-content:center;width:47px}@media (max-width:767px){header .header .vr{display:block}}header .header .menu-switch{cursor:pointer;display:none;height:44px;position:relative;width:44px;z-index:2;-webkit-tap-highlight-color:transparent}header .header .menu-switch .line{background-color:#000;border-radius:2px;height:2px;left:calc(50% - 11px);position:absolute;top:calc(50% - 1px);transition:transform .2s ease,opacity .15s ease;width:22px}header .header .menu-switch .line:first-child{transform:translateY(-7px)}header .header .menu-switch .line:nth-child(3){transform:translateY(7px)}header .header .menu-switch .el{font-family:IBM Plex Mono;font-size:12px;position:absolute}header .header .menu-switch .el-1{left:0;top:0}header .header .menu-switch .el-2{right:0;top:0}header .header .menu-switch .el-3{bottom:0;left:0}header .header .menu-switch .el-4{bottom:0;right:0}@media (max-width:767px){header .header .menu-switch{display:block}}header .header .menu-switch.active .line:first-child{transform:rotate(45deg)}header .header .menu-switch.active .line:nth-child(2){opacity:0}header .header .menu-switch.active .line:nth-child(3){transform:rotate(-45deg)}header .header .mobile-menu{background-image:url(../images/footerPatern.png),linear-gradient(180deg,#fff,#fff);background-repeat:repeat;background-size:30%;display:none;flex-direction:column;height:100vh;justify-content:space-between;left:0;opacity:0;padding:144px 0 24px;pointer-events:none;position:absolute;top:0;width:100%}@media (max-width:767px){header .header .mobile-menu{display:flex}header .header .mobile-menu a{display:block!important}}header .header .mobile-menu .top a{font-size:48px;letter-spacing:.96px;margin-bottom:32px!important}header .header .mobile-menu .bottom a,header .header .mobile-menu .top a{color:#000;font-family:DrukMedium;font-style:normal;font-weight:500;line-height:110%;text-align:center;text-transform:uppercase}header .header .mobile-menu .bottom a{font-size:38px;letter-spacing:.76px}header .header .mobile-menu .bottom a:last-child{margin-top:48px}header .header .header-logo{position:relative;z-index:2}@media (max-width:767px){header .header .header-logo img{height:55px;transform:translateY(5px)}}header .header .right-menu{align-items:center;display:flex;justify-content:space-between;padding:0}@media (max-width:767px){header .header .right-menu{padding:0}}header .header .right-menu a{color:#000;display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:.39px;line-height:1.1;text-transform:uppercase}@media (max-width:767px){header .header .right-menu a{display:none}}header .header .right-menu a span{display:inline-block;margin:0 2px}header .header .right-menu a:hover span{text-decoration:underline;text-underline-offset:4px}header .header .right-menu{display:flex;align-items:center;gap:16px}header .header .right-menu a{margin:0!important}html{background:linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff),linear-gradient(0deg,#b4cbf5,#fff 111.72%);background-attachment:fixed}
+header{height:65px;left:0;opacity:0;padding:0 24px;position:fixed;top:0;width:100%;z-index:20}@media (max-width:991px){header{height:58px;padding:0 8px}}header .header{align-content:center;align-items:center;display:flex;height:100%;justify-content:space-between;width:100%}header .header .vr{align-items:center;background:#fff;border:2px solid #fff;border-radius:50%;cursor:pointer;display:none;height:47px;justify-content:center;width:47px}@media (max-width:767px){header .header .vr{display:block}}header .header .menu-switch{cursor:pointer;display:none;height:44px;position:relative;width:44px;z-index:2;-webkit-tap-highlight-color:transparent}header .header .menu-switch .line{background-color:#000;border-radius:2px;height:2px;left:calc(50% - 11px);position:absolute;top:calc(50% - 1px);transition:transform .2s ease,opacity .15s ease;width:22px}header .header .menu-switch .line:first-child{transform:translateY(-7px)}header .header .menu-switch .line:nth-child(3){transform:translateY(7px)}header .header .menu-switch .el{font-family:IBM Plex Mono;font-size:12px;position:absolute}header .header .menu-switch .el-1{left:0;top:0}header .header .menu-switch .el-2{right:0;top:0}header .header .menu-switch .el-3{bottom:0;left:0}header .header .menu-switch .el-4{bottom:0;right:0}@media (max-width:991px){header .header .menu-switch{display:block}}header .header .menu-switch.active .line:first-child{transform:rotate(45deg)}header .header .menu-switch.active .line:nth-child(2){opacity:0}header .header .menu-switch.active .line:nth-child(3){transform:rotate(-45deg)}header .header .mobile-menu{background-image:url(../images/footerPatern.png),linear-gradient(180deg,#fff,#fff);background-repeat:repeat;background-size:30%;display:none;flex-direction:column;height:100vh;justify-content:space-between;left:0;opacity:0;padding:144px 0 24px;pointer-events:none;position:absolute;top:0;width:100%}@media (max-width:991px){header .header .mobile-menu{display:flex}header .header .mobile-menu a{display:block!important}}header .header .mobile-menu .top a{font-size:48px;letter-spacing:var(--track-display);margin-bottom:32px!important}header .header .mobile-menu .bottom a,header .header .mobile-menu .top a{color:#000;font-family:DrukMedium;font-style:normal;font-weight:500;line-height:110%;text-align:center;text-transform:uppercase}header .header .mobile-menu .bottom a{font-size:38px;letter-spacing:var(--track-display)}header .header .mobile-menu .bottom a:last-child{margin-top:48px}header .header .header-logo{position:relative;z-index:2}@media (max-width:767px){header .header .header-logo img{height:55px;transform:translateY(5px)}}header .header .right-menu{align-items:center;display:flex;justify-content:space-between;padding:0}@media (max-width:767px){header .header .right-menu{padding:0}}header .header .right-menu a{color:#000;display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;font-family:IBM Plex Mono;font-size:14px;font-style:normal;font-weight:500;letter-spacing:var(--track-label);line-height:1.1;text-transform:uppercase}@media (max-width:991px){header .header .right-menu a{display:none}}header .header .right-menu a span{display:inline-block;margin:0 2px}header .header .right-menu a:hover span{text-decoration:underline;text-underline-offset:4px}header .header .right-menu{display:flex;align-items:center;gap:16px}header .header .right-menu a{margin:0!important}html{background:linear-gradient(0deg,#b4cbf5,#f7faff),linear-gradient(0deg,#96bbff,#edf4ff),linear-gradient(0deg,#b4cbf5,#fff 111.72%);background-attachment:fixed}
 
 /* ==========================================================================
    Accessibility, theming and responsive additions (readable CSS; the
@@ -22,7 +22,7 @@ header{height:65px;left:0;opacity:0;padding:0 24px;position:fixed;top:0;width:10
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--track-label);
   line-height: 1.2;
   text-transform: uppercase;
   text-decoration: none;
@@ -73,9 +73,9 @@ header .header .menu-switch:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
-/* Tablet widths (768-1100px): six nav links plus the logo overflowed the
-   header around 768-890px. Tighten the spacing, never the text size. */
-@media (min-width: 768px) and (max-width: 1100px) {
+/* Small laptops (992-1100px; below that the menu button takes over): keep
+   the nav links plus the logo on one row. Tighten the spacing, never the text size. */
+@media (min-width: 992px) and (max-width: 1100px) {
   header .header .right-menu {
     gap: 4px;
   }
@@ -97,9 +97,10 @@ header .header .right-menu {
   min-width: 0;
 }
 
-/* Mobile menu: fill the dynamic viewport and scroll rather than cut off
-   links on short (landscape) screens or with enlarged text. */
-@media (max-width: 767px) {
+/* Mobile menu (phones and tablets, up to 991px): fill the dynamic viewport
+   and scroll rather than cut off links on short (landscape) screens or with
+   enlarged text. */
+@media (max-width: 991px) {
   header .header .mobile-menu {
     height: 100dvh;
     overflow-y: auto;
@@ -111,7 +112,7 @@ header .header .right-menu {
   }
 }
 
-@media (max-width: 767px) and (max-height: 600px) {
+@media (max-width: 991px) and (max-height: 600px) {
   header .header .mobile-menu {
     padding-top: 88px;
   }
@@ -135,5 +136,19 @@ header .header .right-menu {
   header .header .menu-switch .line,
   header .header .right-menu a span {
     transition: none;
+  }
+}
+
+/* Fixed header clears the notch / rounded corners (no-op unless the page
+   opts into viewport-fit=cover, where env() becomes non-zero). */
+header {
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+
+@media (max-width: 991px) {
+  header {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
   }
 }

@@ -19,7 +19,7 @@
   font-family: var(--sgf-mono);
   font-size: clamp(12px, 1.12cqw, 13.5px);
   line-height: 1.25;
-  letter-spacing: 0.015em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
 }
@@ -41,33 +41,33 @@
   padding: clamp(96px, 11.5cqw, 160px) clamp(16px, 2.6cqw, 40px) 0;
 }
 
-.sgf-fade { transition: opacity 0.8s ease var(--sgf-d, 0ms), translate 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) var(--sgf-d, 0ms); }
+.sgf-fade { transition: opacity 300ms ease var(--sgf-d, 0ms), translate 300ms cubic-bezier(0.2, 0.7, 0.1, 1) var(--sgf-d, 0ms); }
 .sgf[data-in="false"] .sgf-fade { opacity: 0; translate: 0 10px; }
 
 /* Contact form */
 .sgf-form { max-width: 380px; }
 .sgf-lede { font: inherit; letter-spacing: inherit; max-width: 300px; }
-.sgf-fields { display: flex; flex-direction: column; gap: 8px; margin-top: clamp(14px, 2cqw, 22px); }
+.sgf-fields { display: flex; flex-direction: column; gap: 8px; margin-top: clamp(16px, 2cqw, 24px); }
 .sgf-fields.is-shake { animation: sgf-shake 300ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 @keyframes sgf-shake { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
 .sgf-field { position: relative; display: flex; align-items: center; padding: 8px 0 8px; border-bottom: 1px solid var(--sgf-ink); }
 .sgf-field::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--sgf-ink); transform: scaleX(0); transform-origin: 0 50%; transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .sgf-field:focus-within::after { transform: scaleX(1); }
 .sgf-field:has([aria-invalid="true"]) { border-bottom-color: var(--danger, #b3261e); }
-.sgf-input { flex: 1; min-width: 0; min-height: 28px; font: inherit; letter-spacing: inherit; text-transform: none; color: inherit; background: transparent; border: 0; outline: none; padding: 0; margin: 0; border-radius: 0; -webkit-appearance: none; appearance: none; resize: vertical; }
+.sgf-input { flex: 1; min-width: 0; min-height: 28px; font: inherit; letter-spacing: var(--track-body); text-transform: none; color: inherit; background: transparent; border: 0; outline: none; padding: 0; margin: 0; border-radius: 0; -webkit-appearance: none; appearance: none; resize: vertical; }
 textarea.sgf-input { min-height: 4.2em; line-height: 1.4; }
 .sgf-input::placeholder { color: var(--sgf-ink); opacity: 0.75; text-transform: uppercase; transition: opacity 200ms; }
 .sgf-input:focus::placeholder { opacity: 0.35; }
-.sgf-send { display: inline-flex; align-self: flex-start; align-items: center; gap: 12px; min-height: 44px; margin-top: 8px; padding: 0 2px; }
+.sgf-send { display: inline-flex; align-self: flex-start; align-items: center; gap: 12px; min-height: var(--tap, 44px); margin-top: 8px; padding: 0 2px; }
 .sgf-send:disabled { cursor: progress; opacity: 0.7; }
 .sgf-go { display: grid; place-items: center; width: 14px; }
 .sgf-go svg { width: 11px; height: 11px; transition: translate 300ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .sgf-send:focus-visible .sgf-go svg { translate: 4px 0; }
 @media (hover: hover) { .sgf-send:hover .sgf-go svg { translate: 4px 0; } }
 .sgf-send:focus-visible, .sgf-done button:focus-visible { outline: 1px dashed var(--sgf-ink); outline-offset: 3px; }
-.sgf-done { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: clamp(14px, 2cqw, 22px); padding: 12px 0; border-bottom: 1px solid var(--sgf-ink); overflow-wrap: anywhere; }
+.sgf-done { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: clamp(16px, 2cqw, 24px); padding: 12px 0; border-bottom: 1px solid var(--sgf-ink); overflow-wrap: anywhere; }
 .sgf-done svg { width: 12px; height: 12px; flex: none; }
-.sgf-done button { margin-left: auto; min-height: 44px; opacity: 0.6; transition: opacity 0.2s; }
+.sgf-done button { margin-left: auto; min-height: var(--tap, 44px); opacity: 0.6; transition: opacity 200ms; }
 .sgf-done button:hover { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
 .sgf-msg { min-height: 1.3em; margin-top: 8px; font-size: 0.9em; }
 
@@ -81,13 +81,13 @@ textarea.sgf-input { min-height: 4.2em; line-height: 1.4; }
 .sgf-link:focus-visible svg { translate: 5px 0; }
 @media (hover: hover) { .sgf-link:hover svg { translate: 5px 0; } }
 .sgf-link:focus-visible { outline: 1px dashed var(--sgf-ink); outline-offset: 2px; }
-.sgf-copy { white-space: pre-line; }
+.sgf-copy { white-space: pre-line; overflow-wrap: anywhere; }
 
 /* Wordmark */
 .sgf-mark { box-sizing: border-box; padding: clamp(36px, 4.6cqw, 64px) clamp(16px, 2.6cqw, 40px) calc(clamp(14px, 2.1cqw, 28px) + env(safe-area-inset-bottom)); }
 .sgf-svg { display: block; width: 100%; height: auto; overflow: hidden; fill: var(--sgf-ink); }
 /* Motion exception (motion audit): the shutter-glyph wordmark is the footer's
-   signature brand animation, not product chrome. .sgf-rise/.sgf-fade/.sgf-flip
+   signature brand animation, not product chrome. .sgf-rise/.sgf-flip
    keep their longer timings and .sgf-half its small overshoot; everything else
    in the footer is on the 100–300ms tokens. Reduced motion turns it all off. */
 .sgf-rise { transition: transform 1.15s cubic-bezier(0.16, 0.84, 0.2, 1) var(--sgf-d, 0ms); }
@@ -114,12 +114,19 @@ textarea.sgf-input { min-height: 4.2em; line-height: 1.4; }
 }
 @container (max-width: 420px) {
   .sgf-top { row-gap: 32px; }
-  .sgf-link { min-height: 40px; }
+  .sgf-link { min-height: var(--tap, 44px); }
+  /* Full-width send button: a phone-sized tap target that lines up with the fields. */
+  .sgf-send { align-self: stretch; justify-content: space-between; padding: 0 16px; border: 1px solid var(--sgf-ink); border-radius: 999px; }
+}
+/* Small phones: two link columns left ~130px each, too tight for
+   "Privacy Policy" plus its arrow; stack everything in one column. */
+@container (max-width: 360px) {
+  .sgf-top { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Touch screens: 16px inputs (iOS zooms the page into smaller ones on
    focus), fixed-height message box, no tap flash on buttons. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 767px) {
   .sgf-input { font-size: 16px; }
   textarea.sgf-input { resize: none; }
   .sgf-send, .sgf-link, .sgf-done button { -webkit-tap-highlight-color: transparent; }

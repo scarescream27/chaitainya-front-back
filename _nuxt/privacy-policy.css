@@ -70,7 +70,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
@@ -105,7 +105,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.2px;
+  letter-spacing: var(--track-body);
   /* A 36-character phrase, so it reads in its written case, not all-caps. */
   text-transform: none;
   margin-bottom: 16px;
@@ -115,9 +115,10 @@ body:has(.privacy-page-root) .transition-component,
   font-family: DrukMedium, sans-serif;
   font-size: 72px;
   line-height: 1.1;
-  /* Relative, so the tightening scales down with the font (a fixed -1.5px
-     made the letters collide at the 32px phone size). */
-  letter-spacing: -0.02em;
+  /* Relative, so it scales with the font (negative tracking made the
+     condensed Druk letters collide at phone sizes). */
+  letter-spacing: var(--track-display);
+  overflow-wrap: break-word;
   text-transform: uppercase;
   margin-bottom: 12px;
   color: var(--ink);
@@ -141,7 +142,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   font-weight: 500;
-  letter-spacing: 0.2px;
+  letter-spacing: var(--track-body);
   color: var(--ink);
   margin-bottom: 12px;
   text-transform: none;
@@ -157,7 +158,7 @@ body:has(.privacy-page-root) .transition-component,
   font-size: var(--fs-label);
   color: var(--ink-muted);
   text-transform: none;
-  letter-spacing: 0.2px;
+  letter-spacing: var(--track-body);
   /* Keep the row within ~64 characters; it wraps to a second line. */
   max-width: 64ch;
   column-gap: 0;
@@ -203,6 +204,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
+  letter-spacing: var(--track-label);
   color: var(--ink);
   text-decoration: none;
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
@@ -241,7 +243,7 @@ body:has(.privacy-page-root) .transition-component,
 }
 
 .privacy-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
 }
 
@@ -269,10 +271,12 @@ body:has(.privacy-page-root) .transition-component,
   font-family: DrukMedium, sans-serif;
   font-size: 28px;
   line-height: 1.1;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 767px) {
@@ -286,6 +290,7 @@ body:has(.privacy-page-root) .transition-component,
    letter, so 70ch ran ~90 characters; 34em is ~68 characters of running text. */
 .privacy-card p {
   max-width: 34em;
+  letter-spacing: var(--track-body);
   font-size: max(var(--fs-body), 14.5px);
   line-height: 1.65;
   color: var(--ink);
@@ -303,6 +308,7 @@ body:has(.privacy-page-root) .transition-component,
 
 .privacy-card li {
   max-width: 34em;
+  letter-spacing: var(--track-body);
   font-size: var(--fs-body);
   line-height: 1.6;
   color: var(--ink);
@@ -325,6 +331,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
   line-height: 1.6;
+  letter-spacing: var(--track-body);
   color: var(--ink);
 }
 
@@ -350,8 +357,9 @@ body:has(.privacy-page-root) .transition-component,
   font-size: 38px;
   text-transform: uppercase;
   margin-bottom: 12px;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-display);
   line-height: 1.1;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 767px) {
@@ -369,6 +377,7 @@ body:has(.privacy-page-root) .transition-component,
   max-width: 65ch;
   margin: 0 auto 24px;
   line-height: 1.6;
+  letter-spacing: var(--track-body);
 }
 
 .privacy-cta-btn {
@@ -380,7 +389,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   text-decoration: none;
   transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
@@ -406,7 +415,7 @@ body:has(.privacy-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   color: var(--ink-muted);
-  letter-spacing: 0.2px;
+  letter-spacing: var(--track-body);
   text-transform: none;
 }
 
@@ -416,11 +425,6 @@ body:has(.privacy-page-root) .transition-component,
 }
 
 @media (max-width: 767px) {
-  /* Druk is already condensed; at phone size any negative tracking collides. */
-  .privacy-hero h1 {
-    letter-spacing: 0;
-  }
-
   /* Stack the details and drop the "•" separators that dangled at line ends.
      (Kept at the end of the file so it wins over the base .privacy-meta-row.) */
   .privacy-meta-row {
@@ -448,5 +452,97 @@ body:has(.privacy-page-root) .transition-component,
     align-items: center;
     justify-content: center;
     min-height: var(--tap);
+  }
+}
+
+/* ==========================================================================
+   Responsive shell (shared by the Privacy and About pages)
+   ========================================================================== */
+
+/* Long words, e-mail addresses and URLs wrap instead of widening the page. */
+.privacy-container {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.privacy-card a,
+.privacy-callout,
+.privacy-footer-credits {
+  overflow-wrap: anywhere;
+}
+
+.privacy-page-root img,
+.privacy-page-root video,
+.privacy-page-root svg {
+  max-width: 100%;
+}
+
+.privacy-page-root img,
+.privacy-page-root video {
+  height: auto;
+}
+
+/* Phones: back / contact buttons and the CTA button go full width. */
+@media (max-width: 600px) {
+  .privacy-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .privacy-back-btn,
+  .privacy-contact-btn,
+  .privacy-cta-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .privacy-hero {
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+
+  .privacy-quick-nav {
+    margin-bottom: 32px;
+  }
+
+  .privacy-sections {
+    gap: 16px;
+  }
+
+  .privacy-cta-box {
+    margin-top: 40px;
+    border-radius: 20px;
+  }
+}
+
+/* Small phones (320-379px): a little more room for text inside the cards. */
+@media (max-width: 379px) {
+  .privacy-hero h1 {
+    font-size: 32px;
+  }
+
+  .privacy-card {
+    padding: 24px 16px;
+  }
+
+  .privacy-card ul {
+    margin-left: 16px;
+  }
+
+  .privacy-cta-box {
+    padding: 32px 16px;
+  }
+
+  .privacy-cta-box h3 {
+    font-size: 24px;
+  }
+}
+
+/* Touch screens: no hover lift on the cards (a tap left them raised). */
+@media (hover: none) {
+  .privacy-card:hover {
+    transform: none;
   }
 }

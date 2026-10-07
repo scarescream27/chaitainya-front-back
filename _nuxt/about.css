@@ -3,11 +3,16 @@
  * Cards, hero and CTA come from privacy-policy.css; this adds the grids.
  * ============================================================================ */
 
+/* Body copy in the about cards. */
+.about-page-root .privacy-card p {
+  letter-spacing: var(--track-body);
+}
+
 .about-sub {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-muted);
   margin: 24px 0 12px;
@@ -27,7 +32,7 @@
 }
 
 .about-stats {
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
 }
 
 .about-stats li {
@@ -42,16 +47,19 @@
   font-family: DrukMedium, sans-serif;
   font-size: 40px;
   line-height: 1.1;
+  letter-spacing: var(--track-display);
 }
 
 .about-stats span {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
+  letter-spacing: var(--track-label);
   color: var(--ink-muted);
+  overflow-wrap: anywhere;
 }
 
 .about-sponsors {
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
 }
 
 .about-sponsors a {
@@ -75,6 +83,7 @@
 .about-sponsors span {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
+  letter-spacing: var(--track-label);
   color: var(--ink-muted);
 }
 
@@ -113,8 +122,9 @@
   font-family: DrukMedium, sans-serif;
   font-size: clamp(36px, 7vw, 60px);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--track-display);
   margin: 0 0 8px;
+  overflow-wrap: anywhere;
   color: var(--ink);
 }
 
@@ -123,7 +133,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: clamp(14px, 2.4vw, 20px);
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--track-label);
   color: var(--ink-muted);
   margin-bottom: 4px;
 }
@@ -133,6 +143,7 @@
 }
 
 .about-team-grid {
+  --avatar: 144px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -141,9 +152,35 @@
   gap: 24px;
 }
 
-@media (min-width: 768px) {
+/* <=379: 1 col; 380-599: 2 cols, smaller avatar; 600-991: 2; 992-1199: 3; >=1200: 4. */
+@media (min-width: 380px) and (max-width: 599px) {
   .about-team-grid {
-    grid-template-columns: repeat(3, 1fr);
+    --avatar: 88px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .about-team-grid .about-team-card {
+    padding: 20px 12px 16px;
+  }
+}
+
+@media (min-width: 600px) {
+  .about-team-grid {
+    --avatar: 120px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .about-team-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .about-team-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
   }
 }
 
@@ -154,6 +191,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  min-width: 0;
+  height: 100%;
   margin: 0;
   max-width: none;
   padding: 32px 24px 24px;
@@ -181,8 +220,10 @@
 .about-team-photo {
   position: relative;
   z-index: 1;
-  width: 144px;
-  height: 144px;
+  flex: none;
+  width: var(--avatar, 144px);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
   border: 4px solid transparent;
@@ -191,11 +232,13 @@
   background: var(--ink);
   color: var(--ink-on-dark);
   font-family: DrukMedium, sans-serif;
-  font-size: 48px;
+  font-size: calc(var(--avatar, 144px) / 3);
+  letter-spacing: var(--track-display);
   transition: border-color 300ms ease, transform 300ms ease;
 }
 
 .about-team-photo img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -213,14 +256,25 @@
   margin: 16px 0 2px;
   font-size: 18px;
   font-weight: 600;
+  letter-spacing: var(--track-name);
   color: var(--ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .privacy-card .about-team-card p {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
+  letter-spacing: var(--track-label);
   color: var(--ink-muted);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.privacy-card .about-team-card .about-team-year {
+  margin-top: 4px;
+  letter-spacing: var(--track-body);
 }
 
 .about-team-links {
@@ -235,6 +289,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
+  letter-spacing: var(--track-label);
   color: var(--ink);
   border: 1px solid var(--line-strong);
   border-radius: 20px;
@@ -278,210 +333,9 @@
   }
 }
 
-/* ---- Teams: one tile per team, each opens the shared overlay ------------ */
-
-.about-team-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  margin: 8px 0 24px;
-  padding: 16px 24px 16px 16px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 20px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-
-.about-team-open-icon {
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: var(--ink);
-  color: var(--ink-on-dark);
-}
-
-.about-team-open-icon svg {
-  width: 28px;
-  height: 28px;
-}
-
-.about-team-open-label {
-  font-family: DrukMedium, sans-serif;
-  font-size: 26px;
-  line-height: 1.1;
-  text-transform: uppercase;
-}
-
-.about-team-open-label small {
-  display: block;
-  margin-top: 8px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--fs-label);
-  text-transform: none;
-  color: var(--ink-muted);
-}
-
-.about-team-open:focus-visible,
-.about-team-close:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
-}
-
-@media (hover: hover) {
-  .about-team-open:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
-  }
-}
-
-/* No padding on the dialog itself, so a click on it (not its content) means
-   the backdrop was clicked. */
-.about-team-dialog {
-  width: min(1000px, calc(100% - 32px));
-  max-height: calc(100dvh - 48px);
-  margin: auto;
-  padding: 0;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 20px;
-  background: var(--sky-top);
-  color: var(--ink);
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-
-.about-team-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.55);
-}
-
-.about-team-dialog .about-team {
-  margin: 0;
-  padding: 40px 32px 32px;
-}
-
-@media (max-width: 767px) {
-  .about-team-dialog .about-team {
-    padding: 48px 16px 16px;
-  }
-}
-
-.about-team-close {
-  position: sticky;
-  top: 12px;
-  float: right;
-  z-index: 2;
-  margin: 12px 12px 0 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1.5px solid var(--line-strong);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 24px;
-  line-height: 1.1;
-  cursor: pointer;
-}
-
-.about-team-dialog[open] {
-  animation: about-team-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes about-team-in {
-  from { opacity: 0; transform: translateY(8px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .about-team-dialog[open] { animation: none; }
-}
-
-/* Lock native page scroll while the overlay is open (clears itself when the
-   dialog closes or the page unmounts). */
-html:has(.about-team-dialog[open]) {
-  overflow: hidden;
-}
-
-/* A modal <dialog> sits in the top layer above the custom #cursor, so use the
-   same crosshair as a native cursor inside it ("x" on clickable things). */
-html.custom-cursor-active .about-team-dialog,
-html.custom-cursor-active .about-team-dialog * {
-  cursor: var(--crosshair-ink) 10 10, crosshair !important;
-}
-
-html.custom-cursor-active .about-team-dialog :is(a, button) {
-  cursor: var(--crosshair-ink-x) 10 10, pointer !important;
-}
-
-/* ---- Team tiles grid and members list ----------------------------------- */
-
-.about-tiles {
-  list-style: none;
-  margin: 0 0 8px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
-
-.privacy-card .about-tiles li {
-  max-width: none;
-  margin: 0;
-}
-
-.about-tiles .about-team-open {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
-
-.about-tiles .about-team-open-label {
-  font-size: 22px;
-}
 
 .about-team .about-sub {
   position: relative;
   z-index: 1;
   margin: 24px 0 12px;
-}
-
-.about-members {
-  position: relative;
-  z-index: 1;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px;
-}
-
-.about-members li {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin: 0;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  font-size: var(--fs-body);
-  color: var(--ink);
-}
-
-.about-members small {
-  flex: none;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--fs-label);
-  color: var(--ink-muted);
-}
-
-/* Spacing audit: cap the team blurb's measure inside the wide overlay. */
-.about-team-head p {
-  max-width: 70ch;
 }

@@ -63,7 +63,18 @@
   }
 }
 
-@media (max-width: 767px) {
+/* Tablets use the menu button too (768-991px): auth-modal.css re-shows the
+   top-bar links from 768px with a stronger selector, so match it here (this
+   file loads last) to keep only the logo and the menu button. */
+@media (min-width: 768px) and (max-width: 991px) {
+  html body header .header .right-menu > a,
+  html body header .header .right-menu > .nav-account > a,
+  html body header .header .right-menu > .nav-account > a.nav-profile {
+    display: none;
+  }
+}
+
+@media (max-width: 991px) {
   /* The open menu is inside #__nuxt (its own stacking layer, z-index 11),
      so the floating cart / scroll buttons (990, outside it) drew on top of
      the menu. Hide them while the menu is open. */
@@ -85,13 +96,14 @@
   /* The e-mail ran off both edges at 38px. */
   header .header .mobile-menu .bottom a {
     font-size: clamp(20px, 7vw, 38px);
+    overflow-wrap: anywhere;
   }
 
   /* Menu fills the visible screen (not 100vh, which runs under the browser
      toolbar) and scrolls on its own when a short phone can't fit it. */
   header .header .mobile-menu {
     height: 100dvh;
-    padding: clamp(88px, 18dvh, 147px) 16px calc(27px + env(safe-area-inset-bottom));
+    padding: clamp(88px, 18dvh, 144px) max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     overflow-y: auto;
     overscroll-behavior: contain;
     box-sizing: border-box;
@@ -99,11 +111,11 @@
 
   header .header .mobile-menu .top a {
     font-size: clamp(36px, 12vw, 48px);
-    margin-bottom: clamp(16px, 4dvh, 30px) !important;
+    margin-bottom: clamp(16px, 4dvh, 32px) !important;
   }
 
   header .header .mobile-menu .bottom a:last-child {
-    margin-top: clamp(24px, 5dvh, 50px);
+    margin-top: clamp(24px, 5dvh, 48px);
   }
 }
 
@@ -209,12 +221,16 @@
 /* --------------------------------------------------------------------------
    Contact page
    -------------------------------------------------------------------------- */
-@media (max-width: 767px) {
-  /* 8px side margins left the form touching the screen edges. */
+/* 8px side margins (contact.css, up to 991px) left the form touching the
+   screen edges. */
+@media (max-width: 991px) {
   .contact-page[data-v-8976a4c8] {
     padding-left: 16px;
     padding-right: 16px;
   }
+}
+
+@media (max-width: 767px) {
 
   /* contact.css sizes the pills to 100vw - 16px with !important. */
   .contact-form .wrapper form .input-wrapper {

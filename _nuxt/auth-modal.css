@@ -138,7 +138,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   padding: 4px 12px;
   border-radius: 30px;
   cursor: pointer;
@@ -163,7 +163,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "DrukMedium", sans-serif;
   font-size: 48px;
   line-height: 1.1;
-  letter-spacing: -0.5px;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 8px;
@@ -172,7 +172,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .chaitanya-modal-subtitle {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
-  letter-spacing: 0.3px;
+  letter-spacing: var(--track-body);
   color: var(--ink-muted);
   margin: 0 auto;
   max-width: 420px;
@@ -230,7 +230,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   cursor: pointer;
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
@@ -269,7 +269,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink);
   margin-bottom: 8px;
@@ -324,7 +324,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-weight: 600;
   color: var(--ink-muted);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
 }
 
 /* Mode Switchers */
@@ -348,6 +348,7 @@ html.pp-open .chaitanya-modal-backdrop {
   text-decoration: underline;
   text-underline-offset: 4px;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   transition: color 0.2s ease;
 }
 
@@ -383,7 +384,7 @@ html.pp-open .chaitanya-modal-backdrop {
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 4px;
-  letter-spacing: -0.3px;
+  letter-spacing: var(--track-name);
 }
 
 .profile-email {
@@ -398,7 +399,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-muted);
 }
@@ -436,6 +437,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .profile-meta-label {
   color: var(--ink-muted);
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   font-weight: 500;
 }
 
@@ -474,7 +476,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   cursor: pointer;
   transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
@@ -520,7 +522,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-weight: 600;
   color: var(--ink-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
 }
 
 .admin-table-wrap {
@@ -547,7 +549,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border-bottom: 2px solid var(--ink);
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
 }
 
 .admin-table td {
@@ -604,6 +606,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
 /* Status palette from tokens.css so badges read in both themes. */
@@ -736,7 +739,7 @@ html.pp-open .chaitanya-modal-backdrop {
   color: var(--danger-ink);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
 }
 
 .admin-panel-box {
@@ -754,7 +757,7 @@ html.pp-open .chaitanya-modal-backdrop {
   margin: 0 0 8px;
   font-size: 14px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: var(--track-label);
 }
 
 .admin-panel-box p {
@@ -833,9 +836,13 @@ html:not(.is-fest-admin) a[href="/admin"] {
 
 /* Display headings: open up the condensed Druk letterforms for readability */
 .chaitanya-modal-title,
-.profile-name,
 .admin-stat-num {
   letter-spacing: 0.04em;
+  word-spacing: 0.08em;
+}
+
+/* Person name: name tracking, same word spacing as the display titles. */
+.profile-name {
   word-spacing: 0.08em;
 }
 
@@ -945,7 +952,7 @@ html.pp-open {
   font-size: var(--fs-label);
   font-weight: 600;
   color: var(--ok);
-  letter-spacing: 0.6px;
+  letter-spacing: var(--track-label);
 }
 
 .pp-title {
@@ -1016,7 +1023,7 @@ html.pp-open {
   font-size: var(--fs-label);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: var(--track-label);
   color: var(--ink-muted);
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -1065,6 +1072,7 @@ html.pp-open {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   cursor: pointer;
 }
 
@@ -1086,7 +1094,7 @@ html.pp-open {
   font-size: var(--fs-label);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
 }
 
 .pp-field input,
@@ -1126,6 +1134,7 @@ html.pp-open {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   cursor: pointer;
 }
 
@@ -1240,7 +1249,7 @@ html.pp-open {
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 20px;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
   white-space: nowrap;
 }
 
@@ -1294,7 +1303,7 @@ html.pp-open {
   color: var(--ink-on-dark);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: var(--track-label);
 }
 
 .pp-idcard-main {
@@ -1350,7 +1359,7 @@ html.pp-open {
   font-size: var(--fs-label);
   font-weight: 600;
   padding: 12px;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
 }
 
 .pp-idcard.verified .pp-idcard-status {
@@ -1387,7 +1396,7 @@ html.pp-open {
 
 .pp-verify strong {
   font-size: 16px;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--track-label);
 }
 
 .pp-verify p {
@@ -1636,7 +1645,7 @@ html.not-home header {
   line-height: 1.1;
   margin: 2px 0 4px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-display);
   overflow-wrap: anywhere;
 }
 
@@ -1647,7 +1656,7 @@ html.not-home header {
   line-height: 1.1;
   margin: 4px 0 8px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-display);
 }
 
 .prof-section-head {
@@ -1685,7 +1694,7 @@ html.not-home header {
 
 .prof-form .pp-field small {
   text-transform: none;
-  letter-spacing: 0;
+  letter-spacing: var(--track-body);
   font-weight: 400;
 }
 
@@ -1751,6 +1760,7 @@ html.not-home header {
   color: var(--ink-muted);
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
   font-size: var(--fs-label);
   padding-top: 1px;
 }
@@ -2046,4 +2056,130 @@ header .header .nav-account {
 .chaitanya-modal-backdrop.active .chaitanya-modal-card,
 .pp-overlay.active .pp-panel {
   transition: transform var(--motion-200) var(--ease-out), opacity var(--motion-200) var(--ease-out);
+}
+
+/* ==========================================================================
+   Responsive pass: sign-in dialog, profile panel/page, admin tables
+   ========================================================================== */
+/* Long emails and names wrap instead of widening dialogs and rows. */
+.profile-email,
+.profile-meta-val,
+.pp-reg-top strong,
+.pp-verify-events li,
+.chaitanya-modal-banner {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.profile-meta-row {
+  gap: 12px;
+}
+
+.profile-meta-val {
+  text-align: right;
+}
+
+:where(.chaitanya-modal-card, .pp-panel, .profile-page-root) img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Wide admin tables scroll inside their own box, never the page. */
+.admin-table-wrap {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.admin-table th {
+  white-space: nowrap;
+}
+
+/* Touch: remaining dialog, profile and admin controls reach 44px. */
+@media (pointer: coarse), (max-width: 767px) {
+  .btn-secondary-action,
+  .pp-tab,
+  .admin-tab-btn,
+  .btn-action-approve,
+  .btn-action-reject,
+  .btn-action-view,
+  .chaitanya-form-input,
+  .pp-field input,
+  .pp-field select,
+  .pp-utr input {
+    min-height: var(--tap);
+  }
+
+  .pp-close {
+    min-width: var(--tap);
+  }
+
+  /* 16px stops iOS Safari zooming the page when a field takes focus. */
+  .chaitanya-form-input,
+  .pp-field input,
+  .pp-field select,
+  .pp-utr input,
+  .prof-form .pp-field input,
+  .prof-form .pp-field select,
+  .prof-confirm .pp-field input {
+    font-size: 16px;
+  }
+}
+
+/* Phones: the sign-in dialog fits the visible viewport (100dvh) with its
+   own scroll, clear of the notch and home indicator. */
+@media (max-width: 600px) {
+  .chaitanya-modal-backdrop {
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .chaitanya-modal-card {
+    max-height: 100%;
+  }
+
+  .pp-panel {
+    top: max(12px, env(safe-area-inset-top));
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  .pp-foot {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Small phones (≤379px). */
+@media (max-width: 379px) {
+  .chaitanya-modal-card {
+    padding: 24px 16px 16px;
+  }
+
+  .chaitanya-modal-topbar {
+    margin-right: -4px;
+  }
+
+  .chaitanya-modal-title {
+    font-size: 32px;
+  }
+
+  .btn-google-auth {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .profile-meta-card {
+    padding: 12px 16px;
+  }
+
+  .profile-name {
+    font-size: 32px;
+  }
+
+  .pp-idcard-main {
+    flex-wrap: wrap;
+  }
+
+  .prof-head .prof-avatar {
+    width: 48px;
+    height: 48px;
+  }
 }

@@ -116,7 +116,7 @@ html body:has(.admin-page-root) header {
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   text-align: left;
   color: color-mix(in srgb, var(--ink) 86.7%, var(--surface)); /* #222 in light */
@@ -210,7 +210,7 @@ html body:has(.admin-page-root) header {
   margin-top: 8px;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-muted);
 }
@@ -233,7 +233,7 @@ html body:has(.admin-page-root) header {
   font-family: "DrukMedium", sans-serif;
   font-size: 20px;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
   margin: 0 0 12px;
 }
@@ -539,4 +539,76 @@ ol.adm-list li span::before {
 
 .adm-reject-form .pp-msg:empty {
   margin-top: -8px; /* cancel the flex gap while there is no message */
+}
+
+/* ==========================================================================
+   Responsive pass
+   ========================================================================== */
+/* Tables scroll inside .admin-table-wrap; nothing else may widen the page. */
+.admin-page-root {
+  overflow-x: clip;
+}
+
+.adm-attention li > span,
+.adm-list li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Touch: section rows and bar rows are 44px targets. */
+@media (pointer: coarse), (max-width: 767px) {
+  .adm-bar-row {
+    min-height: var(--tap);
+  }
+
+  /* 16px stops iOS Safari zooming the page when a field takes focus. */
+  .adm-search input,
+  .adm-select select,
+  .adm-reject-form .pp-field input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .adm-top {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .adm-card {
+    padding: 16px;
+  }
+
+  .adm-search,
+  .adm-select {
+    flex: 1 1 100%;
+  }
+}
+
+/* Phones: stat cards pair up instead of one tall column. */
+@media (max-width: 480px) {
+  .adm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .adm-stat {
+    padding: 12px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .adm-stat-num {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 379px) {
+  .adm-main {
+    padding: 12px;
+  }
+
+  .adm-card {
+    padding: 12px;
+  }
 }
