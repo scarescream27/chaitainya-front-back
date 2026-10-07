@@ -546,3 +546,101 @@ body:has(.privacy-page-root) .transition-component,
     transform: none;
   }
 }
+
+/* ==========================================================================
+   Mobile & tablet polish (<= 991px), shared by Privacy, About, Organisation
+   and 404. Desktop (>= 992px) is untouched.
+   ========================================================================== */
+@media (max-width: 991px) {
+  /* Safety net: nothing inside the page may widen the viewport. */
+  .privacy-page-root {
+    overflow-x: clip;
+  }
+
+  /* 32px at 320, ~37px at 390, 40px at 430, capped at the old 48px by 768. */
+  .privacy-hero h1 {
+    font-size: clamp(32px, calc(7vw + 10px), 48px);
+  }
+
+  .privacy-card-header h2 {
+    font-size: clamp(20px, calc(2.5vw + 12px), 28px);
+  }
+
+  /* Readable body copy: 15px / 1.6 on phones and tablets. */
+  .privacy-card p,
+  .privacy-card li,
+  .privacy-callout {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .privacy-card code {
+    overflow-wrap: anywhere;
+  }
+
+  .privacy-cta-box h3 {
+    font-size: clamp(24px, calc(4vw + 12px), 38px);
+  }
+}
+
+@media (max-width: 600px) {
+  /* Tighter vertical rhythm on phones. */
+  .privacy-top-bar {
+    margin-bottom: 24px;
+  }
+
+  .privacy-hero {
+    margin-bottom: 24px;
+  }
+
+  .privacy-quick-nav {
+    margin-bottom: 24px;
+  }
+
+  .privacy-card-header {
+    margin-bottom: 12px;
+  }
+
+  .privacy-cta-box {
+    margin-top: 32px;
+  }
+
+  /* Full-width buttons wrap long labels instead of overflowing; 44px tall. */
+  .privacy-back-btn,
+  .privacy-contact-btn,
+  .privacy-cta-btn {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-height: var(--tap, 44px);
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* 16px side padding: "[ OPEN CONTACT US DESK ]" fits one line from 360px and wraps cleanly below. */
+  .privacy-cta-btn {
+    padding: 14px 16px;
+  }
+
+  .privacy-footer-credits {
+    margin-top: 32px;
+  }
+}
+
+/* No lifts or slides for people who asked for less motion. */
+@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .privacy-card,
+  .privacy-back-btn,
+  .privacy-contact-btn,
+  .privacy-cta-btn,
+  .quick-nav-pill {
+    transition: none;
+  }
+
+  .privacy-card:hover,
+  .privacy-back-btn:hover,
+  .privacy-contact-btn:hover,
+  .privacy-cta-btn:hover,
+  .quick-nav-pill:hover {
+    transform: none;
+  }
+}

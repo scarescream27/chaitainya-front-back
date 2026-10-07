@@ -126,6 +126,7 @@ let st,
       mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
       mAbout = d("span", null, "About", -1),
+      mOrg = d("span", null, "Organisation", -1),
       mAdmin = d("span", null, "Admin", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
@@ -385,6 +386,15 @@ let st,
                                     { to: "/about" },
                                     {
                                       default: Z(() => [O("["), mAbout, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  // Phones / tablets only: the mobile menu is hidden on desktop.
+                                  Y(
+                                    z,
+                                    { to: "/organisation" },
+                                    {
+                                      default: Z(() => [O("["), mOrg, O("]")]),
                                       _: 1,
                                     },
                                   ),

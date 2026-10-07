@@ -42,6 +42,7 @@ import {
 } from "./cart.js";
 
 import { openAuthModal } from "./auth-modal.js";
+import { organiserFor } from "./teams-data.js";
 import { registrationQrHtml } from "./profile-panel.js";
 
 import {
@@ -75,6 +76,16 @@ let resumeCheckoutUntil = 0; // resume checkout only if sign-in completes soon a
 let lastAuthUid = null; // to spot a sign-out (see subscribeAuthState)
 let globalListenersBound = false;
 
+// Phones and tablets: no cart (one event → REGISTER → checkout), and the
+// details drawer gets its own URL (/events/<id>) so the back button closes it.
+// Checked at the moment of each action, never cached.
+const isMobile = () => window.matchMedia("(max-width: 991px)").matches;
+const getRouter = () => document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+const DEEP_LINK = /^\/events\/([^/?#]+)/;
+const EVENTS_PATH = /^\/events\/?$/;
+let dossierEventId = null;
+let routerHooked = false;
+let skipCloseNav = false; // closing the drawer to follow a link: leave the URL alone
 // Checkout wizard state
 let checkout = null;
 // The checkout whose register/join request is in flight; blocks double submits and closing mid-request.
@@ -321,6 +332,14 @@ function actionButtonHtml(ev, { large = false } = {}) {
   return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
 }
 
+// Mobile drawer CTA: registers just this event (no cart).
+function mobileActionButtonHtml(ev) {
+  if (!isEventRegistered(ev.id) && isRegistrationOpen(ev)) {
+    return `<button type="button" class="event-submit-btn event-action-large" data-action="register-now" data-event-id="${e(ev.id)}">[ REGISTER ]</button>`;
+  }
+  return actionButtonHtml(ev, { large: true });
+}
+
 const svg = (d) =>
   `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
@@ -440,7 +459,59 @@ export function openEventDossier(eventId) {
   let sectionCount = 2;
   const sectionNo = () => String(++sectionCount).padStart(2, "0");
 
-  panel.innerHTML = `
+  const mobile = isMobile();
+  panel.classList.toggle("is-m", mobile);
+  if (mobile) {
+    // Phones/tablets: visual, title, tagline, when/where, REGISTER, then the detail sections.
+    const number = String(getEventCatalog().indexOf(ev) + 1).padStart(2, "0");
+    const flagship = ev.badge && ev.badge !== ev.categoryName ? ev.badge : "";
+    const org = organiserFor(ev);
+    const heads = coordinators.map((c) => e(c.name)).join(", ");
+    let n = 0;
+    const no = () => String(++n).padStart(2, "0");
+    const section = (title, inner) => `
+    <div class="event-dossier-section">
+      <h3 class="event-dossier-heading">[ ${no()}. ${title} ]</h3>
+      ${inner}
+    </div>`;
+    panel.innerHTML = `
+    <div class="event-dossier-mbar">
+      <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
+      <button type="button" class="event-dossier-close" id="dossier-close-btn">[ CLOSE ]</button>
+    </div>
+    <div class="event-dossier-visual" style="--cat:${accentColor};">
+      <span class="event-visual-num" aria-hidden="true">${number}</span>
+      <span class="event-visual-icon">${CATEGORY_ICONS[ev.category] || ""}</span>
+      ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}
+    </div>
+    <span class="event-dossier-kicker" style="color:${accentColor};">${e(ev.categoryName)}</span>
+    <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
+    <p class="event-dossier-tagline">${e(ev.tagline)}</p>
+    <dl class="event-dossier-facts">
+      <div><dt>DATE · TIME</dt><dd>${e(ev.date)} · ${e(ev.time)}</dd></div>
+      <div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>
+    </dl>
+    <div class="event-dossier-cta">
+      ${mobileActionButtonHtml(ev)}
+      ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Join your team with a team code</button>` : ""}
+    </div>
+    ${section("ABOUT", `<p class="event-dossier-text">${e(ev.overview)}</p>`)}
+    ${rulesHtml ? section("RULES", `<ul class="event-dossier-list">${rulesHtml}</ul>`) : ""}
+    ${roundsHtml ? section("FORMAT & ROUNDS", `<div class="event-rounds">${roundsHtml}</div>`) : ""}
+    ${scoringHtml ? section(ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
+    ${section("ELIGIBILITY", `
+      <dl class="event-dossier-facts">
+        <div><dt>REGISTRATION</dt><dd>${e(typeLabel)}</dd></div>
+        <div><dt>TEAM SIZE</dt><dd>${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</dd></div>
+        <div><dt>REGISTER BY</dt><dd>${e(formatDeadline(ev))}</dd></div>
+        <div><dt>FEE</dt><dd>${e(feeLabel(ev))}</dd></div>
+      </dl>`)}
+    ${section("ORGANISED BY", `
+      <p class="event-dossier-text"><a class="event-org-link" href="${e(org.href)}" data-action="org-link">${e(org.name)} →</a></p>
+      <p class="event-dossier-text">${heads ? `Student heads: ${heads}` : "Student heads will be announced soon"}</p>`)}
+    ${section("CONTACT", `<div>${coordinatorsHtml}</div>`)}
+  `;
+  } else panel.innerHTML = `
     <button type="button" class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
     <div>
       <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}${ev.badge && ev.badge !== ev.categoryName ? ` // ${e(ev.badge)}` : ""}</span>
@@ -501,7 +572,8 @@ export function openEventDossier(eventId) {
     requestAnimationFrame(() => panel.isConnected && (panel.scrollTop = 0));
   }
   isDossierOpen = true;
-  panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
+  dossierEventId = ev.id;
+  panel.querySelector("#dossier-close-btn").onclick = () => closeEventDossier();
   // Fresh open: focus the title. Re-render after ADD TO CART: stay on the action.
   activateDialog("dossier", wasOpen ? ".event-action-large" : "#event-dossier-title");
 }
@@ -509,7 +581,58 @@ export function openEventDossier(eventId) {
 export function closeEventDossier() {
   document.getElementById("event-dossier-overlay")?.classList.remove("active");
   isDossierOpen = false;
+  dossierEventId = null;
   deactivateDialog("dossier");
+  // Left /events/<id>: step back to /events if that's the previous entry (so
+  // the phone's back button doesn't reopen it), else swap the URL in place.
+  if (skipCloseNav || !DEEP_LINK.test(location.pathname)) return;
+  const router = getRouter();
+  if (!router) return;
+  const prev = history.state?.back;
+  if (typeof prev === "string" && EVENTS_PATH.test(prev.split(/[?#]/)[0])) router.back();
+  else router.replace("/events");
+}
+
+// Mobile: a card opens its details at /events/<id> (desktop keeps the URL).
+function openDossierFromCard(id) {
+  openEventDossier(id);
+  const router = getRouter();
+  const path = `/events/${encodeURIComponent(id)}`;
+  if (isMobile() && isDossierOpen && router && location.pathname !== path) router.push(path);
+}
+
+// Keeps the drawer in step with the URL: back/forward open or close it.
+function hookRouter() {
+  const router = getRouter();
+  if (!router || routerHooked) return;
+  routerHooked = true;
+  router.afterEach((to) => {
+    if (!document.getElementById("event-dossier-overlay")) return; // not on /events
+    const m = to.path.match(DEEP_LINK);
+    if (m) {
+      const id = decodeURIComponent(m[1]);
+      if (!getEventById(id)) return router.replace("/events");
+      if (!isDossierOpen || dossierEventId !== id) openEventDossier(id);
+    } else if (EVENTS_PATH.test(to.path) && isDossierOpen) {
+      closeEventDossier();
+    }
+  });
+}
+
+// Mobile REGISTER: check out just this event.
+function handleRegisterNow(eventId) {
+  const ev = getEventById(eventId);
+  if (!ev || isEventRegistered(ev.id) || !isRegistrationOpen(ev)) return;
+  try {
+    clearCart();
+    addToCart(ev.id);
+  } catch (err) {
+    return flashToast(err.message);
+  }
+  // Close first: the open drawer would make the sign-in modal inert.
+  closeEventDossier();
+  refreshEventsGrid();
+  startCheckout();
 }
 
 // ----------------------------------------------------------------------------
@@ -572,6 +695,7 @@ function updateCartFab(items = getCartItems()) {
 }
 
 export function openCart() {
+  if (isMobile()) return; // no cart on mobile: REGISTER checks out one event
   renderCartPanel();
   const overlay = document.getElementById("events-cart-overlay");
   if (!overlay) return;
@@ -591,7 +715,7 @@ function handleAddToCart(eventId) {
   if (!ev) return;
   try {
     addToCart(ev.id);
-    flashToast(`${ev.title} added to cart`);
+    if (!isMobile()) flashToast(`${ev.title} added to cart`);
   } catch (err) {
     flashToast(err.message);
   }
@@ -603,7 +727,7 @@ function handleRemoveFromCart(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
   removeFromCart(ev.id);
-  flashToast(`${ev.title} removed from cart`);
+  if (!isMobile()) flashToast(`${ev.title} removed from cart`);
   refreshEventsGrid();
   if (isDossierOpen) openEventDossier(ev.id);
 }
@@ -724,7 +848,10 @@ function requestCloseCheckout() {
   if (submitting) return;
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
-    if (!confirm("Leave registration? Your cart stays, but what you entered here will be cleared.")) return;
+    const msg = isMobile()
+      ? "Leave registration? What you entered here will be cleared."
+      : "Leave registration? Your cart stays, but what you entered here will be cleared.";
+    if (!confirm(msg)) return;
   }
   closeCheckout();
 }
@@ -1423,7 +1550,22 @@ function bindGlobalListeners() {
     const id = btn.dataset.eventId;
     switch (btn.dataset.action) {
       case "view-details":
-        return id && openEventDossier(id);
+        return id && openDossierFromCard(id);
+      case "register-now":
+        return id && handleRegisterNow(id);
+      case "dossier-back":
+        return closeEventDossier();
+      case "org-link": {
+        // Plain <a> would reload the app; route it. Keep /events/<id> in
+        // history so coming back reopens the details.
+        const router = getRouter();
+        if (!router || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.button !== 0) return;
+        evt.preventDefault();
+        skipCloseNav = true;
+        closeEventDossier();
+        skipCloseNav = false;
+        return router.push(btn.getAttribute("href"));
+      }
       case "add-to-cart":
         return id && handleAddToCart(id);
       case "remove-from-cart":
@@ -1477,6 +1619,13 @@ function bindGlobalListeners() {
         if (document.getElementById("event-reg-modal")) startCheckout();
       }, 300);
     }
+  });
+
+  // Crossing the 991px breakpoint: re-render the open drawer in the other
+  // layout; the cart doesn't exist on mobile.
+  window.matchMedia("(max-width: 991px)").addEventListener?.("change", () => {
+    if (isDossierOpen && dossierEventId) openEventDossier(dossierEventId);
+    if (isCartOpen && isMobile()) closeCart();
   });
 
   subscribeCart((items) => {
@@ -1580,7 +1729,17 @@ export function initEventsPage() {
   if (url.searchParams.get("cart") === "1") {
     url.searchParams.delete("cart");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
-    setTimeout(openCart, 400);
+    if (!isMobile()) setTimeout(openCart, 400);
+  }
+
+  // /events/<id>: open that event's details (all widths); unknown id → /events.
+  hookRouter();
+  const deep = location.pathname.match(DEEP_LINK);
+  if (deep) {
+    const id = decodeURIComponent(deep[1]);
+    if (getEventById(id)) openEventDossier(id);
+    else if (getRouter()) getRouter().replace("/events");
+    else history.replaceState(history.state, "", "/events");
   }
 
   // Reloaded mid-checkout (e.g. the phone dropped the tab during the UPI
@@ -1618,6 +1777,7 @@ export function destroyEventsPage() {
     scrollMotionCleanup = null;
   }
   isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  dossierEventId = null;
   checkout = null;
   submitting = null;
   // Leaving /events in the app closes the checkout for good: the draft is
@@ -1633,7 +1793,7 @@ export function openEventRegistration(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
   if (isEventRegistered(ev.id)) return window.openProfilePanel?.("registrations");
-  if (isRegistrationOpen(ev)) handleAddToCart(ev.id);
+  if (isRegistrationOpen(ev)) (isMobile() ? handleRegisterNow : handleAddToCart)(ev.id);
 }
 
 if (typeof window !== "undefined") {

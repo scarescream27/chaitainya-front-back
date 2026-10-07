@@ -15,7 +15,8 @@
  */
 import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket, getCurrentUser } from "./auth-service.js";
-import { escapeHtml as esc } from "./fest-config.js";
+import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel } from "./fest-config.js";
+import { EVENTS_DATA, EVENT_CATEGORIES, REGISTRATION_DEADLINE, formatDeadline, feeLabel } from "./events-data.js";
 
 // #region glyphs (verbatim from the component, types removed)
 
@@ -169,6 +170,107 @@ export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((v || "").tri
 
 // #endregion
 
+
+// #region mobile-only sections (events preview, FAQ, footer nav; m-home.css)
+
+// Same glyphs as the events page cards (CATEGORY_ICONS in events-page.js).
+const msvg = (d) =>
+  `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CAT_ICONS = {
+  tech: msvg('<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/>'),
+  innovation: msvg('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/>'),
+  business: msvg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+  esports: msvg('<path d="M7 9h4M9 7v4M15 10h.01M18 8h.01"/><path d="M6.5 5h11A4.5 4.5 0 0 1 22 9.5v4.3a3.2 3.2 0 0 1-5.6 2.1L15 14H9l-1.4 1.9A3.2 3.2 0 0 1 2 13.8V9.5A4.5 4.5 0 0 1 6.5 5Z"/>'),
+  cultural: msvg('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+};
+
+/** 4 events: badged (flagship) ones first, one per category, then the catalogue order. */
+const previewEvents = () => {
+  const flagged = EVENTS_DATA.filter((ev) => ev.badge && ev.badge !== ev.categoryName);
+  const seen = new Set();
+  const picks = flagged.filter((ev) => !seen.has(ev.category) && seen.add(ev.category));
+  for (const ev of [...flagged, ...EVENTS_DATA]) if (picks.length < 4 && !picks.includes(ev)) picks.push(ev);
+  return picks.slice(0, 4);
+};
+
+const eventCard = (ev) => {
+  const cat = EVENT_CATEGORIES.find((c) => c.id === ev.category);
+  const num = String(EVENTS_DATA.indexOf(ev) + 1).padStart(2, "0");
+  return `
+    <li class="sgfm-card" style="--cat:${cat?.accent || "var(--ink)"}">
+      <div class="sgfm-vis" aria-hidden="true">
+        <span class="sgfm-num">${num}</span>
+        <span class="sgfm-glyph">${CAT_ICONS[ev.category] || ""}</span>
+        <span class="sgfm-cat">${esc(cat?.shortCode || "")}</span>
+      </div>
+      <div class="sgfm-body">
+        <h3 class="sgfm-title">${esc(ev.title)}</h3>
+        <p class="sgfm-tag">${esc(ev.tagline)}</p>
+        <p class="sgfm-meta">${esc(ev.date)} · ${esc(ev.venue === "To be notified" ? "Venue to be notified" : ev.venue)}</p>
+        <a class="sgfm-more" href="/events/${encodeURIComponent(ev.id)}" data-sgfm-link>View details <span aria-hidden="true">→</span><span class="sr-only">: ${esc(ev.title)}</span></a>
+      </div>
+    </li>`;
+};
+
+const faqItems = () => {
+  const cats = EVENT_CATEGORIES.filter((c) => c.id !== "all").map((c) => c.name.toLowerCase());
+  const deadline = formatDeadline({ deadline: REGISTRATION_DEADLINE });
+  const mail = `<a href="mailto:${esc(FEST_CONFIG.contactEmail)}">${esc(FEST_CONFIG.contactEmail)}</a>`;
+  return [
+    ["What is " + FEST_CONFIG.name + "?",
+      `${esc(FEST_CONFIG.name)} is the fest of ${esc(FEST_CONFIG.university)}, running ${esc(getFestDatesLabel())} over ${FEST_CONFIG.festDays} days, with ${EVENTS_DATA.length} events across ${esc(cats.join(", "))}.`],
+    ["Who can participate?",
+      "All bona fide undergraduate and postgraduate students from recognized colleges, universities and polytechnics with a valid student ID card."],
+    ["How can I register?",
+      `Sign in (or create an account), open <a href="/events" data-sgfm-link>Events</a>, pick an event and register from its details. Registration closes on ${esc(deadline)} IST. For team events, the team leader registers the team and gets a unique team code; teammates sign in and join with that code on the same event.`],
+    ["Is registration free?",
+      // Same source as the event pages' FEE line, so the two never disagree.
+      EVENTS_DATA.every((ev) => feeLabel(ev) === "Free")
+        ? "Yes, every event currently lists entry as free. Each event's details page shows its fee, so check there before you register."
+        : "Entry fees are listed on each event's details page (some are free, some are still to be notified), so check the event before you register."],
+    ["Where are the events conducted?",
+      `On the ${esc(FEST_CONFIG.university)} campus. Each event's page lists its venue; some venues are still to be announced.`],
+    ["Can I participate in multiple events?",
+      "Yes. You can register for multiple events as long as their timings don't clash."],
+    ["Where can I find event timings?",
+      `Each event's details page shows its day and time. The fest runs ${esc(getFestDatesLabel())}; some timings are still to be announced.`],
+    ["Who can I contact for help?",
+      `Write to ${mail}, or send us a message with the <a href="#contact" data-sgfm-link>contact form</a> below.`],
+  ];
+};
+
+const MNAV = [
+  ["Home", "/"],
+  ["About", "/about"],
+  ["Events", "/events"],
+  ["Organisation", "/organisation"],
+  ["FAQ", "#faq"],
+  ["Register", "#register"],
+  ["Privacy Policy", "/privacy-policy"],
+  ["Contact", "#contact"],
+];
+
+const mobileSections = (uid) => `
+    <div class="sgfm">
+      <section class="sgfm-events" aria-labelledby="${uid}-ev">
+        <h2 class="sgfm-h" id="${uid}-ev">Events</h2>
+        <ul class="sgfm-row">${previewEvents().map(eventCard).join("")}</ul>
+        <a class="sgfm-all" href="/events" data-sgfm-link>[ All events ]</a>
+      </section>
+      <section class="sgfm-faq" id="faq" aria-labelledby="${uid}-faq">
+        <h2 class="sgfm-h" id="${uid}-faq">FAQ</h2>
+        ${faqItems().map(([q, a]) => `<details class="sgfm-qa"><summary>${esc(q)}</summary><div class="sgfm-a"><p>${a}</p></div></details>`).join("")}
+      </section>
+    </div>`;
+
+const mobileNav = () => `
+      <nav class="sgfm-nav" aria-label="Footer">
+        <ul>${MNAV.map(([l, h]) => `<li><a href="${h}" data-sgfm-link>${l}</a></li>`).join("")}
+          <li><a href="mailto:${esc(FEST_CONFIG.contactEmail)}">Email us</a></li></ul>
+      </nav>`;
+
+// #endregion
+
 const SVGNS = "http://www.w3.org/2000/svg";
 const ARROW =
   '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9.2M6.4 2.2 10.2 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>';
@@ -222,7 +324,7 @@ export function mountShutterFooter(root, opts = {}) {
     </li>`;
 
   root.dataset.in = still ? "true" : "false";
-  root.innerHTML = `
+  root.innerHTML = `${mobileSections(uid)}
     <div class="sgf-top">
       <form class="sgf-form sgf-fade" style="${delay()}" novalidate aria-labelledby="${uid}-lede">
         <h2 class="sgf-lede" id="${uid}-lede">${esc(o.contactLabel)}</h2>
@@ -245,6 +347,7 @@ export function mountShutterFooter(root, opts = {}) {
       <p class="sgf-copy sgf-fade" style="${delay()}">${esc(o.copy)}</p>
 
       <nav aria-label="More"><ul class="sgf-list">${o.legal.map(linkItem).join("")}</ul></nav>
+      ${mobileNav()}
     </div>
     <div class="sgf-mark">
       <p class="sr-only">${esc(o.wordmark)}</p>
@@ -406,6 +509,37 @@ export function mountShutterFooter(root, opts = {}) {
     e.preventDefault();
     const sm = window.ScrollSmoother?.get?.();
     sm ? sm.scrollTo(0, true) : window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
+  });
+
+  // Mobile sections: in-page targets scroll (through ScrollSmoother when it
+  // runs), other internal paths go through the router like the rest of the
+  // site. index.html's capture handler already routes /events, /about and
+  // /privacy-policy before this runs (defaultPrevented), so those stay as-is.
+  const scrollToEl = (el) => {
+    const sm = window.ScrollSmoother?.get?.();
+    sm ? sm.scrollTo(el, !still, "top 72px") : el.scrollIntoView({ behavior: still ? "auto" : "smooth" });
+  };
+  on(root, "click", (e) => {
+    const a = e.target.closest?.("a[data-sgfm-link]");
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const href = a.getAttribute("href");
+    if (href === "/") {
+      e.preventDefault();
+      const sm = window.ScrollSmoother?.get?.();
+      sm ? sm.scrollTo(0, !still) : window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
+    } else if (href === "#faq") {
+      e.preventDefault();
+      scrollToEl(root.querySelector("#faq"));
+    } else if (href === "#contact") {
+      e.preventDefault();
+      scrollToEl(form);
+      input(input("name").value ? "message" : "name").focus({ preventScroll: true });
+    } else if (href.startsWith("/")) {
+      const router = document.querySelector("#__nuxt")?.__vue_app__?.config?.globalProperties?.$router;
+      if (!router) return; // no router yet: let the browser load the page
+      e.preventDefault();
+      router.push(href);
+    }
   });
 
   // ---- contact form ----------------------------------------------------------

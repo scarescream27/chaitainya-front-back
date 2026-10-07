@@ -339,3 +339,100 @@
   z-index: 1;
   margin: 24px 0 12px;
 }
+
+/* The "full organisation" link is a phone/tablet shortcut; desktop is unchanged. */
+@media (min-width: 992px) {
+  .privacy-card .about-org-link {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Mobile & tablet (<= 991px). Desktop is untouched.
+   ========================================================================== */
+@media (max-width: 991px) {
+  .about-sub {
+    margin: 20px 0 12px;
+  }
+
+  .about-team {
+    margin-bottom: 16px;
+  }
+
+  .about-inline-cta {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Two stat tiles per row instead of one 253px-wide tile per number. */
+  .about-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .about-stats li {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .about-stats b {
+    font-size: 32px;
+  }
+
+  /* Long labels ("[ MEET THE FULL ORGANISATION ]" is ~293px at 12px) wrap
+     inside the full-width button instead of overflowing 320px. */
+  .about-inline-cta {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .about-team-card h4 {
+    font-size: 16px;
+    margin-top: 12px;
+  }
+}
+
+/* Team cards: 1 column below 360px, 2 columns from 360px (was 380px). */
+@media (max-width: 359px) {
+  .about-team-grid {
+    --avatar: 112px;
+    gap: 12px;
+  }
+
+  .about-team-grid .about-team-card {
+    padding: 24px 16px 20px;
+  }
+}
+
+@media (min-width: 360px) and (max-width: 599px) {
+  .about-team-grid {
+    --avatar: 88px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .about-team-grid .about-team-card {
+    padding: 20px 12px 16px;
+  }
+}
+
+@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .about-team-card,
+  .about-team-wave,
+  .about-team-photo,
+  .about-team-photo img {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Phones/tablets: .privacy-card ul indents bullet lists; the team card grid
+   was pushed off-centre by that indent. */
+@media (max-width: 991px) {
+  .privacy-card .about-team-grid {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
