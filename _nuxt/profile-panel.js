@@ -167,8 +167,8 @@ function renderPage() {
         <h1 class="prof-title">Sign in to view your profile</h1>
         <p class="pp-hint">Sign in to see your details, event registrations and entry QR codes.</p>
         <div class="prof-actions">
-          <button type="button" class="pp-primary" data-prof="login">[ Sign in ]</button>
-          <button type="button" class="pp-action subtle" data-prof="register">[ Create account ]</button>
+          <button type="button" class="pp-primary" data-prof="login">Sign in</button>
+          <button type="button" class="pp-action subtle" data-prof="register">Create account</button>
         </div>
       </section>`;
     refreshScroll();
@@ -184,7 +184,7 @@ function renderPage() {
         <span class="pp-sub">${e(user.email)}</span>
         ${user.studentId ? `<span class="pp-sub">Chaitanya ID <b class="mono">${e(user.studentId)}</b></span>` : ""}
       </div>
-      <button type="button" class="pp-logout prof-logout" data-prof="logout">[ Sign out ]</button>
+      <button type="button" class="pp-logout prof-logout" data-prof="logout">Sign out</button>
     </div>
 
     <section class="prof-card" id="profile-details" aria-labelledby="prof-details-title">

@@ -236,9 +236,9 @@ export function renderEventsPageHtml() {
   const categoriesHtml = categories
     .map(
       (cat) => `
-      <button type="button" class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" aria-pressed="${activeCategory === cat.id}" data-cat="${e(cat.id)}">
+      <button type="button" class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" aria-pressed="${activeCategory === cat.id}" data-cat="${e(cat.id)}" style="--tint: ${cat.accent || "var(--ink)"}">
         ${e(cat.name)}
-        <span class="cat-count">(${cat.count})</span>
+        <span class="cat-count"><span class="d-only">(</span>${cat.count}<span class="d-only">)</span></span>
       </button>
     `
     )
@@ -249,8 +249,13 @@ export function renderEventsPageHtml() {
       <div id="events-scroll-progress"></div>
 
       <div class="events-container">
-        <div class="events-hero">
-          <span class="events-hero-coords">[ 31.7088° N, 76.5273° E // HPTU HAMIRPUR ]</span>
+        <div class="events-m-head m-only">
+          <h1>Events</h1>
+          <p>${e(totalEvents())} events · ${e(getFestDatesLabel().replace(/\s*\d{4}$/, ""))} · HPTU Hamirpur</p>
+        </div>
+
+        <div class="events-hero d-only">
+          <span class="events-hero-coords">31.7088° N, 76.5273° E // HPTU HAMIRPUR</span>
           <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
           <p class="events-hero-subtitle">Code, build, pitch, play and perform. Pick your events and register in one go.</p>
           <ul class="events-stats-strip" aria-label="Fest at a glance">
@@ -279,7 +284,7 @@ export function renderEventsPageHtml() {
           <span class="pulse-dot"></span>
           <span id="events-scroll-counter">${e(totalEvents())} EVENTS</span>
         </div>
-        <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Back to top">[ ↑ TOP ]</button>
+        <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Back to top">↑ TOP</button>
       </div>
 
       <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog" aria-label="Cart, 0 events" title="Cart">
@@ -317,13 +322,13 @@ function renderGridHtml(events) {
 function actionButtonHtml(ev) {
   const cls = "event-submit-btn event-action-large";
   if (isEventRegistered(ev.id)) {
-    return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`;
+    return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">✓ REGISTERED</button>`;
   }
   if (isRegistrationOpen(ev)) {
-    return `<button type="button" class="${cls}" data-action="register-now" data-event-id="${e(ev.id)}">[ REGISTER ]</button>`;
+    return `<button type="button" class="${cls}" data-action="register-now" data-event-id="${e(ev.id)}">REGISTER</button>`;
   }
   const label = isPastDeadline(ev) ? "REGISTRATION CLOSED" : "REGISTRATION SOON";
-  return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
+  return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">${label}</button>`;
 }
 
 const svg = (d) =>
@@ -390,13 +395,14 @@ function renderEventCardHtml(ev) {
         <h2 class="event-card-title" title="${e(ev.title)}">${e(ev.title)}</h2>
         <p class="event-card-tagline" title="${e(ev.tagline)}">${e(ev.tagline)}</p>
 
+
         <ul class="event-card-chips" aria-label="Key details">
           <li class="event-chip">${CHIP_ICONS.date}${e(ev.date)}</li>
           <li class="event-chip">${CHIP_ICONS.team}${e(teamChip)}</li>
         </ul>
 
         <div class="event-card-actions">
-          <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
+          <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">VIEW DETAILS</button>
           ${cartToggleHtml(ev)}
         </div>
       </div>
@@ -470,13 +476,13 @@ export function openEventDossier(eventId) {
   const no = () => String(++n).padStart(2, "0");
   const section = (title, inner) => `
   <div class="event-dossier-section">
-    <h3 class="event-dossier-heading">[ ${no()}. ${title} ]</h3>
+    <h3 class="event-dossier-heading">${no()}. ${title}</h3>
     ${inner}
   </div>`;
   panel.innerHTML = `
   <div class="event-dossier-mbar">
     <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
-    <button type="button" class="event-dossier-close" id="dossier-close-btn">[ CLOSE ]</button>
+    <button type="button" class="event-dossier-close" id="dossier-close-btn" aria-label="Close"><span class="d-only">CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
   </div>
   <div class="event-dossier-visual" style="--cat:${accentColor};">
     <span class="event-visual-num" aria-hidden="true">${number}</span>
@@ -614,13 +620,13 @@ function renderCartPanel() {
   panel.innerHTML = `
     <div class="cart-head">
       <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
-      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart">[ CLOSE ]</button>
+      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart"><span class="d-only">CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
     </div>
     ${items.length
       ? `<ul class="cart-list">${rows}</ul>
          <div class="cart-foot">
            <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
-           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ REGISTER ]</button>
+           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">REGISTER</button>
          </div>`
       : `<div class="cart-empty"><p>Your cart is empty.</p><p>Tap the cart button on an event to add it.</p></div>`}
   `;
@@ -953,8 +959,8 @@ function renderCheckout(focusSel) {
         ${detailsFieldsHtml(checkout.details, user)}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          ${checkout.only ? "" : `<button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← BACK TO CART ]</button>`}
-          <button type="submit" class="event-submit-btn">[ CONTINUE → ]</button>
+          ${checkout.only ? "" : `<button type="button" class="event-submit-btn secondary" data-action="co-back-cart">← BACK TO CART</button>`}
+          <button type="submit" class="event-submit-btn">CONTINUE →</button>
         </div>
       </form>`;
   } else if (step === "teams") {
@@ -1002,8 +1008,8 @@ function renderCheckout(focusSel) {
         ${blocks}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-prev">[ ← BACK ]</button>
-          <button type="submit" class="event-submit-btn">[ CONTINUE → ]</button>
+          <button type="button" class="event-submit-btn secondary" data-action="co-prev">← BACK</button>
+          <button type="submit" class="event-submit-btn">CONTINUE →</button>
         </div>
       </form>`;
   } else if (step === "review") {
@@ -1023,7 +1029,7 @@ function renderCheckout(focusSel) {
           ? `<div class="event-upi-payment-box">
               <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
               ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
-              ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">[ PAY ₹${e(total)} WITH A UPI APP ]</a>` : ""}
+              ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">PAY ₹${e(total)} WITH A UPI APP</a>` : ""}
               <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
               <p class="event-upi-help">After paying, enter the 12-digit UTR from the receipt. The fest team matches it with the bank statement, then confirms your registration.</p>
               <div class="event-reg-group">
@@ -1044,8 +1050,8 @@ function renderCheckout(focusSel) {
         ${paymentHtml}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-prev">[ ← BACK ]</button>
-          <button type="submit" class="event-submit-btn" id="co-submit" ${total > 0 && !payReady ? "disabled" : ""}>[ CONFIRM REGISTRATION ]</button>
+          <button type="button" class="event-submit-btn secondary" data-action="co-prev">← BACK</button>
+          <button type="submit" class="event-submit-btn" id="co-submit" ${total > 0 && !payReady ? "disabled" : ""}>CONFIRM REGISTRATION</button>
         </div>
       </form>`;
   } else if (step === "done") {
@@ -1066,8 +1072,8 @@ function renderCheckout(focusSel) {
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
       ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
       <div class="checkout-nav">
-        <button type="button" class="event-submit-btn secondary" data-action="co-close">[ BACK TO EVENTS ]</button>
-        <button type="button" class="event-submit-btn" data-action="co-my-registrations">[ VIEW MY REGISTRATIONS ]</button>
+        <button type="button" class="event-submit-btn secondary" data-action="co-close">BACK TO EVENTS</button>
+        <button type="button" class="event-submit-btn" data-action="co-my-registrations">VIEW MY REGISTRATIONS</button>
       </div>`;
   } else if (step === "join") {
     const ev = getEventById(checkout.joinEventId);
@@ -1085,14 +1091,14 @@ function renderCheckout(focusSel) {
         ${detailsFieldsHtml(checkout.details, user)}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-close">[ CANCEL ]</button>
-          <button type="submit" class="event-submit-btn" id="co-submit">[ JOIN TEAM ]</button>
+          <button type="button" class="event-submit-btn secondary" data-action="co-close">CANCEL</button>
+          <button type="submit" class="event-submit-btn" id="co-submit">JOIN TEAM</button>
         </div>
       </form>`;
   }
 
   card.innerHTML = `
-    <button type="button" class="event-reg-close" data-action="co-close">[ ESC / CLOSE ]</button>
+    <button type="button" class="event-reg-close" data-action="co-close" aria-label="Close"><span class="d-only">ESC / CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
     ${stepperHtml()}
     <div class="checkout-step" key="${step}">${body}</div>
   `;
@@ -1141,7 +1147,7 @@ async function onCheckoutSubmit(evt, card) {
       if (total > 0 && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
       const btn = card.querySelector("#co-submit");
       btn.disabled = true;
-      btn.textContent = "[ REGISTERING… ]";
+      btn.textContent = "REGISTERING…";
       submitting = co;
       const result = await checkoutCart(
         co.items.map((i) => ({ eventId: i.eventId, mode: i.mode })),
@@ -1162,7 +1168,7 @@ async function onCheckoutSubmit(evt, card) {
       if (!code) throw new Error("Enter your team code.");
       const btn = card.querySelector("#co-submit");
       btn.disabled = true;
-      btn.textContent = "[ JOINING... ]";
+      btn.textContent = "JOINING...";
       submitting = co;
       const joined = await joinTeamWithCode(code, getEventById(co.joinEventId), co.details);
       removeFromCart(co.joinEventId);
@@ -1192,7 +1198,7 @@ async function onCheckoutSubmit(evt, card) {
     const btn = card.querySelector("#co-submit");
     if (btn) {
       btn.disabled = false;
-      btn.textContent = co.step === "join" ? "[ JOIN TEAM ]" : "[ CONFIRM REGISTRATION ]";
+      btn.textContent = co.step === "join" ? "JOIN TEAM" : "CONFIRM REGISTRATION";
     }
   } finally {
     if (submitting === co) submitting = null;

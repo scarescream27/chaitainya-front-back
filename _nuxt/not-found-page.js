@@ -36,7 +36,7 @@ let a,
           <div class="privacy-container">
             <div class="privacy-top-bar">
               <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
-              <a href="/events" class="privacy-contact-btn">[ EXPLORE EVENTS ]</a>
+              <a href="/events" class="privacy-contact-btn">EXPLORE EVENTS</a>
             </div>
             <div class="privacy-hero">
               <span class="privacy-tag-badge">Error 404</span>

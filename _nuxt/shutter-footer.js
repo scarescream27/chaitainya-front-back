@@ -17,7 +17,8 @@ import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket, getCurrentUser } from "./auth-service.js";
 import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES, REGISTRATION_DEADLINE, formatDeadline, feeLabel } from "./events-data.js";
-import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
+import { marqueeHtml, eventCardHtml, personCardHtml } from "./m-marquee.js";
+import { allPeople } from "./teams-data.js";
 
 // #region glyphs (verbatim from the component, types removed)
 
@@ -252,6 +253,46 @@ const MNAV = [
   ["Contact", "/contact-us"],
 ];
 
+// Phones only (.m-only): more of the fest below the events row. Sections fade
+// up as they scroll in and the numbers count up (see revealOnScroll).
+const phoneExtras = () => {
+  const cats = EVENT_CATEGORIES.filter((c) => c.id !== "all");
+  const count = (id) => EVENTS_DATA.filter((ev) => ev.category === id).length;
+  const people = allPeople().map((p) => ({ name: p.name, role: p.roles[0] }));
+  return `
+      <div class="m-only m-home-extra">
+        <section class="m-home-sec m-reveal">
+          <h2 class="m-h">Fest at a glance</h2>
+          <ul class="m-stats m-home-stats">
+            <li><b data-count="${FEST_CONFIG.festDays}">${FEST_CONFIG.festDays}</b><span>Days</span></li>
+            <li><b data-count="${EVENTS_DATA.length}">${EVENTS_DATA.length}</b><span>Events</span></li>
+            <li><b data-count="${cats.length}">${cats.length}</b><span>Categories</span></li>
+          </ul>
+          <p class="m-home-when">${esc(getFestDatesLabel())} · HPTU Hamirpur</p>
+        </section>
+        <section class="m-home-sec m-reveal">
+          <h2 class="m-h">Pick a category</h2>
+          <ul class="m-home-cats">${cats
+            .map(
+              (c, i) => `
+            <li style="--tint: ${c.accent}; --i: ${i}"><a href="/events" data-sgfm-link>
+              <span class="m-home-cat-mark" aria-hidden="true">${esc(c.shortCode)}</span>
+              <strong>${esc(c.name)}</strong><span>${count(c.id)} events</span></a></li>`
+            )
+            .join("")}</ul>
+        </section>
+        <section class="m-home-sec m-reveal">
+          <h2 class="m-h">The organisers</h2>
+          ${marqueeHtml(people.map((p, i) => personCardHtml(p, `var(${["--cat-tech", "--cat-esports", "--cat-cultural", "--cat-innovation", "--cat-business"][i % 5]})`)), { label: "Organisers", secsPerCard: 3 })}
+          <a class="sgfm-all" href="/organisers" data-sgfm-link>Meet the organisers</a>
+        </section>
+        <section class="m-home-sec m-home-ctas m-reveal">
+          <a class="m-home-cta" href="/sponsors" data-sgfm-link><span>Partner with us</span><strong>Sponsors</strong></a>
+          <a class="m-home-cta" href="/contact-us" data-sgfm-link><span>Questions?</span><strong>Contact us</strong></a>
+        </section>
+      </div>`;
+};
+
 const mobileSections = (uid) => `
     <div class="sgfm">
       <section class="sgfm-events" aria-labelledby="${uid}-ev">
@@ -262,10 +303,11 @@ const mobileSections = (uid) => `
             const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
             return eventCardHtml(ev, c?.accent, c?.shortCode);
           }),
-          { label: "All events", secsPerCard: 4 }
+          { label: "All events", still: true }
         )}</div>
-        <a class="sgfm-all" href="/events" data-sgfm-link>[ All events ]</a>
+        <a class="sgfm-all" href="/events" data-sgfm-link>All events</a>
       </section>
+      ${phoneExtras()}
       <section class="sgfm-faq" id="faq" aria-labelledby="${uid}-faq">
         <div class="sgfm-faq-head">
           <h2 class="sgfm-faq-title" id="${uid}-faq">Frequently asked questions</h2>
@@ -692,9 +734,41 @@ export function mountShutterFooter(root, opts = {}) {
     if (window.__scrollToContact) window.__scrollToContact = null;
   });
 
+  revealOnScroll(root, reduced, cleanups);
+
   return {
     destroy() {
       cleanups.splice(0).forEach((fn) => fn());
     },
   };
+}
+
+// Phone extras: fade sections up as they enter, count the stats up once.
+function revealOnScroll(root, reduced, cleanups) {
+  const items = root.querySelectorAll(".m-reveal");
+  if (!items.length || reduced || !("IntersectionObserver" in window)) return;
+  root.classList.add("m-anim");
+  const countUp = (b) => {
+    const to = +b.dataset.count;
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / 900);
+      b.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        en.target.classList.add("is-in");
+        en.target.querySelectorAll("[data-count]").forEach(countUp);
+        io.unobserve(en.target);
+      }
+    },
+    { threshold: 0.2 }
+  );
+  items.forEach((el) => io.observe(el));
+  cleanups.push(() => io.disconnect());
 }

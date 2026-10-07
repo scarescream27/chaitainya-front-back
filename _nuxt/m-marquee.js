@@ -14,8 +14,14 @@ import { PHOTOS, initials, personSlug } from "./teams-data.js";
  * cards wide, then the half is doubled (copy hidden from screen readers) so
  * the CSS loop (translateX -50% -> 0) is seamless.
  */
-export function marqueeHtml(items, { label = "", min = 6, secsPerCard = 4 } = {}) {
+export function marqueeHtml(items, { label = "", min = 6, secsPerCard = 4, still = false } = {}) {
   if (!items.length) return "";
+  // still: a plain swipeable row (no drift, no faded edges).
+  if (still)
+    return `
+    <div class="m-swipe" role="region" aria-label="${esc(label)}">
+      <ul class="m-marquee-track">${items.map((h) => `<li>${h}</li>`).join("")}</ul>
+    </div>`;
   let half = items.slice();
   while (half.length < min) half = half.concat(items);
   const copy = half.map((html) => html.replace(/<a /g, '<a tabindex="-1" '));

@@ -39,42 +39,40 @@ const section = (title, body, id = "") => `
 // ---- /contact-us -----------------------------------------------------------
 
 function contactHtml() {
-  const heads = categoryTeams()
-    .filter((tm) => tm.people.length)
-    .map(
-      (tm) => `
-      <li style="--tint: ${tm.accent}">
-        <a href="/organisers#${esc(tm.id)}"><strong>${esc(tm.name)}</strong>
-        <span>${esc(tm.people.map((p) => p.name).join(", "))}</span></a>
-      </li>`
-    )
-    .join("");
+  const ico = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
   return shell(
     "Chaitanya 2k26 · HPTU Hamirpur",
     "Contact Us",
-    "Questions about events, registration, sponsorship or anything else.",
+    "Questions about events, registration, sponsorship or anything else? Write to us.",
     `
     <div class="m-quick">
-      <a class="m-quick-card" href="mailto:${mail()}"><span>Email</span><strong>${mail()}</strong></a>
-      <a class="m-quick-card" href="/events"><span>Events</span><strong>Rules, venues and timings</strong></a>
+      <a class="m-quick-card m-quick-dark" href="mailto:${mail()}">
+        ${ico("M3 6h18v12H3zM3 6l9 7 9-7")}
+        <span>Email us</span><strong>${mail()}</strong></a>
+      <a class="m-quick-card" href="/events">
+        ${ico("M4 5h16v15H4zM4 10h16M9 3v4M15 3v4")}
+        <span>Event details</span><strong>Rules, venues and timings</strong></a>
+      <a class="m-quick-card" href="/organisers">
+        ${ico("M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6")}
+        <span>Organisers</span><strong>Who runs each event</strong></a>
     </div>
     ${section(
       "Send a message",
       `
       <form class="m-form" novalidate>
-        <label>Name<input name="name" autocomplete="name" required minlength="2" /></label>
-        <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-        <label>Phone <small>(optional)</small><input name="phone" type="tel" autocomplete="tel" inputmode="tel" /></label>
-        <label>Message<textarea name="message" rows="4" required></textarea></label>
+        <label>Name<input name="name" autocomplete="name" required minlength="2" placeholder="Your name" /></label>
+        <label>Email<input name="email" type="email" autocomplete="email" required placeholder="you@example.com" /></label>
+        <label>Phone <small>(optional)</small><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="10-digit number" /></label>
+        <label>Message<textarea name="message" rows="4" required placeholder="How can we help?"></textarea></label>
         <p class="m-form-status" role="status" aria-live="polite"></p>
-        <button type="submit" class="privacy-cta-btn">[ SEND MESSAGE ]</button>
+        <button type="submit" class="privacy-cta-btn">SEND MESSAGE</button>
       </form>`
     )}
-    ${section("Event teams", `<p>Questions about one event? Its team can help.</p><ul class="m-team-list">${heads}</ul>`)}
-    ${section(
-      "Where",
-      `<p>${esc(FEST_CONFIG.university)}. The fest runs ${esc(getFestDatesLabel())}.</p>`
-    )}`
+    <div class="m-where">
+      <span>Venue</span>
+      <strong>${esc(FEST_CONFIG.university)}</strong>
+      <span>${esc(getFestDatesLabel())}</span>
+    </div>`
   );
 }
 
@@ -133,29 +131,39 @@ function sponsorsHtml() {
           ${s.logo ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" loading="lazy" />` : `<strong>${esc(s.name)}</strong>`}
           ${s.tier ? `<span>${esc(s.tier)}</span>` : ""}</a></li>`
       ).join("")}</ul>`
-    : `<p>Our sponsors for 2026 will be announced here. Sponsorship is open now.</p>`;
+    : `<div class="m-sponsor-empty"><strong>Your brand here</strong><span>2026 sponsors will be announced on this page.</span></div>`;
+  const kinds = [
+    ["01", "Title partnership", "Your name on the fest itself."],
+    ["02", "Event partnership", `Back one of the ${EVENTS_DATA.length} events or a whole category.`],
+    ["03", "Stall partnership", "Meet students on campus during the fest."],
+  ];
   return shell(
     `${esc(getFestDatesLabel())} · HPTU Hamirpur`,
     "Sponsors",
-    "The partners who make Chaitanya 2k26 happen.",
+    "Put your brand in front of engineering and management students from colleges across Himachal Pradesh.",
     `
+    <ul class="m-stats m-sponsor-stats">
+      <li><b>${FEST_CONFIG.festDays}</b><span>Days</span></li>
+      <li><b>${EVENTS_DATA.length}</b><span>Events</span></li>
+      <li><b>${cats.length}</b><span>Categories</span></li>
+    </ul>
     ${section("Our sponsors", list)}
     ${section(
-      "Why sponsor",
-      `
-      <ul class="m-stats">
-        <li><b>${FEST_CONFIG.festDays}</b><span>Days</span></li>
-        <li><b>${EVENTS_DATA.length}</b><span>Events</span></li>
-        <li><b>${cats.length}</b><span>Categories</span></li>
-      </ul>
-      <p>Title, event and stall partnerships put your brand in front of engineering and management students
-        from colleges across Himachal Pradesh.</p>
-      <ul class="m-chips">${cats.map((c) => `<li style="--tint: ${c.accent}">${esc(c.name)}</li>`).join("")}</ul>`
+      "Ways to partner",
+      `<ol class="m-kinds">${kinds
+        .map(([n, t, d]) => `<li><span>${n}</span><div><strong>${t}</strong><p>${d}</p></div></li>`)
+        .join("")}</ol>`
+    )}
+    ${section(
+      "Events you can back",
+      `<ul class="m-chips">${cats
+        .map((c) => `<li>${esc(c.name)} · ${EVENTS_DATA.filter((ev) => ev.category === c.id).length}</li>`)
+        .join("")}</ul>`
     )}
     <section class="privacy-cta-box">
       <h3>BECOME A SPONSOR</h3>
       <p>Write to <a href="mailto:${mail()}?subject=${subject}" style="color:inherit;text-decoration:underline;">${mail()}</a> and we'll send the partnership details.</p>
-      <a href="mailto:${mail()}?subject=${subject}" class="privacy-cta-btn">[ EMAIL THE TEAM ]</a>
+      <a href="mailto:${mail()}?subject=${subject}" class="privacy-cta-btn">EMAIL THE TEAM</a>
     </section>`
   );
 }
@@ -169,7 +177,7 @@ function organiserHtml(slug) {
       "Organisers",
       "Organiser not found",
       "This link may be out of date.",
-      `<a href="/organisers" class="privacy-cta-btn m-back">[ ALL ORGANISERS ]</a>`
+      `<a href="/organisers" class="privacy-cta-btn m-back">ALL ORGANISERS</a>`
     );
   const extra = PROFILES[p.name] || {};
   const photo = PHOTOS[p.name];
@@ -204,7 +212,7 @@ function organiserHtml(slug) {
         ? `<h2 class="m-h">Runs ${p.events.length === 1 ? "this event" : `these ${p.events.length} events`}</h2>
            ${marqueeHtml(
              p.events.map((ev) => eventCardHtml(ev, `var(--cat-${ev.category})`, markOf(ev.category))),
-             { label: `Events run by ${p.name}`, secsPerCard: 5 }
+             { label: `Events run by ${p.name}`, secsPerCard: 5, still: true }
            )}`
         : ""
     }

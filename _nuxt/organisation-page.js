@@ -79,16 +79,21 @@ function buildHtml() {
     )
     .join("");
 
-  // Phones: one drifting row of people (tap for their page) and one of events
-  // per team, instead of the card grids. Desktop keeps the grids above.
+  // Phones: per team, two people (tap for their page) with "View more" for
+  // the rest, then a swipeable row of its events. Desktop keeps the grids.
+  const peopleGrid = (cards, label) => `
+    <div class="m-people" aria-label="${esc(label)}">
+      <ul class="m-people-grid">${cards.map((c, i) => `<li${i > 1 ? ' class="m-people-more"' : ""}>${c}</li>`).join("")}</ul>
+      ${cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">View more (${cards.length - 2})</button>` : ""}
+    </div>`;
   const markOf = (id) => (EVENT_CATEGORIES.find((c) => c.id === id) || {}).shortCode;
   const mobile = `
     <div class="m-only m-org">
       <section class="m-org-team" id="m-core-team">
         <h2 class="m-h">Core Team</h2>
-        ${marqueeHtml(
+        ${peopleGrid(
           TEAMS.flatMap((tm) => tm.people).map((m, i) => personCardHtml(m, `var(${TINTS[i % TINTS.length]})`)),
-          { label: "Core team" }
+          "Core team"
         )}
       </section>
       ${teams
@@ -96,9 +101,9 @@ function buildHtml() {
           (tm) => `
       <section class="m-org-team" id="m-${esc(tm.id)}">
         <h2 class="m-h" style="--tint: ${tm.accent}">${esc(tm.name)}</h2>
-        ${tm.people.length ? marqueeHtml(tm.people.map((m) => personCardHtml(m, tm.accent)), { label: `${tm.name}: student heads` }) : ""}
+        ${tm.people.length ? peopleGrid(tm.people.map((m) => personCardHtml(m, tm.accent)), `${tm.name}: student heads`) : ""}
         <h3 class="m-sub">Events (${tm.events.length})</h3>
-        ${marqueeHtml(tm.events.map((ev) => eventCardHtml(ev, tm.accent, markOf(tm.categoryId))), { label: `${tm.name}: events`, secsPerCard: 5 })}
+        ${marqueeHtml(tm.events.map((ev) => eventCardHtml(ev, tm.accent, markOf(tm.categoryId))), { label: `${tm.name}: events`, secsPerCard: 5, still: true })}
       </section>`
         )
         .join("")}
@@ -112,7 +117,7 @@ function buildHtml() {
     <div class="privacy-container org-container">
       <div class="privacy-top-bar d-only">
         <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
-        <a href="/events" class="privacy-contact-btn">[ EXPLORE EVENTS ]</a>
+        <a href="/events" class="privacy-contact-btn">EXPLORE EVENTS</a>
       </div>
 
       <div class="privacy-hero">
@@ -133,8 +138,8 @@ function buildHtml() {
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
         <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
-        <a href="/contact" class="privacy-cta-btn d-only">[ CONTACT US ]</a>
-        <a href="/contact-us" class="privacy-cta-btn m-only">[ CONTACT US ]</a>
+        <a href="/contact" class="privacy-cta-btn d-only">CONTACT US</a>
+        <a href="/contact-us" class="privacy-cta-btn m-only">CONTACT US</a>
       </section>
     </div>`;
 }
@@ -157,6 +162,14 @@ function scrollToId(id) {
 // No global SPA handler exists for plain <a href>, so route internal links here.
 function onClick(ev) {
   if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  const more = ev.target.closest && ev.target.closest("[data-more]");
+  if (more) {
+    const box = more.closest(".m-people");
+    const open = box.classList.toggle("is-open");
+    more.setAttribute("aria-expanded", String(open));
+    more.textContent = open ? "View less" : `View more (${box.querySelectorAll(".m-people-more").length})`;
+    return;
+  }
   const a = ev.target.closest && ev.target.closest("a[href]");
   if (!a || a.target) return;
   const href = a.getAttribute("href");
