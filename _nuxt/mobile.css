@@ -278,3 +278,43 @@
     min-height: 40px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Compact header (phones and tablets; desktop >= 992px untouched)
+   -------------------------------------------------------------------------- */
+@media (max-width: 991px) {
+  header {
+    height: 56px;
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  }
+
+  /* The four [ ] corner glyphs boxed the burger into a "cube": drop them,
+     keep the plain three-line button. */
+  header .header .menu-switch .el {
+    display: none;
+  }
+
+  /* 44px tap target, burger centred, a quiet pill so it reads as a button. */
+  header .header .menu-switch {
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    border-radius: 12px;
+  }
+
+  header .header .menu-switch:active {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+
+  header .header .header-logo img {
+    height: 40px;
+    width: auto;
+    transform: none;
+    display: block;
+  }
+
+  header .header .right-menu {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+}

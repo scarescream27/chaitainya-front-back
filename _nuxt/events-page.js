@@ -4,8 +4,7 @@
  * ============================================================================
  * - /events layout with hero, sticky category toolbar and live search
  * - Event details drawer (fee, deadline, registration type, team size, heads)
- * - Cart: add several events, pick solo/team, see the total, remove items
- * - Checkout: confirm details → team names/members → review & pay → done
+ * - REGISTER: one event → checkout (confirm details → team → review & pay → done)
  * - Join an existing team with a code
  */
 
@@ -34,14 +33,12 @@ import {
   getCartTotal,
   addToCart,
   removeFromCart,
-  setCartItemMode,
   clearCart,
-  isInCart,
   setCartOwner,
-  subscribeCart,
 } from "./cart.js";
 
 import { openAuthModal } from "./auth-modal.js";
+import { organiserFor } from "./teams-data.js";
 import { registrationQrHtml } from "./profile-panel.js";
 
 import {
@@ -69,12 +66,19 @@ function saveFilters() {
   } catch {}
 }
 let isDossierOpen = false;
-let isCartOpen = false;
 let isCheckoutOpen = false;
 let resumeCheckoutUntil = 0; // resume checkout only if sign-in completes soon after "Done"
 let lastAuthUid = null; // to spot a sign-out (see subscribeAuthState)
 let globalListenersBound = false;
 
+// No cart: one event → REGISTER → checkout. The details drawer gets its own
+// URL (/events/<id>) so the back button closes it.
+const getRouter = () => document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router;
+const DEEP_LINK = /^\/events\/([^/?#]+)/;
+const EVENTS_PATH = /^\/events\/?$/;
+let dossierEventId = null;
+let routerHooked = false;
+let skipCloseNav = false; // closing the drawer to follow a link: leave the URL alone
 // Checkout wizard state
 let checkout = null;
 // The checkout whose register/join request is in flight; blocks double submits and closing mid-request.
@@ -83,14 +87,13 @@ let submitting = null;
 const CHECKOUT_DRAFT_KEY = "chaitanya-checkout-draft";
 
 // ----------------------------------------------------------------------------
-// DIALOG PLUMBING (details drawer, cart drawer, checkout modal)
+// DIALOG PLUMBING (details drawer, checkout modal)
 // One dialog is open at a time. Opening one: remember what had focus, make the
 // rest of the page inert, move focus inside. Tab/Shift+Tab wrap inside it
 // (see bindGlobalListeners). Closing: un-inert and give focus back.
 // ----------------------------------------------------------------------------
 const DIALOGS = {
   dossier: { overlay: "event-dossier-overlay", panel: "event-dossier-panel", title: "#event-dossier-title" },
-  cart: { overlay: "events-cart-overlay", panel: "events-cart-panel", title: "#events-cart-title" },
   checkout: { overlay: "event-reg-modal", panel: "event-reg-card", title: "#co-title" },
 };
 let activeDialog = null; // key of DIALOGS
@@ -104,8 +107,8 @@ function focusablesIn(el) {
   return Array.from(el.querySelectorAll(FOCUSABLE)).filter((n) => !n.closest("[hidden]") && n.getClientRects().length > 0);
 }
 
-// Inert every other child of <body> (the page under #__nuxt, the cart button,
-// the HUD, other overlays). The toast stays live so it is still announced.
+// Inert every other child of <body> (the page under #__nuxt, the HUD, other
+// overlays). The toast stays live so it is still announced.
 function setBackgroundInert(overlay) {
   inertedEls.forEach((el) => el.removeAttribute("inert"));
   inertedEls = [];
@@ -168,13 +171,12 @@ function deactivateDialog(key) {
   const back = dialogReturnFocus[key];
   dialogReturnFocus[key] = null;
   let target = back && back.isConnected && !back.closest("[inert]") ? back : null;
-  // The opener may have been re-rendered (e.g. a card's ADD TO CART button).
+  // The opener may have been re-rendered (the grid refreshes on sign-in).
   if (!target && back?.dataset?.eventId) {
     target = document.querySelector(
       `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] .event-btn-details`
     );
   }
-  if (!target) target = document.getElementById("events-cart-fab");
   try {
     target?.focus({ preventScroll: true });
   } catch {}
@@ -272,17 +274,8 @@ export function renderEventsPageHtml() {
         <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Back to top">[ ↑ TOP ]</button>
       </div>
 
-      <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog">
-        <span class="events-cart-fab-label">[ CART ]</span>
-        <span class="events-cart-fab-count" id="events-cart-count">0</span>
-      </button>
-
       <div class="event-dossier-overlay" id="event-dossier-overlay">
         <div class="event-dossier-panel" id="event-dossier-panel" role="dialog" aria-modal="true" aria-labelledby="event-dossier-title"></div>
-      </div>
-
-      <div class="events-cart-overlay" id="events-cart-overlay">
-        <aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-labelledby="events-cart-title"></aside>
       </div>
 
       <div class="event-reg-modal" id="event-reg-modal">
@@ -303,19 +296,14 @@ function renderGridHtml(events) {
     `;
 }
 
-/**
- * The main action button for an event, by state.
- */
-function actionButtonHtml(ev, { large = false } = {}) {
-  const cls = large ? "event-submit-btn event-action-large" : "event-btn-register";
+// The details drawer's action, by state: REGISTER checks out just this event.
+function actionButtonHtml(ev) {
+  const cls = "event-submit-btn event-action-large";
   if (isEventRegistered(ev.id)) {
     return `<button type="button" class="${cls} registered" data-action="view-booking" data-event-id="${e(ev.id)}">[ ✓ REGISTERED ]</button>`;
   }
-  if (isInCart(ev.id)) {
-    return `<button type="button" class="${cls} in-cart" data-action="remove-from-cart" data-event-id="${e(ev.id)}" aria-label="Added. Remove ${e(ev.title)} from cart" title="Remove from cart">[ ✓ ADDED ]</button>`;
-  }
   if (isRegistrationOpen(ev)) {
-    return `<button type="button" class="${cls}" data-action="add-to-cart" data-event-id="${e(ev.id)}">[ + ADD TO CART ]</button>`;
+    return `<button type="button" class="${cls}" data-action="register-now" data-event-id="${e(ev.id)}">[ REGISTER ]</button>`;
   }
   const label = isPastDeadline(ev) ? "REGISTRATION CLOSED" : "REGISTRATION SOON";
   return `<button type="button" class="${cls} is-closed" disabled aria-disabled="true">[ ${label} ]</button>`;
@@ -353,7 +341,7 @@ function renderEventCardHtml(ev) {
   const teamChip = ev.registrationType === "solo" ? "SOLO" : ev.registrationType === "team" ? `TEAM ${ev.teamSize}` : `SOLO / TEAM`;
 
   return `
-    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
       <button type="button" class="event-card-visual" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
         <span class="event-visual-num" aria-hidden="true">${number}</span>
@@ -373,7 +361,6 @@ function renderEventCardHtml(ev) {
 
         <div class="event-card-actions">
           <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
-          ${actionButtonHtml(ev)}
         </div>
       </div>
     </div>
@@ -437,59 +424,55 @@ export function openEventDossier(eventId) {
   const scoringHtml = (ev.judgingCriteria || [])
     .map((c) => `<div class="event-score-row"><span>${e(c.name)}</span><strong>${e(c.weight)}</strong></div>`)
     .join("");
-  let sectionCount = 2;
-  const sectionNo = () => String(++sectionCount).padStart(2, "0");
-
+  // Visual, title, tagline, when/where, REGISTER, then the detail sections.
+  const number = String(getEventCatalog().indexOf(ev) + 1).padStart(2, "0");
+  const flagship = ev.badge && ev.badge !== ev.categoryName ? ev.badge : "";
+  const org = organiserFor(ev);
+  const heads = coordinators.map((c) => e(c.name)).join(", ");
+  let n = 0;
+  const no = () => String(++n).padStart(2, "0");
+  const section = (title, inner) => `
+  <div class="event-dossier-section">
+    <h3 class="event-dossier-heading">[ ${no()}. ${title} ]</h3>
+    ${inner}
+  </div>`;
   panel.innerHTML = `
-    <button type="button" class="event-dossier-close" id="dossier-close-btn">[ ESC / CLOSE ]</button>
-    <div>
-      <span class="event-dossier-badge" style="color:${accentColor}; border-color:${accentColor};">${e(ev.categoryName)}${ev.badge && ev.badge !== ev.categoryName ? ` // ${e(ev.badge)}` : ""}</span>
-      <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
-      <p class="event-dossier-tagline">${e(ev.tagline)}</p>
-    </div>
-
-    <div class="event-dossier-specs">
-      <div class="event-spec-item wide"><span class="event-spec-k">DATE & TIME</span><span class="event-spec-v">${e(ev.date)} · ${e(ev.time)}</span></div>
-      <div class="event-spec-item wide"><span class="event-spec-k">VENUE</span><span class="event-spec-v">${e(ev.venue)}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">FEE</span><span class="event-spec-v">${e(feeLabel(ev))}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">REGISTER BY</span><span class="event-spec-v">${e(formatDeadline(ev))}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">REGISTRATION</span><span class="event-spec-v">${e(typeLabel)}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">TEAM SIZE</span><span class="event-spec-v">${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</span></div>
-      <div class="event-spec-item"><span class="event-spec-k">PRIZES</span><span class="event-spec-v">${e(ev.prizePool)}</span></div>
-    </div>
-
-    <div class="event-dossier-section">
-      <h3 class="event-dossier-heading">[ 01. ABOUT ]</h3>
-      <p class="event-dossier-text">${e(ev.overview)}</p>
-    </div>
-
-    <div class="event-dossier-section">
-      <h3 class="event-dossier-heading">[ 02. RULES ]</h3>
-      <ul class="event-dossier-list">${rulesHtml}</ul>
-    </div>
-
-    ${roundsHtml ? `
-    <div class="event-dossier-section">
-      <h3 class="event-dossier-heading">[ ${sectionNo()}. FORMAT & ROUNDS ]</h3>
-      <div class="event-rounds">${roundsHtml}</div>
-    </div>` : ""}
-
-    ${scoringHtml ? `
-    <div class="event-dossier-section">
-      <h3 class="event-dossier-heading">[ ${sectionNo()}. ${ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA"} ]</h3>
-      <div class="event-scoring">${scoringHtml}</div>
-    </div>` : ""}
-
-    <div class="event-dossier-section">
-      <h3 class="event-dossier-heading">[ ${sectionNo()}. STUDENT HEADS & CONTACT ]</h3>
-      <div>${coordinatorsHtml}</div>
-    </div>
-
-    <div class="event-dossier-cta">
-      ${actionButtonHtml(ev, { large: true })}
-      ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Join your team with a team code</button>` : ""}
-    </div>
-  `;
+  <div class="event-dossier-mbar">
+    <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
+    <button type="button" class="event-dossier-close" id="dossier-close-btn">[ CLOSE ]</button>
+  </div>
+  <div class="event-dossier-visual" style="--cat:${accentColor};">
+    <span class="event-visual-num" aria-hidden="true">${number}</span>
+    <span class="event-visual-icon">${CATEGORY_ICONS[ev.category] || ""}</span>
+    ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}
+  </div>
+  <span class="event-dossier-kicker" style="color:${accentColor};">${e(ev.categoryName)}</span>
+  <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>
+  <p class="event-dossier-tagline">${e(ev.tagline)}</p>
+  <dl class="event-dossier-facts">
+    <div><dt>DATE · TIME</dt><dd>${e(ev.date)} · ${e(ev.time)}</dd></div>
+    <div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>
+  </dl>
+  <div class="event-dossier-cta">
+    ${actionButtonHtml(ev)}
+    ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Join your team with a team code</button>` : ""}
+  </div>
+  ${section("ABOUT", `<p class="event-dossier-text">${e(ev.overview)}</p>`)}
+  ${rulesHtml ? section("RULES", `<ul class="event-dossier-list">${rulesHtml}</ul>`) : ""}
+  ${roundsHtml ? section("FORMAT & ROUNDS", `<div class="event-rounds">${roundsHtml}</div>`) : ""}
+  ${scoringHtml ? section(ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
+  ${section("ELIGIBILITY", `
+    <dl class="event-dossier-facts">
+      <div><dt>REGISTRATION</dt><dd>${e(typeLabel)}</dd></div>
+      <div><dt>TEAM SIZE</dt><dd>${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</dd></div>
+      <div><dt>REGISTER BY</dt><dd>${e(formatDeadline(ev))}</dd></div>
+      <div><dt>FEE</dt><dd>${e(feeLabel(ev))}</dd></div>
+    </dl>`)}
+  ${section("ORGANISED BY", `
+    <p class="event-dossier-text"><a class="event-org-link" href="${e(org.href)}" data-action="org-link">${e(org.name)} →</a></p>
+    <p class="event-dossier-text">${heads ? `Student heads: ${heads}` : "Student heads will be announced soon"}</p>`)}
+  ${section("CONTACT", `<div>${coordinatorsHtml}</div>`)}
+`;
 
   const wasOpen = isDossierOpen && activeDialog === "dossier";
   overlay.classList.add("active");
@@ -501,111 +484,66 @@ export function openEventDossier(eventId) {
     requestAnimationFrame(() => panel.isConnected && (panel.scrollTop = 0));
   }
   isDossierOpen = true;
-  panel.querySelector("#dossier-close-btn").onclick = closeEventDossier;
-  // Fresh open: focus the title. Re-render after ADD TO CART: stay on the action.
-  activateDialog("dossier", wasOpen ? ".event-action-large" : "#event-dossier-title");
+  dossierEventId = ev.id;
+  panel.querySelector("#dossier-close-btn").onclick = () => closeEventDossier();
+  activateDialog("dossier");
 }
 
 export function closeEventDossier() {
   document.getElementById("event-dossier-overlay")?.classList.remove("active");
   isDossierOpen = false;
+  dossierEventId = null;
   deactivateDialog("dossier");
+  // Left /events/<id>: step back to /events if that's the previous entry (so
+  // the phone's back button doesn't reopen it), else swap the URL in place.
+  if (skipCloseNav || !DEEP_LINK.test(location.pathname)) return;
+  const router = getRouter();
+  if (!router) return;
+  const prev = history.state?.back;
+  if (typeof prev === "string" && EVENTS_PATH.test(prev.split(/[?#]/)[0])) router.back();
+  else router.replace("/events");
 }
 
-// ----------------------------------------------------------------------------
-// CART
-// ----------------------------------------------------------------------------
-
-function renderCartPanel() {
-  const panel = document.getElementById("events-cart-panel");
-  if (!panel) return;
-  const keepFocus = focusedSelector(panel);
-  const items = getCartItems();
-  const total = getCartTotal(items);
-
-  const rows = items
-    .map(({ event: ev, mode, amount }) => {
-      const typeControl =
-        ev.registrationType === "both"
-          ? `<div class="cart-mode" role="group" aria-label="Solo or team for ${e(ev.title)}">
-               <button type="button" class="${mode === "solo" ? "active" : ""}" data-action="cart-mode" data-mode="solo" data-event-id="${e(ev.id)}">SOLO</button>
-               <button type="button" class="${mode === "team" ? "active" : ""}" data-action="cart-mode" data-mode="team" data-event-id="${e(ev.id)}">TEAM</button>
-             </div>`
-          : `<span class="cart-type">${ev.registrationType === "team" ? `TEAM · ${e(ev.minTeam)}–${e(ev.maxTeam)}` : "SOLO"}</span>`;
-      return `
-        <li class="cart-item">
-          <div class="cart-item-main">
-            <strong>${e(ev.title)}</strong>
-            <span>${e(ev.date)} · ${e(ev.time)}</span>
-            ${typeControl}
-          </div>
-          <div class="cart-item-side">
-            <span class="cart-amount">${amount ? `₹${e(amount)}` : "FREE"}</span>
-            <button type="button" class="cart-remove" data-action="cart-remove" data-event-id="${e(ev.id)}" aria-label="Remove ${e(ev.title)} from cart">REMOVE</button>
-          </div>
-        </li>`;
-    })
-    .join("");
-
-  panel.innerHTML = `
-    <div class="cart-head">
-      <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
-      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart">[ CLOSE ]</button>
-    </div>
-    ${items.length
-      ? `<ul class="cart-list">${rows}</ul>
-         <div class="cart-foot">
-           <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
-           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ REGISTER ]</button>
-         </div>`
-      : `<div class="cart-empty"><p>Your cart is empty.</p><p>Open an event and tap <strong>ADD TO CART</strong>.</p></div>`}
-  `;
-  // Re-rendered while open (remove / solo-team switch): keep keyboard focus.
-  if (activeDialog === "cart" && !panel.contains(document.activeElement)) focusInto(panel, keepFocus || DIALOGS.cart.title);
+// A card opens its details at /events/<id>.
+function openDossierFromCard(id) {
+  openEventDossier(id);
+  const router = getRouter();
+  const path = `/events/${encodeURIComponent(id)}`;
+  if (isDossierOpen && router && location.pathname !== path) router.push(path);
 }
 
-function updateCartFab(items = getCartItems()) {
-  const count = document.getElementById("events-cart-count");
-  const fab = document.getElementById("events-cart-fab");
-  if (count) count.textContent = String(items.length);
-  if (fab) fab.classList.toggle("has-items", items.length > 0);
+// Keeps the drawer in step with the URL: back/forward open or close it.
+function hookRouter() {
+  const router = getRouter();
+  if (!router || routerHooked) return;
+  routerHooked = true;
+  router.afterEach((to) => {
+    if (!document.getElementById("event-dossier-overlay")) return; // not on /events
+    const m = to.path.match(DEEP_LINK);
+    if (m) {
+      const id = decodeURIComponent(m[1]);
+      if (!getEventById(id)) return router.replace("/events");
+      if (!isDossierOpen || dossierEventId !== id) openEventDossier(id);
+    } else if (EVENTS_PATH.test(to.path) && isDossierOpen) {
+      closeEventDossier();
+    }
+  });
 }
 
-export function openCart() {
-  renderCartPanel();
-  const overlay = document.getElementById("events-cart-overlay");
-  if (!overlay) return;
-  overlay.classList.add("active");
-  isCartOpen = true;
-  activateDialog("cart");
-}
-
-export function closeCart() {
-  document.getElementById("events-cart-overlay")?.classList.remove("active");
-  isCartOpen = false;
-  deactivateDialog("cart");
-}
-
-function handleAddToCart(eventId) {
+// REGISTER: check out just this event.
+function handleRegisterNow(eventId) {
   const ev = getEventById(eventId);
-  if (!ev) return;
+  if (!ev || isEventRegistered(ev.id) || !isRegistrationOpen(ev)) return;
   try {
+    clearCart();
     addToCart(ev.id);
-    flashToast(`${ev.title} added to cart`);
   } catch (err) {
-    flashToast(err.message);
+    return flashToast(err.message);
   }
+  // Close first: the open drawer would make the sign-in modal inert.
+  closeEventDossier();
   refreshEventsGrid();
-  if (isDossierOpen) openEventDossier(ev.id);
-}
-
-function handleRemoveFromCart(eventId) {
-  const ev = getEventById(eventId);
-  if (!ev) return;
-  removeFromCart(ev.id);
-  flashToast(`${ev.title} removed from cart`);
-  refreshEventsGrid();
-  if (isDossierOpen) openEventDossier(ev.id);
+  startCheckout();
 }
 
 // The toast is a polite live region. It is created (empty) when the page
@@ -645,7 +583,6 @@ function startCheckout() {
   const user = getCurrentUser();
   if (!user) {
     resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
-    closeCart();
     openAuthModal("login");
     return;
   }
@@ -674,7 +611,6 @@ function startCheckout() {
   if (draft?.cartKey === cartKey(items) && draft.uid === user.uid) {
     Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
   }
-  closeCart();
   openCheckoutModal();
 }
 
@@ -724,7 +660,7 @@ function requestCloseCheckout() {
   if (submitting) return;
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
-    if (!confirm("Leave registration? Your cart stays, but what you entered here will be cleared.")) return;
+    if (!confirm("Leave registration? What you entered here will be cleared.")) return;
   }
   closeCheckout();
 }
@@ -745,7 +681,7 @@ function readCheckoutDraft() {
   }
 }
 
-// Saves the open cart checkout, or clears the draft once it's closed or done.
+// Saves the open checkout, or clears the draft once it's closed or done.
 function saveCheckoutDraft() {
   try {
     if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
@@ -863,7 +799,6 @@ function renderCheckout(focusSel) {
         ${detailsFieldsHtml(checkout.details, user)}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← BACK TO CART ]</button>
           <button type="submit" class="event-submit-btn">[ CONTINUE → ]</button>
         </div>
       </form>`;
@@ -1125,10 +1060,6 @@ function onCheckoutClick(evt) {
     );
     return;
   }
-  if (action === "co-back-cart") {
-    closeCheckout();
-    return openCart();
-  }
   if (action === "co-prev") {
     if (checkout.step === "teams") readTeams(card);
     if (checkout.step === "review") checkout.utr = card.querySelector("#co-utr")?.value || "";
@@ -1161,7 +1092,7 @@ export function triggerCardsReveal(stagger = true) {
   const cards = Array.from(document.querySelectorAll(".event-card"));
   if (!cards.length) return;
 
-  // Re-renders (filter, search, cart changes) show cards at once: adding the
+  // Re-renders (filter, search, sign-in) show cards at once: adding the
   // class before the first paint skips the fade, so updates never cascade.
   if (!stagger) {
     cards.forEach((card) => card.classList.add("is-revealed"));
@@ -1390,7 +1321,7 @@ export function refreshEventsGrid() {
   const grid = document.getElementById("events-card-grid");
   if (!grid) return;
   // Keep keyboard focus on the same card when its buttons are re-rendered
-  // (e.g. ADD TO CART becomes ADDED).
+  // (e.g. a card turns REGISTERED after sign-in).
   const focused = grid.contains(document.activeElement) ? document.activeElement : null;
   const focusEventId = focused?.dataset?.eventId;
   const focusAction = focused?.dataset?.action;
@@ -1400,7 +1331,6 @@ export function refreshEventsGrid() {
     const target =
       card &&
       ((focusAction && card.querySelector(`[data-action="${CSS.escape(focusAction)}"]`)) ||
-        card.querySelector(".event-btn-register:not([disabled])") ||
         card.querySelector(".event-btn-details"));
     try {
       target?.focus({ preventScroll: true });
@@ -1423,28 +1353,28 @@ function bindGlobalListeners() {
     const id = btn.dataset.eventId;
     switch (btn.dataset.action) {
       case "view-details":
-        return id && openEventDossier(id);
-      case "add-to-cart":
-        return id && handleAddToCart(id);
-      case "remove-from-cart":
-        return id && handleRemoveFromCart(id);
+        return id && openDossierFromCard(id);
+      case "register-now":
+        return id && handleRegisterNow(id);
+      case "dossier-back":
+        return closeEventDossier();
+      case "org-link": {
+        // Plain <a> would reload the app; route it. Keep /events/<id> in
+        // history so coming back reopens the details.
+        const router = getRouter();
+        if (!router || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.button !== 0) return;
+        evt.preventDefault();
+        skipCloseNav = true;
+        closeEventDossier();
+        skipCloseNav = false;
+        return router.push(btn.getAttribute("href"));
+      }
       case "view-booking":
         closeEventDossier();
         if (typeof window.openProfilePanel === "function") window.openProfilePanel("registrations");
         return;
       case "join-team":
         return id && openJoinTeam(id);
-      case "cart-close":
-        return closeCart();
-      case "cart-remove":
-        removeFromCart(id);
-        renderCartPanel();
-        return refreshEventsGrid();
-      case "cart-mode":
-        setCartItemMode(id, btn.dataset.mode);
-        return renderCartPanel();
-      case "cart-done":
-        return startCheckout();
       default:
         return onCheckoutClick(evt);
     }
@@ -1460,7 +1390,6 @@ function bindGlobalListeners() {
     // The profile overlay / auth modal handle their own Escape.
     if (isOtherOverlayOpen()) return;
     if (isCheckoutOpen) requestCloseCheckout();
-    else if (isCartOpen) closeCart();
     else if (isDossierOpen) closeEventDossier();
   });
 
@@ -1478,11 +1407,6 @@ function bindGlobalListeners() {
       }, 300);
     }
   });
-
-  subscribeCart((items) => {
-    updateCartFab(items);
-    if (isCartOpen) renderCartPanel();
-  });
 }
 
 // Drop cart items the user has since registered for (e.g. on another device).
@@ -1494,8 +1418,6 @@ function pruneRegisteredFromCart() {
 const BODY_LEVEL_IDS = [
   "event-dossier-overlay",
   "event-reg-modal",
-  "events-cart-overlay",
-  "events-cart-fab",
   "events-scroll-hud",
   "events-scroll-progress",
 ];
@@ -1517,7 +1439,7 @@ export function initEventsPage() {
   });
 
   bindGlobalListeners();
-  isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  isDossierOpen = isCheckoutOpen = false;
   activeDialog = null;
   setBackgroundInert(null);
   ensureToast();
@@ -1554,11 +1476,8 @@ export function initEventsPage() {
     searchBox?.focus(); // the clear button hides itself, so don't drop focus
   });
 
-  document.getElementById("events-cart-fab")?.addEventListener("click", openCart);
-
   const outside = [
     ["event-dossier-overlay", closeEventDossier],
-    ["events-cart-overlay", closeCart],
     ["event-reg-modal", requestCloseCheckout],
   ];
   outside.forEach(([id, close]) => {
@@ -1570,17 +1489,25 @@ export function initEventsPage() {
 
   setCartOwner(getCurrentUser()?.uid);
   pruneRegisteredFromCart();
-  updateCartFab();
   refreshEventsGrid();
   initScrollMotion();
   watchForUnmount(root);
 
-  // Deep link from the profile overlay: /events?cart=1 opens the cart.
+  // Old deep link (/events?cart=1): there's no cart any more, just drop it.
   const url = new URL(window.location.href);
   if (url.searchParams.get("cart") === "1") {
     url.searchParams.delete("cart");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
-    setTimeout(openCart, 400);
+  }
+
+  // /events/<id>: open that event's details (all widths); unknown id → /events.
+  hookRouter();
+  const deep = location.pathname.match(DEEP_LINK);
+  if (deep) {
+    const id = decodeURIComponent(deep[1]);
+    if (getEventById(id)) openEventDossier(id);
+    else if (getRouter()) getRouter().replace("/events");
+    else history.replaceState(history.state, "", "/events");
   }
 
   // Reloaded mid-checkout (e.g. the phone dropped the tab during the UPI
@@ -1593,7 +1520,7 @@ export function initEventsPage() {
 
 /**
  * The events view has no Vue unmount hook, so watch for its root leaving the
- * DOM and remove everything it moved to <body> (cart button, HUD, overlays),
+ * DOM and remove everything it moved to <body> (HUD, overlays),
  * plus the body class that hides the site's page transition.
  */
 function watchForUnmount(root) {
@@ -1617,7 +1544,8 @@ export function destroyEventsPage() {
     } catch {}
     scrollMotionCleanup = null;
   }
-  isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  isDossierOpen = isCheckoutOpen = false;
+  dossierEventId = null;
   checkout = null;
   submitting = null;
   // Leaving /events in the app closes the checkout for good: the draft is
@@ -1633,13 +1561,12 @@ export function openEventRegistration(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
   if (isEventRegistered(ev.id)) return window.openProfilePanel?.("registrations");
-  if (isRegistrationOpen(ev)) handleAddToCart(ev.id);
+  if (isRegistrationOpen(ev)) handleRegisterNow(ev.id);
 }
 
 if (typeof window !== "undefined") {
   window.openEventDossier = openEventDossier;
   window.openEventRegistration = openEventRegistration;
-  window.openEventsCart = openCart;
   window.initEventsPage = initEventsPage;
   window.initScrollMotion = initScrollMotion;
   window.triggerCardsReveal = triggerCardsReveal;

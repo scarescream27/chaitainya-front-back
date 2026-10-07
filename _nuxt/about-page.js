@@ -10,38 +10,10 @@ import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b } from "./vue-runtime.js";
 import { FEST_CONFIG, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
 import { EVENT_CATEGORIES, EVENTS_DATA } from "./events-data.js";
-
-// Source: "Chaitanya Teams 2026". Names and roles only.
-const TEAMS = [
-  {
-    name: "Event Coordinators",
-    people: [
-      { name: "Aman Singh Ranawat", role: "Event Coordinator" },
-      { name: "Krish Kanha", role: "Event Coordinator" },
-    ],
-  },
-  {
-    name: "Website Developers",
-    people: [
-      { name: "Aditya Verma", role: "Website Developer" },
-      { name: "Manas Kapoor", role: "Website Developer" },
-    ],
-  },
-];
+import { TEAMS, PHOTOS, initials } from "./teams-data.js";
 
 // Sponsors: { name, tier, url, logo }. Empty shows the "sponsor us" card.
 const SPONSORS = [];
-
-function initials(name) {
-  return name.replace(/^(Mr|Mrs|Ms|Dr|Er)\.\s*/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
-}
-
-// Optional photos, keyed by the exact name used above. Drop square images
-// (min 300x300) in images/team/ at the site root, named lowercase-hyphenated,
-// e.g. images/team/aditya-verma.jpg, then add:
-//   "Aditya Verma": "/images/team/aditya-verma.jpg",
-// Anyone without an entry keeps the initials avatar.
-const PHOTOS = {};
 
 function avatarHtml(name) {
   const src = PHOTOS[name];
@@ -133,7 +105,8 @@ function buildHtml() {
           <a href="/events" class="privacy-contact-btn about-inline-cta">[ BROWSE ALL EVENTS ]</a>`)}
 
         ${card("03", "about-team", "Organising Team", `
-          ${TEAMS.map(teamSectionHtml).join("")}`)}
+          ${TEAMS.map(teamSectionHtml).join("")}
+          <a href="/organisation" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE FULL ORGANISATION ]</a>`)}
 
         ${card("04", "about-sponsors", "Sponsors", `
           ${sponsorsBody}

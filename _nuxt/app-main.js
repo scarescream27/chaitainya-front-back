@@ -4199,12 +4199,23 @@ let At,
         },
         {
           name: "events",
-          path: "/events",
-          meta: {},
+          // /events/<id> opens that event's details; one page key so changing
+          // the id doesn't remount the page.
+          path: "/events/:id?",
+          meta: { key: "events", scrollToTop: false },
           alias: [],
           redirect: void 0,
           component: () =>
             import("./events-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
+          name: "organisation",
+          path: "/organisation",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./organisation-page.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
           name: "profile",

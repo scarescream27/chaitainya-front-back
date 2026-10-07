@@ -116,6 +116,7 @@ let st,
       tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
       tabAbout = d("span", null, "About", -1),
+      tabOrg = d("span", null, "Organisation", -1),
       tabAdmin = d("span", null, "Admin", -1),
       gt = at(
         '<div class="line"></div><div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
@@ -126,6 +127,7 @@ let st,
       mHome = d("span", null, "Home", -1),
       mEvents = d("span", null, "Events", -1),
       mAbout = d("span", null, "About", -1),
+      mOrg = d("span", null, "Organisation", -1),
       mAdmin = d("span", null, "Admin", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
@@ -320,6 +322,11 @@ let st,
                           { to: "/about" },
                           { default: Z(() => [O("["), tabAbout, O("]")]), _: 1 },
                         ),
+                        Y(
+                          z,
+                          { to: "/organisation" },
+                          { default: Z(() => [O("["), tabOrg, O("]")]), _: 1 },
+                        ),
                         d(
                           "a",
                           {
@@ -385,6 +392,14 @@ let st,
                                     { to: "/about" },
                                     {
                                       default: Z(() => [O("["), mAbout, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  Y(
+                                    z,
+                                    { to: "/organisation" },
+                                    {
+                                      default: Z(() => [O("["), mOrg, O("]")]),
                                       _: 1,
                                     },
                                   ),
