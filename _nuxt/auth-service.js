@@ -773,6 +773,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
     throw new Error("Enter the team code exactly as your leader shared it (e.g. BYTE-4F8K).");
   }
 
+  const name = cleanText(details.displayName || user.displayName) || "Teammate";
   const phone = cleanPhone(details.phone || user.phone);
   const college = cleanText(details.college || user.college);
   const year = cleanYear(details.year || user.year);
@@ -784,7 +785,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
   }
 
   const evInfo = { id: found.eventId, title: found.eventName };
-  const link = { uid: user.uid, name: user.displayName || "Teammate" };
+  const link = { uid: user.uid, name };
   const registration = {
     id: registrationId(found.eventId, user.uid),
     user_id: user.uid,
@@ -840,6 +841,8 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
         {
           registeredEvents: arrayUnion(evInfo.title),
           registeredEventIds: arrayUnion(evInfo.id),
+          displayName: name,
+          name,
           ...(phone ? { phone } : {}),
           ...(college ? { college } : {}),
           ...(year ? { year } : {}),
@@ -861,6 +864,7 @@ export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
     demoSet("registrations", registration.id, registration);
   }
 
+  user.displayName = name;
   if (phone) user.phone = phone;
   if (college) user.college = college;
   if (year) user.year = year;
@@ -1026,7 +1030,11 @@ export function isEventRegistered(eventIdOrTitle) {
 // verified) keep their payment trail, so organisers handle those.
 const SELF_CANCELLABLE = [PAYMENT_STATUS.FREE, PAYMENT_STATUS.TEAM, PAYMENT_STATUS.REJECTED];
 
-export function canCancelRegistration(registration) {
+// payment: the registration's payment doc, when known. A rejected payment
+// whose UTR was resubmitted is back to pending_verification while the
+// registration still says "rejected": cancelling then would strand the money.
+export function canCancelRegistration(registration, payment = null) {
+  if (registration?.payment_status === PAYMENT_STATUS.REJECTED && payment?.status === PAYMENT_STATUS.PENDING) return false;
   return SELF_CANCELLABLE.includes(registration?.payment_status);
 }
 
@@ -1042,7 +1050,11 @@ export async function cancelRegistration(eventId) {
   const registration = await getDocData("registrations", regId);
   const title = registration?.event_title || getEventById(eventId)?.title || eventId;
 
-  if (registration && !canCancelRegistration(registration)) {
+  const payment =
+    registration?.payment_status === PAYMENT_STATUS.REJECTED && registration.payment_id
+      ? await getDocData("payments", registration.payment_id)
+      : null;
+  if (registration && !canCancelRegistration(registration, payment)) {
     throw new Error(`Your ${title} registration includes a payment, so it can't be cancelled online. Please contact the fest team.`);
   }
 
@@ -1120,7 +1132,7 @@ export async function deleteMyProfile() {
   const user = requireUser();
   const regs = await getMyRegistrations();
 
-  const locked = regs.filter((r) => !canCancelRegistration(r.registration));
+  const locked = regs.filter((r) => !canCancelRegistration(r.registration, r.payment));
   if (locked.length) {
     throw new Error(
       `You have paid registrations (${locked.map((r) => r.registration.event_title).join(", ")}). Please contact the fest team to cancel those before deleting your profile.`
@@ -1223,7 +1235,8 @@ export async function submitQueryTicket(queryData = {}) {
     id: queryId,
     user_id: currentUser ? currentUser.uid : null,
     subject: cleanText(queryData.subject || `Query from ${queryData.name || "Participant"}`, 200),
-    message: String(queryData.message || queryData.query || "").slice(0, 5000),
+    // Control characters (keeping tab/newline) would break the admin's Excel export.
+    message: String(queryData.message || queryData.query || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 5000),
     name: cleanText(queryData.name),
     email: cleanText(queryData.email),
     phone: cleanPhone(queryData.phone || queryData.contact_no),

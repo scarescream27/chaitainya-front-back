@@ -4165,7 +4165,7 @@ let At,
           path: (Yi == null ? void 0 : Yi.path) ?? "/music-demo",
           meta: Yi || {},
           alias: (Yi == null ? void 0 : Yi.alias) || [],
-          redirect: Yi == null ? void 0 : Yi.redirect,
+          redirect: "/events", // Agency music demo removed (its CSS/audio/models are gone)
           component: () =>
             Si(
               () =>
@@ -4237,6 +4237,15 @@ let At,
               __vite__mapDeps([26, 20, 13, 4, 5, 21, 2, 3, 27]),
               import.meta.url,
             ).then((t) => t.default || t),
+        },
+        {
+          name: "not-found",
+          path: "/:pathMatch(.*)*", // Unknown URLs: "Page not found" (must stay last)
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./not-found-page.js").then(async (t) => (await t.__tla, t.default || t)),
         },
       ],
       nv = (t, e, i) => (

@@ -408,6 +408,22 @@ function matchesSearch(...values) {
   return values.some((v) => String(v ?? "").toLowerCase().includes(q));
 }
 
+// Toolbar filters per section, shared by the tables and the CSV export.
+const keepPayment = (p) =>
+  (state.statusFilter === "all" || p.status === state.statusFilter) &&
+  matchesSearch(p.payerName, p.payerEmail, p.payerPhone, p.transactionRef, ...paymentItems(p).map((i) => i.eventTitle));
+const keepRegistration = (r) =>
+  (state.eventFilter === "all" || r.event_id === state.eventFilter) &&
+  (state.statusFilter === "all" || r.payStatus === state.statusFilter) &&
+  matchesSearch(r.user_name, r.user_email, r.user_phone, r.user_college, r.team_code, r.registration_qr_id, r.student_id, r.event_title);
+const keepTeam = (t) =>
+  (state.eventFilter === "all" || t.eventId === state.eventFilter) &&
+  matchesSearch(t.teamName, t.teamCode, t.leaderName, t.eventName, ...(t.members || []).map((m) => m.name));
+const keepAttendee = (a) => matchesSearch(a.displayName, a.name, a.email, a.college, a.phone, a.studentId);
+const keepQuery = (q) =>
+  (state.statusFilter === "all" || (q.status || "open") === state.statusFilter) &&
+  matchesSearch(q.name, q.email, q.phone, q.subject, q.message, q.team_name);
+
 function table(headers, rows, emptyText, total) {
   const label = `${SECTIONS.find((s) => s.id === state.section)?.label || "Results"} table`;
   // The wrapper scrolls sideways on narrow screens, so it is a focusable,
@@ -574,8 +590,7 @@ function renderPayments({ utrCounts }) {
   const pending = state.payments.filter((p) => p.status === "pending_verification");
   const verifiedTotal = state.payments.filter((p) => p.status === "verified").reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const filtered = [...state.payments]
-    .filter((p) => state.statusFilter === "all" || p.status === state.statusFilter)
-    .filter((p) => matchesSearch(p.payerName, p.payerEmail, p.payerPhone, p.transactionRef, ...paymentItems(p).map((i) => i.eventTitle)))
+    .filter(keepPayment)
     .sort((a, b) => (a.status === "pending_verification" ? 0 : 1) - (b.status === "pending_verification" ? 0 : 1) || String(b.createdAt).localeCompare(String(a.createdAt)));
   const rows = filtered.map((p) => {
     const items = paymentItems(p);
@@ -627,9 +642,7 @@ function renderPayments({ utrCounts }) {
 function renderRegistrations({ regRows }) {
   const unpaid = regRows.filter((r) => r.payStatus === "unpaid" || r.payStatus === "rejected");
   const filtered = regRows
-    .filter((r) => state.eventFilter === "all" || r.event_id === state.eventFilter)
-    .filter((r) => state.statusFilter === "all" || r.payStatus === state.statusFilter)
-    .filter((r) => matchesSearch(r.user_name, r.user_email, r.user_phone, r.user_college, r.team_code, r.registration_qr_id, r.student_id, r.event_title))
+    .filter(keepRegistration)
     .sort((a, b) => String(a.event_title).localeCompare(String(b.event_title)) || String(a.user_name).localeCompare(String(b.user_name)));
   const rows = filtered.map(
     (r) => `
@@ -658,9 +671,7 @@ function renderRegistrations({ regRows }) {
 // ---- Teams ------------------------------------------------------------------
 
 function renderTeams({ leaderContact }) {
-  const filtered = state.teams
-    .filter((t) => state.eventFilter === "all" || t.eventId === state.eventFilter)
-    .filter((t) => matchesSearch(t.teamName, t.teamCode, t.leaderName, t.eventName, ...(t.members || []).map((m) => m.name)));
+  const filtered = state.teams.filter(keepTeam);
   const rows = filtered.map((t) => {
     const c = leaderContact.get(t.teamId) || {};
     const small = (t.teamSize || 1) < (t.minTeamSize || 1);
@@ -689,7 +700,7 @@ function renderTeams({ leaderContact }) {
 // ---- Accounts ---------------------------------------------------------------
 
 function renderAttendees() {
-  const filtered = state.attendees.filter((a) => matchesSearch(a.displayName, a.name, a.email, a.college, a.phone, a.studentId));
+  const filtered = state.attendees.filter(keepAttendee);
   const rows = filtered.map(
     (a) => `
       <tr>
@@ -716,8 +727,7 @@ function renderAttendees() {
 
 function renderQueries() {
   const filtered = [...state.queries]
-    .filter((q) => state.statusFilter === "all" || (q.status || "open") === state.statusFilter)
-    .filter((q) => matchesSearch(q.name, q.email, q.phone, q.subject, q.message, q.team_name))
+    .filter(keepQuery)
     .sort((a, b) => ((a.status === "resolved") - (b.status === "resolved")) || String(b.created_at).localeCompare(String(a.created_at)));
   const rows = filtered.map(
     (q) => `
@@ -963,12 +973,14 @@ function onSubmit(evt) {
 // EXPORTS
 // ----------------------------------------------------------------------------
 
-function exportRows({ regRows, leaderContact }) {
+// filtered: apply the toolbar filters (section CSV); the master workbook exports everything.
+function exportRows({ regRows, leaderContact }, filtered = false) {
+  const pick = (list, keep) => (filtered ? list.filter(keep) : list);
   return {
     payments: {
       name: "Payments",
       headers: ["Payment ID", "Events", "Teams", "Payer", "Email", "Phone", "Amount (INR)", "UTR", "Status", "Submitted", "Verified/Rejected By", "Reason"],
-      rows: state.payments.map((p) => [
+      rows: pick(state.payments, keepPayment).map((p) => [
         p.paymentId,
         paymentItems(p).map((it) => it.eventTitle).join("; "),
         paymentItems(p).map((it) => it.teamName).filter(Boolean).join("; "),
@@ -980,7 +992,7 @@ function exportRows({ regRows, leaderContact }) {
     registrations: {
       name: "Registrations",
       headers: ["Event", "Name", "Email", "Phone", "College", "Year", "Chaitanya ID", "Type", "Team Code", "Team Members", "Pass ID", "Payment", "Registered"],
-      rows: regRows.map((r) => [
+      rows: pick(regRows, keepRegistration).map((r) => [
         r.event_title, r.user_name, r.user_email, r.user_phone, r.user_college, r.user_year, r.student_id,
         r.participation_type === "team" ? `team ${r.team_role || ""}`.trim() : "solo",
         r.team_code, (r.team_members || []).map((m) => m.name).join("; "),
@@ -990,7 +1002,7 @@ function exportRows({ regRows, leaderContact }) {
     teams: {
       name: "Teams",
       headers: ["Team", "Code", "Event", "Leader", "Leader Email", "Leader Phone", "Members", "Size", "Max", "Payment"],
-      rows: state.teams.map((t) => {
+      rows: pick(state.teams, keepTeam).map((t) => {
         const c = leaderContact.get(t.teamId) || {};
         return [t.teamName, t.teamCode, t.eventName, t.leaderName, c.email, c.phone, (t.members || []).map((m) => m.name).join("; "), t.teamSize, t.maxTeamSize, t.paymentStatus];
       }),
@@ -998,21 +1010,27 @@ function exportRows({ regRows, leaderContact }) {
     attendees: {
       name: "Accounts",
       headers: ["Name", "Email", "College", "Year", "Phone", "Chaitanya ID", "Registered Events"],
-      rows: state.attendees.map((a) => [a.displayName || a.name, a.email, a.college, a.year, a.phone, a.studentId, (a.registeredEvents || []).join("; ")]),
+      rows: pick(state.attendees, keepAttendee).map((a) => [a.displayName || a.name, a.email, a.college, a.year, a.phone, a.studentId, (a.registeredEvents || []).join("; ")]),
     },
     queries: {
       name: "Queries",
       headers: ["Received", "Name", "Email", "Phone", "Team", "Subject", "Message", "Status"],
-      rows: state.queries.map((q) => [formatDate(q.created_at), q.name, q.email, q.phone, q.team_name, q.subject, q.message, q.status || "open"]),
+      rows: pick(state.queries, keepQuery).map((q) => [formatDate(q.created_at), q.name, q.email, q.phone, q.team_name, q.subject, q.message, q.status || "open"]),
     },
   };
 }
 
-// Prevent spreadsheet formula injection from participant-entered text.
+// Prevent spreadsheet formula injection from participant-entered text (CSV).
+// A leading +/- is left alone when the value is only digits and phone
+// punctuation (e.g. "+91 98765 43210"): it can't call a function.
 function safeCell(value) {
   const s = value === null || value === undefined ? "" : String(value);
-  return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  if (/^[=@\t\r]/.test(s)) return `'${s}`;
+  return /^[+\-]/.test(s) && /[^\d\s+\-().]/.test(s) ? `'${s}` : s;
 }
+
+// XML 1.0 forbids these control characters; one would make Excel reject the workbook.
+const stripControl = (s) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
 
 function downloadBlob(content, type, filename) {
   const blob = new Blob([content], { type });
@@ -1031,7 +1049,7 @@ function stamp() {
 }
 
 function exportSectionCsv(data) {
-  const sheets = exportRows(data);
+  const sheets = exportRows(data, true);
   const sheet = sheets[state.section] || sheets.registrations;
   const csvCell = (v) => `"${safeCell(v).replace(/"/g, '""')}"`;
   const csv = [sheet.headers, ...sheet.rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
@@ -1039,7 +1057,8 @@ function exportSectionCsv(data) {
 }
 
 function exportMasterExcel(data) {
-  const xml = (v) => safeCell(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // Every cell is ss:Type="String", so no formula can run: no safeCell prefix here.
+  const xml = (v) => stripControl(v === null || v === undefined ? "" : String(v)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const sheets = exportRows(data);
   const sheetXml = ({ name, headers, rows }) => `
   <Worksheet ss:Name="${xml(name)}">

@@ -71,6 +71,7 @@ let isDossierOpen = false;
 let isCartOpen = false;
 let isCheckoutOpen = false;
 let resumeCheckoutUntil = 0; // resume checkout only if sign-in completes soon after "Done"
+let lastAuthUid = null; // to spot a sign-out (see subscribeAuthState)
 let globalListenersBound = false;
 
 // Checkout wizard state
@@ -643,7 +644,8 @@ function startCheckout() {
     joinEventId: null,
   };
   const draft = readCheckoutDraft();
-  if (draft?.cartKey === cartKey(items)) {
+  // Only the student who started it gets it back (shared computers, e.g. a registration desk).
+  if (draft?.cartKey === cartKey(items) && draft.uid === user.uid) {
     Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
   }
   closeCart();
@@ -656,7 +658,8 @@ function openJoinTeam(eventId) {
     // Close the drawer first: it makes the rest of the page (and the sign-in
     // modal) inert while open.
     closeEventDossier();
-    openAuthModal("login");
+    // Come back to the join form once signed in, like "Register" resumes checkout.
+    openAuthModal("login", { afterSignIn: () => openJoinTeam(eventId) });
     return;
   }
   const ev = getEventById(eventId);
@@ -702,6 +705,12 @@ function requestCloseCheckout() {
 
 const cartKey = (items) => items.map((i) => `${i.eventId}:${i.mode}`).join(",");
 
+function clearCheckoutDraft() {
+  try {
+    sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+  } catch {}
+}
+
 function readCheckoutDraft() {
   try {
     return JSON.parse(sessionStorage.getItem(CHECKOUT_DRAFT_KEY));
@@ -715,7 +724,8 @@ function saveCheckoutDraft() {
   try {
     if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
       const { step, teams, details, utr, items } = checkout;
-      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items) }));
+      const uid = getCurrentUser()?.uid || null;
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items), uid }));
     } else {
       sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
     }
@@ -1429,6 +1439,9 @@ function bindGlobalListeners() {
   });
 
   subscribeAuthState((user) => {
+    // Signing out drops the open checkout's details (name, college, phone).
+    if (lastAuthUid && !user) clearCheckoutDraft();
+    lastAuthUid = user?.uid || null;
     setCartOwner(user?.uid);
     pruneRegisteredFromCart();
     if (document.getElementById("events-card-grid")) refreshEventsGrid();
@@ -1581,6 +1594,9 @@ export function destroyEventsPage() {
   isDossierOpen = isCartOpen = isCheckoutOpen = false;
   checkout = null;
   submitting = null;
+  // Leaving /events in the app closes the checkout for good: the draft is
+  // only for a reload or a dropped tab (no unmount runs then).
+  clearCheckoutDraft();
   // Leaving /events with a drawer open must not leave the site inert.
   activeDialog = null;
   setBackgroundInert(null);

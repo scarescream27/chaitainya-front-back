@@ -191,7 +191,7 @@ function renderPage() {
       <div class="prof-section-head">
         <span class="pp-kicker">01 // YOUR DETAILS</span>
         <h2 class="prof-h2" id="prof-details-title">Profile information</h2>
-        <p class="pp-hint">These details appear on your registrations, entry QR codes and Digital ID.</p>
+        <p class="pp-hint">These details appear on your Digital ID and on events you register for from now on. Passes you already have keep the details they were issued with.</p>
       </div>
       ${detailsFormHtml(user)}
     </section>
@@ -390,11 +390,11 @@ function renderRegistrations() {
           <div class="pp-reg-actions">
             ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
             ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
-            ${canCancelRegistration(r) && page.confirmDereg !== r.event_id
+            ${canCancelRegistration(r, payment) && page.confirmDereg !== r.event_id
               ? `<button type="button" class="pp-action subtle prof-dereg" data-prof="dereg-ask" data-event-id="${e(r.event_id)}">Cancel registration</button>`
               : ""}
           </div>
-          ${!canCancelRegistration(r) ? `<span class="pp-reg-note">Paid registrations can't be cancelled here. Contact the fest team.</span>` : ""}
+          ${!canCancelRegistration(r, payment) ? `<span class="pp-reg-note">Paid registrations can't be cancelled here. Contact the fest team.</span>` : ""}
           ${page.confirmDereg === r.event_id ? deregConfirmHtml(r, team) : ""}
           ${page.deregError?.eventId === r.event_id ? `<p class="pp-msg bad" role="alert">${e(page.deregError.message)}</p>` : ""}
           ${status === "rejected" && payment ? `

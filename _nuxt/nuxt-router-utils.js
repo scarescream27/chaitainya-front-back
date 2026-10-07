@@ -213,6 +213,8 @@ let st,
                 sw.setAttribute("role", "button");
                 sw.setAttribute("tabindex", "0");
                 sw.setAttribute("aria-label", "Menu");
+                // The bracket glyphs and lines are decoration: keep them out of the button's content.
+                sw.querySelectorAll(".el, .line").forEach((el) => el.setAttribute("aria-hidden", "true"));
                 sw.setAttribute("aria-controls", "mobile-menu");
                 sw.addEventListener("keydown", (e) => {
                   if (e.key === "Enter" || e.key === " ") {

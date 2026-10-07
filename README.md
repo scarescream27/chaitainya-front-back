@@ -47,7 +47,7 @@ chaitanya-2k26/
 │   ├── home-scene-3d.js        # Main 3D canvas, Cannon physics & preloader
 │   ├── events-page-view.js     # Vue 3 component for the /events route
 │   ├── events-page.js          # Events Arena controller, search, filters & scroll motion
-│   ├── events-data.js          # Dataset for 12 competitions, rules, rounds & coordinators
+│   ├── events-data.js          # Dataset for all 20 events, rules, rounds & coordinators
 │   ├── events.css              # Glassmorphic brutalist styles, drawer, modal & scroll HUD
 │   ├── auth-modal.js           # Multi-tab Admin Panel, User Profile & Sign-In modals
 │   ├── auth-modal.css          # Frosted glass authentication & admin styling
@@ -59,7 +59,6 @@ chaitanya-2k26/
 │   ├── DrukMedium.otf          # Display title typography
 │   └── IBMPlexMono.ttf         # Monospace metadata typography
 │
-├── audio/                      # Spatial sound effects and ambient tracks
 ├── fonts/                      # 3D Three.js FontLoader JSON geometries
 ├── hdri/                       # High dynamic range environment reflections
 ├── images/                     # SVG icons, badges, UI elements and patterns
@@ -88,8 +87,7 @@ Event details (venues, times, fees, prizes, coordinators) are in [`_nuxt/events-
 2. Replace placeholder event details and add real coordinators in `events-data.js`.
 3. Deploy the security rules: `npm run deploy:rules`.
 4. Sign in as an admin and run **Admin → Setup → Sync events & FAQs**.
-5. Add `hdri/photo_studio_01_1k.hdr` (Poly Haven, CC0); the 3D scene requests it.
-6. Keep the admin list in `firebase-config.js` and `firestore.rules` identical.
+5. Keep the admin list in `firebase-config.js` and `firestore.rules` identical.
 
 ## Getting Started
 
