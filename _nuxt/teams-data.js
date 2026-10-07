@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: teams-data.js
- * Purpose: The organising teams, shared by /about, /organisation and the
+ * Purpose: The organising teams, shared by /about, /organisers and the
  * "Organised by" block of every event. Real names only.
  * ============================================================================
  */
@@ -34,6 +34,35 @@ export const TEAMS = [
 // Anyone without an entry keeps the initials avatar.
 export const PHOTOS = {};
 
+// Optional profile details for /organisers/<slug>, keyed by exact name, e.g.
+//   "Aditya Verma": { department: "CSE, 3rd year", from: "Hamirpur, HP", email: "..." },
+// Only fill in what the person has agreed to share; empty fields are hidden.
+export const PROFILES = {};
+
+/** URL slug of a person, e.g. "Aditya Verma" -> "aditya-verma". */
+export const personSlug = (name) =>
+  name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+/**
+ * Everyone on /organisers, merged by name: { slug, name, roles, teams, events }.
+ * events are event objects this person heads.
+ */
+export function allPeople() {
+  const by = new Map();
+  const add = (name, role, team, events = []) => {
+    const p = by.get(name) || { slug: personSlug(name), name, roles: [], teams: [], events: [] };
+    if (!p.roles.includes(role)) p.roles.push(role);
+    if (!p.teams.some((t) => t.id === team.id)) p.teams.push({ id: team.id, name: team.name });
+    for (const ev of events) if (!p.events.includes(ev)) p.events.push(ev);
+    by.set(name, p);
+  };
+  for (const tm of TEAMS) for (const m of tm.people) add(m.name, m.role, { id: "core-team", name: tm.name });
+  for (const tm of categoryTeams())
+    for (const m of tm.people)
+      add(m.name, m.role, tm, tm.events.filter((ev) => (ev.coordinators || []).some((q) => q.name === m.name)));
+  return [...by.values()];
+}
+
 export function initials(name) {
   return name
     .replace(/^(Mr|Mrs|Ms|Dr|Er)\.\s*/i, "")
@@ -44,7 +73,7 @@ export function initials(name) {
     .join("");
 }
 
-/** Anchor id of a category team on /organisation, e.g. "team-tech". */
+/** Anchor id of a category team on /organisers, e.g. "team-tech". */
 export const categoryTeamId = (categoryId) => `team-${categoryId}`;
 
 /**
@@ -72,7 +101,7 @@ export function organiserFor(ev) {
   const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
   return {
     name: c ? `${titleCase(c.name)} Team` : "Organising Committee",
-    href: c ? `/organisation#${categoryTeamId(c.id)}` : "/organisation",
+    href: c ? `/organisers#${categoryTeamId(c.id)}` : "/organisers",
   };
 }
 

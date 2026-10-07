@@ -128,6 +128,8 @@ let st,
       mEvents = d("span", null, "Events", -1),
       mAbout = d("span", null, "About", -1),
       mOrg = d("span", null, "Organisers", -1),
+      mSponsors = d("span", null, "Sponsors", -1),
+      mContact = d("span", null, "Contact Us", -1),
       mAdmin = d("span", null, "Admin", -1),
       _t = at(
         '<div class="bottom"><a target="_blank" href="mailto:chaitanyahptu@gmail.com">chaitanyahptu@gmail.com</a></div>',
@@ -324,7 +326,7 @@ let st,
                         ),
                         Y(
                           z,
-                          { to: "/organisation" },
+                          { to: "/organisers" },
                           { default: Z(() => [O("["), tabOrg, O("]")]), _: 1 },
                         ),
                         d(
@@ -397,9 +399,26 @@ let st,
                                   ),
                                   Y(
                                     z,
-                                    { to: "/organisation" },
+                                    { to: "/organisers" },
                                     {
                                       default: Z(() => [O("["), mOrg, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  // Phone menu only (the desktop bar is unchanged).
+                                  Y(
+                                    z,
+                                    { to: "/sponsors" },
+                                    {
+                                      default: Z(() => [O("["), mSponsors, O("]")]),
+                                      _: 1,
+                                    },
+                                  ),
+                                  Y(
+                                    z,
+                                    { to: "/contact-us" },
+                                    {
+                                      default: Z(() => [O("["), mContact, O("]")]),
                                       _: 1,
                                     },
                                   ),

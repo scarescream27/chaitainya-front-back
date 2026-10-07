@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: organisation-page.js
- * Purpose: /organisation — the core team plus one team per event category
+ * Purpose: /organisers — the core team plus one team per event category
  * (anchors like #team-tech, linked from each event's "Organised by" block).
  * Reuses privacy-policy.css (cards/hero) and about.css (team cards); layout
  * tweaks live in organisation.css under .organisation-page-root.
@@ -11,6 +11,8 @@ import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b, E as rt } from "./vue-runtime.js";
 import { FEST_CONFIG, escapeHtml as esc } from "./fest-config.js";
 import { TEAMS, PHOTOS, initials, categoryTeams } from "./teams-data.js";
+import { EVENT_CATEGORIES } from "./events-data.js";
+import { marqueeHtml, personCardHtml, eventCardHtml } from "./m-marquee.js";
 
 const TINTS = ["--cat-cultural", "--cat-tech", "--cat-innovation", "--cat-esports", "--cat-business"];
 
@@ -77,13 +79,38 @@ function buildHtml() {
     )
     .join("");
 
+  // Phones: one drifting row of people (tap for their page) and one of events
+  // per team, instead of the card grids. Desktop keeps the grids above.
+  const markOf = (id) => (EVENT_CATEGORIES.find((c) => c.id === id) || {}).shortCode;
+  const mobile = `
+    <div class="m-only m-org">
+      <section class="m-org-team" id="m-core-team">
+        <h2 class="m-h">Core Team</h2>
+        ${marqueeHtml(
+          TEAMS.flatMap((tm) => tm.people).map((m, i) => personCardHtml(m, `var(${TINTS[i % TINTS.length]})`)),
+          { label: "Core team" }
+        )}
+      </section>
+      ${teams
+        .map(
+          (tm) => `
+      <section class="m-org-team" id="m-${esc(tm.id)}">
+        <h2 class="m-h" style="--tint: ${tm.accent}">${esc(tm.name)}</h2>
+        ${tm.people.length ? marqueeHtml(tm.people.map((m) => personCardHtml(m, tm.accent)), { label: `${tm.name}: student heads` }) : ""}
+        <h3 class="m-sub">Events (${tm.events.length})</h3>
+        ${marqueeHtml(tm.events.map((ev) => eventCardHtml(ev, tm.accent, markOf(tm.categoryId))), { label: `${tm.name}: events`, secsPerCard: 5 })}
+      </section>`
+        )
+        .join("")}
+    </div>`;
+
   const jump = [{ id: "core-team", name: "Core Team" }, ...teams]
     .map((tm) => `<li><a href="#${esc(tm.id)}">${esc(tm.name)}</a></li>`)
     .join("");
 
   return `
     <div class="privacy-container org-container">
-      <div class="privacy-top-bar">
+      <div class="privacy-top-bar d-only">
         <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
         <a href="/events" class="privacy-contact-btn">[ EXPLORE EVENTS ]</a>
       </div>
@@ -94,9 +121,11 @@ function buildHtml() {
         <p class="subtitle">Chaitanya 2k26 is planned and run by students of HPTU Hamirpur with guidance from faculty coordinators.</p>
       </div>
 
-      <nav class="org-jump" aria-label="Teams on this page"><ul>${jump}</ul></nav>
+      <nav class="org-jump d-only" aria-label="Teams on this page"><ul>${jump}</ul></nav>
 
-      <div class="privacy-sections">
+      ${mobile}
+
+      <div class="privacy-sections d-only">
         ${core}
         ${catCards}
       </div>
@@ -104,7 +133,8 @@ function buildHtml() {
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
         <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
-        <a href="/contact" class="privacy-cta-btn">[ CONTACT US ]</a>
+        <a href="/contact" class="privacy-cta-btn d-only">[ CONTACT US ]</a>
+        <a href="/contact-us" class="privacy-cta-btn m-only">[ CONTACT US ]</a>
       </section>
     </div>`;
 }
@@ -114,7 +144,9 @@ const reduceMotion = () => window.matchMedia && window.matchMedia("(prefers-redu
 // ScrollSmoother (when active) moves #smooth-content with a transform, so
 // scroll through it; otherwise use native scrolling. Header offset ~80px.
 function scrollToId(id) {
-  const el = id && document.getElementById(id);
+  // Phones show the m-* copy of each section; the desktop one is hidden.
+  const m = id && document.getElementById("m-" + id);
+  const el = m && m.offsetParent ? m : id && document.getElementById(id);
   if (!el || !el.closest(".organisation-page-root")) return false;
   const smoother = window.ScrollSmoother && window.ScrollSmoother.get && window.ScrollSmoother.get();
   if (smoother && !smoother.paused()) smoother.scrollTo(el, !reduceMotion(), "top 80px");
@@ -174,12 +206,30 @@ let a,
               content: "The people behind Chaitanya 2k26 at HPTU Hamirpur: the core team and the student heads of every event team.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/organisation" }],
+          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/organisers" }],
         });
 
         rt(() => {
-          const id = decodeURIComponent(location.hash.slice(1));
-          if (id) requestAnimationFrame(() => requestAnimationFrame(() => scrollToId(id)));
+          // A direct load (/organisers#team-tech) goes through index.html's
+          // deep-link routing, which drops the hash: it is stashed there.
+          const hash = location.hash || window.__organisersHash || "";
+          window.__organisersHash = "";
+          if (hash && !location.hash) history.replaceState(history.state, "", location.pathname + hash);
+          const id = decodeURIComponent(hash.slice(1));
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              if (id && scrollToId(id)) {
+                // Direct load: the home page's layout is still being torn down,
+                // so the first jump can overshoot. Settle on the section again.
+                setTimeout(() => scrollToId(id), 700);
+                return;
+              }
+              // Arriving from a scrolled page (e.g. the About button): start at the top.
+              const smoother = window.ScrollSmoother?.get?.();
+              if (smoother && !smoother.paused()) smoother.scrollTo(0, false);
+              else window.scrollTo(0, 0);
+            })
+          );
         });
 
         const html = buildHtml();

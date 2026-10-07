@@ -5,6 +5,7 @@
  * - /events layout with hero, sticky category toolbar and live search
  * - Event details drawer (fee, deadline, registration type, team size, heads)
  * - REGISTER: one event → checkout (confirm details → team → review & pay → done)
+ * - Cart (icon buttons): collect several events, pick solo/team, register all
  * - Join an existing team with a code
  */
 
@@ -33,8 +34,11 @@ import {
   getCartTotal,
   addToCart,
   removeFromCart,
+  setCartItemMode,
   clearCart,
+  isInCart,
   setCartOwner,
+  subscribeCart,
 } from "./cart.js";
 
 import { openAuthModal } from "./auth-modal.js";
@@ -66,8 +70,10 @@ function saveFilters() {
   } catch {}
 }
 let isDossierOpen = false;
+let isCartOpen = false;
 let isCheckoutOpen = false;
 let resumeCheckoutUntil = 0; // resume checkout only if sign-in completes soon after "Done"
+let resumeOnlyId = null; // the one event a direct REGISTER was checking out (null = the cart)
 let lastAuthUid = null; // to spot a sign-out (see subscribeAuthState)
 let globalListenersBound = false;
 
@@ -87,13 +93,14 @@ let submitting = null;
 const CHECKOUT_DRAFT_KEY = "chaitanya-checkout-draft";
 
 // ----------------------------------------------------------------------------
-// DIALOG PLUMBING (details drawer, checkout modal)
+// DIALOG PLUMBING (details drawer, cart drawer, checkout modal)
 // One dialog is open at a time. Opening one: remember what had focus, make the
 // rest of the page inert, move focus inside. Tab/Shift+Tab wrap inside it
 // (see bindGlobalListeners). Closing: un-inert and give focus back.
 // ----------------------------------------------------------------------------
 const DIALOGS = {
   dossier: { overlay: "event-dossier-overlay", panel: "event-dossier-panel", title: "#event-dossier-title" },
+  cart: { overlay: "events-cart-overlay", panel: "events-cart-panel", title: "#events-cart-title" },
   checkout: { overlay: "event-reg-modal", panel: "event-reg-card", title: "#co-title" },
 };
 let activeDialog = null; // key of DIALOGS
@@ -107,8 +114,8 @@ function focusablesIn(el) {
   return Array.from(el.querySelectorAll(FOCUSABLE)).filter((n) => !n.closest("[hidden]") && n.getClientRects().length > 0);
 }
 
-// Inert every other child of <body> (the page under #__nuxt, the HUD, other
-// overlays). The toast stays live so it is still announced.
+// Inert every other child of <body> (the page under #__nuxt, the cart button,
+// the HUD, other overlays). The toast stays live so it is still announced.
 function setBackgroundInert(overlay) {
   inertedEls.forEach((el) => el.removeAttribute("inert"));
   inertedEls = [];
@@ -177,6 +184,7 @@ function deactivateDialog(key) {
       `#events-card-grid .event-card[data-event-id="${CSS.escape(back.dataset.eventId)}"] .event-btn-details`
     );
   }
+  if (!target) target = document.getElementById("events-cart-fab");
   try {
     target?.focus({ preventScroll: true });
   } catch {}
@@ -274,8 +282,17 @@ export function renderEventsPageHtml() {
         <button type="button" class="events-scroll-top-btn" id="events-scroll-top-btn" title="Back to top">[ ↑ TOP ]</button>
       </div>
 
+      <button type="button" class="events-cart-fab" id="events-cart-fab" aria-haspopup="dialog" aria-label="Cart, 0 events" title="Cart">
+        ${CART_ICON}
+        <span class="events-cart-fab-count" id="events-cart-count" aria-hidden="true">0</span>
+      </button>
+
       <div class="event-dossier-overlay" id="event-dossier-overlay">
         <div class="event-dossier-panel" id="event-dossier-panel" role="dialog" aria-modal="true" aria-labelledby="event-dossier-title"></div>
+      </div>
+
+      <div class="events-cart-overlay" id="events-cart-overlay">
+        <aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-labelledby="events-cart-title"></aside>
       </div>
 
       <div class="event-reg-modal" id="event-reg-modal">
@@ -312,6 +329,25 @@ function actionButtonHtml(ev) {
 const svg = (d) =>
   `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
+// Lucide "shopping-cart"; the toggle adds a plus (add) or a check (added).
+const CART_PATH = `<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>`;
+const CART_ICON = svg(CART_PATH);
+const CART_ADD_ICON = svg(`${CART_PATH}<path d="M14 8v5M11.5 10.5h5"/>`);
+const CART_ADDED_ICON = svg(`${CART_PATH}<path d="m11.5 10.5 2 2 3.5-3.5"/>`);
+
+// Icon-only add/remove-from-cart toggle (cards and the drawer). Registered or
+// closed events get none.
+function cartToggleHtml(ev) {
+  if (isEventRegistered(ev.id) || !isRegistrationOpen(ev)) return "";
+  const added = isInCart(ev.id);
+  return `<button type="button" class="event-cart-toggle${added ? " is-added" : ""}" data-action="toggle-cart" data-event-id="${e(ev.id)}" ${cartToggleAttrs(ev, added)}>${added ? CART_ADDED_ICON : CART_ADD_ICON}</button>`;
+}
+
+function cartToggleAttrs(ev, added) {
+  const label = `${added ? "Remove" : "Add"} ${e(ev.title)} ${added ? "from" : "to"} cart`;
+  return `aria-pressed="${added}" aria-label="${label}" title="${added ? "Remove from cart" : "Add to cart"}"`;
+}
+
 const HERO_ICONS = {
   events: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>'),
   date: svg('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
@@ -341,7 +377,7 @@ function renderEventCardHtml(ev) {
   const teamChip = ev.registrationType === "solo" ? "SOLO" : ev.registrationType === "team" ? `TEAM ${ev.teamSize}` : `SOLO / TEAM`;
 
   return `
-    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
       <button type="button" class="event-card-visual" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
         <span class="event-visual-num" aria-hidden="true">${number}</span>
@@ -361,6 +397,7 @@ function renderEventCardHtml(ev) {
 
         <div class="event-card-actions">
           <button type="button" class="event-btn-details" aria-haspopup="dialog" data-action="view-details" data-event-id="${e(ev.id)}">[ VIEW DETAILS ]</button>
+          ${cartToggleHtml(ev)}
         </div>
       </div>
     </div>
@@ -454,7 +491,7 @@ export function openEventDossier(eventId) {
     <div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>
   </dl>
   <div class="event-dossier-cta">
-    ${actionButtonHtml(ev)}
+    <div class="event-cta-row">${actionButtonHtml(ev)}${cartToggleHtml(ev)}</div>
     ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Join your team with a team code</button>` : ""}
   </div>
   ${section("ABOUT", `<p class="event-dossier-text">${e(ev.overview)}</p>`)}
@@ -530,20 +567,122 @@ function hookRouter() {
   });
 }
 
-// REGISTER: check out just this event.
+// REGISTER: check out just this event. The cart is left as it is.
 function handleRegisterNow(eventId) {
   const ev = getEventById(eventId);
   if (!ev || isEventRegistered(ev.id) || !isRegistrationOpen(ev)) return;
-  try {
-    clearCart();
-    addToCart(ev.id);
-  } catch (err) {
-    return flashToast(err.message);
-  }
   // Close first: the open drawer would make the sign-in modal inert.
   closeEventDossier();
-  refreshEventsGrid();
-  startCheckout();
+  startCheckout(ev.id);
+}
+
+// ----------------------------------------------------------------------------
+// CART
+// ----------------------------------------------------------------------------
+
+function renderCartPanel() {
+  const panel = document.getElementById("events-cart-panel");
+  if (!panel) return;
+  const keepFocus = focusedSelector(panel);
+  const items = getCartItems();
+  const total = getCartTotal(items);
+
+  const rows = items
+    .map(({ event: ev, mode, amount }) => {
+      const typeControl =
+        ev.registrationType === "both"
+          ? `<div class="cart-mode" role="group" aria-label="Solo or team for ${e(ev.title)}">
+               <button type="button" class="${mode === "solo" ? "active" : ""}" aria-pressed="${mode === "solo"}" data-action="cart-mode" data-mode="solo" data-event-id="${e(ev.id)}">SOLO</button>
+               <button type="button" class="${mode === "team" ? "active" : ""}" aria-pressed="${mode === "team"}" data-action="cart-mode" data-mode="team" data-event-id="${e(ev.id)}">TEAM</button>
+             </div>`
+          : `<span class="cart-type">${ev.registrationType === "team" ? `TEAM · ${e(ev.minTeam)}–${e(ev.maxTeam)}` : "SOLO"}</span>`;
+      return `
+        <li class="cart-item">
+          <div class="cart-item-main">
+            <strong>${e(ev.title)}</strong>
+            <span>${e(ev.date)} · ${e(ev.time)}</span>
+            ${typeControl}
+          </div>
+          <div class="cart-item-side">
+            <span class="cart-amount">${amount ? `₹${e(amount)}` : "FREE"}</span>
+            <button type="button" class="cart-remove" data-action="cart-remove" data-event-id="${e(ev.id)}" aria-label="Remove ${e(ev.title)} from cart">REMOVE</button>
+          </div>
+        </li>`;
+    })
+    .join("");
+
+  panel.innerHTML = `
+    <div class="cart-head">
+      <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
+      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart">[ CLOSE ]</button>
+    </div>
+    ${items.length
+      ? `<ul class="cart-list">${rows}</ul>
+         <div class="cart-foot">
+           <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
+           <button type="button" class="event-submit-btn cart-done" data-action="cart-done">[ REGISTER ]</button>
+         </div>`
+      : `<div class="cart-empty"><p>Your cart is empty.</p><p>Tap the cart button on an event to add it.</p></div>`}
+  `;
+  // Re-rendered while open (remove / solo-team switch): keep keyboard focus.
+  if (activeDialog === "cart" && !panel.contains(document.activeElement)) focusInto(panel, keepFocus || DIALOGS.cart.title);
+}
+
+// Cart changed: update the floating button, every toggle and card in place
+// (no re-render, so focus stays put), and the open drawer.
+function syncCartUi(items = getCartItems()) {
+  const count = document.getElementById("events-cart-count");
+  const fab = document.getElementById("events-cart-fab");
+  if (count) count.textContent = String(items.length);
+  if (fab) {
+    fab.classList.toggle("has-items", items.length > 0);
+    fab.setAttribute("aria-label", `Cart, ${items.length} event${items.length === 1 ? "" : "s"}`);
+  }
+  const ids = new Set(items.map((i) => i.eventId));
+  document.querySelectorAll(".event-cart-toggle[data-event-id]").forEach((btn) => {
+    const ev = getEventById(btn.dataset.eventId);
+    const added = ids.has(btn.dataset.eventId);
+    if (!ev || btn.classList.contains("is-added") === added) return;
+    btn.classList.toggle("is-added", added);
+    btn.setAttribute("aria-pressed", String(added));
+    btn.setAttribute("aria-label", `${added ? "Remove" : "Add"} ${ev.title} ${added ? "from" : "to"} cart`);
+    btn.title = added ? "Remove from cart" : "Add to cart";
+    btn.innerHTML = added ? CART_ADDED_ICON : CART_ADD_ICON;
+  });
+  document.querySelectorAll("#events-card-grid .event-card:not(.is-registered)").forEach((card) => {
+    card.classList.toggle("is-added", ids.has(card.dataset.eventId));
+  });
+  if (isCartOpen) renderCartPanel();
+}
+
+export function openCart() {
+  renderCartPanel();
+  const overlay = document.getElementById("events-cart-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  isCartOpen = true;
+  activateDialog("cart");
+}
+
+export function closeCart() {
+  document.getElementById("events-cart-overlay")?.classList.remove("active");
+  isCartOpen = false;
+  deactivateDialog("cart");
+}
+
+function handleToggleCart(eventId) {
+  const ev = getEventById(eventId);
+  if (!ev) return;
+  if (isInCart(ev.id)) {
+    removeFromCart(ev.id);
+    return flashToast(`${ev.title} removed from cart`);
+  }
+  try {
+    addToCart(ev.id);
+    flashToast(`${ev.title} added to cart`);
+  } catch (err) {
+    flashToast(err.message);
+  }
 }
 
 // The toast is a polite live region. It is created (empty) when the page
@@ -577,12 +716,22 @@ function flashToast(message) {
 // CHECKOUT (details → teams → review & pay → done)
 // ----------------------------------------------------------------------------
 
-function startCheckout() {
-  const items = getCartItems();
+// Checks out the whole cart, or (direct REGISTER) only `onlyId` without
+// touching the rest of the cart.
+function startCheckout(onlyId = null) {
+  let items = getCartItems();
+  if (onlyId) {
+    const ev = getEventById(onlyId);
+    if (!ev || isEventRegistered(ev.id) || !isRegistrationOpen(ev)) return;
+    const mode = ev.registrationType === "team" ? "team" : "solo";
+    items = [items.find((i) => i.eventId === ev.id) || { eventId: ev.id, mode, event: ev, amount: Number(ev.entryFeeNum) || 0 }];
+  }
   if (!items.length) return;
   const user = getCurrentUser();
   if (!user) {
     resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
+    resumeOnlyId = onlyId;
+    closeCart();
     openAuthModal("login");
     return;
   }
@@ -605,12 +754,14 @@ function startCheckout() {
     utr: "",
     result: null,
     joinEventId: null,
+    only: onlyId,
   };
   const draft = readCheckoutDraft();
   // Only the student who started it gets it back (shared computers, e.g. a registration desk).
   if (draft?.cartKey === cartKey(items) && draft.uid === user.uid) {
     Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
   }
+  closeCart();
   openCheckoutModal();
 }
 
@@ -660,7 +811,10 @@ function requestCloseCheckout() {
   if (submitting) return;
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
-    if (!confirm("Leave registration? What you entered here will be cleared.")) return;
+    const msg = checkout.only
+      ? "Leave registration? What you entered here will be cleared."
+      : "Leave registration? Your cart stays, but what you entered here will be cleared.";
+    if (!confirm(msg)) return;
   }
   closeCheckout();
 }
@@ -685,9 +839,9 @@ function readCheckoutDraft() {
 function saveCheckoutDraft() {
   try {
     if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
-      const { step, teams, details, utr, items } = checkout;
+      const { step, teams, details, utr, items, only } = checkout;
       const uid = getCurrentUser()?.uid || null;
-      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items), uid }));
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items), uid, only }));
     } else {
       sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
     }
@@ -799,6 +953,7 @@ function renderCheckout(focusSel) {
         ${detailsFieldsHtml(checkout.details, user)}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
+          ${checkout.only ? "" : `<button type="button" class="event-submit-btn secondary" data-action="co-back-cart">[ ← BACK TO CART ]</button>`}
           <button type="submit" class="event-submit-btn">[ CONTINUE → ]</button>
         </div>
       </form>`;
@@ -1059,6 +1214,10 @@ function onCheckoutClick(evt) {
       () => flashToast(`Couldn't copy. The UPI ID is ${FEST_CONFIG.upiId}`)
     );
     return;
+  }
+  if (action === "co-back-cart") {
+    closeCheckout();
+    return openCart();
   }
   if (action === "co-prev") {
     if (checkout.step === "teams") readTeams(card);
@@ -1375,6 +1534,16 @@ function bindGlobalListeners() {
         return;
       case "join-team":
         return id && openJoinTeam(id);
+      case "toggle-cart":
+        return id && handleToggleCart(id);
+      case "cart-close":
+        return closeCart();
+      case "cart-remove":
+        return id && removeFromCart(id);
+      case "cart-mode":
+        return id && setCartItemMode(id, btn.dataset.mode);
+      case "cart-done":
+        return startCheckout();
       default:
         return onCheckoutClick(evt);
     }
@@ -1390,6 +1559,7 @@ function bindGlobalListeners() {
     // The profile overlay / auth modal handle their own Escape.
     if (isOtherOverlayOpen()) return;
     if (isCheckoutOpen) requestCloseCheckout();
+    else if (isCartOpen) closeCart();
     else if (isDossierOpen) closeEventDossier();
   });
 
@@ -1402,11 +1572,15 @@ function bindGlobalListeners() {
     if (document.getElementById("events-card-grid")) refreshEventsGrid();
     if (user && resumeCheckoutUntil > Date.now()) {
       resumeCheckoutUntil = 0;
+      const only = resumeOnlyId;
+      resumeOnlyId = null;
       setTimeout(() => {
-        if (document.getElementById("event-reg-modal")) startCheckout();
+        if (document.getElementById("event-reg-modal")) startCheckout(only);
       }, 300);
     }
   });
+
+  subscribeCart((items) => syncCartUi(items));
 }
 
 // Drop cart items the user has since registered for (e.g. on another device).
@@ -1418,6 +1592,8 @@ function pruneRegisteredFromCart() {
 const BODY_LEVEL_IDS = [
   "event-dossier-overlay",
   "event-reg-modal",
+  "events-cart-overlay",
+  "events-cart-fab",
   "events-scroll-hud",
   "events-scroll-progress",
 ];
@@ -1439,7 +1615,7 @@ export function initEventsPage() {
   });
 
   bindGlobalListeners();
-  isDossierOpen = isCheckoutOpen = false;
+  isDossierOpen = isCartOpen = isCheckoutOpen = false;
   activeDialog = null;
   setBackgroundInert(null);
   ensureToast();
@@ -1476,8 +1652,11 @@ export function initEventsPage() {
     searchBox?.focus(); // the clear button hides itself, so don't drop focus
   });
 
+  document.getElementById("events-cart-fab")?.addEventListener("click", openCart);
+
   const outside = [
     ["event-dossier-overlay", closeEventDossier],
+    ["events-cart-overlay", closeCart],
     ["event-reg-modal", requestCloseCheckout],
   ];
   outside.forEach(([id, close]) => {
@@ -1489,15 +1668,17 @@ export function initEventsPage() {
 
   setCartOwner(getCurrentUser()?.uid);
   pruneRegisteredFromCart();
+  syncCartUi();
   refreshEventsGrid();
   initScrollMotion();
   watchForUnmount(root);
 
-  // Old deep link (/events?cart=1): there's no cart any more, just drop it.
+  // Deep link from the profile overlay: /events?cart=1 opens the cart.
   const url = new URL(window.location.href);
   if (url.searchParams.get("cart") === "1") {
     url.searchParams.delete("cart");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+    setTimeout(openCart, 400);
   }
 
   // /events/<id>: open that event's details (all widths); unknown id → /events.
@@ -1512,15 +1693,19 @@ export function initEventsPage() {
 
   // Reloaded mid-checkout (e.g. the phone dropped the tab during the UPI
   // payment): reopen it where the student left off once they're signed in.
-  if (readCheckoutDraft()) {
-    if (getCurrentUser()) setTimeout(startCheckout, 400);
-    else resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
+  const draft = readCheckoutDraft();
+  if (draft) {
+    if (getCurrentUser()) setTimeout(() => startCheckout(draft.only || null), 400);
+    else {
+      resumeCheckoutUntil = Date.now() + 3 * 60 * 1000;
+      resumeOnlyId = draft.only || null;
+    }
   }
 }
 
 /**
  * The events view has no Vue unmount hook, so watch for its root leaving the
- * DOM and remove everything it moved to <body> (HUD, overlays),
+ * DOM and remove everything it moved to <body> (cart button, HUD, overlays),
  * plus the body class that hides the site's page transition.
  */
 function watchForUnmount(root) {
@@ -1544,7 +1729,7 @@ export function destroyEventsPage() {
     } catch {}
     scrollMotionCleanup = null;
   }
-  isDossierOpen = isCheckoutOpen = false;
+  isDossierOpen = isCartOpen = isCheckoutOpen = false;
   dossierEventId = null;
   checkout = null;
   submitting = null;
@@ -1567,6 +1752,7 @@ export function openEventRegistration(eventId) {
 if (typeof window !== "undefined") {
   window.openEventDossier = openEventDossier;
   window.openEventRegistration = openEventRegistration;
+  window.openEventsCart = openCart;
   window.initEventsPage = initEventsPage;
   window.initScrollMotion = initScrollMotion;
   window.triggerCardsReveal = triggerCardsReveal;

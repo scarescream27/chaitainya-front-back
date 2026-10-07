@@ -17,6 +17,7 @@ import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket, getCurrentUser } from "./auth-service.js";
 import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES, REGISTRATION_DEADLINE, formatDeadline, feeLabel } from "./events-data.js";
+import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
 
 // #region glyphs (verbatim from the component, types removed)
 
@@ -243,18 +244,26 @@ const MNAV = [
   ["Home", "/"],
   ["About", "/about"],
   ["Events", "/events"],
-  ["Organisers", "/organisation"],
+  ["Organisers", "/organisers"],
+  ["Sponsors", "/sponsors"],
   ["FAQ", "#faq"],
   ["Register", "#register"],
   ["Privacy Policy", "/privacy-policy"],
-  ["Contact", "#contact"],
+  ["Contact", "/contact-us"],
 ];
 
 const mobileSections = (uid) => `
     <div class="sgfm">
       <section class="sgfm-events" aria-labelledby="${uid}-ev">
         <h2 class="sgfm-h" id="${uid}-ev">Events</h2>
-        <ul class="sgfm-row">${previewEvents().map(eventCard).join("")}</ul>
+        <ul class="sgfm-row d-only">${previewEvents().map(eventCard).join("")}</ul>
+        <div class="m-only">${marqueeHtml(
+          EVENTS_DATA.map((ev) => {
+            const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
+            return eventCardHtml(ev, c?.accent, c?.shortCode);
+          }),
+          { label: "All events", secsPerCard: 4 }
+        )}</div>
         <a class="sgfm-all" href="/events" data-sgfm-link>[ All events ]</a>
       </section>
       <section class="sgfm-faq" id="faq" aria-labelledby="${uid}-faq">
@@ -296,7 +305,7 @@ const DEFAULTS = {
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
     { label: "Events", href: "/events" },
-    { label: "Organisers", href: "/organisation" },
+    { label: "Organisers", href: "/organisers" },
     { label: "FAQ", href: "#faq" },
   ],
   legal: [

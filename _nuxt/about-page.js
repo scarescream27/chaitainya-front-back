@@ -8,12 +8,10 @@
  */
 import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b } from "./vue-runtime.js";
-import { FEST_CONFIG, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
+import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
 import { EVENT_CATEGORIES, EVENTS_DATA } from "./events-data.js";
 import { TEAMS, PHOTOS, initials } from "./teams-data.js";
-
-// Sponsors: { name, tier, url, logo }. Empty shows the "sponsor us" card.
-const SPONSORS = [];
+import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
 
 function avatarHtml(name) {
   const src = PHOTOS[name];
@@ -46,9 +44,9 @@ function teamSectionHtml(team) {
     </div>`;
 }
 
-function card(num, id, title, body) {
+function card(num, id, title, body, cls = "") {
   return `
-    <article class="privacy-card" id="${id}">
+    <article class="privacy-card ${cls}" id="${id}">
       <div class="privacy-card-header">
         <span class="privacy-card-num">${num}</span>
         <h2>${title}</h2>
@@ -75,7 +73,7 @@ function buildHtml() {
 
   return `
     <div class="privacy-container about-container">
-      <div class="privacy-top-bar">
+      <div class="privacy-top-bar d-only">
         <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
         <a href="/events" class="privacy-contact-btn">[ EXPLORE EVENTS ]</a>
       </div>
@@ -102,21 +100,30 @@ function buildHtml() {
             <li><b>${EVENTS_DATA.length}</b><span>Events</span></li>
             ${categories.map((c) => `<li><b>${c.count}</b><span>${esc(c.name)}</span></li>`).join("")}
           </ul>
+          <div class="m-only about-m-events">${marqueeHtml(
+            EVENTS_DATA.map((ev) => {
+              const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
+              return eventCardHtml(ev, c?.accent, c?.shortCode);
+            }),
+            { label: "Events" }
+          )}</div>
           <a href="/events" class="privacy-contact-btn about-inline-cta">[ BROWSE ALL EVENTS ]</a>`)}
 
         ${card("03", "about-team", "Organising Team", `
           ${TEAMS.map(teamSectionHtml).join("")}
-          <a href="/organisation" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE ORGANISERS ]</a>`)}
+          <a href="/organisers" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE ORGANISERS ]</a>`, "d-only")}
 
-        ${card("04", "about-sponsors", "Sponsors", `
+        ${card(`<span class="d-only">04</span><span class="m-only">03</span>`, "about-sponsors", "Sponsors", `
           ${sponsorsBody}
-          <a href="mailto:${mail}?subject=${encodeURIComponent("Sponsorship: Chaitanya 2k26")}" class="privacy-contact-btn about-inline-cta">[ BECOME A SPONSOR ]</a>`)}
+          <a href="mailto:${mail}?subject=${encodeURIComponent("Sponsorship: Chaitanya 2k26")}" class="privacy-contact-btn about-inline-cta">[ BECOME A SPONSOR ]</a>
+          <a href="/sponsors" class="privacy-contact-btn about-inline-cta m-only">[ SEE SPONSORS ]</a>`)}
       </div>
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
         <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
-        <a href="/contact" class="privacy-cta-btn">[ CONTACT US ]</a>
+        <a href="/contact" class="privacy-cta-btn d-only">[ CONTACT US ]</a>
+        <a href="/contact-us" class="privacy-cta-btn m-only">[ CONTACT US ]</a>
       </section>
     </div>`;
 }
