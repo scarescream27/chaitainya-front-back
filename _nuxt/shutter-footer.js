@@ -171,7 +171,7 @@ export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((v || "").tri
 // #endregion
 
 
-// #region mobile-only sections (events preview, FAQ, footer nav; m-home.css)
+// #region footer sections (events preview, FAQ; phone-only footer nav; m-home.css)
 
 // Same glyphs as the events page cards (CATEGORY_ICONS in events-page.js).
 const msvg = (d) =>
@@ -258,8 +258,13 @@ const mobileSections = (uid) => `
         <a class="sgfm-all" href="/events" data-sgfm-link>[ All events ]</a>
       </section>
       <section class="sgfm-faq" id="faq" aria-labelledby="${uid}-faq">
-        <h2 class="sgfm-h" id="${uid}-faq">FAQ</h2>
-        ${faqItems().map(([q, a]) => `<details class="sgfm-qa"><summary>${esc(q)}</summary><div class="sgfm-a"><p>${a}</p></div></details>`).join("")}
+        <div class="sgfm-faq-head">
+          <h2 class="sgfm-faq-title" id="${uid}-faq">Frequently asked questions</h2>
+          <p class="sgfm-faq-desc">Answers to common questions about Chaitanya 2k26. Can't find what you're looking for? <a href="#contact" data-sgfm-link>Contact the team</a>.</p>
+        </div>
+        <div class="sgfm-faq-list">
+          ${faqItems().map(([q, a]) => `<details class="sgfm-qa" name="${uid}-faq"><summary><span>${esc(q)}</span>${CHEVRON}</summary><div class="sgfm-a"><p>${a}</p></div></details>`).join("")}
+        </div>
       </section>
     </div>`;
 
@@ -272,6 +277,9 @@ const mobileNav = () => `
 // #endregion
 
 const SVGNS = "http://www.w3.org/2000/svg";
+// FAQ chevron (lucide ChevronDown); `name` on the <details> keeps one answer open at a time.
+const CHEVRON =
+  '<svg class="sgfm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ARROW =
   '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9.2M6.4 2.2 10.2 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>';
 const CHECK =
@@ -283,13 +291,18 @@ const DEFAULTS = {
   copy: "© 2026\nChaitanya 2k26 · HPTU Hamirpur",
   contactLabel: "Ask us about events, registration or anything else",
   email: "chaitanyahptu@gmail.com",
+  // Desktop link columns (phones show the compact .sgfm-nav instead).
   connect: [
-    { label: "Email us", href: "mailto:chaitanyahptu@gmail.com" },
-    { label: "Events", href: "/events" },
+    { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Register", href: "#register" },
+    { label: "Events", href: "/events" },
+    { label: "Organisation", href: "/organisation" },
+    { label: "FAQ", href: "#faq" },
   ],
   legal: [
+    { label: "Register", href: "#register" },
+    { label: "Contact", href: "#contact" },
+    { label: "Email us", href: "mailto:chaitanyahptu@gmail.com" },
     { label: "Privacy Policy", href: "/privacy-policy" },
     { label: "Back to top", href: "#top", action: "top" },
   ],
@@ -318,7 +331,7 @@ export function mountShutterFooter(root, opts = {}) {
 
   const linkItem = (l) => `
     <li class="sgf-fade" style="${delay()}">
-      <a class="sgf-link" href="${esc(l.href)}"${l.action ? ` data-sgf-action="${esc(l.action)}"` : ""} aria-label="${esc(l.label)}">
+      <a class="sgf-link" href="${esc(l.href)}"${l.action ? ` data-sgf-action="${esc(l.action)}"` : " data-sgfm-link"} aria-label="${esc(l.label)}">
         <span aria-hidden="true">${esc(l.label)}</span>${ARROW}
       </a>
     </li>`;
@@ -511,7 +524,7 @@ export function mountShutterFooter(root, opts = {}) {
     sm ? sm.scrollTo(0, true) : window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
   });
 
-  // Mobile sections: in-page targets scroll (through ScrollSmoother when it
+  // Footer sections and links: in-page targets scroll (through ScrollSmoother when it
   // runs), other internal paths go through the router like the rest of the
   // site. index.html's capture handler already routes /events, /about and
   // /privacy-policy before this runs (defaultPrevented), so those stay as-is.

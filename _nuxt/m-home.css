@@ -1,25 +1,166 @@
 /* ==========================================================================
-   Home footer, mobile only (< 992px): events preview, FAQ accordion and a
-   compact footer nav, rendered by shutter-footer.js. Desktop never shows
-   them; the desktop footer is unchanged.
+   Home footer: events preview and FAQ accordion (all widths) plus a compact
+   footer nav (phones, < 992px), rendered by shutter-footer.js.
+   Phones: scroll-snap event row, one-column footer, .sgfm-nav replaces the
+   link lists. Desktop: 4-column event grid, FAQ column, desktop link lists.
    ========================================================================== */
-.sgfm,
 .sgfm-nav { display: none; }
 
-@media (max-width: 991px) {
-  .sgfm {
-    display: block;
-    box-sizing: border-box;
-    padding: 96px 16px 0;
-  }
-  .sgfm-h {
-    font: inherit;
-    font-size: 13px;
-    letter-spacing: var(--track-label);
-    margin: 0 0 16px;
-  }
+.sgfm {
+  display: block;
+  box-sizing: border-box;
+  padding: 96px 16px 0;
+}
+.sgfm-h {
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: var(--track-label);
+  margin: 0 0 16px;
+}
 
-  /* ---- events preview: horizontal scroll-snap row ---------------------- */
+/* ---- event cards ---------------------------------------------------------- */
+.sgfm-card {
+  position: relative;
+  height: 400px;
+  display: grid;
+  grid-template-rows: 3fr 2fr;
+  background: var(--surface, #fff);
+  border: 1px solid var(--ink, #000);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sgfm-card:has(.sgfm-more:focus-visible) { outline: var(--focus-ring, 2px solid #000); outline-offset: var(--focus-offset, 3px); }
+.sgfm-vis {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  color: var(--cat);
+  background: color-mix(in srgb, var(--cat) 12%, #fff);
+  border-bottom: 1px solid var(--ink, #000);
+}
+.sgfm-glyph svg { display: block; width: 72px; height: 72px; }
+.sgfm-num { position: absolute; top: 12px; left: 14px; font-size: 32px; line-height: 1; letter-spacing: var(--track-display); }
+.sgfm-cat { position: absolute; bottom: 12px; left: 14px; font-size: 11px; }
+.sgfm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  padding: 12px 14px;
+}
+.sgfm-title, .sgfm-tag, .sgfm-meta {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.sgfm-title { -webkit-line-clamp: 2; font: inherit; font-size: 15px; line-height: 1.2; letter-spacing: var(--track-name); }
+.sgfm-tag { -webkit-line-clamp: 2; font-size: 13px; line-height: 1.3; text-transform: none; letter-spacing: var(--track-body); color: var(--ink-muted, #4a5160); }
+.sgfm-meta { -webkit-line-clamp: 1; font-size: 11px; line-height: 1.3; }
+.sgfm-more { margin-top: auto; font-size: 12px; outline: none; }
+/* The whole card is the tap target for "View details". */
+.sgfm-more::after { content: ""; position: absolute; inset: 0; }
+.sgfm-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap, 44px);
+  margin-top: 8px;
+}
+
+/* ---- FAQ (Faq3 layout: heading + description, single-open accordion) ---- */
+.sgfm-faq { margin-top: 72px; scroll-margin-top: 72px; }
+.sgfm-faq-head { max-width: 768px; margin: 0 auto 40px; text-align: left; }
+.sgfm-faq-title {
+  margin: 0 0 12px;
+  font: inherit;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-transform: none;
+  letter-spacing: var(--track-body);
+  color: var(--ink, #000);
+}
+.sgfm-faq-desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  text-transform: none;
+  letter-spacing: var(--track-body);
+  color: var(--ink-muted, #555);
+}
+.sgfm-faq-desc a { color: var(--ink, #000); text-decoration: underline; text-underline-offset: 3px; }
+.sgfm-faq-list { width: 100%; max-width: 768px; margin: 0 auto; }
+.sgfm-qa { border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.14)); }
+.sgfm-qa summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--tap, 44px);
+  padding: 16px 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: var(--track-body);
+  color: var(--ink, #000);
+  list-style: none;
+  cursor: pointer;
+  transition: opacity var(--motion-200, 200ms) var(--ease-out, ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.sgfm-qa summary::-webkit-details-marker { display: none; }
+.sgfm-chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transition: transform var(--motion-200, 200ms) var(--ease-out, ease);
+}
+.sgfm-qa[open] .sgfm-chev { transform: rotate(180deg); }
+.sgfm-qa summary:focus-visible { outline: var(--focus-ring, 2px solid currentColor); outline-offset: 2px; }
+.sgfm-a {
+  padding: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-transform: none;
+  letter-spacing: var(--track-body);
+  color: var(--ink-muted, #555);
+  overflow-wrap: anywhere;
+}
+.sgfm-a p { margin: 0; }
+.sgfm-a a { color: var(--ink, #000); text-decoration: underline; text-underline-offset: 3px; }
+.sgfm-qa[open] .sgfm-a { animation: sgfm-in var(--motion-200, 200ms) var(--ease-out, ease); }
+@keyframes sgfm-in { from { opacity: 0; } }
+/* Height animation (accordion-down / -up) where the browser can animate to auto. */
+@supports (interpolate-size: allow-keywords) {
+  .sgfm-faq { interpolate-size: allow-keywords; }
+  .sgfm-qa::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height var(--motion-200, 200ms) var(--ease-out, ease), content-visibility var(--motion-200, 200ms) allow-discrete;
+  }
+  .sgfm-qa[open]::details-content { height: auto; }
+}
+/* md: centred heading; lg: larger type, roomier rows. */
+@media (min-width: 768px) {
+  .sgfm-faq-head { text-align: center; margin-bottom: 56px; }
+  .sgfm-faq-title { font-size: 32px; margin-bottom: 16px; }
+}
+@media (min-width: 992px) {
+  .sgfm-faq-title { font-size: 36px; margin-bottom: 20px; }
+  .sgfm-faq-desc { font-size: 17px; }
+  .sgfm-qa summary { padding: 20px 0; font-size: 17px; }
+  .sgfm-a { padding-bottom: 20px; font-size: 16px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .sgfm-qa summary:hover { opacity: 0.6; }
+}
+.sgfm-nav a:focus-visible, .sgfm-all:focus-visible { outline: 1px dashed var(--ink, #000); outline-offset: 2px; }
+
+/* ---- phones: scroll-snap row, one-column footer, compact nav ------------- */
+@media (max-width: 991px) {
   .sgfm .sgfm-row {
     display: flex;
     gap: 12px;
@@ -32,109 +173,8 @@
     scrollbar-width: none;
   }
   .sgfm-row::-webkit-scrollbar { display: none; }
-  .sgfm-card {
-    position: relative;
-    flex: 0 0 min(78%, 300px);
-    height: 400px;
-    display: grid;
-    grid-template-rows: 3fr 2fr;
-    scroll-snap-align: start;
-    background: var(--surface, #fff);
-    border: 1px solid var(--ink, #000);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .sgfm-card:has(.sgfm-more:focus-visible) { outline: var(--focus-ring, 2px solid #000); outline-offset: var(--focus-offset, 3px); }
-  .sgfm-vis {
-    position: relative;
-    display: grid;
-    place-items: center;
-    min-height: 0;
-    color: var(--cat);
-    background: color-mix(in srgb, var(--cat) 12%, #fff);
-    border-bottom: 1px solid var(--ink, #000);
-  }
-  .sgfm-glyph svg { display: block; width: 72px; height: 72px; }
-  .sgfm-num { position: absolute; top: 12px; left: 14px; font-size: 32px; line-height: 1; letter-spacing: var(--track-display); }
-  .sgfm-cat { position: absolute; bottom: 12px; left: 14px; font-size: 11px; }
-  .sgfm-body {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-height: 0;
-    padding: 12px 14px;
-  }
-  .sgfm-title, .sgfm-tag, .sgfm-meta {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    margin: 0;
-  }
-  .sgfm-title { -webkit-line-clamp: 2; font: inherit; font-size: 15px; line-height: 1.2; letter-spacing: var(--track-name); }
-  .sgfm-tag { -webkit-line-clamp: 2; font-size: 13px; line-height: 1.3; text-transform: none; letter-spacing: var(--track-body); color: var(--ink-muted, #4a5160); }
-  .sgfm-meta { -webkit-line-clamp: 1; font-size: 11px; line-height: 1.3; }
-  .sgfm-more { margin-top: auto; font-size: 12px; outline: none; }
-  /* The whole card is the tap target for "View details". */
-  .sgfm-more::after { content: ""; position: absolute; inset: 0; }
-  .sgfm-all {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--tap, 44px);
-    margin-top: 8px;
-  }
+  .sgfm-card { flex: 0 0 min(78%, 300px); scroll-snap-align: start; }
 
-  /* ---- FAQ accordion (native details/summary) ---------------------------- */
-  .sgfm-faq { margin-top: 56px; scroll-margin-top: 72px; }
-  .sgfm-qa { border-top: 1px solid var(--ink, #000); }
-  .sgfm-qa:last-of-type { border-bottom: 1px solid var(--ink, #000); }
-  .sgfm-qa summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: var(--tap, 44px);
-    padding: 10px 0;
-    font-size: 15px;
-    line-height: 1.3;
-    text-transform: none;
-    letter-spacing: var(--track-body);
-    list-style: none;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .sgfm-qa summary::-webkit-details-marker { display: none; }
-  .sgfm-qa summary::after {
-    content: "+";
-    flex: none;
-    font-size: 18px;
-    transition: transform var(--motion-200, 200ms) var(--ease-out, ease);
-  }
-  .sgfm-qa[open] summary::after { transform: rotate(45deg); }
-  .sgfm-qa summary:focus-visible { outline: 1px dashed var(--ink, #000); outline-offset: 2px; }
-  .sgfm-a {
-    padding: 0 0 16px;
-    font-size: 14px;
-    line-height: 1.5;
-    text-transform: none;
-    letter-spacing: var(--track-body);
-    overflow-wrap: anywhere;
-  }
-  .sgfm-a a { text-decoration: underline; text-underline-offset: 3px; }
-  .sgfm-qa[open] .sgfm-a { animation: sgfm-in var(--motion-200, 200ms) var(--ease-out, ease); }
-  @keyframes sgfm-in { from { opacity: 0; translate: 0 -4px; } }
-  /* Height animation where the browser can animate to auto (open and close). */
-  @supports (interpolate-size: allow-keywords) {
-    .sgfm-faq { interpolate-size: allow-keywords; }
-    .sgfm-qa::details-content {
-      height: 0;
-      overflow: clip;
-      transition: height var(--motion-200, 200ms) var(--ease-out, ease), content-visibility var(--motion-200, 200ms) allow-discrete;
-    }
-    .sgfm-qa[open]::details-content { height: auto; }
-  }
-
-  /* ---- existing footer block: one column, mobile nav replaces the link lists */
   .sgf .sgf-top { grid-template-columns: minmax(0, 1fr); padding-top: 56px; }
   .sgf .sgf-form { max-width: none; }
   .sgf .sgf-top > nav:not(.sgfm-nav) { display: none; }
@@ -149,11 +189,35 @@
     overflow-wrap: anywhere;
     -webkit-tap-highlight-color: transparent;
   }
-  .sgfm-nav a:focus-visible, .sgfm-all:focus-visible { outline: 1px dashed var(--ink, #000); outline-offset: 2px; }
 }
 
-@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+/* ---- desktop: 4-up event grid, FAQ column, footer's own gutters ---------- */
+@media (min-width: 992px) {
+  /* The footer grew taller: keep the scene fade a fixed strip, not 14%. */
+  .sgf:has(.sgfm) { background: linear-gradient(180deg, rgba(247, 250, 255, 0) 0, var(--sgf-top) 140px, var(--sgf-bg) 100%); }
+  .sgfm { padding: clamp(96px, 11.5cqw, 160px) clamp(16px, 2.6cqw, 40px) 0; }
+  .sgfm .sgfm-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6cqw, 24px); }
+  .sgfm-card { height: clamp(360px, 29cqw, 420px); }
+  .sgfm-glyph svg { width: 80px; height: 80px; }
+  .sgfm-body { padding: 14px 16px; }
+  .sgfm-all { margin-top: 16px; }
+  .sgfm-faq { margin-top: clamp(80px, 9cqw, 128px); }
+  .sgf .sgf-top { padding-top: clamp(64px, 7cqw, 112px); }
+}
+
+/* Hover states, fine pointers only. */
+@media (min-width: 992px) and (hover: hover) and (pointer: fine) {
+  .sgfm-card { transition: translate var(--motion-200, 200ms) var(--ease-out, ease), box-shadow var(--motion-200, 200ms) var(--ease-out, ease); }
+  .sgfm-card:hover { translate: -2px -2px; box-shadow: 4px 4px 0 var(--ink, #000); }
+  .sgfm-card:hover .sgfm-more,
+  .sgfm-all:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .sgfm-a a:hover { text-decoration-thickness: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
   .sgfm-qa[open] .sgfm-a { animation: none; }
-  .sgfm-qa summary::after { transition: none; }
+  .sgfm-chev, .sgfm-qa summary { transition: none; }
   .sgfm-qa::details-content { transition: none !important; }
+  .sgfm-card { transition: none !important; }
+  .sgfm-card:hover { translate: none; }
 }

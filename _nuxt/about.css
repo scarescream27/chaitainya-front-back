@@ -340,12 +340,6 @@
   margin: 24px 0 12px;
 }
 
-/* The "full organisation" link is a phone/tablet shortcut; desktop is unchanged. */
-@media (min-width: 992px) {
-  .privacy-card .about-org-link {
-    display: none;
-  }
-}
 
 /* ==========================================================================
    Mobile & tablet (<= 991px). Desktop is untouched.
@@ -428,11 +422,9 @@
   }
 }
 
-/* Phones/tablets: .privacy-card ul indents bullet lists; the team card grid
-   was pushed off-centre by that indent. */
-@media (max-width: 991px) {
-  .privacy-card .about-team-grid {
-    margin-left: 0;
-    margin-right: 0;
-  }
+/* .privacy-card ul indents bullet lists; the team card grid was pushed
+   off-centre by that indent. */
+.privacy-card .about-team-grid {
+  margin-left: 0;
+  margin-right: 0;
 }

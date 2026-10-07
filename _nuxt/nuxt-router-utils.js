@@ -116,6 +116,7 @@ let st,
       tabHome = d("span", null, "Home", -1),
       tabEvents = d("span", null, "Events", -1),
       tabAbout = d("span", null, "About", -1),
+      tabOrg = d("span", null, "Organisation", -1),
       tabAdmin = d("span", null, "Admin", -1),
       gt = at(
         '<div class="line"></div><div class="line"></div><div class="line"></div><span class="el el-1">[</span><span class="el el-2">]</span><span class="el el-3">[</span><span class="el el-4">]</span>',
@@ -321,6 +322,11 @@ let st,
                           { to: "/about" },
                           { default: Z(() => [O("["), tabAbout, O("]")]), _: 1 },
                         ),
+                        Y(
+                          z,
+                          { to: "/organisation" },
+                          { default: Z(() => [O("["), tabOrg, O("]")]), _: 1 },
+                        ),
                         d(
                           "a",
                           {
@@ -389,7 +395,6 @@ let st,
                                       _: 1,
                                     },
                                   ),
-                                  // Phones / tablets only: the mobile menu is hidden on desktop.
                                   Y(
                                     z,
                                     { to: "/organisation" },

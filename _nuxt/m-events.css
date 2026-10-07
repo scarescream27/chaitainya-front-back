@@ -1,226 +1,249 @@
 /* ============================================================================
- * m-events.css — /events on phones and tablets (<= 991px) only.
- * Loaded after mobile.css. Desktop (>= 992px) is untouched.
+ * m-events.css — /events cards (visual 60% / body 40%) and the details drawer
+ * layout, all widths. Loaded after events.css and mobile.css.
  * ============================================================================ */
-@media (max-width: 991px) {
-  /* ---- 1. Cards: visual 60% / body 40% --------------------------------- */
+/* ---- 1. Cards: visual 60% / body 40% --------------------------------- */
+.event-card {
+  display: grid;
+  /* One full-width column: an implicit track sized to the visual's content
+     (cards without a flagship badge got a narrow panel). */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+  height: 580px;
+  padding: 0;
+  min-width: 0;
+}
+
+.event-card .event-card-visual {
+  aspect-ratio: auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.event-card .event-visual-num {
+  font-size: 128px;
+}
+
+.event-card .event-card-body {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 16px 16px 16px;
+}
+
+.event-card .event-badge-category {
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.event-card .event-card-title {
+  font-size: 22px;
+  margin: 0 0 6px;
+  /* 2-line clamp comes from events.css */
+}
+
+.event-card .event-card-tagline {
+  font-size: 13px;
+  line-height: 1.45;
+  min-height: 0;
+  margin: 0 0 10px;
+}
+
+.event-card .event-card-chips {
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin: 0 0 12px;
+}
+
+/* Date chip only. */
+.event-card .event-chip + .event-chip {
+  display: none;
+}
+
+.event-card .event-chip {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.event-card .event-card-actions {
+  margin-top: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.event-card .event-btn-details {
+  flex: none;
+  width: 100%;
+  min-height: var(--tap);
+  white-space: nowrap;
+}
+
+/* ---- 2. Details drawer -------------------------------------------- */
+.event-dossier-panel {
+  --mpad: 24px;
+  padding: 0 var(--mpad) calc(24px + env(safe-area-inset-bottom));
+}
+
+.event-dossier-mbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 calc(-1 * var(--mpad)) 16px;
+  padding: 10px var(--mpad);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.event-dossier-mbar .event-dossier-close {
+  margin: 0;
+  align-self: auto;
+  min-height: var(--tap);
+}
+
+.event-dossier-back {
+  min-height: var(--tap);
+  padding: 0 8px 0 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.event-dossier-back:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The category glyph panel stands in for an event photo. */
+.event-dossier-visual {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 44vh;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  color: var(--ink-on-dark);
+  background-color: var(--cat, var(--ink));
+  background-image:
+    radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.22), transparent 55%),
+    radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1.2px);
+  background-size: auto, 14px 14px;
+}
+
+.event-dossier-visual .event-visual-num {
+  font-size: 140px;
+}
+
+.event-dossier-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.event-dossier-panel .event-dossier-tagline {
+  margin-bottom: 16px;
+}
+
+.event-dossier-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.event-dossier-facts > div {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+}
+
+.event-dossier-facts dt {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  color: var(--ink-muted);
+}
+
+.event-dossier-facts dd {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* The CTA sits in the flow under when/where (events.css pins it on phones). */
+.event-dossier-panel .event-dossier-cta {
+  position: static;
+  margin: 0 0 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.event-org-link {
+  display: inline-block;
+  padding: 6px 0;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* Desktop (>= 992px): the events.css grid (auto-fill, 320px min) gives 2–3
+   columns, 335–460px wide. 560px tall keeps the visual near 60% without a
+   tall empty panel; the body track never drops below its content, so the
+   wider title can't push VIEW DETAILS out of the card. */
+@media (min-width: 992px) {
   .event-card {
-    display: grid;
-    grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
-    height: 580px;
-    padding: 0;
-    min-width: 0;
-  }
-
-  .event-card .event-card-visual {
-    aspect-ratio: auto;
-    min-height: 0;
-    height: 100%;
-  }
-
-  .event-card .event-visual-num {
-    font-size: 128px;
+    grid-template-rows: minmax(0, 3fr) minmax(min-content, 2fr);
+    height: 560px;
   }
 
   .event-card .event-card-body {
-    min-height: 0;
-    min-width: 0;
-    overflow: hidden;
-    padding: 16px 16px 16px;
-  }
-
-  .event-card .event-badge-category {
-    margin-bottom: 4px;
-    font-size: 11px;
+    padding: 18px 20px 20px;
   }
 
   .event-card .event-card-title {
-    font-size: 22px;
-    margin: 0 0 6px;
-    /* 2-line clamp comes from events.css */
+    font-size: 24px;
   }
 
-  .event-card .event-card-tagline {
-    font-size: 13px;
-    line-height: 1.45;
-    min-height: 0;
-    margin: 0 0 10px;
+  /* Drawer keeps its events.css width (620px) and slide-in. */
+  .event-dossier-panel {
+    --mpad: 32px;
+    padding-bottom: 40px;
   }
 
-  .event-card .event-card-chips {
-    flex-wrap: nowrap;
-    min-width: 0;
-    margin: 0 0 12px;
-  }
-
-  /* Date chip only. */
-  .event-card .event-chip + .event-chip {
-    display: none;
-  }
-
-  .event-card .event-chip {
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .event-card .event-card-actions {
-    margin-top: auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
-
-  .event-card .event-btn-details {
-    flex: none;
-    width: 100%;
-    min-height: var(--tap);
-    white-space: nowrap;
-  }
-
-  /* ---- 2. No cart on mobile ------------------------------------------- */
-  .event-card .event-btn-register,
-  .events-cart-fab,
-  .events-cart-overlay,
-  .event-reg-card [data-action="co-back-cart"] {
-    display: none !important;
-  }
-
-  /* ---- 4. Details drawer, mobile layout (.is-m set by events-page.js) ---- */
-  .event-dossier-panel.is-m {
-    --mpad: 24px;
-    padding: 0 var(--mpad) calc(24px + env(safe-area-inset-bottom));
-  }
-
-  .event-dossier-mbar {
-    position: sticky;
-    top: 0;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin: 0 calc(-1 * var(--mpad)) 16px;
-    padding: 10px var(--mpad);
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .event-dossier-mbar .event-dossier-close {
-    margin: 0;
-    align-self: auto;
-    min-height: var(--tap);
-  }
-
-  .event-dossier-back {
-    min-height: var(--tap);
-    padding: 0 8px 0 0;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    font-family: "IBM Plex Mono", monospace;
-    font-size: var(--fs-label);
-    font-weight: 600;
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .event-dossier-back:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-  }
-
-  /* The category glyph panel stands in for an event photo. */
   .event-dossier-visual {
-    position: relative;
-    flex-shrink: 0;
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    max-height: 44vh;
-    margin-bottom: 20px;
-    border-radius: 20px;
-    overflow: hidden;
-    color: var(--ink-on-dark);
-    background-color: var(--cat, var(--ink));
-    background-image:
-      radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.22), transparent 55%),
-      radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1.2px);
-    background-size: auto, 14px 14px;
-  }
-
-  .event-dossier-visual .event-visual-num {
-    font-size: 140px;
-  }
-
-  .event-dossier-kicker {
-    display: block;
-    margin-bottom: 6px;
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-  }
-
-  .event-dossier-panel.is-m .event-dossier-tagline {
-    margin-bottom: 16px;
-  }
-
-  .event-dossier-facts {
-    display: grid;
-    gap: 8px;
-    margin: 0 0 20px;
-  }
-
-  .event-dossier-facts > div {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    align-items: baseline;
-    gap: 12px;
-  }
-
-  .event-dossier-facts dt {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: var(--track-label);
-    color: var(--ink-muted);
-  }
-
-  .event-dossier-facts dd {
-    margin: 0;
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.45;
-    color: var(--ink);
-    overflow-wrap: anywhere;
-  }
-
-  /* The CTA sits in the flow under when/where (events.css pins it on phones). */
-  .event-dossier-panel.is-m .event-dossier-cta {
-    position: static;
-    margin: 0 0 28px;
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-
-  .event-org-link {
-    display: inline-block;
-    padding: 6px 0;
-    color: var(--ink);
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    overflow-wrap: anywhere;
+    aspect-ratio: 16 / 9;
+    max-height: 40vh;
   }
 }
 
 @media (max-width: 379px) {
-  .event-dossier-panel.is-m {
+  .event-dossier-panel {
     --mpad: 16px;
   }
 
