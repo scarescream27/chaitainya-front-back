@@ -1,0 +1,547 @@
+/* ============================================================================
+ * Chaitanya 2k26 — phone-only layouts (< 768px)
+ * Drifting card rows (m-marquee.js), the phone /organisers layout, the
+ * /contact-us, /sponsors and /organisers/<slug> pages, the phone About page
+ * and the register dialog backdrop. Desktop never renders .m-only blocks.
+ * ============================================================================ */
+
+@media (min-width: 768px) {
+  .m-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .d-only {
+    display: none !important;
+  }
+
+  /* Register / sign-in dialog: solid black behind the card, not a see-through scrim. */
+  .chaitanya-modal-backdrop {
+    background: #000;
+  }
+}
+
+/* ---- Drifting row: moves left to right, pauses on touch/hover/focus ------- */
+
+.m-marquee {
+  --gap: 12px;
+  overflow: hidden;
+  margin: 0 -16px 8px;
+  padding: 8px 0 12px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
+.m-marquee-track {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: m-drift var(--dur, 30s) linear infinite;
+}
+
+/* Spacing as padding, not gap, so the two halves are exactly 50% each. */
+.m-marquee-track > li {
+  flex: none;
+  margin: 0;
+  padding: 0 var(--gap) 0 0;
+}
+
+.m-marquee:hover .m-marquee-track,
+.m-marquee:active .m-marquee-track,
+.m-marquee:focus-within .m-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes m-drift {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-inline: 16px;
+  }
+  .m-marquee-track {
+    animation: none;
+  }
+  .m-marquee-track > li[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* ---- Cards: photo (or tinted gradient + big initials) as the background ---- */
+
+.m-card {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 200px;
+  height: 260px;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1.5px solid var(--ink);
+  color: #fff;
+  text-decoration: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.78) 100%),
+    var(--bg, linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 45%, #000)));
+  background-size: cover;
+  background-position: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-card-event {
+  width: 230px;
+}
+
+.m-card-mark {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  font-family: DrukMedium, sans-serif;
+  font-size: 120px;
+  line-height: 1;
+  letter-spacing: var(--track-display);
+  color: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+
+.m-card-event .m-card-mark {
+  font-size: 84px;
+}
+
+.m-card-body {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.m-card .m-card-body strong {
+  color: inherit;
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: var(--track-name);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.m-card-body > span,
+.m-card-kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.m-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+}
+
+.m-card:active {
+  transform: scale(0.98);
+}
+
+/* ---- Shared headings ------------------------------------------------------ */
+
+.m-h {
+  margin: 0 0 4px;
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.m-h::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--tint, var(--ink));
+}
+
+.m-sub {
+  margin: 12px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ---- Phone /organisers ---------------------------------------------------- */
+
+.m-org {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* keep the rows from widening the page */
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.m-org-team {
+  scroll-margin-top: 80px;
+}
+
+/* ---- Phone pages (contact, sponsors, organiser) --------------------------- */
+
+.m-page-root {
+  overflow-x: clip;
+}
+
+.m-page .privacy-card p {
+  letter-spacing: var(--track-body);
+}
+
+.m-section {
+  margin-bottom: 16px;
+}
+
+.m-quick {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.m-quick-card,
+.m-team-list a {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.m-quick-card span,
+.m-team-list span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-label);
+  color: var(--ink-muted);
+}
+
+.m-quick-card span {
+  text-transform: uppercase;
+}
+
+.m-team-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.m-team-list li {
+  margin: 0;
+}
+
+.m-team-list a {
+  border-left: 6px solid var(--tint);
+}
+
+/* Contact form */
+.m-form {
+  display: grid;
+  gap: 12px;
+}
+
+.m-form label {
+  display: grid;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.m-form small {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.m-form input,
+.m-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* 16px: no iOS zoom */
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.m-form textarea {
+  resize: vertical;
+}
+
+.m-form [aria-invalid="true"] {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.m-form-status {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.m-form-status[data-kind="error"] {
+  color: var(--danger-ink);
+}
+
+.m-form-status[data-kind="ok"] {
+  color: var(--ok);
+}
+
+.m-form button {
+  justify-self: stretch;
+  cursor: pointer;
+}
+
+.m-form button:disabled {
+  opacity: 0.6;
+}
+
+/* Sponsors */
+.m-stats {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.m-stats li {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  padding: 12px 4px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.m-stats b {
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.m-stats span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.m-chips {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.m-chips li {
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--tint);
+  color: #fff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+}
+
+.m-sponsors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.m-sponsors a {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  text-align: center;
+}
+
+.m-sponsors img {
+  max-width: 100%;
+  max-height: 56px;
+  object-fit: contain;
+}
+
+/* Organiser page */
+.m-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  margin-bottom: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.m-person-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 300px;
+  margin-bottom: 16px;
+  padding: 20px;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 24px;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.8) 100%),
+    var(--bg, linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 40%, #000)));
+  background-size: cover;
+  background-position: center;
+}
+
+.m-person-hero .m-card-mark {
+  font-size: 200px;
+}
+
+.m-person-name {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.m-person-name h1 {
+  margin: 0;
+  font-family: DrukMedium, sans-serif;
+  font-weight: 400;
+  font-size: 52px;
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.m-dl {
+  margin: 0;
+  display: grid;
+}
+
+.m-dl > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.m-dl dt {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.m-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.m-note {
+  margin: 12px 0 0;
+}
+
+.m-person .m-h {
+  margin-top: 24px;
+}
+
+/* ---- Phone About: events row sits inside its card -------------------------- */
+
+.about-m-events {
+  margin: 16px 0 8px;
+}
+
+.about-m-events .m-marquee {
+  margin-inline: 0;
+}
+
+.m-person-name .privacy-tag-badge {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* .privacy-card indents bullet lists; these sit flush. */
+.privacy-card ul.m-stats,
+.privacy-card ul.m-chips,
+.privacy-card ul.m-team-list,
+.privacy-card ul.m-sponsors {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+}
+
+/* Inside .privacy-card (About), undo its bullet-list margins and type. */
+.privacy-card ul.m-marquee-track {
+  margin: 0;
+}
+
+.privacy-card .m-marquee-track > li {
+  max-width: none;
+  margin: 0;
+  line-height: normal;
+  color: inherit;
+}

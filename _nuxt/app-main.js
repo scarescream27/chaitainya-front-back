@@ -4209,13 +4209,38 @@ let At,
             import("./events-page-view.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
-          name: "organisation",
+          // Old URL (shared before the rename): keep the team anchor.
           path: "/organisation",
+          meta: {},
+          redirect: (to) => ({ path: "/organisers", hash: to.hash }),
+        },
+        {
+          name: "organisers",
+          path: "/organisers",
           meta: {},
           alias: [],
           redirect: void 0,
           component: () =>
             import("./organisation-page.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
+          // Phone-only pages (linked from the mobile menu and /organisers).
+          name: "organiser",
+          path: "/organisers/:slug",
+          meta: {},
+          component: () => import("./m-pages.js").then(async (t) => (await t.__tla, t.OrganiserPage)),
+        },
+        {
+          name: "contact-us",
+          path: "/contact-us",
+          meta: {},
+          component: () => import("./m-pages.js").then(async (t) => (await t.__tla, t.ContactPage)),
+        },
+        {
+          name: "sponsors",
+          path: "/sponsors",
+          meta: {},
+          component: () => import("./m-pages.js").then(async (t) => (await t.__tla, t.SponsorsPage)),
         },
         {
           name: "profile",

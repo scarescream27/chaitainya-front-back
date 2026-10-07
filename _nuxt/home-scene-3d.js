@@ -6850,6 +6850,14 @@ let Ws,
                     !t &&
                       window.innerWidth < 1024 &&
                       W.scale.set(8e3, 8e3, 8e3),
+                    // Phones: the smaller rings kept the desktop spacing and read
+                    // as far apart; pull them 8% closer around their shared
+                    // centre (mean y, cached before any ring moves). More than
+                    // ~10% makes neighbouring rings touch in the close-up shots.
+                    window.innerWidth < 768 &&
+                      ((W.parent.userData.midY ??=
+                        W.parent.children.reduce((s, c) => s + c.position.y, 0) / W.parent.children.length),
+                      (W.position.y = W.parent.userData.midY + (W.position.y - W.parent.userData.midY) * 0.92)),
                     (W.children[0].material = new Ns({
                       color: 16777215,
                       transparent: !0,
@@ -6860,13 +6868,22 @@ let Ws,
                     })),
                     (W.children[1].material.transparent = !0),
                     (W.children[1].material.side = He),
+                    // Phones: each ring texture repeats its title 3-4 times
+                      // (esports/technical 4, others 3); show it twice so the
+                      // words read larger. Crops on a copy boundary, so the
+                      // wrap stays seamless; the scroll speed is kept above.
+                    window.innerWidth < 768 &&
+                      W.children[1].material.map &&
+                      ((W.children[1].material.map.wrapS = _e),
+                      (W.children[1].material.map.repeat.x =
+                        2 / (/esports|technical/i.test(W.children[1].material.map.name) ? 4 : 3))),
                     c.add(() => {
                       if (REDUCED_MOTION) return;
                       V.fromTo(
                         W.children[1].material.map.offset,
                         { x: 0 },
                         {
-                          x: 2 * Math.PI * (360 / 360),
+                          x: 2 * Math.PI * W.children[1].material.map.repeat.x,
                           duration: 120,
                           repeat: -1,
                           ease: "none",

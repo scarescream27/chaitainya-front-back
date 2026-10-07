@@ -26,6 +26,10 @@ export const FEST_CONFIG = {
   upiQrImage: null,
 };
 
+// Sponsors: { name, tier, url, logo }, shown on /about and /sponsors.
+// Empty shows the "sponsorship is open" message.
+export const SPONSORS = [];
+
 export function getFestDatesLabel() {
   return FEST_CONFIG.datesLabel || "DATES TBA";
 }
