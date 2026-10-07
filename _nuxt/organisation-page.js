@@ -90,7 +90,7 @@ function buildHtml() {
 
       <div class="privacy-hero">
         <span class="privacy-tag-badge">Chaitanya 2k26 · HPTU Hamirpur</span>
-        <h1>The Organisation</h1>
+        <h1>The Organisers</h1>
         <p class="subtitle">Chaitanya 2k26 is planned and run by students of HPTU Hamirpur with guidance from faculty coordinators.</p>
       </div>
 
@@ -167,7 +167,7 @@ let a,
         } catch (e) {}
 
         t({
-          title: "Chaitanya 2k26 | Organisation",
+          title: "Chaitanya 2k26 | Organisers",
           meta: [
             {
               name: "description",

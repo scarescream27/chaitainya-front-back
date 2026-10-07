@@ -374,7 +374,7 @@
     font-size: 32px;
   }
 
-  /* Long labels ("[ MEET THE FULL ORGANISATION ]" is ~293px at 12px) wrap
+  /* Long labels ("[ MEET THE ORGANISERS ]" is ~210px at 12px) wrap
      inside the full-width button instead of overflowing 320px. */
   .about-inline-cta {
     white-space: normal;

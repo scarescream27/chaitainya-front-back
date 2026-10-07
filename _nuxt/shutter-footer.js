@@ -243,7 +243,7 @@ const MNAV = [
   ["Home", "/"],
   ["About", "/about"],
   ["Events", "/events"],
-  ["Organisation", "/organisation"],
+  ["Organisers", "/organisation"],
   ["FAQ", "#faq"],
   ["Register", "#register"],
   ["Privacy Policy", "/privacy-policy"],
@@ -296,7 +296,7 @@ const DEFAULTS = {
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
     { label: "Events", href: "/events" },
-    { label: "Organisation", href: "/organisation" },
+    { label: "Organisers", href: "/organisation" },
     { label: "FAQ", href: "#faq" },
   ],
   legal: [

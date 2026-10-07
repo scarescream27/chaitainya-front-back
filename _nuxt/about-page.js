@@ -106,7 +106,7 @@ function buildHtml() {
 
         ${card("03", "about-team", "Organising Team", `
           ${TEAMS.map(teamSectionHtml).join("")}
-          <a href="/organisation" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE FULL ORGANISATION ]</a>`)}
+          <a href="/organisation" class="privacy-contact-btn about-inline-cta about-org-link">[ MEET THE ORGANISERS ]</a>`)}
 
         ${card("04", "about-sponsors", "Sponsors", `
           ${sponsorsBody}
