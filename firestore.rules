@@ -21,8 +21,7 @@ service cloud.firestore {
         request.auth.token.email.lower() in [
           "chaitanyahptu@gmail.com",
           "adityaverma200911@gmail.com",
-          "manaskapoor033@gmail.com",
-          "admin@chaitanya2k26.org"
+          "manaskapoor033@gmail.com"
         ];
     }
 
@@ -46,12 +45,16 @@ service cloud.firestore {
       return value is string && value.matches('^[0-9]{12}$');
     }
 
-    // Entry fee as seeded by the admin "Apply Schema" action. If events are
-    // not seeded yet the fee cannot be checked here; the admin dashboard
-    // flags unpaid registrations for paid events either way.
+    // Entry fee as seeded by the admin "Sync events" action. An event that is
+    // not seeded is treated as paid, so free sign-ups need the events synced.
     function eventIsFree(eventId) {
       let path = /databases/$(database)/documents/events/$(eventId);
-      return !exists(path) || get(path).data.entryFeeNum == 0;
+      return exists(path) && get(path).data.entryFeeNum == 0;
+    }
+
+    function isPassId(value) {
+      // CH26-<event hash>-<7 digits>; legacy CH26-<event prefix>-<5 digits> still valid.
+      return value is string && value.matches('^CH26-([A-Z0-9]{4}-[0-9]{7}|[A-Z0-9]{1,4}-[0-9]{5})$');
     }
 
     // =========================================================================
@@ -103,12 +106,29 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // TEAMS — readable by signed-in users (needed to join by code)
+    // TEAM CODES — code -> team lookup; fetch by exact code only, never listed
+    // =========================================================================
+    match /team_codes/{code} {
+      allow get: if isAuthenticated();
+      allow list, update: if isAdmin();
+      // The leader registers their team's code in the same batch as the team.
+      allow create: if isAdmin() || (
+        isAuthenticated() &&
+        data().keys().hasOnly(['teamId', 'eventId']) &&
+        data().teamId == 'team_' + data().eventId + '_' + request.auth.uid &&
+        getAfter(/databases/$(database)/documents/teams/$(data().teamId)).data.teamCode == code
+      );
+      allow delete: if isAdmin() || (
+        isAuthenticated() && resource.data.teamId == 'team_' + resource.data.eventId + '_' + request.auth.uid
+      );
+    }
+
+    // =========================================================================
+    // TEAMS — fetched by id (from team_codes); only admins list them
     // =========================================================================
     match /teams/{teamId} {
       allow get: if isAuthenticated();
-      // Participants may only look a team up by code (limit 1), not list them all.
-      allow list: if isAdmin() || (isAuthenticated() && request.query.limit <= 1);
+      allow list: if isAdmin();
 
       // Leader creates the team: roster of names, only their own account linked.
       allow create: if isAuthenticated() &&
@@ -126,13 +146,16 @@ service cloud.firestore {
         data().paymentStatus in ['free', 'pending'] &&
         (data().paymentStatus == 'pending' || eventIsFree(data().eventId));
 
-      // A teammate links their account: they may only append themself.
+      // A teammate links their account: they may only append themself, and only
+      // alongside their registration carrying this team's code (proves they know it).
       allow update: if isAdmin() || (
         isAuthenticated() &&
         !(request.auth.uid in resource.data.memberUids) &&
+        getAfter(/databases/$(database)/documents/registrations/$('reg_' + resource.data.eventId + '_' + request.auth.uid)).data.team_code == resource.data.teamCode &&
         changedKeys().hasOnly(['memberUids', 'linkedMembers']) &&
         data().memberUids == resource.data.memberUids.concat([request.auth.uid]) &&
         data().linkedMembers.size() == resource.data.linkedMembers.size() + 1 &&
+        data().linkedMembers.hasAll(resource.data.linkedMembers) &&
         data().linkedMembers[data().linkedMembers.size() - 1].uid == request.auth.uid &&
         data().memberUids.size() <= resource.data.maxTeamSize
       ) || (
@@ -142,7 +165,8 @@ service cloud.firestore {
         request.auth.uid != resource.data.leaderUid &&
         changedKeys().hasOnly(['memberUids', 'linkedMembers']) &&
         data().memberUids == resource.data.memberUids.removeAll([request.auth.uid]) &&
-        data().linkedMembers.size() == resource.data.linkedMembers.size() - 1
+        data().linkedMembers.size() == resource.data.linkedMembers.size() - 1 &&
+        resource.data.linkedMembers.hasAll(data().linkedMembers)
       );
 
       // The leader may delete their team while nobody else has linked to it
@@ -181,14 +205,16 @@ service cloud.firestore {
         data().user_id == request.auth.uid &&
         data().participation_type in ['individual', 'team'] &&
         data().registration_status == 'registered' &&
-        data().registration_qr_id is string &&
+        isPassId(data().registration_qr_id) &&
         (
           data().payment_status == 'pending_verification' ||
           (data().payment_status == 'free' && eventIsFree(data().event_id)) ||
           // Teammates are covered by their leader's team payment.
           (data().payment_status == 'team' &&
             data().participation_type == 'team' &&
-            request.auth.uid in getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.memberUids)
+            getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.eventId == data().event_id &&
+            request.auth.uid in getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.memberUids &&
+            data().team_code == getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.teamCode)
         );
 
       // Owners may only cancel; payment status is set by admins.
@@ -266,7 +292,13 @@ service cloud.firestore {
     // QUERIES — contact form
     // =========================================================================
     match /queries/{queryId} {
-      allow create: if isShortString(data().subject, 200) &&
+      allow create: if data().keys().hasOnly(['id', 'user_id', 'subject', 'message', 'name', 'email',
+                                              'phone', 'team_name', 'status', 'created_at', 'updated_at']) &&
+        isShortString(data().get('name', ''), 120) &&
+        isShortString(data().get('email', ''), 200) &&
+        isShortString(data().get('phone', ''), 20) &&
+        isShortString(data().get('team_name', ''), 120) &&
+        isShortString(data().subject, 200) &&
         isShortString(data().message, 5000) &&
         data().status == 'open' &&
         (data().user_id == null || (isAuthenticated() && data().user_id == request.auth.uid));

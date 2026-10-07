@@ -179,11 +179,12 @@ const DEFAULTS = {
   wordmark: "CHAITANYA",
   shutterAt: 2,
   copy: "© 2026\nChaitanya 2k26 · HPTU Hamirpur",
-  contactLabel: "Contact us: events, registration or anything else",
+  contactLabel: "Ask us about events, registration or anything else",
   email: "chaitanyahptu@gmail.com",
   connect: [
     { label: "Email us", href: "mailto:chaitanyahptu@gmail.com" },
     { label: "Events", href: "/events" },
+    { label: "About", href: "/about" },
     { label: "Register", href: "#register" },
   ],
   legal: [
@@ -458,7 +459,7 @@ export function mountShutterFooter(root, opts = {}) {
     const message = input("message").value.trim();
     const problems = [
       [name.length < 2, "name", "Enter your name"],
-      [!isEmail(email), "email", "That doesn't look like an email"],
+      [!isEmail(email), "email", "Enter an email like name@example.com"],
       [phone && phone.replace(/\D/g, "").length < 10, "phone", "Phone needs 10 digits, or leave it empty"],
       [message.length < 3, "message", "Write a short message"],
     ].filter(([bad]) => bad);
@@ -480,6 +481,8 @@ export function mountShutterFooter(root, opts = {}) {
       );
     } catch (err) {
       setState("failed", `Couldn't send. Try again or write to ${o.email}`);
+      // The button was disabled while sending, so focus fell to <body>; hand it back.
+      if (!document.activeElement || document.activeElement === document.body) sendBtn.focus();
       shake();
       return;
     }

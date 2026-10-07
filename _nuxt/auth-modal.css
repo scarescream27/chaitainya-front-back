@@ -14,9 +14,9 @@
    token. Translucent white/black tints elsewhere in this file are written as
    color-mix() of --surface / --ink. */
 :root {
-  --am-scrim: rgba(220, 232, 252, 0.45);
+  --am-scrim: rgba(220, 232, 252, 0.6);
   --am-scrim-solid: rgba(220, 226, 236, 0.8);
-  --am-pp-scrim: rgba(214, 220, 232, 0.35);
+  --am-pp-scrim: rgba(214, 220, 232, 0.6);
   --am-pattern: url(/images/footerPatern.png);
   --am-link-hover: #0433ff;
   --am-hot: #e4001d; /* sign-out hover fill */
@@ -35,14 +35,12 @@
   align-items: center;
   justify-content: center;
   background: var(--am-scrim);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
   opacity: 0;
   pointer-events: none;
   /* visibility keeps the closed dialog out of the tab order and a11y tree */
   visibility: hidden;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.35s;
-  padding: 20px;
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 300ms;
+  padding: 24px;
   box-sizing: border-box;
 }
 
@@ -50,7 +48,7 @@
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
 }
 
 /* Floating events buttons live outside #__nuxt, so the app's inert misses them. */
@@ -81,22 +79,20 @@ html.pp-open .chaitanya-modal-backdrop {
   overscroll-behavior: contain;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+  background-color: var(--surface);
   background-image: var(--am-pattern);
   background-repeat: repeat;
   background-size: 80px;
-  -webkit-backdrop-filter: blur(28px);
-  backdrop-filter: blur(28px);
   border: 2px solid var(--surface);
   box-shadow: 
-    0 30px 90px rgba(15, 23, 42, 0.12),
+    0 30px 90px rgba(15, 23, 42, 0.06),
     0 4px 20px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 var(--surface);
   border-radius: 28px;
-  padding: 32px 32px 28px;
+  padding: 32px 32px 32px;
   color: var(--ink);
-  transform: translateY(20px) scale(0.97);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(8px) scale(0.98);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
 
@@ -120,7 +116,7 @@ html.pp-open .chaitanya-modal-backdrop {
   position: absolute;
   color: color-mix(in srgb, var(--ink) 28%, transparent);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   user-select: none;
 }
@@ -143,10 +139,10 @@ html.pp-open .chaitanya-modal-backdrop {
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.5px;
-  padding: 5px 12px;
+  padding: 4px 12px;
   border-radius: 30px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
   text-transform: uppercase;
 }
 
@@ -154,19 +150,19 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--ink);
   color: var(--ink-on-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* Headers */
 .chaitanya-modal-header {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .chaitanya-modal-title {
   font-family: "DrukMedium", sans-serif;
   font-size: 48px;
-  line-height: 0.88;
+  line-height: 1.1;
   letter-spacing: -0.5px;
   text-transform: uppercase;
   color: var(--ink);
@@ -185,11 +181,11 @@ html.pp-open .chaitanya-modal-backdrop {
 
 /* Notice / Banner */
 .chaitanya-modal-banner {
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  background: var(--surface);
   border: 1.5px solid color-mix(in srgb, var(--ink) 15%, transparent);
   border-radius: 14px;
   padding: 12px 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -226,19 +222,19 @@ html.pp-open .chaitanya-modal-backdrop {
   justify-content: center;
   gap: 12px;
   width: 100%;
-  padding: 15px 24px;
+  padding: 16px 24px;
   background: var(--ink);
   color: var(--ink-on-dark);
   border: 2px solid var(--ink);
   border-radius: 50px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
 }
 
@@ -246,7 +242,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--surface);
   color: var(--ink);
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 
 .btn-google-auth:active {
@@ -264,7 +260,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 /* Form Fields */
 .chaitanya-form-group {
-  margin-bottom: 13px;
+  margin-bottom: 12px;
   text-align: left;
 }
 
@@ -276,21 +272,21 @@ html.pp-open .chaitanya-modal-backdrop {
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--ink);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .chaitanya-form-input {
   width: 100%;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  background: var(--surface);
   border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
-  border-radius: 50px;
-  padding: 13px 20px;
+  border-radius: 12px;
+  padding: 12px 24px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ink);
-  transition: all 0.2s ease;
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
@@ -298,7 +294,7 @@ html.pp-open .chaitanya-modal-backdrop {
   outline: none;
   border-color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .chaitanya-form-input::placeholder {
@@ -322,7 +318,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .chaitanya-divider span {
-  padding: 0 14px;
+  padding: 0 16px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -348,7 +344,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 2px 8px;
   text-decoration: underline;
   text-underline-offset: 4px;
   text-transform: uppercase;
@@ -373,17 +369,17 @@ html.pp-open .chaitanya-modal-backdrop {
   height: 90px;
   border-radius: 50%;
   border: 3px solid var(--ink);
-  padding: 3px;
+  padding: 4px;
   object-fit: cover;
   background: var(--surface);
   margin-bottom: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .profile-name {
   font-family: "DrukMedium", sans-serif;
   font-size: 38px;
-  line-height: 0.92;
+  line-height: 1.1;
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 4px;
@@ -394,21 +390,17 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: var(--ink-muted);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .profile-role-badge {
   display: inline-block;
-  padding: 4px 14px;
-  border-radius: 30px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1.5px solid var(--ink);
+  color: var(--ink-muted);
 }
 
 .profile-role-badge.admin {
@@ -418,11 +410,11 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .profile-meta-card {
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  background: var(--surface);
   border: 1.5px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 18px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
   text-align: left;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
 }
@@ -456,14 +448,14 @@ html.pp-open .chaitanya-modal-backdrop {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .profile-event-chip {
   background: var(--surface);
   border: 1.5px solid var(--ink);
   border-radius: 30px;
-  padding: 5px 14px;
+  padding: 4px 16px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -474,7 +466,7 @@ html.pp-open .chaitanya-modal-backdrop {
 /* Secondary Button / Sign Out */
 .btn-secondary-action {
   width: 100%;
-  padding: 13px;
+  padding: 12px;
   background: transparent;
   border: 1.5px solid var(--ink);
   border-radius: 50px;
@@ -485,7 +477,7 @@ html.pp-open .chaitanya-modal-backdrop {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
   margin-top: 12px;
   box-sizing: border-box;
 }
@@ -494,22 +486,22 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--am-hot);
   border-color: var(--am-hot);
   color: var(--ink-on-dark);
-  box-shadow: 0 6px 18px rgba(228, 0, 29, 0.25);
+  box-shadow: 0 6px 18px rgba(228, 0, 29, 0.06);
 }
 
 /* Admin Table & Stats */
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .admin-stat-card {
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: var(--surface);
   border: 1.5px solid var(--ink);
   border-radius: 18px;
-  padding: 18px 20px;
+  padding: 16px 24px;
   text-align: center;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
@@ -518,7 +510,7 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "DrukMedium", sans-serif;
   font-size: 46px;
   color: var(--ink);
-  line-height: 0.95;
+  line-height: 1.1;
   margin-bottom: 4px;
 }
 
@@ -536,7 +528,7 @@ html.pp-open .chaitanya-modal-backdrop {
   border: 1.5px solid var(--ink);
   border-radius: 16px;
   background: var(--surface);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
@@ -551,7 +543,7 @@ html.pp-open .chaitanya-modal-backdrop {
 .admin-table th {
   background: var(--ink);
   color: var(--ink-on-dark);
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-bottom: 2px solid var(--ink);
   text-transform: uppercase;
   font-weight: 600;
@@ -559,7 +551,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-table td {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
   color: var(--ink);
 }
@@ -582,14 +574,14 @@ html.pp-open .chaitanya-modal-backdrop {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 600;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  background: var(--surface);
   color: var(--ink-muted);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
 }
 
 .admin-tab-btn:hover {
@@ -645,7 +637,7 @@ html.pp-open .chaitanya-modal-backdrop {
 /* Admin Action Buttons */
 .admin-action-btn-group {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -659,7 +651,7 @@ html.pp-open .chaitanya-modal-backdrop {
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
 }
 
 .btn-action-approve:hover {
@@ -676,7 +668,7 @@ html.pp-open .chaitanya-modal-backdrop {
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--motion-150) var(--ease-out), opacity var(--motion-150) var(--ease-out), background-color var(--motion-150) ease, color var(--motion-150) ease, border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
 }
 
 .btn-action-reject:hover {
@@ -689,14 +681,14 @@ html.pp-open .chaitanya-modal-backdrop {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 /* Responsive tweaks */
 @media (max-width: 767px) {
   .chaitanya-modal-card {
-    padding: 32px 20px 24px;
+    padding: 32px 24px 24px;
     border-radius: 20px;
   }
   .chaitanya-modal-title {
@@ -726,7 +718,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-note {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   line-height: 1.5;
 }
 
@@ -737,13 +729,13 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .admin-flag {
   display: inline-block;
-  margin: 4px 0 0 6px;
-  padding: 1px 6px;
+  margin: 4px 0 0 8px;
+  padding: 1px 8px;
   border-radius: 4px;
   background: var(--danger-bg);
   color: var(--danger-ink);
   font-size: var(--fs-label);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.4px;
 }
 
@@ -751,16 +743,16 @@ html.pp-open .chaitanya-modal-backdrop {
   background: color-mix(in srgb, var(--ink) 3%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   border-radius: 8px;
-  padding: 18px;
-  margin-bottom: 20px;
+  padding: 16px;
+  margin-bottom: 24px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   line-height: 1.5;
 }
 
 .admin-panel-box h4 {
-  margin: 0 0 6px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -772,7 +764,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .admin-inline-btn {
   width: auto !important;
-  padding: 8px 14px !important;
+  padding: 8px 16px !important;
   font-size: var(--fs-label) !important;
 }
 
@@ -783,7 +775,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .admin-progress {
-  margin-top: 10px;
+  margin-top: 12px;
   padding: 8px 12px;
   background: var(--am-info-bg);
   border-radius: 4px;
@@ -794,7 +786,7 @@ html.pp-open .chaitanya-modal-backdrop {
   background: var(--surface);
   border: 1px solid var(--ink);
   border-radius: 6px;
-  padding: 6px 12px;
+  padding: 8px 12px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   cursor: pointer;
@@ -816,7 +808,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 #profile-edit-form .chaitanya-form-group {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 html:not(.is-fest-admin) a[href="#admin"],
@@ -835,7 +827,7 @@ html:not(.is-fest-admin) a[href="/admin"] {
     background: var(--am-scrim-solid);
   }
   .chaitanya-modal-card {
-    background-color: color-mix(in srgb, var(--surface) 97%, transparent);
+    background-color: var(--surface);
   }
 }
 
@@ -881,8 +873,8 @@ html:not(.is-fest-admin) a[href="/admin"] {
   justify-content: center;
   background: var(--ink);
   color: var(--ink-on-dark);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -894,17 +886,15 @@ html:not(.is-fest-admin) a[href="/admin"] {
   inset: 0;
   z-index: 100001;
   background: var(--am-pp-scrim);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.28s ease, visibility 0s linear 0.28s;
+  transition: opacity 300ms ease, visibility 0s linear 300ms;
 }
 
 .pp-overlay.active {
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.28s ease, visibility 0s;
+  transition: opacity 300ms ease, visibility 0s;
 }
 
 .pp-panel {
@@ -915,20 +905,18 @@ html:not(.is-fest-admin) a[href="/admin"] {
   max-height: calc(100dvh - 100px);
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  background: var(--surface);
   background-image: var(--am-pattern);
-  background-size: 80px;
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-  backdrop-filter: blur(28px) saturate(160%);
+  background-size: 80px;saturate(160%);saturate(160%);
   border: 2px solid var(--surface);
   border-radius: 26px;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.06);
   font-family: "IBM Plex Mono", monospace;
   color: var(--ink);
   overflow: hidden;
-  transform: translateY(-10px) scale(0.97);
+  transform: translateY(-4px) scale(0.98);
   transform-origin: top right;
-  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .pp-overlay.active .pp-panel {
@@ -943,7 +931,7 @@ html.pp-open {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 18px 12px;
+  padding: 16px 16px 12px;
 }
 
 .pp-head-text {
@@ -955,7 +943,7 @@ html.pp-open {
 
 .pp-kicker {
   font-size: var(--fs-label);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ok);
   letter-spacing: 0.6px;
 }
@@ -963,7 +951,7 @@ html.pp-open {
 .pp-title {
   font-family: "DrukMedium", sans-serif;
   font-size: 26px;
-  line-height: 1;
+  line-height: 1.1;
   margin: 2px 0;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -993,8 +981,8 @@ html.pp-open {
   justify-content: center;
   background: var(--ink);
   color: var(--ink-on-dark);
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .pp-close {
@@ -1002,10 +990,10 @@ html.pp-open {
   height: 34px;
   border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent);
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -1013,7 +1001,7 @@ html.pp-open {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  margin: 0 14px;
+  margin: 0 16px;
   padding: 4px;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   border-radius: 14px;
@@ -1023,7 +1011,7 @@ html.pp-open {
   border: none;
   background: transparent;
   border-radius: 10px;
-  padding: 9px 4px;
+  padding: 8px 4px;
   font-family: inherit;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -1042,12 +1030,12 @@ html.pp-open {
 .pp-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 18px;
+  padding: 16px 16px;
   overscroll-behavior: contain;
 }
 
 .pp-body.pp-enter {
-  animation: pp-fade-in 0.26s ease both;
+  animation: pp-fade-in 300ms ease both;
 }
 
 @keyframes pp-fade-in {
@@ -1062,20 +1050,20 @@ html.pp-open {
 }
 
 .pp-foot {
-  padding: 12px 18px 16px;
+  padding: 12px 16px 16px;
   border-top: 1px solid var(--line);
 }
 
 .pp-logout {
   width: 100%;
-  padding: 11px;
+  padding: 12px;
   border-radius: 30px;
   border: 1.5px solid var(--danger);
   background: transparent;
   color: var(--danger);
   font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -1094,7 +1082,7 @@ html.pp-open {
 .pp-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   font-size: var(--fs-label);
   font-weight: 600;
   text-transform: uppercase;
@@ -1106,7 +1094,7 @@ html.pp-open {
 .pp-utr input {
   border: 1.5px solid color-mix(in srgb, var(--ink) 18%, transparent);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px 12px;
   font-family: inherit;
   font-size: 12px;
   background: var(--surface);
@@ -1129,7 +1117,7 @@ html.pp-open {
   display: inline-block;
   text-align: center;
   text-decoration: none;
-  padding: 11px 18px;
+  padding: 12px 16px;
   border-radius: 30px;
   border: none;
   background: var(--ink);
@@ -1156,7 +1144,7 @@ html.pp-open {
 .pp-loading,
 .pp-empty {
   text-align: center;
-  padding: 24px 6px;
+  padding: 24px 8px;
 }
 
 .pp-empty p {
@@ -1190,14 +1178,14 @@ html.pp-open {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .pp-reg {
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1225,7 +1213,7 @@ html.pp-open {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .pp-action {
@@ -1233,7 +1221,7 @@ html.pp-open {
   background: var(--ink);
   color: var(--ink-on-dark);
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 8px 12px;
   font-family: inherit;
   font-size: var(--fs-label);
   font-weight: 600;
@@ -1249,8 +1237,8 @@ html.pp-open {
 .pp-chip {
   flex-shrink: 0;
   font-size: var(--fs-label);
-  font-weight: 700;
-  padding: 3px 8px;
+  font-weight: 600;
+  padding: 4px 8px;
   border-radius: 20px;
   letter-spacing: 0.4px;
   white-space: nowrap;
@@ -1279,8 +1267,8 @@ html.pp-open {
 .pp-utr {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .pp-utr input {
@@ -1295,24 +1283,24 @@ html.pp-open {
   border: 2px solid var(--ink);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 .pp-idcard-head {
   display: flex;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--ink);
   color: var(--ink-on-dark);
   font-size: var(--fs-label);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 1px;
 }
 
 .pp-idcard-main {
   display: flex;
-  gap: 14px;
-  padding: 14px;
+  gap: 16px;
+  padding: 16px;
   align-items: flex-start;
 }
 
@@ -1327,7 +1315,7 @@ html.pp-open {
   margin: 0;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 10px;
+  gap: 4px 12px;
   font-size: var(--fs-label);
   min-width: 0;
 }
@@ -1360,8 +1348,8 @@ html.pp-open {
 .pp-idcard-status {
   text-align: center;
   font-size: var(--fs-label);
-  font-weight: 700;
-  padding: 10px;
+  font-weight: 600;
+  padding: 12px;
   letter-spacing: 0.4px;
 }
 
@@ -1392,13 +1380,13 @@ html.pp-open {
 /* Organiser verification */
 .pp-verify {
   border-radius: 16px;
-  padding: 14px;
+  padding: 16px;
   text-align: center;
   margin-bottom: 8px;
 }
 
 .pp-verify strong {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.5px;
 }
 
@@ -1445,13 +1433,11 @@ html.pp-open {
 
 @media (hover: none), (max-width: 1024px) {
   .pp-overlay {
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
   }
   .pp-panel {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background-color: color-mix(in srgb, var(--surface) 96%, transparent);
+    background-color: var(--surface);
   }
 }
 
@@ -1462,7 +1448,82 @@ html.pp-open {
 #cursor .wrapper {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  background: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- Game-style crosshair -------------------------------------------------
+   The follower draws a "+" crosshair; over anything clickable
+   (html.cursor-target, set in the cursor component) it rotates into an "x".
+   The white bubble only appears when the cursor grows to show text
+   ("Click and hold" on the 3D scene), detected with a size query. */
+:root {
+  /* White crosshair for the follower (blended with difference, so it reads
+     on light and dark). Black copies are for native cursors (top-layer
+     dialogs), which can't blend. */
+  --crosshair: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 32 32'><path d='M16 3v8M16 21v8M3 16h8M21 16h8' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/><circle cx='16' cy='16' r='1.75' fill='%23fff'/></svg>");
+  --crosshair-ink: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 32 32'><path d='M16 3v8M16 21v8M3 16h8M21 16h8' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/><circle cx='16' cy='16' r='1.75' fill='%23000'/></svg>");
+  --crosshair-ink-x: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 32 32'><path d='M16 3v8M16 21v8M3 16h8M21 16h8' stroke='%23000' stroke-width='2.5' stroke-linecap='round' transform='rotate(45 16 16)'/><circle cx='16' cy='16' r='1.75' fill='%23000'/></svg>");
+}
+
+#cursor {
+  container-type: size;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+
+/* Text bubble up: no inversion, so the white bubble and its text read as-is. */
+html.cursor-text #cursor {
+  mix-blend-mode: normal;
+}
+
+/* Hide the system cursor everywhere while the crosshair is on screen. Many
+   rules set cursor: pointer on buttons/tabs, which used to draw the system
+   hand on top of the crosshair. */
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active * {
+    cursor: none !important;
+  }
+}
+
+#cursor .wrapper,
+#cursor.dif .wrapper {
+  position: relative;
+  background: transparent;
+  box-shadow: none;
+}
+
+#cursor .wrapper::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  background: var(--crosshair) center / contain no-repeat;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
+  pointer-events: none;
+}
+
+html.cursor-target #cursor .wrapper::before {
+  transform: translate(-50%, -50%) rotate(45deg) scale(1.15);
+}
+
+@container (min-width: 90px) {
+  #cursor .wrapper,
+  #cursor.dif .wrapper {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  }
+  #cursor .wrapper::before {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cursor .wrapper::before {
+    transition: none;
+  }
 }
 
 #cursor {
@@ -1491,15 +1552,11 @@ html.custom-cursor-active .error-page .go-home {
   pointer-events: none;
 }
 
-/* A thin dark ring keeps the white cursor visible on white/light sections. */
-#cursor:not(.dif) .wrapper {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-}
 
 header .header .mobile-menu .nav-avatar {
   width: 42px;
   height: 42px;
-  margin-right: 10px;
+  margin-right: 12px;
   vertical-align: middle;
   font-size: 16px;
 }
@@ -1535,7 +1592,7 @@ html.not-home header {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .prof-card {
@@ -1576,7 +1633,7 @@ html.not-home header {
   font-family: "DrukMedium", sans-serif;
   font-size: clamp(28px, 6vw, 44px);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.1;
   margin: 2px 0 4px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1587,14 +1644,14 @@ html.not-home header {
   font-family: "DrukMedium", sans-serif;
   font-size: 26px;
   font-weight: 500;
-  line-height: 1.05;
-  margin: 4px 0 6px;
+  line-height: 1.1;
+  margin: 4px 0 8px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .prof-section-head {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .prof-section-head .pp-hint {
@@ -1603,7 +1660,7 @@ html.not-home header {
 
 .prof-logout {
   width: auto;
-  padding: 10px 18px;
+  padding: 12px 16px;
   flex-shrink: 0;
 }
 
@@ -1618,7 +1675,7 @@ html.not-home header {
 .prof-form .pp-field input,
 .prof-form .pp-field select {
   font-size: 14px;
-  padding: 12px 14px;
+  padding: 12px 16px;
 }
 
 .prof-form .pp-field input[readonly] {
@@ -1645,7 +1702,7 @@ html.not-home header {
 .prof-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -1660,7 +1717,7 @@ html.not-home header {
 
 /* Registrations: details on the left, entry QR on the right */
 .prof-regs {
-  gap: 14px;
+  gap: 16px;
 }
 
 .prof-reg {
@@ -1685,8 +1742,8 @@ html.not-home header {
 .prof-reg-dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 2px 10px;
-  margin: 6px 0 2px;
+  gap: 2px 12px;
+  margin: 8px 0 2px;
   font-size: var(--fs-label);
 }
 
@@ -1710,7 +1767,7 @@ html.not-home header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .prof-qr.small {
@@ -1736,7 +1793,7 @@ html.not-home header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: var(--fs-label);
   text-align: center;
 }
@@ -1751,13 +1808,13 @@ html.not-home header {
   background: var(--surface);
   border: 2px solid var(--ink);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   margin-bottom: 16px;
 }
 
 .checkout-qrs ul {
   list-style: none;
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
@@ -1773,7 +1830,7 @@ html.not-home header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   text-align: center;
@@ -1785,7 +1842,7 @@ html.not-home header {
   }
 
   .prof-card {
-    padding: 18px 16px;
+    padding: 16px 16px;
     border-radius: 20px;
   }
 
@@ -1828,8 +1885,8 @@ html body:has(.profile-page-root) header {
 
 /* Deregister / delete-profile confirmations */
 .prof-confirm {
-  margin-top: 10px;
-  padding: 12px 14px;
+  margin-top: 12px;
+  padding: 12px 16px;
   border: 1.5px solid var(--danger);
   border-radius: 14px;
   background: var(--danger-bg);
@@ -1838,12 +1895,12 @@ html body:has(.profile-page-root) header {
 }
 
 .prof-confirm p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .prof-confirm .pp-field input {
   font-size: 14px;
-  padding: 12px 14px;
+  padding: 12px 16px;
 }
 
 .prof-confirm-yes {
@@ -1872,7 +1929,7 @@ html body:has(.profile-page-root) header {
 
 .prof-delete-open {
   width: auto;
-  padding: 10px 18px;
+  padding: 12px 16px;
 }
 
 .prof-reg-info .pp-msg {
@@ -1903,8 +1960,8 @@ header .header .mobile-menu a.nav-profile {
 header .header .right-menu a.nav-profile .nav-avatar {
   width: 28px;
   height: 28px;
-  font-size: 10px;
-  line-height: 1;
+  font-size: 12px;
+  line-height: 1.1;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1972,3 +2029,21 @@ header .header .nav-account {
   display: contents;
 }
 
+
+/* ---- Motion audit: enter eases out, exit eases in ------------------------- */
+.chaitanya-modal-backdrop,
+.pp-overlay {
+  transition: opacity var(--motion-150) var(--ease-in), visibility 0s linear var(--motion-150);
+}
+.chaitanya-modal-backdrop.active,
+.pp-overlay.active {
+  transition: opacity var(--motion-200) var(--ease-out), visibility 0s;
+}
+.chaitanya-modal-card,
+.pp-panel {
+  transition: transform var(--motion-150) var(--ease-in), opacity var(--motion-150) var(--ease-in);
+}
+.chaitanya-modal-backdrop.active .chaitanya-modal-card,
+.pp-overlay.active .pp-panel {
+  transition: transform var(--motion-200) var(--ease-out), opacity var(--motion-200) var(--ease-out);
+}

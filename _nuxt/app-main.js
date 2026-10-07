@@ -4165,7 +4165,7 @@ let At,
           path: (Yi == null ? void 0 : Yi.path) ?? "/music-demo",
           meta: Yi || {},
           alias: (Yi == null ? void 0 : Yi.alias) || [],
-          redirect: Yi == null ? void 0 : Yi.redirect,
+          redirect: "/events", // Agency music demo removed (its CSS/audio/models are gone)
           component: () =>
             Si(
               () =>
@@ -4187,6 +4187,15 @@ let At,
               __vite__mapDeps([25, 4, 5]),
               import.meta.url,
             ).then((t) => t.default || t),
+        },
+        {
+          name: "about",
+          path: "/about",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./about-page.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
           name: "events",
@@ -4228,6 +4237,15 @@ let At,
               __vite__mapDeps([26, 20, 13, 4, 5, 21, 2, 3, 27]),
               import.meta.url,
             ).then((t) => t.default || t),
+        },
+        {
+          name: "not-found",
+          path: "/:pathMatch(.*)*", // Unknown URLs: "Page not found" (must stay last)
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./not-found-page.js").then(async (t) => (await t.__tla, t.default || t)),
         },
       ],
       nv = (t, e, i) => (
@@ -46044,18 +46062,23 @@ void main() {
             pt.timeline({ paused: !0 }),
             pt.timeline({ paused: !0 }),
             e.$onAction(({ name: d }) => {
+              // cursor-text: the bubble ("Click and hold") is up; the crosshair
+              // drops its difference blend so the bubble reads normally.
+              ["hideCursor", "showCursor", "blendCursor", "formCursor"].includes(d) &&
+                document.documentElement.classList.toggle("cursor-text", d === "showCursor");
               (d === "hideCursor" && c(),
                 d === "showCursor" && l(),
                 d === "blendCursor" && o(),
                 d === "formCursor" && u());
             }),
             wo(() => {
+              // Reduced motion: the crosshair sits on the pointer, no trailing.
               ((i = pt.quickTo(r.value, "x", {
-                duration: 0.1,
+                duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 0.1,
                 ease: "power1.out",
               })),
                 (n = pt.quickTo(r.value, "y", {
-                  duration: 0.1,
+                  duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 0.1,
                   ease: "power1.out",
                 })),
                 window.addEventListener("mousemove", a, !1),
@@ -46063,6 +46086,11 @@ void main() {
                   ((window.__customCursorBound = !0),
                   document.addEventListener("mouseleave", m),
                   document.addEventListener("mouseover", (d) => {
+                    // Crosshair turns "+" into "x" over anything clickable (see auth-modal.css).
+                    document.documentElement.classList.toggle(
+                      "cursor-target",
+                      Boolean(d.target?.closest?.('a[href], button:not(:disabled), [role="button"], [data-adm], [data-prof], [data-action], [data-team-open], [data-team-close], [tabindex="0"], input:is([type="checkbox"], [type="radio"], [type="submit"], [type="button"], [type="file"], [type="range"]), select, label, summary, .menu-switch, .vr, .sgf-g, .adm-bar-row, .input-wrapper.send, .swiper-button-next, .swiper-button-prev, .swiper-pagination-bullet')),
+                    );
                     d.target && d.target.tagName === "IFRAME" && m();
                   })));
             }));
@@ -46273,7 +46301,7 @@ void main() {
                     class: "go-home",
                     onClick: s,
                   },
-                  [K3(" back to the homepage "), hS],
+                  [K3(" go to the homepage "), hS],
                   32,
                 ),
               ])

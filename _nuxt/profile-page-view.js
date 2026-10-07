@@ -26,6 +26,7 @@ let a,
               name: "description",
               content: "Your Chaitanya 2k26 profile, event registrations and entry QR codes.",
             },
+            { name: "robots", content: "noindex, nofollow" },
           ],
         });
 

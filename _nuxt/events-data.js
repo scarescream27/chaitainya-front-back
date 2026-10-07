@@ -95,7 +95,7 @@ export const EVENTS_DATA = [
     time: "30 Oct, 6:00 PM – 31 Oct, 6:00 PM (24 hrs)",
     venue: "Electrical Labs 307 & 308, 3rd floor",
     overview:
-      "The flagship 24-hour open-source hackathon of Chaitanya 2k26. Teams ideate, design and build a working open-source project overnight and present it to the judges at the end of the sprint.",
+      "Chaitanya 2k26's flagship hackathon. Teams get 24 hours to ideate, design and build a working open-source project overnight, then present it to the judges when the sprint ends.",
     coordinators: heads("Priyanshu"),
   }),
   event({
@@ -108,7 +108,7 @@ export const EVENTS_DATA = [
     time: "1 Nov, 8:00 AM – 4:00 PM (8 hrs)",
     venue: "3 computer labs (rooms to be announced)",
     overview:
-      "An 8-hour capture-the-flag contest with challenges across web security, cryptography, forensics and reverse engineering. Solve challenges to capture flags and score points.",
+      "Eight hours of capture-the-flag across web security, cryptography, forensics and reverse engineering. Crack a challenge to capture its flag, then submit it for points.",
     coordinators: heads("Ritik Chauhan", "Paras Rana"),
   }),
   event({
@@ -121,7 +121,7 @@ export const EVENTS_DATA = [
     time: "31 Oct, 10:00 AM – 1:00 PM (3 hrs)",
     venue: "2 computer labs (rooms to be announced)",
     overview:
-      "A 3-hour algorithmic programming contest. Solve as many problems as you can, as efficiently as you can, before time runs out.",
+      "Solve as many algorithmic problems as you can in 3 hours, with code that is correct and efficient. Individual entry.",
     coordinators: heads("Manas Kapoor"),
   }),
   event({
@@ -136,7 +136,7 @@ export const EVENTS_DATA = [
     venue: "Rooms 207 & 208 (computer lab)",
     prizePool: "Top 3 win · prizes to be announced",
     overview:
-      "A C++ debugging and code-completion contest (also listed as Glitch Code). Code is shown on a large screen: spot the bug, fix the logic or finish the missing part, faster and more accurately than everyone else. Individual entry, C++ only, three rounds of rising difficulty.",
+      "A C++ debugging and code-completion contest, also listed as Glitch Code. Each round puts code on a large screen: spot the bug, fix the logic or finish the missing part, faster and more accurately than the rest. Solo entry, C++ only, three rounds that get harder as you go.",
     rules: [
       "Individual event: one participant per entry, no teams.",
       "Only C++ may be used in every round.",
@@ -173,22 +173,22 @@ export const EVENTS_DATA = [
     id: "prompt-engineering",
     registrationType: "solo",
     title: "PROMPT ENGINEERING",
-    tagline: "Get the best out of AI with the right prompt",
+    tagline: "Write the prompt that gets AI to the right answer",
     category: "tech",
     time: "3 hrs (date to be announced)",
-    overview: "A 3-hour challenge where participants craft prompts to get AI tools to solve the given tasks as accurately as possible.",
+    overview: "You get 3 hours and a set of tasks. Write prompts that get AI tools to solve each one as accurately as possible.",
     coordinators: heads("Karan"),
   }),
   event({
     id: "ui-ux-designathon",
     registrationType: "both", maxTeam: 2, startsAt: "2026-11-01T14:00:00+05:30", endsAt: "2026-11-01T17:00:00+05:30",
     title: "UI/UX DESIGNATHON",
-    tagline: "Design the interface, own the experience",
+    tagline: "Design the screens that solve the brief",
     category: "tech",
     date: "DAY 3",
     time: "1 Nov, 2:00 PM – 5:00 PM (3 hrs)",
     venue: "Room 108",
-    overview: "A design sprint to create user interfaces and experiences for a given problem statement. Details will be announced soon.",
+    overview: "A 3-hour design sprint for solo designers or pairs. Design the interface and user experience for a given problem statement. Full brief to be announced.",
   }),
 
   // --------------------------------------------------------------------------
@@ -203,7 +203,7 @@ export const EVENTS_DATA = [
     date: "DAY 1",
     time: "30 Oct, 1:00 PM – 5:00 PM (4 hrs)",
     venue: "2 computer labs (rooms to be announced)",
-    overview: "A 4-hour CAD modelling competition: turn the given problem into a precise, well-engineered 3D design.",
+    overview: "A 4-hour solo CAD modelling contest. Read the problem, then turn it into a precise, well-engineered 3D model.",
     coordinators: heads("Mahek", "Gargi"),
   }),
   event({
@@ -217,7 +217,7 @@ export const EVENTS_DATA = [
     time: "31 Oct, 9:00 AM – 10:00 AM (1 hr)",
     venue: "Open Air Theatre (OAT)",
     overview:
-      "A three-round speedcubing competition. Each round has two sub-rounds, and cubers advance round by round until the Mirror Cube final decides the winners. The organisers provide all competition puzzles, timers and scramble cards.",
+      "Three rounds of speedcubing, each split into two sub-rounds. Cubers advance round by round until the Mirror Cube final decides the winners. The organisers supply every competition puzzle, timer and scramble card.",
     rules: [
       "Each cuber gets 1 attempt per sub-round.",
       "15 seconds of inspection before every solve: you may hold and turn the puzzle in your hands, but make no moves.",
@@ -242,9 +242,9 @@ export const EVENTS_DATA = [
     id: "innovation-fair",
     registrationType: "team", minTeam: 1, maxTeam: 4,
     title: "INNOVATION FAIR",
-    tagline: "Project exhibition: showcase your projects and prototypes",
+    tagline: "Project exhibition: bring your prototype, explain the build",
     category: "innovation",
-    overview: "A project exhibition for student projects, prototypes and ideas. Display your work and present it to visitors and judges.",
+    overview: "An exhibition of student projects, prototypes and ideas. Set up your work and present it to visitors and judges, solo or in a team of up to 4.",
     coordinators: heads("Ankush", "Divyanshi"),
   }),
 
@@ -260,17 +260,17 @@ export const EVENTS_DATA = [
     date: "DAY 3",
     time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",
     venue: "Conference Hall & labs",
-    overview: "A startup pitch competition. Present your idea, defend it under questioning and convince the panel.",
+    overview: "Pitch your startup idea to the panel, defend it under questioning and win their vote. Enter solo or as a team of up to 4.",
   }),
   event({
     id: "marketmind",
     registrationType: "team", minTeam: 1, maxTeam: 3,
     title: "MARKETMIND: THE PRODUCT CASE CHALLENGE",
-    tagline: "Product management & case studies: crack the case, present the strategy",
+    tagline: "Product case study: crack it, present the strategy",
     category: "business",
     time: "2 hrs (date to be announced)",
     venue: "Conference Hall",
-    overview: "A 2-hour product management and business case challenge. Analyse the case, build a strategy and present your solution.",
+    overview: "Teams of up to 3 get a product management and business case, and 2 hours to solve it. Analyse the problem, build a strategy and present your solution.",
   }),
   event({
     id: "model-lok-sabha",
@@ -284,7 +284,7 @@ export const EVENTS_DATA = [
     venue: "Open Air Theatre (OAT)",
     prizePool: "Best Delegate · High Commendation · Special Mention · certificates for all delegates",
     overview:
-      "Lok Sabha (House of the People) in an Indian Parliamentary MUN format. Delegates represent sitting MPs and follow Lok Sabha procedure. Agenda: The Public Examinations (Prevention of Unfair Means) Legislation: the crisis of paper leaks and cheating in national and state exams such as NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register individually or as a double delegation; MP portfolios are allotted by the secretariat.",
+      "An Indian Parliamentary MUN run on the Lok Sabha (House of the People) format, where delegates represent sitting MPs and follow Lok Sabha procedure. Agenda: The Public Examinations (Prevention of Unfair Means) Legislation, and the crisis of paper leaks and cheating in national and state exams such as NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register individually or as a double delegation; the secretariat allots MP portfolios.",
     rules: [
       "Address the Chair as \"Hon'ble Speaker\" or \"Mr./Madam Speaker\" and other members as \"Hon'ble Member\" or \"Hon'ble Minister\". All speeches go through the Chair.",
       "Stand while speaking; stay seated while the Chair or another member speaks, unless raising a point.",
@@ -322,20 +322,20 @@ export const EVENTS_DATA = [
     title: "ESPORTS: COUNTER-STRIKE 2",
     tagline: "Tactical 5v5 on campus",
     category: "esports",
-    overview: "A Counter-Strike 2 tournament. Format and schedule will be announced soon.",
+    overview: "Counter-Strike 2 tournament for teams of 5–6. Format and schedule to be announced.",
     coordinators: heads("Rhythm Rangra"),
   }),
   event({
     id: "esports-bgmi",
     registrationType: "team", minTeam: 4, maxTeam: 4, allDay: ["2026-10-30", "2026-10-31"],
     title: "ESPORTS: BGMI",
-    tagline: "Battle royale squads: play smart, fight together, win together",
+    tagline: "Four-player squads, two days, twelve matches",
     category: "esports",
     badge: "BATTLE ROYALE",
     date: "DAY 1 – 2",
     time: "30 & 31 Oct, 12:00 PM – 4:00 PM each day",
     overview:
-      "BGMI battle royale tournament (latest game version) for 4-player squads, on mobile devices only. Six matches per day across Rondo, Erangel and Miramar; earn placement and kill points for the highest overall score.",
+      "A BGMI battle royale tournament for 4-player squads on the latest game version, mobile devices only. Squads play six matches a day across Rondo, Erangel and Miramar. Placement and kill points add up to the overall standings.",
     rules: [
       "Squads of exactly 4 players. Mobile devices only; emulators and PC clients are not allowed.",
       "Use your own BGMI account (no guest accounts) and the in-game name submitted at registration. Only registered players may play.",
@@ -369,11 +369,11 @@ export const EVENTS_DATA = [
     id: "esports-free-fire",
     registrationType: "team", minTeam: 4, maxTeam: 5, startsAt: "2026-11-01T11:00:00+05:30", endsAt: "2026-11-01T15:00:00+05:30",
     title: "ESPORTS: FREE FIRE",
-    tagline: "Fast-paced battle royale",
+    tagline: "Squad battle royale on Day 3",
     category: "esports",
     date: "DAY 3",
     time: "1 Nov, 11:00 AM – 3:00 PM (4 hrs)",
-    overview: "A Free Fire tournament. Squad format and match schedule will be announced soon.",
+    overview: "Free Fire tournament for squads of 4–5. Squad format and match schedule to be announced.",
     coordinators: heads("Dhruv Rangra", "Ankush"),
   }),
 
@@ -384,12 +384,12 @@ export const EVENTS_DATA = [
     id: "nerd-wars",
     registrationType: "team", minTeam: 2, maxTeam: 3, startsAt: "2026-10-31T11:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
     title: "NERD WARS",
-    tagline: "The quiz: trivia, puzzles and pure nerd power",
+    tagline: "The fest quiz: trivia, puzzles and fast recall",
     category: "cultural",
     date: "DAY 2",
     time: "31 Oct, 11:00 AM – 1:00 PM (2 hrs)",
     venue: "Open Air Theatre (OAT)",
-    overview: "The Chaitanya 2k26 quiz: a battle of wits for the biggest nerds on campus. Format will be announced soon.",
+    overview: "The official Chaitanya 2k26 quiz, for teams of 2–3 who live for trivia and puzzles. Round format to be announced.",
     coordinators: heads("Shabnam Minhas", "Anshita", "Sourav"),
   }),
   event({
@@ -400,7 +400,7 @@ export const EVENTS_DATA = [
     category: "cultural",
     date: "DAY 1",
     time: "30 Oct, 11:00 AM – 2:00 PM (3 hrs)",
-    overview: "A 3-hour campus-wide treasure hunt. Decode the clues, race between checkpoints and find the treasure first.",
+    overview: "Three hours, one campus, a trail of clues. Decode each one, race between checkpoints and reach the treasure before the other teams.",
     coordinators: heads("Mahek", "Gargi", "Aparna Sharma"),
   }),
   event({
@@ -412,7 +412,7 @@ export const EVENTS_DATA = [
     date: "DAY 1 – 3",
     time: "Runs through the fest · final submission 4:00 PM",
     venue: "Ground floor",
-    overview: "A photography competition running through the fest. Capture the best moments of Chaitanya 2k26 and submit your entries by the 4:00 PM final submission deadline.",
+    overview: "A photography contest that runs across all three fest days. Shoot the moments that define the fest and submit your entries by the 4:00 PM final deadline.",
     coordinators: heads("Dhruv Rangra", "Kartik"),
   }),
   event({
@@ -421,7 +421,7 @@ export const EVENTS_DATA = [
     title: "CULTURAL WALK",
     tagline: "A walk through the cultures of India",
     category: "cultural",
-    overview: "A cultural parade celebrating traditions, attire and heritage. Details will be announced soon.",
+    overview: "A parade of regional attire, traditions and heritage from across India. Walk solo or in a group of up to 10; details to be announced.",
     coordinators: heads("Ankita Thakur", "Dhruv", "Gargi"),
   }),
   event({
@@ -430,7 +430,7 @@ export const EVENTS_DATA = [
     title: "DANCE COMPETITION",
     tagline: "Own the stage",
     category: "cultural",
-    overview: "Solo and group dance performances. Categories and rules will be announced soon.",
+    overview: "Perform solo or with a crew of up to 12. Dance categories and rules to be announced.",
     coordinators: heads("Ankita Thakur", "Gargi"),
   }),
 ];

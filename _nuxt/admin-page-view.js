@@ -26,6 +26,7 @@ let a,
               name: "description",
               content: "Chaitanya 2k26 organiser dashboard.",
             },
+            { name: "robots", content: "noindex, nofollow" },
           ],
         });
 

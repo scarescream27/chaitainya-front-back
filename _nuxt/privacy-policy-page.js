@@ -34,9 +34,10 @@ let a,
           meta: [
             {
               name: "description",
-              content: "Official Privacy Policy, Data Protection, and Compliance Directive for Chaitanya 2k26.",
+              content: "How Chaitanya 2k26 at HPTU Hamirpur collects, uses and protects participant data for registrations, payments and event entry.",
             },
           ],
+          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/privacy-policy" }],
         });
 
         const policyHtml = `
@@ -46,7 +47,7 @@ let a,
               <a href="/" class="privacy-back-btn" id="btn-privacy-home">
                 <span>←</span> RETURN TO HOME
               </a>
-              <div style="display:flex; gap:10px;">
+              <div style="display:flex; gap:12px;">
                 <a href="/contact" class="privacy-contact-btn" id="btn-privacy-contact">
                   [ CONTACT FEST DESK ]
                 </a>
@@ -89,7 +90,7 @@ let a,
                 </div>
                 <p>
                   This Privacy Policy governs the access and usage of the official digital portal for <strong>Chaitanya 2k26</strong>, 
-                  the premier technical and cultural festival hosted by <strong>Himachal Pradesh Technical University (HPTU)</strong>.
+                  the annual technical and cultural festival hosted by <strong>Himachal Pradesh Technical University (HPTU)</strong>.
                 </p>
                 <p>
                   By registering for events, participating in hackathons, logging into the participant portal, or submitting inquiries 
