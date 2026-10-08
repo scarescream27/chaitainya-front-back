@@ -233,6 +233,7 @@ function isOtherOverlayOpen() {
   // The profile overlay / auth modal (other modules) handle their own keys.
   return (
     document.documentElement.classList.contains("pp-open") ||
+    Boolean(document.querySelector("dialog[open]")) || // e.g. the leave-registration confirm
     Boolean(document.getElementById("chaitanya-auth-backdrop")?.classList.contains("active"))
   );
 }
@@ -318,7 +319,7 @@ function stayBannerHtml() {
   return `
     <div class="events-stay-text">
       <strong>Stay on campus — ₹${e(ACCOMMODATION.entryFeeNum)} incl. meals</strong>
-      <span>${e(ACCOMMODATION.date)} · all three fest nights · breakfast, lunch &amp; dinner</span>
+      <span>${e(ACCOMMODATION.date)} · all three fest nights · breakfast &amp; dinner</span>
     </div>
     <div class="events-stay-actions">
       ${status}
@@ -858,17 +859,62 @@ export function closeCheckout() {
 // Esc, backdrop and the close button: past the details step the student may
 // have typed team names or already paid, so don't drop that on one keystroke.
 function requestCloseCheckout() {
-  if (submitting) return;
+  if (submitting || leaveDialog) return;
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
-    const msg = checkout.paidId
-      ? `Your payment went through but the registration isn't saved yet. Note your payment ID ${checkout.paidId} and email ${FEST_CONFIG.contactEmail} if you leave. Leave anyway?`
+    const desc = checkout.paidId
+      ? `Your payment went through but the registration isn't saved yet. Note your payment ID ${checkout.paidId} and email ${FEST_CONFIG.contactEmail} if you leave.`
       : checkout.only
-      ? "Leave registration? What you entered here will be cleared."
-      : "Leave registration? Your cart stays, but what you entered here will be cleared.";
-    if (!confirm(msg)) return;
+      ? "What you entered here will be cleared."
+      : "Your cart stays, but what you entered here will be cleared.";
+    return confirmLeave(checkout.paidId ? "Leave anyway?" : "Leave registration?", desc);
   }
   closeCheckout();
+}
+
+// Styled <dialog> (same look as the home "Open …?" confirm, .sgf-confirm in
+// m-home.css) instead of window.confirm(): a native dialog steals the mouse,
+// and with the system cursor hidden (html.custom-cursor-active) the page was
+// left with no cursor until a click. showModal() handles inert, focus and Esc;
+// the cursor CSS shows the system cursor while a dialog is open.
+let leaveDialog = null;
+function confirmLeave(title, desc) {
+  if (leaveDialog) return;
+  const dlg = document.createElement("dialog");
+  dlg.className = "sgf-confirm";
+  dlg.setAttribute("aria-labelledby", "co-leave-t");
+  dlg.setAttribute("aria-describedby", "co-leave-d");
+  dlg.innerHTML = `<div class="sgf-confirm-card">
+      <h2 class="sgf-confirm-title" id="co-leave-t"></h2>
+      <p class="sgf-confirm-desc" id="co-leave-d"></p>
+      <div class="sgf-confirm-actions">
+        <button type="button" class="sgf-confirm-stay">Stay</button>
+        <button type="button" class="sgf-confirm-go">Leave</button>
+      </div></div>`;
+  dlg.querySelector("h2").textContent = title;
+  dlg.querySelector("p").textContent = desc;
+  // Settled here rather than in a "close" listener, which could arrive late
+  // (or after the Esc that opened this dialog) and leave the checkout stuck.
+  const finish = (leave) => {
+    if (leaveDialog !== dlg) return;
+    leaveDialog = null;
+    dlg.close();
+    dlg.remove();
+    if (leave && isCheckoutOpen && !submitting) closeCheckout();
+  };
+  dlg.addEventListener("click", (evt) => {
+    if (evt.target.closest(".sgf-confirm-go")) finish(true);
+    else if (evt.target === dlg || evt.target.closest(".sgf-confirm-stay")) finish(false); // backdrop = stay
+  });
+  dlg.addEventListener("cancel", (evt) => {
+    evt.preventDefault();
+    finish(false);
+  });
+  // Appended after setBackgroundInert ran, so it is never inerted itself.
+  document.body.appendChild(dlg);
+  leaveDialog = dlg;
+  dlg.showModal();
+  dlg.querySelector(".sgf-confirm-stay").focus();
 }
 
 const cartKey = (items) => items.map((i) => `${i.eventId}:${i.mode}`).join(",");
@@ -1647,7 +1693,11 @@ function bindGlobalListeners() {
     if (evt.key !== "Escape") return;
     // The profile overlay / auth modal handle their own Escape.
     if (isOtherOverlayOpen()) return;
-    if (isCheckoutOpen) requestCloseCheckout();
+    if (isCheckoutOpen) {
+      // Handled here: Esc's default action must not reach the confirm this opens.
+      evt.preventDefault();
+      requestCloseCheckout();
+    }
     else if (isCartOpen) closeCart();
     else if (isDossierOpen) closeEventDossier();
   });
@@ -1887,6 +1937,8 @@ export function destroyEventsPage() {
     scrollMotionCleanup = null;
   }
   isDossierOpen = isCartOpen = isCheckoutOpen = false;
+  leaveDialog?.remove();
+  leaveDialog = null;
   dossierEventId = null;
   checkout = null;
   submitting = null;

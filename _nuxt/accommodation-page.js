@@ -2,7 +2,7 @@
  * ============================================================================
  * File: accommodation-page.js
  * Purpose: /accommodation — the ₹999 on-campus stay package (3 fest nights,
- * all meals). Booking goes through the event checkout (events-page.js exposes
+ * breakfast and dinner, 6 meals over 3 days). Booking goes through the event checkout (events-page.js exposes
  * window.openAccommodationBooking); the button's label/state comes from
  * auth-service.js accommodationState(). Hero/cards/CTA reuse privacy-policy.css;
  * page styles live in m-pages.css (.m-accom-root); FAQ rows reuse m-home.css.
@@ -49,7 +49,7 @@ function buildHtml() {
   const mail = esc(FEST_CONFIG.contactEmail);
   const included = [
     ["stay", "Stay", "All three fest nights on the HPTU Hamirpur campus."],
-    ["meals", "Meals", "Breakfast, lunch and dinner."],
+    ["meals", "Meals", "Breakfast and dinner: 2 meals a day for 3 days (6 meals). Dinner on arrival, 29 October."],
     ["dates", "Check in / out", "29 Oct evening → 1 Nov."],
     ["pass", "Booking pass", "A QR pass in your profile, shown at check-in."],
   ];
@@ -60,7 +60,8 @@ function buildHtml() {
     ["Show your booking pass", "Show the pass QR at check-in."],
   ];
   const faq = [
-    ["Is food included?", "Yes — breakfast, lunch and dinner during the stay."],
+    ["Is food included?", "Yes. 2 meals a day, breakfast and dinner, for 3 days: 6 meals in all. Day 1: breakfast + dinner · Day 2: breakfast + dinner · Day 3: breakfast + dinner."],
+    ["Will dinner be provided on the day of arrival?", "Yes. Dinner will be provided on your arrival on 29 October."],
     ["Can I book without an event?", "No — register for at least one event first; you can add both to the cart."],
     ["Can I cancel?", `Contact the fest team at <a href="mailto:${mail}">${mail}</a>.`],
     ["Where do I check in?", "At the fest help desk on campus; details will be shared with your booking."],
@@ -72,7 +73,7 @@ function buildHtml() {
         <div>
           <span class="privacy-tag-badge">Chaitanya 2k26 · HPTU Hamirpur</span>
           <h1>Accommodation</h1>
-          <p class="subtitle">Stay on campus for all three fest nights — meals included.</p>
+          <p class="subtitle">Stay on campus for all three fest nights — breakfast and dinner included.</p>
         </div>
       </div>
 
@@ -106,7 +107,7 @@ function buildHtml() {
         <h2 class="m-h" id="accom-book">Book your stay</h2>
         <div class="m-accom-price">
           <p><b>₹999</b> <span>per person</span></p>
-          <p class="m-accom-when">29 Oct – 1 Nov · 3 nights · All meals</p>
+          <p class="m-accom-when">29 Oct – 1 Nov · 3 nights · 6 meals (breakfast + dinner)</p>
           <p class="m-accom-note">Pay by UPI at booking; the fest team confirms your payment.</p>
           <div data-accom-slot>${buttonHtml()}</div>
         </div>
@@ -170,7 +171,7 @@ let a,
           meta: [
             {
               name: "description",
-              content: "Stay on the HPTU Hamirpur campus for all three Chaitanya 2k26 fest nights, 29 Oct – 1 Nov, with all meals: ₹999 per person.",
+              content: "Stay on the HPTU Hamirpur campus for all three Chaitanya 2k26 fest nights, 29 Oct – 1 Nov, with breakfast and dinner (6 meals): ₹999 per person.",
             },
           ],
           link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/accommodation" }],

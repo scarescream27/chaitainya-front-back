@@ -12,10 +12,10 @@
 export const TEAMS = [
   {
     id: "event-coordinators",
-    name: "Event Coordinators",
+    name: "Chaitanya Coordinators",
     people: [
-      { name: "Aman Singh Ranawat", role: "Event Coordinator" },
-      { name: "Krish Kanha", role: "Event Coordinator" },
+      { name: "Aman Singh Ranawat", role: "Chaitanya Coordinator" },
+      { name: "Krish Kanha", role: "Chaitanya Coordinator" },
     ],
   },
   {
@@ -63,7 +63,7 @@ export const personSlug = (name) =>
 
 /**
  * Everyone on /organisers, in page order, merged by name:
- * { slug, name, roles, teams, events }. Event coordinators, website
+ * { slug, name, roles, teams, events }. Chaitanya coordinators, website
  * developers, then team coordinators. events stays empty: event student
  * heads are listed on the events page only.
  */

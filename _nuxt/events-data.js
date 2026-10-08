@@ -449,7 +449,7 @@ export const EVENTS_DATA = [
   event({
     id: "cultural-walk",
     registrationType: "both", maxTeam: 10,
-    title: "CULTURAL WALK",
+    title: "UNLEASHED",
     tagline: "A walk through the cultures of India",
     category: "cultural",
     overview: "A parade of regional attire, traditions and heritage from across India. Walk solo or in a group of up to 10; details to be announced.",
@@ -458,7 +458,7 @@ export const EVENTS_DATA = [
   event({
     id: "dance-competition",
     registrationType: "both", maxTeam: 12,
-    title: "DANCE COMPETITION",
+    title: "RHYTHMIC RUMBLE",
     tagline: "Own the stage",
     category: "cultural",
     overview: "Perform solo or with a crew of up to 12. Dance categories and rules to be announced.",
@@ -477,14 +477,14 @@ export const ACCOMMODATION = event({
   registrationType: "solo",
   entryFeeNum: 999,
   entryFee: "₹999",
-  tagline: "Stay on campus for all three fest nights, meals included",
+  tagline: "Stay on campus for all three fest nights, breakfast and dinner included",
   date: "29 OCT – 1 NOV",
   time: "Check in 29 Oct (evening) · Check out 1 Nov",
   allDay: ["2026-10-29", "2026-11-01"],
   venue: "HPTU Hamirpur campus",
   status: "BOOKING",
   overview:
-    "Stay on the HPTU Hamirpur campus for all three fest nights. Check in on the evening of 29 Oct and check out on 1 Nov. Breakfast, lunch and dinner are included.",
+    "Stay on the HPTU Hamirpur campus for all three fest nights. Check in on the evening of 29 Oct and check out on 1 Nov. Meals: 2 a day, breakfast and dinner, for 3 days (6 meals in all). Dinner is provided on arrival on 29 October.",
   rules: [
     "One booking per person.",
     "Carry your college ID and a government photo ID.",

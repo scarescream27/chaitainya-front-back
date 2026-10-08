@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: organisation-page.js
- * Purpose: /organisers — event coordinators, website developers, then the
+ * Purpose: /organisers — Chaitanya coordinators, website developers, then the
  * student coordinator of each organising team (anchors like #team-technical).
  * Event student heads are on /events only.
  * Reuses privacy-policy.css (hero/CTA); person/event cards and the team grid
@@ -30,7 +30,7 @@ function buildHtml() {
         .join("")}</ul>
       ${!all && cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">View more (${cards.length - 2})</button>` : ""}
     </div>`;
-  // The fest's event coordinators, then the website developers (#core-team kept
+  // The Chaitanya coordinators, then the website developers (#core-team kept
   // as the anchor of this block), then each team's coordinators. Event
   // student heads are on the events page only.
   const coreHtml = TEAMS.map(
