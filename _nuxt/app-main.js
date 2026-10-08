@@ -31344,7 +31344,10 @@ void main() {
               function de() {
                 if (
                   (Y.forEach(function (Te) {
-                    _e.get(Te).currentProgram.isReady() && Y.delete(Te);
+                    // Patched: a material disposed mid-compile (leaving the
+                    // home scene before its shaders finished) has no program.
+                    const cp = _e.get(Te).currentProgram;
+                    (!cp || cp.isReady()) && Y.delete(Te);
                   }),
                   Y.size === 0)
                 ) {

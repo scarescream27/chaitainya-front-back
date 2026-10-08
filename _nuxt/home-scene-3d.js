@@ -7339,6 +7339,7 @@ let Ws,
           let Ht, mi;
           // Per-frame scratch (the physics loops used to allocate per body per frame).
           const tmpF = new h(),
+            tmpG = new h(),
             tmpQ = new ks();
           // Adaptive resolution: rolling ~1s windows of frame intervals.
           // ponytail: avg >22ms for 2 windows -> pixel ratio x0.85 (floor 0.6 low / 0.75), avg <18ms for 3 windows -> back up to the initial cap. (18 not 14: the ticker is capped at 60fps so ~16.7ms is the best case.)
@@ -7436,8 +7437,10 @@ let Ws,
                 !(Kt || !yi) &&
                   (d.step(1 / 60),
                   ys.forEach(({ mesh: N, body: A }) => {
+                    // ht is a three.js vector (no vsub): copy it into a reused
+                    // physics vector first. vsub(v, target) returns undefined.
                     const U = tmpF;
-                    ht.vsub(A.position, U);
+                    tmpG.set(ht.x, ht.y, ht.z).vsub(A.position, U);
                     (U.normalize(),
                       U.scale(xs.value, U),
                       A.applyForce(U),
