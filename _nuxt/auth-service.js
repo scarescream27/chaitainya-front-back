@@ -20,7 +20,7 @@ import {
   isAdminUser,
 } from "./firebase-config.js";
 import { getEventById, isRegistrationOpen } from "./events-data.js";
-import { isPaymentConfigured } from "./fest-config.js";
+import { FEST_CONFIG, isPaymentConfigured, isRazorpayEnabled } from "./fest-config.js";
 
 const SDK_VERSION = "10.12.0";
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
@@ -555,15 +555,18 @@ function addEventsToProfile(user, events) {
   user.registeredEventIds = [...ids];
 }
 
+const RAZORPAY_PAYMENT_ID = /^pay_[A-Za-z0-9]{14}$/;
+
 /**
- * Register for every event in the cart in one atomic write.
- *
- * @param items   [{ eventId, mode: "solo" | "team" }]
- * @param details { displayName, college, year, phone }
- * @param teams   { [eventId]: { teamName, members: [{ name, email }] } }
- * @param utr     12-digit UTR when the total is above zero
+ * Check a checkout without writing anything (same rules checkoutCart applies).
+ * Run it before taking money so nobody pays and then fails validation.
  */
-export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
+export function validateCheckout(items, details = {}, teams = {}) {
+  const { total } = checkCart(items, details, teams);
+  return { total };
+}
+
+function checkCart(items, details, teams) {
   const user = requireUser();
   if (!Array.isArray(items) || !items.length) throw new Error("Your cart is empty.");
 
@@ -601,10 +604,31 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
   });
 
   const total = lines.reduce((sum, l) => sum + l.amount, 0);
+  return { user, phone, college, year, name, lines, total };
+}
+
+/**
+ * Register for every event in the cart in one atomic write.
+ *
+ * @param items   [{ eventId, mode: "solo" | "team" }]
+ * @param details { displayName, college, year, phone }
+ * @param teams   { [eventId]: { teamName, members: [{ name, email }] } }
+ * @param utr     12-digit UTR when the total is above zero (UPI), or the
+ *                Razorpay payment id (pay_...) when opts.method is "razorpay"
+ * @param opts    { method: "upi" | "razorpay" }
+ */
+export async function checkoutCart(items, details = {}, teams = {}, utr = "", { method = "upi" } = {}) {
+  const { user, phone, college, year, name, lines, total } = checkCart(items, details, teams);
+  const viaRazorpay = method === "razorpay";
   const payId = total > 0 ? `pay_${user.uid}_${Date.now()}` : null;
   if (total > 0) {
-    if (!isPaymentConfigured()) throw new Error("Online payment isn't open yet.");
-    assertUtr(String(utr).trim());
+    if (viaRazorpay) {
+      if (!isRazorpayEnabled()) throw new Error("Online payment isn't open yet.");
+      if (!RAZORPAY_PAYMENT_ID.test(String(utr).trim())) throw new Error("Missing Razorpay payment ID.");
+    } else {
+      if (!isPaymentConfigured()) throw new Error("Online payment isn't open yet.");
+      assertUtr(String(utr).trim());
+    }
   }
 
   const writes = []; // [collection, id, data]
@@ -706,7 +730,7 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "") {
             teamName: l.isTeam ? l.team.teamName : null,
           })),
         amount: total,
-        method: "upi",
+        method: viaRazorpay ? "razorpay" : "upi",
         transactionRef: String(utr).trim(),
         status: PAYMENT_STATUS.PENDING,
         createdAt: nowIso(),
@@ -1011,6 +1035,75 @@ export async function resubmitPaymentUtr(paymentIdValue, utr) {
     demoSet("payments", paymentIdValue, { ...p, ...patch });
   }
   return { success: true };
+}
+
+// ----------------------------------------------------------------------------
+// RAZORPAY CHECKOUT (test mode, no server: pay first, then checkoutCart saves
+// the registration with the Razorpay payment id for the fest team to verify)
+// ----------------------------------------------------------------------------
+
+let razorpayScript = null;
+
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve();
+  if (!razorpayScript) {
+    razorpayScript = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => {
+        razorpayScript = null;
+        s.remove();
+        reject(new Error("Couldn't load the payment window. Check your connection and try again."));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return razorpayScript;
+}
+
+/**
+ * Open Razorpay Checkout for `amountRupees`. Resolves { status: "paid",
+ * paymentId } or { status: "dismissed" } (window closed, nothing charged);
+ * rejects with Razorpay's reason if the payment failed.
+ */
+export async function payWithRazorpay({ amountRupees, description = "", prefill = {}, events = [] } = {}) {
+  await initFirebase();
+  if (!isLive()) throw new Error("Online payment isn't available in demo mode.");
+  const user = requireUser();
+  if (!isRazorpayEnabled()) throw new Error("Online payment isn't open yet.");
+  const paise = Math.round(Number(amountRupees) * 100);
+  if (!(paise > 0)) throw new Error("Nothing to pay.");
+  await loadRazorpayScript();
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let lastFailure = null; // Razorpay lets people retry inside the window
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      fn(value);
+    };
+    const rzp = new window.Razorpay({
+      key: FEST_CONFIG.razorpay.keyId,
+      amount: paise,
+      currency: "INR",
+      name: "Chaitanya 2k26",
+      description: String(description).slice(0, 255),
+      prefill: { name: prefill.name || "", email: prefill.email || "", contact: prefill.phone || prefill.contact || "" },
+      notes: { uid: user.uid, events: events.join(",").slice(0, 250) },
+      theme: { color: "#000000" },
+      handler: (res) => finish(resolve, { status: "paid", paymentId: res.razorpay_payment_id }),
+      modal: {
+        ondismiss: () => (lastFailure ? finish(reject, new Error(lastFailure)) : finish(resolve, { status: "dismissed" })),
+      },
+    });
+    rzp.on("payment.failed", (resp) => {
+      lastFailure = resp?.error?.description || "Payment failed. Please try again.";
+    });
+    rzp.open();
+  });
 }
 
 export function isEventRegistered(eventIdOrTitle) {

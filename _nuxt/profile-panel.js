@@ -387,6 +387,7 @@ function renderRegistrations() {
             <dt>Type</dt><dd>${r.participation_type === "team" ? "Team" : "Solo"}</dd>
           </dl>
           ${team ? `<span class="pp-reg-meta">Team ${e(team.teamName)}${isLeader ? ` · code <b class="mono">${e(team.teamCode)}</b>` : ""}</span>` : ""}
+          ${payment?.method === "razorpay" ? `<span class="pp-reg-meta">Paid with Razorpay · <b class="mono">${e(payment.transactionRef || "")}</b></span>` : ""}
           <div class="pp-reg-actions">
             ${cal ? `<a class="pp-action" href="${e(cal)}" target="_blank" rel="noopener noreferrer">+ Add to Google Calendar</a>` : ""}
             ${status === "pending" ? `<span class="pp-reg-note">The fest team is verifying your payment.</span>` : ""}
@@ -397,7 +398,8 @@ function renderRegistrations() {
           ${!canCancelRegistration(r, payment) ? `<span class="pp-reg-note">Paid registrations can't be cancelled here. Contact the fest team.</span>` : ""}
           ${page.confirmDereg === r.event_id ? deregConfirmHtml(r, team) : ""}
           ${page.deregError?.eventId === r.event_id ? `<p class="pp-msg bad" role="alert">${e(page.deregError.message)}</p>` : ""}
-          ${status === "rejected" && payment ? `
+          ${status === "rejected" && payment?.method === "razorpay" ? `<span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this payment.")} Contact the fest team with your payment ID.</span>` : ""}
+          ${status === "rejected" && payment && payment.method !== "razorpay" ? `
             <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
               <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this UTR. Enter the correct one below.")}</span>
               <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit UTR" aria-label="Correct 12-digit UTR" />

@@ -221,10 +221,50 @@ let st,
                 "scrollRestoration" in history && (history.scrollRestoration = "manual");
                 window.location.hash || toTop();
               } catch (e) {}
+              // Header over a dark surface (black cards scrolling under the
+              // transparent header): switch logo, links and menu icon to white.
+              // Samples what sits under the logo and the menu button; a header
+              // with its own background (phones, inner pages) is left alone.
+              const headerEl = document.querySelector("header");
+              const bgOf = (el) => {
+                for (; el && el !== document.documentElement; el = el.parentElement) {
+                  if (el.tagName === "CANVAS") return null; // 3D scene: light
+                  const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
+                  if (m && (m[3] === undefined ? 1 : +m[3]) > 0.5) return m.slice(0, 3).map(Number);
+                }
+                return null;
+              };
+              const isDarkAt = (x, y) => {
+                const el = document.elementsFromPoint(x, y).find((n) => !n.closest("header, #cursor, dialog"));
+                const c = el && bgOf(el);
+                return !!c && 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] < 90;
+              };
+              let darkQueued = false;
+              // Each item (logo, every visible link, menu button) is toned by
+              // what sits directly behind it, so a dark card under only part
+              // of the header switches only the items it covers.
+              const syncHeaderTone = () => {
+                darkQueued = false;
+                if (!headerEl) return;
+                const own = getComputedStyle(headerEl);
+                const opaque = own.backgroundImage !== "none" || (own.backgroundColor.match(/[\d.]+/g)?.[3] ?? 1) > 0.5;
+                headerEl
+                  .querySelectorAll(".header-logo, .right-menu > a, .right-menu > .nav-account > a, .menu-switch")
+                  .forEach((el) => {
+                    const r = el.getBoundingClientRect();
+                    const dark = !opaque && r.width > 0 && isDarkAt(r.left + r.width / 2, r.top + r.height / 2);
+                    el.classList.toggle("on-dark", dark);
+                  });
+              };
+              const queueTone = () => darkQueued || ((darkQueued = true), requestAnimationFrame(syncHeaderTone));
+              window.addEventListener("scroll", queueTone, { passive: true });
+              window.addEventListener("resize", queueTone, { passive: true });
+              setTimeout(queueTone, 300);
               try {
                 document.querySelector("#__nuxt")?.__vue_app__?.config.globalProperties.$router?.afterEach((to, from) => {
                   markRoute(to.path);
                   "scrollRestoration" in history && (history.scrollRestoration = "manual");
+                  setTimeout(queueTone, 400);
                   if (to.hash || (to.meta?.key && to.meta.key === from.meta?.key) || window.__contactPending) return;
                   requestAnimationFrame(() => requestAnimationFrame(toTop));
                 });

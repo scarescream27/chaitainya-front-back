@@ -24,6 +24,8 @@ import {
   getCurrentUser,
   subscribeAuthState,
   checkoutCart,
+  validateCheckout,
+  payWithRazorpay,
   joinTeamWithCode,
   isEventRegistered,
   YEAR_OPTIONS,
@@ -49,11 +51,19 @@ import {
   FEST_CONFIG,
   getFestDatesLabel,
   isPaymentConfigured,
+  isRazorpayEnabled,
   buildUpiLink,
   escapeHtml as e,
 } from "./fest-config.js";
 
 const UTR_PATTERN = /^\d{12}$/;
+
+// Paid checkouts go through Razorpay when it's switched on (UPI + UTR otherwise).
+// co.paidId: Razorpay already took the money but the save hasn't succeeded yet,
+// so the button only retries the save (never charges twice).
+const useRazorpay = (total) => total > 0 && isRazorpayEnabled();
+const reviewSubmitLabel = (co, total) =>
+  co.paidId ? "RETRY SAVING REGISTRATION" : useRazorpay(total) ? `PAY ₹${total} WITH RAZORPAY` : "CONFIRM REGISTRATION";
 
 // Category + search survive a reload of /events (same tab).
 const FILTERS_KEY = "chaitanya-events-filters";
@@ -754,6 +764,7 @@ function startCheckout(onlyId = null) {
   // Only the student who started it gets it back (shared computers, e.g. a registration desk).
   if (draft?.cartKey === cartKey(items) && draft.uid === user.uid) {
     Object.assign(checkout, { step: draft.step, teams: draft.teams, details: draft.details, utr: draft.utr });
+    if (draft.paidId) checkout.paidId = draft.paidId;
   }
   closeCart();
   openCheckoutModal();
@@ -805,7 +816,9 @@ function requestCloseCheckout() {
   if (submitting) return;
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
-    const msg = checkout.only
+    const msg = checkout.paidId
+      ? `Your payment went through but the registration isn't saved yet. Note your payment ID ${checkout.paidId} and email ${FEST_CONFIG.contactEmail} if you leave. Leave anyway?`
+      : checkout.only
       ? "Leave registration? What you entered here will be cleared."
       : "Leave registration? Your cart stays, but what you entered here will be cleared.";
     if (!confirm(msg)) return;
@@ -833,9 +846,9 @@ function readCheckoutDraft() {
 function saveCheckoutDraft() {
   try {
     if (checkout && ["details", "teams", "review"].includes(checkout.step)) {
-      const { step, teams, details, utr, items, only } = checkout;
+      const { step, teams, details, utr, items, only, paidId } = checkout;
       const uid = getCurrentUser()?.uid || null;
-      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items), uid, only }));
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({ step, teams, details, utr, cartKey: cartKey(items), uid, only, paidId }));
     } else {
       sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
     }
@@ -1008,11 +1021,18 @@ function renderCheckout(focusSel) {
         <li><span>${e(ev.title)} <em>${mode === "team" ? `TEAM · ${e(checkout.teams[ev.id]?.teamName || "")}` : "SOLO"}</em></span><strong>${amount ? `₹${e(amount)}` : "FREE"}</strong></li>`
       )
       .join("");
-    const payReady = isPaymentConfigured();
+    const payReady = isRazorpayEnabled() || isPaymentConfigured();
     const upiLink = total > 0 ? buildUpiLink(total, `${FEST_CONFIG.name} registration`) : null;
     const paymentHtml =
       total <= 0
         ? `<div class="event-reg-free-note">✓ NO PAYMENT NEEDED</div>`
+        : checkout.paidId
+          ? `<div class="event-reg-closed-note"><strong>PAYMENT RECEIVED · ID <span class="mono">${e(checkout.paidId)}</span></strong><span>Your registration isn't saved yet. Retry below. If it keeps failing, contact ${e(FEST_CONFIG.contactEmail)} with this payment ID.</span></div>`
+        : useRazorpay(total)
+          ? `<div class="event-upi-payment-box">
+              <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
+              <p class="event-upi-help">You'll pay securely with Razorpay (UPI, cards, netbanking). Test mode — no real money is charged.</p>
+            </div>`
         : payReady
           ? `<div class="event-upi-payment-box">
               <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
@@ -1038,8 +1058,8 @@ function renderCheckout(focusSel) {
         ${paymentHtml}
         <div class="event-reg-error" id="co-error" role="alert" hidden></div>
         <div class="checkout-nav">
-          <button type="button" class="event-submit-btn secondary" data-action="co-prev">← BACK</button>
-          <button type="submit" class="event-submit-btn" id="co-submit" ${total > 0 && !payReady ? "disabled" : ""}>CONFIRM REGISTRATION</button>
+          ${checkout.paidId ? "" : `<button type="button" class="event-submit-btn secondary" data-action="co-prev">← BACK</button>`}
+          <button type="submit" class="event-submit-btn" id="co-submit" ${total > 0 && !payReady ? "disabled" : ""}>${e(reviewSubmitLabel(checkout, total))}</button>
         </div>
       </form>`;
   } else if (step === "done") {
@@ -1055,7 +1075,7 @@ function renderCheckout(focusSel) {
       <div class="event-reg-head">
         <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
         <h3 class="event-reg-title" id="co-title" tabindex="-1">Registration received</h3>
-        <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.total > 0 ? " Your registrations are confirmed once the fest team verifies your payment." : r.teamPending ? " Your registration is confirmed once the fest team verifies your team leader's payment." : ""}</p>
+        <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.razorpayId ? ` Payment received (ID ${e(r.razorpayId)}). The fest team will confirm it shortly.` : r.total > 0 ? " Your registrations are confirmed once the fest team verifies your payment." : r.teamPending ? " Your registration is confirmed once the fest team verifies your team leader's payment." : ""}</p>
       </div>
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
       ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
@@ -1131,20 +1151,59 @@ async function onCheckoutSubmit(evt, card) {
     }
     if (checkout.step === "review") {
       const total = getCartTotal(checkout.items);
+      const viaRazorpay = useRazorpay(total) || Boolean(co.paidId);
       checkout.utr = card.querySelector("#co-utr")?.value.trim() || "";
-      if (total > 0 && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
+      if (total > 0 && !viaRazorpay && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
       const btn = card.querySelector("#co-submit");
+      const cartLines = co.items.map((i) => ({ eventId: i.eventId, mode: i.mode }));
+      if (viaRazorpay && !co.paidId) {
+        // Pay first, then save: check everything up front so nobody pays and then fails validation.
+        validateCheckout(cartLines, co.details, co.teams);
+        btn.disabled = true;
+        btn.textContent = "OPENING PAYMENT…";
+        submitting = co;
+        const paid = await payWithRazorpay({
+          amountRupees: total,
+          description: co.items.map((i) => i.event.title).join(", "),
+          prefill: { name: co.details.displayName, email: getCurrentUser()?.email || "", phone: co.details.phone },
+          events: co.items.map((i) => i.eventId),
+        });
+        if (paid.status !== "paid") {
+          btn.disabled = false;
+          btn.textContent = reviewSubmitLabel(co, total);
+          return;
+        }
+        co.paidId = paid.paymentId;
+        saveCheckoutDraft();
+      }
       btn.disabled = true;
       btn.textContent = "REGISTERING…";
       submitting = co;
-      const result = await checkoutCart(
-        co.items.map((i) => ({ eventId: i.eventId, mode: i.mode })),
-        co.details,
-        co.teams,
-        co.utr
-      );
+      let result;
+      try {
+        result = await checkoutCart(
+          cartLines,
+          co.details,
+          co.teams,
+          viaRazorpay ? co.paidId : co.utr,
+          viaRazorpay ? { method: "razorpay" } : undefined
+        );
+      } catch (err) {
+        if (!co.paidId) throw err;
+        // Paid but not saved: show the payment ID prominently, then the reason.
+        if (checkout === co) {
+          renderCheckout();
+          const box = document.getElementById("co-error");
+          if (box) {
+            box.textContent = `${err.message || "Registration could not be saved."} Keep your payment ID ${co.paidId}.`;
+            box.hidden = false;
+          }
+        }
+        return;
+      }
       clearCart(result.eventIds);
       if (checkout !== co) return refreshEventsGrid();
+      if (co.paidId) result.razorpayId = co.paidId;
       checkout.result = result;
       checkout.step = "done";
       refreshEventsGrid();
@@ -1186,7 +1245,7 @@ async function onCheckoutSubmit(evt, card) {
     const btn = card.querySelector("#co-submit");
     if (btn) {
       btn.disabled = false;
-      btn.textContent = co.step === "join" ? "JOIN TEAM" : "CONFIRM REGISTRATION";
+      btn.textContent = co.step === "join" ? "JOIN TEAM" : reviewSubmitLabel(co, getCartTotal(co.items));
     }
   } finally {
     if (submitting === co) submitting = null;

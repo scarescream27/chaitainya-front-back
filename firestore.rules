@@ -45,6 +45,18 @@ service cloud.firestore {
       return value is string && value.matches('^[0-9]{12}$');
     }
 
+    // Razorpay payment id from checkout (test mode). No server checks its
+    // signature, so an admin still confirms it against the Razorpay dashboard.
+    function isRazorpayPaymentId(value) {
+      return value is string && value.matches('^pay_[A-Za-z0-9]{14}$');
+    }
+
+    // UPI payments carry a 12-digit UTR; Razorpay payments a pay_ id.
+    function isPaymentRef(method, ref) {
+      return (method == 'razorpay' && isRazorpayPaymentId(ref)) ||
+        (method != 'razorpay' && isUtr(ref));
+    }
+
     // Entry fee as seeded by the admin "Sync events" action. An event that is
     // not seeded is treated as paid, so free sign-ups need the events synced.
     function eventIsFree(eventId) {
@@ -252,7 +264,7 @@ service cloud.firestore {
         data().status == 'pending_verification' &&
         data().verifiedAt == null &&
         data().verifiedBy == null &&
-        isUtr(data().transactionRef) &&
+        isPaymentRef(data().get('method', 'upi'), data().transactionRef) &&
         data().amount is number && data().amount > 0;
 
       // Payer may correct the UTR only after a rejection; admins verify/reject.
@@ -261,7 +273,7 @@ service cloud.firestore {
         resource.data.payerUid == request.auth.uid &&
         resource.data.status == 'rejected' &&
         data().status == 'pending_verification' &&
-        isUtr(data().transactionRef) &&
+        isPaymentRef(resource.data.get('method', 'upi'), data().transactionRef) &&
         changedKeys().hasOnly(['transactionRef', 'status', 'resubmittedAt'])
       );
 

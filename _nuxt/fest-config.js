@@ -24,6 +24,11 @@ export const FEST_CONFIG = {
   // Optional: path to the official bank-issued QR image (e.g. "/images/upi-qr.png").
   // When null, only the UPI ID + a "Pay with UPI app" button are shown.
   upiQrImage: null,
+
+  // Razorpay Checkout. TEST MODE ONLY; see RAZORPAY_SETUP.md. keyId is the
+  // public test key id ("rzp_test_..."), never the key secret. When enabled,
+  // paid checkouts use Razorpay; the UPI + UTR flow above is the fallback.
+  razorpay: { enabled: false, keyId: null },
 };
 
 // Sponsors: { name, tier, url, logo }, shown on /about and /sponsors.
@@ -36,6 +41,12 @@ export function getFestDatesLabel() {
 
 export function isPaymentConfigured() {
   return Boolean(FEST_CONFIG.upiId && FEST_CONFIG.upiId.includes("@"));
+}
+
+// Test-mode guard: only a "rzp_test_" key id switches Razorpay on.
+export function isRazorpayEnabled() {
+  const rp = FEST_CONFIG.razorpay || {};
+  return Boolean(rp.enabled && typeof rp.keyId === "string" && rp.keyId.startsWith("rzp_test_"));
 }
 
 /**

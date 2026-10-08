@@ -152,3 +152,32 @@ header {
     padding-right: max(8px, env(safe-area-inset-right, 0px));
   }
 }
+
+/* Header items over a dark surface (.on-dark is set per item from
+   nuxt-router-utils.js by sampling what sits behind it): white logo, links
+   and menu icon. Not while the phone menu is open (it has a light
+   background of its own). */
+html:not(:has(header .menu-switch.active)) header .header .header-logo.on-dark img {
+  filter: invert(1);
+}
+html:not(:has(header .menu-switch.active)) header .header .right-menu a.on-dark {
+  color: #fff;
+}
+html:not(:has(header .menu-switch.active)) header .header .menu-switch.on-dark .line {
+  background-color: #fff;
+}
+header .header .header-logo img,
+header .header .right-menu > a {
+  transition: filter 0.2s ease, color 0.2s ease;
+}
+/* Keep the burger -> cross animation (transform/opacity) as well. */
+header .header .menu-switch .line {
+  transition: transform 0.2s ease, opacity 0.15s ease, background-color 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  header .header .header-logo img,
+  header .header .right-menu > a,
+  header .header .menu-switch .line {
+    transition: none;
+  }
+}

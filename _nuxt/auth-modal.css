@@ -1497,6 +1497,20 @@ html.cursor-text #cursor {
   html.custom-cursor-active * {
     cursor: none !important;
   }
+
+  /* A modal <dialog> (e.g. the home "Open …?" confirm) sits in the top
+     layer, above the crosshair, so no cursor was visible at all. While one is
+     open, use the system cursor and hide the crosshair. */
+  html.custom-cursor-active:has(dialog[open]),
+  html.custom-cursor-active:has(dialog[open]) * {
+    cursor: auto !important;
+  }
+  html.custom-cursor-active:has(dialog[open]) dialog[open] :is(button, a, [role="button"]) {
+    cursor: pointer !important;
+  }
+  html:has(dialog[open]) #cursor {
+    opacity: 0 !important;
+  }
 }
 
 #cursor .wrapper,
