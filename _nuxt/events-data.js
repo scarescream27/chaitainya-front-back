@@ -441,7 +441,7 @@ export const EVENTS_DATA = [
   event({
     id: "cultural-walk",
     registrationType: "both", maxTeam: 10,
-    title: "CULTURAL WALK",
+    title: "Unleashed",
     tagline: "A walk through the cultures of India",
     category: "cultural",
     overview: "A parade of regional attire, traditions and heritage from across India. Walk solo or in a group of up to 10; details to be announced.",
@@ -450,7 +450,7 @@ export const EVENTS_DATA = [
   event({
     id: "dance-competition",
     registrationType: "both", maxTeam: 12,
-    title: "DANCE COMPETITION",
+    title: "Rythmic Rumble",
     tagline: "Own the stage",
     category: "cultural",
     overview: "Perform solo or with a crew of up to 12. Dance categories and rules to be announced.",
