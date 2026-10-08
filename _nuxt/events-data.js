@@ -63,6 +63,7 @@ const POSTERS = new Set([
   "esports-bgmi",
   "cadcraft",
   "esports-free-fire",
+  "competitive-programming",
 ]);
 
 // Official rulebook PDFs (rulebooks/<event id>.pdf). Served from jsDelivr,
