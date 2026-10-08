@@ -40,7 +40,6 @@ export function isFirebaseConfigured(config = getFirebaseConfig()) {
 // Admin emails (UI only). Access is enforced by isAdmin() in firestore.rules;
 // keep both lists in sync.
 export const ADMIN_EMAILS = [
-  "chaitanyahptu@gmail.com",
   "adityaverma200911@gmail.com",
   "manaskapoor033@gmail.com",
 ];
