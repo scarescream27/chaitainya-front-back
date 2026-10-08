@@ -19,7 +19,7 @@ export const FEST_CONFIG = {
   // UPI collection account. Leave upiId null until the account is verified
   // by the committee: paid registrations will show "payment details coming
   // soon" and stay closed so nobody pays the wrong account.
-  upiId: null,
+  upiId: "bilibiryani@ptaxis", // verified by the organisers (8 Oct 2026)
   upiPayeeName: "Chaitanya HPTU",
   // Optional: path to the official bank-issued QR image (e.g. "/images/upi-qr.png").
   // When null, only the UPI ID + a "Pay with UPI app" button are shown.
