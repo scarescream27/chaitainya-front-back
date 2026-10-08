@@ -42,7 +42,7 @@ const TBN = "To be notified";
 // poster keep the category glyph.
 // Bump when a poster file is replaced under the same name: images are cached
 // for 7 days (firebase.json), so a new ?v= makes browsers fetch the new one.
-const POSTER_V = "2";
+const POSTER_V = "3";
 const POSTERS = new Set([
   "codeforge-reforged",
   "capture-the-flag",
