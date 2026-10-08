@@ -1440,8 +1440,9 @@
 /* Event cards with a poster: the poster carries the name, so no dark fade and
    the text is kept for screen readers only. */
 .m-card.m-card-poster {
-  /* Whole poster (square or 4:5) inside the taller card: never crop its text. */
-  background: var(--bg) center / contain no-repeat, #000;
+  /* Whole poster (square or 4:5) inside the taller card: never crop its
+     text; its blurred copy fills the rest instead of black bars. */
+  background: var(--bg) center / contain no-repeat, var(--poster-bg, none) center / cover no-repeat, #000;
 }
 .m-card.m-card-poster .m-card-body {
   position: absolute;

@@ -387,7 +387,7 @@ function renderEventCardHtml(ev) {
   return `
     <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
-      <button type="button" class="event-card-visual${ev.poster ? " has-poster" : ""}" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
+      <button type="button" class="event-card-visual${ev.poster ? " has-poster" : ""}"${ev.posterBg ? ` style="--poster-bg: url('${e(ev.posterBg)}')"` : ""} aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
         ${
           ev.poster
             ? posterImg(ev)
@@ -491,7 +491,7 @@ export function openEventDossier(eventId) {
     <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
     <button type="button" class="event-dossier-close" id="dossier-close-btn" aria-label="Close"><span class="m-x" aria-hidden="true">✕</span></button>
   </div>
-  <div class="event-dossier-visual${ev.poster ? " has-poster" : ""}" style="--cat:${accentColor};">
+  <div class="event-dossier-visual${ev.poster ? " has-poster" : ""}" style="--cat:${accentColor};${ev.posterBg ? ` --poster-bg: url('${e(ev.posterBg)}');` : ""}">
     ${
       ev.poster
         ? posterImg(ev, { eager: true })

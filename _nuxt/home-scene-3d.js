@@ -6851,14 +6851,26 @@ let Ws,
                     !t &&
                       window.innerWidth < 1024 &&
                       W.scale.set(8e3, 8e3, 8e3),
-                    // Phones: the smaller rings kept the desktop spacing and read
-                    // as far apart; pull them 8% closer around their shared
-                    // centre (mean y, cached before any ring moves). More than
-                    // ~10% makes neighbouring rings touch in the close-up shots.
-                    window.innerWidth < 768 &&
-                      ((W.parent.userData.midY ??=
-                        W.parent.children.reduce((s, c) => s + c.position.y, 0) / W.parent.children.length),
-                      (W.position.y = W.parent.userData.midY + (W.position.y - W.parent.userData.midY) * 0.92)),
+                    // Ring spacing: the empty gap between neighbouring rings is
+                    // half of what it was (phones were already 8% closer: the gap
+                    // is halved from that). Computed from the ring's real height
+                    // (glass geometry x its scale) and the model's spacing, about
+                    // the rings' shared centre (mean y, cached before any moves).
+                    (() => {
+                      const ud = W.parent.userData;
+                      if (ud.ringFactor === undefined) {
+                        const ys = W.parent.children.map((c) => c.position.y);
+                        ud.midY = ys.reduce((a, y) => a + y, 0) / ys.length;
+                        const S = (Math.max(...ys) - Math.min(...ys)) / Math.max(1, ys.length - 1);
+                        const g = W.children[0].geometry;
+                        g.boundingBox || g.computeBoundingBox();
+                        const h = (g.boundingBox.max.y - g.boundingBox.min.y) * W.scale.y;
+                        const f0 = window.innerWidth < 768 ? 0.92 : 1;
+                        const gap = Math.max(0, S * f0 - h);
+                        ud.ringFactor = S > 0 ? (h + gap / 2) / S : 1;
+                      }
+                      W.position.y = ud.midY + (W.position.y - ud.midY) * ud.ringFactor;
+                    })(),
                     (W.children[0].material = new Ns({
                       color: 16777215,
                       transparent: !0,

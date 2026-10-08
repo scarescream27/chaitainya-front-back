@@ -350,7 +350,8 @@
 .event-card-visual.has-poster {
   padding: 0;
   overflow: hidden;
-  background: #000;
+  /* Blurred copy of the poster fills the box around the whole poster. */
+  background: var(--poster-bg, none) center / cover no-repeat, #000;
 }
 .event-card-visual.has-poster .event-poster {
   position: absolute;
@@ -358,10 +359,10 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
+  /* Whole poster, never cropped; the backdrop fills the rest. */
+  object-fit: contain;
 }
-/* Details: the whole poster, uncropped, on a black stage. */
+/* Details: the whole poster, uncropped, over its blurred backdrop. */
 .event-dossier-visual.has-poster {
   aspect-ratio: auto;
   height: auto;
@@ -370,7 +371,7 @@
   padding: 0;
   display: block;
   overflow: hidden;
-  background: #000;
+  background: var(--poster-bg, none) center / cover no-repeat, #000;
 }
 .event-dossier-visual.has-poster .event-poster {
   display: block;

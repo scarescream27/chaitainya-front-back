@@ -200,7 +200,7 @@ const eventCard = (ev) => {
   const num = String(EVENTS_DATA.indexOf(ev) + 1).padStart(2, "0");
   return `
     <li class="sgfm-card" style="--cat:${cat?.accent || "var(--ink)"}">
-      <div class="sgfm-vis${ev.poster ? " has-poster" : ""}" aria-hidden="true">
+      <div class="sgfm-vis${ev.poster ? " has-poster" : ""}"${ev.posterBg ? ` style="--poster-bg: url('${esc(ev.posterBg)}')"` : ""} aria-hidden="true">
         ${
           ev.poster
             ? `<img class="sgfm-poster" src="${esc(ev.poster)}" alt="" width="900" height="900" loading="lazy" decoding="async">`

@@ -26,8 +26,10 @@ export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 const TBN = "To be notified";
 
 // Events that have a poster: images/events/<event id>.webp (900px wide,
-// square or 4:5). To add one, drop the file in and add the id here; events
-// without a poster keep the category glyph.
+// square or 4:5) plus <event id>-bg.webp, a tiny blurred copy that fills the
+// rest of a box so the whole poster shows with no cropping and no black bars.
+// To add one, drop both files in and add the id here; events without a
+// poster keep the category glyph.
 const POSTERS = new Set([
   "codeforge-reforged",
   "capture-the-flag",
@@ -93,6 +95,7 @@ function event(e) {
     coordinators: [],
     ...e,
     poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp` : null,
+    posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp` : null,
     registrationType: type,
     minTeam,
     maxTeam,
