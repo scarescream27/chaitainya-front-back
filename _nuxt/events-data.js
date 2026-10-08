@@ -565,7 +565,7 @@ export function feeLabel(ev) {
   if (!ev) return "";
   if (!ev.registrationOpen && !ev.entryFeeNum) return ev.entryFee || "To be notified";
   if (!ev.entryFeeNum) return "Free";
-  return `₹${ev.entryFeeNum}${ev.registrationType === "solo" ? "" : " per person"}`;
+  return `₹${ev.entryFeeNum}${{ team: " per team", both: " per entry (solo or team)" }[ev.registrationType] || ""}`;
 }
 
 /**

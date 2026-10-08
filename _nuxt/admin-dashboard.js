@@ -612,7 +612,7 @@ function renderPayments({ utrCounts }) {
     .sort((a, b) => (a.status === "pending_verification" ? 0 : 1) - (b.status === "pending_verification" ? 0 : 1) || String(b.createdAt).localeCompare(String(a.createdAt)));
   const rows = filtered.map((p) => {
     const items = paymentItems(p);
-    const expected = items.reduce((sum, it) => sum + eventFee(it.eventId) * (Number(it.people) || 1), 0);
+    const expected = items.reduce((sum, it) => sum + eventFee(it.eventId), 0);
     const flags = [
       utrCounts.get(p.transactionRef) > 1 ? `<span class="admin-flag">DUPLICATE UTR</span>` : "",
       expected > 0 && Number(p.amount) !== expected ? `<span class="admin-flag">FEE IS ₹${e(expected)}</span>` : "",

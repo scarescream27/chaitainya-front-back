@@ -603,9 +603,7 @@ function checkCart(items, details, teams) {
       if (size > ev.maxTeam) throw new Error(`${ev.title} allows at most ${ev.maxTeam} members including you.`);
       team = { teamName, members };
     }
-    // Fees are per person: the leader pays for the whole team.
-    const people = isTeam ? team.members.length + 1 : 1;
-    return { ev, isTeam, team, people, amount: (Number(ev.entryFeeNum) || 0) * people };
+    return { ev, isTeam, team, amount: Number(ev.entryFeeNum) || 0 };
   });
 
   if (lines.some((l) => l.ev.isAccommodation)) {
@@ -737,7 +735,6 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "", { 
             eventId: l.ev.id,
             eventTitle: l.ev.title,
             amount: l.amount,
-            people: l.people,
             type: l.isTeam ? "team" : "solo",
             teamId: l.isTeam ? `team_${l.ev.id}_${user.uid}` : null,
             teamName: l.isTeam ? l.team.teamName : null,

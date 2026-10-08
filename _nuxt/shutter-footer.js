@@ -233,7 +233,7 @@ const faqItems = () => {
       // Same source as the event pages' FEE line, so the two never disagree.
       EVENTS_DATA.every((ev) => feeLabel(ev) === "Free")
         ? "Yes, right now every event is free to enter. Each event's page shows its fee, so check it before you sign up."
-        : "Most events have a small entry fee, from ₹20 to ₹299. A few are free. For team events the fee is per person, and the team leader pays for the whole team. Each event's page shows its fee and prizes."],
+        : "Most events have a small entry fee, from ₹20 to ₹299. A few are free. For team events the fee is for the whole team, and the team leader pays it once. Each event's page shows its fee and prizes."],
     ["Where are the events held?",
       `On the ${esc(FEST_CONFIG.university)} campus. Each event's page shows its venue. Some venues are not out yet.`],
     ["Can I join more than one event?",

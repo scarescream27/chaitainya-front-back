@@ -64,14 +64,6 @@ const UTR_PATTERN = /^\d{12}$/;
 // Paid checkouts go through Razorpay when it's switched on (UPI + UTR otherwise).
 // co.paidId: Razorpay already took the money but the save hasn't succeeded yet,
 // so the button only retries the save (never charges twice).
-// Fees are per person: a team line costs the fee × its size (leader + named
-// members). Before the team step is filled in, the size is the event minimum.
-const lineAmount = ({ event: ev, mode, amount }) => {
-  if (mode !== "team") return amount;
-  const members = checkout?.teams?.[ev.id]?.members;
-  return amount * (members ? Math.max(members.filter((m) => m.name).length + 1, ev.minTeam) : ev.minTeam);
-};
-const lineTotal = (items) => items.reduce((sum, i) => sum + lineAmount(i), 0);
 const useRazorpay = (total) => total > 0 && isRazorpayEnabled();
 const reviewSubmitLabel = (co, total) =>
   co.paidId ? "RETRY SAVING REGISTRATION" : useRazorpay(total) ? `PAY ₹${total} WITH RAZORPAY` : "CONFIRM REGISTRATION";
@@ -640,8 +632,7 @@ function renderCartPanel() {
   if (!panel) return;
   const keepFocus = focusedSelector(panel);
   const items = getCartItems();
-  const total = lineTotal(items);
-  const from = items.some((i) => i.mode === "team" && i.amount) ? "FROM " : "";
+  const total = getCartTotal(items);
 
   const rows = items
     .map(({ event: ev, mode, amount }) => {
@@ -660,7 +651,7 @@ function renderCartPanel() {
             ${typeControl}
           </div>
           <div class="cart-item-side">
-            <span class="cart-amount">${amount ? `₹${e(amount)}${mode === "team" ? " / person" : ""}` : "FREE"}</span>
+            <span class="cart-amount">${amount ? `₹${e(amount)}` : "FREE"}</span>
             <button type="button" class="cart-remove" data-action="cart-remove" data-event-id="${e(ev.id)}" aria-label="Remove ${e(ev.title)} from cart">REMOVE</button>
           </div>
         </li>`;
@@ -675,7 +666,7 @@ function renderCartPanel() {
     ${items.length
       ? `<ul class="cart-list">${rows}</ul>
          <div class="cart-foot">
-           <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `${from}₹${e(total)}` : "FREE"}</strong></div>
+           <div class="cart-total"><span>${items.length} EVENT${items.length > 1 ? "S" : ""}</span><strong>TOTAL ${total ? `₹${e(total)}` : "FREE"}</strong></div>
            <button type="button" class="event-submit-btn cart-done" data-action="cart-done">REGISTER</button>
          </div>`
       : `<div class="cart-empty"><p>Your cart is empty.</p><p>Tap the cart button on an event to add it.</p></div>`}
@@ -1115,11 +1106,11 @@ function renderCheckout(focusSel) {
         </div>
       </form>`;
   } else if (step === "review") {
-    const total = lineTotal(checkout.items);
+    const total = getCartTotal(checkout.items);
     const rows = checkout.items
       .map(
-        (item) => `
-        <li><span>${e(item.event.title)} <em>${item.mode === "team" ? `TEAM · ${e(checkout.teams[item.eventId]?.teamName || "")}` : "SOLO"}</em></span><strong>${item.amount ? `₹${e(lineAmount(item))}` : "FREE"}</strong></li>`
+        ({ event: ev, mode, amount }) => `
+        <li><span>${e(ev.title)} <em>${mode === "team" ? `TEAM · ${e(checkout.teams[ev.id]?.teamName || "")}` : "SOLO"}</em></span><strong>${amount ? `₹${e(amount)}` : "FREE"}</strong></li>`
       )
       .join("");
     const payReady = isRazorpayEnabled() || isPaymentConfigured();
@@ -1251,7 +1242,7 @@ async function onCheckoutSubmit(evt, card) {
       return renderCheckout();
     }
     if (checkout.step === "review") {
-      const total = lineTotal(checkout.items);
+      const total = getCartTotal(checkout.items);
       const viaRazorpay = useRazorpay(total) || Boolean(co.paidId);
       checkout.utr = card.querySelector("#co-utr")?.value.trim() || "";
       if (total > 0 && !viaRazorpay && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
@@ -1346,7 +1337,7 @@ async function onCheckoutSubmit(evt, card) {
     const btn = card.querySelector("#co-submit");
     if (btn) {
       btn.disabled = false;
-      btn.textContent = co.step === "join" ? "JOIN TEAM" : reviewSubmitLabel(co, lineTotal(co.items));
+      btn.textContent = co.step === "join" ? "JOIN TEAM" : reviewSubmitLabel(co, getCartTotal(co.items));
     }
   } finally {
     if (submitting === co) submitting = null;
