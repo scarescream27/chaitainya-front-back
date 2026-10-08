@@ -7,23 +7,23 @@
  */
 
 // Source: "Chaitanya Teams 2026". Names and roles only. Order is the order
-// on /organisers and in the home organisers slider: website developers, then
-// the coordinators of the whole fest, then the team coordinators below.
+// on /organisers and in the home organisers slider: the coordinators of the
+// whole fest, then the website developers, then the team coordinators below.
 export const TEAMS = [
-  {
-    id: "website-developers",
-    name: "Website Developers",
-    people: [
-      { name: "Aditya Verma", role: "Website Developer" },
-      { name: "Manas Kapoor", role: "Website Developer" },
-    ],
-  },
   {
     id: "event-coordinators",
     name: "Event Coordinators",
     people: [
       { name: "Aman Singh Ranawat", role: "Event Coordinator" },
       { name: "Krish Kanha", role: "Event Coordinator" },
+    ],
+  },
+  {
+    id: "website-developers",
+    name: "Website Developers",
+    people: [
+      { name: "Aditya Verma", role: "Website Developer" },
+      { name: "Manas Kapoor", role: "Website Developer" },
     ],
   },
 ];
@@ -63,8 +63,8 @@ export const personSlug = (name) =>
 
 /**
  * Everyone on /organisers, in page order, merged by name:
- * { slug, name, roles, teams, events }. Website developers, event
- * coordinators, then team coordinators. events stays empty: event student
+ * { slug, name, roles, teams, events }. Event coordinators, website
+ * developers, then team coordinators. events stays empty: event student
  * heads are listed on the events page only.
  */
 export function allPeople() {

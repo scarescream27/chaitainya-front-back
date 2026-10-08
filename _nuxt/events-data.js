@@ -40,6 +40,11 @@ const POSTERS = new Set([
   "treasure-hunt",
   "cultural-walk",
   "dance-competition",
+  "pitch-sansad",
+  "capture-the-moment",
+  "nerd-wars",
+  "ui-ux-designathon",
+  "innovation-fair",
 ]);
 
 // Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
