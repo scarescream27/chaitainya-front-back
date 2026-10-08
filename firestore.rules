@@ -118,7 +118,7 @@ service cloud.firestore {
     // (= 8 Oct 18:30 UTC). Lifts by itself. Keep in sync with
     // REGISTRATIONS_PAUSED_UNTIL in _nuxt/events-data.js.
     function registrationsPaused() {
-      return request.time < timestamp.date(2026, 10, 8) + duration.time(18, 30, 0, 0);
+      return false; // pause lifted 8 Oct 2026
     }
 
     function isPassId(value) {

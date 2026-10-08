@@ -26,7 +26,7 @@ export const REGISTRATIONS_CLOSED = false;
 // reopen by themselves afterwards, no redeploy needed. Shows "REGISTRATION
 // SOON". Set to null for no pause. Keep in sync with registrationsPaused()
 // in firestore.rules. (Paused 8 Oct 2026 after the site link leaked early.)
-export const REGISTRATIONS_PAUSED_UNTIL = "2026-10-09T00:00:00+05:30";
+export const REGISTRATIONS_PAUSED_UNTIL = null;
 
 export function isRegistrationPaused(now = Date.now()) {
   return Boolean(REGISTRATIONS_PAUSED_UNTIL) && now < Date.parse(REGISTRATIONS_PAUSED_UNTIL);
