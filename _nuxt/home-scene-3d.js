@@ -6703,13 +6703,14 @@ let Ws,
                 await ka());
             },
             ka = async () => {
-              // Same early download as the HDR (index.html); fall back to a
-              // normal load if it is missing or failed.
+              // Same early download as the HDR (index.html). If jsDelivr fails
+              // (some networks block it), load the copy the site itself serves.
               const early = window.__homeAssets && window.__homeAssets.glb;
               early && (window.__homeAssets.glb = null);
+              const local = () => s.loadAsync("/models/Scene14.glb");
               const N = await (early
-                  ? early.then((buf) => s.parseAsync(buf, "/models/")).catch(() => s.loadAsync("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/models/Scene14.glb"))
-                  : s.loadAsync("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/models/Scene14.glb")),
+                  ? early.then((buf) => s.parseAsync(buf, "/models/")).catch(local)
+                  : s.loadAsync("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/models/Scene14.glb").catch(local)),
                 A = N.scene,
                 G = N.animations;
               ((pe = A.children[7]),
