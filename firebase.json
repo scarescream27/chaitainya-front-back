@@ -43,7 +43,8 @@
       "**/*.cmd",
       "**/*.sh",
       "netlify.toml",
-      "vercel.json"
+      "vercel.json",
+      "wrangler.jsonc"
     ],
     "rewrites": [
       {

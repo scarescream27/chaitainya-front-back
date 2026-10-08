@@ -32,3 +32,4 @@ __pycache__/
 
 # Cloudflare Pages build output (scripts/build-pages.mjs)
 dist/
+.wrangler/
