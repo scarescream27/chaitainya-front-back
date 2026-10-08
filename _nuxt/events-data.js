@@ -30,6 +30,9 @@ const TBN = "To be notified";
 // rest of a box so the whole poster shows with no cropping and no black bars.
 // To add one, drop both files in and add the id here; events without a
 // poster keep the category glyph.
+// Bump when a poster file is replaced under the same name: images are cached
+// for 7 days (firebase.json), so a new ?v= makes browsers fetch the new one.
+const POSTER_V = "2";
 const POSTERS = new Set([
   "codeforge-reforged",
   "capture-the-flag",
@@ -40,6 +43,11 @@ const POSTERS = new Set([
   "treasure-hunt",
   "cultural-walk",
   "dance-competition",
+  "pitch-sansad",
+  "capture-the-moment",
+  "nerd-wars",
+  "ui-ux-designathon",
+  "innovation-fair",
 ]);
 
 // Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
@@ -94,8 +102,8 @@ function event(e) {
     judgingCriteria: [],
     coordinators: [],
     ...e,
-    poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp` : null,
-    posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp` : null,
+    poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp?v=${POSTER_V}` : null,
+    posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp?v=${POSTER_V}` : null,
     registrationType: type,
     minTeam,
     maxTeam,
