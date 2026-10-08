@@ -747,6 +747,30 @@ body:has(.events-page-root) .transition-component {
   color: var(--ink);
 }
 
+.event-rulebook-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap, 44px);
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--line-strong);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.event-rulebook-btn:hover {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.event-rulebook-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 /* Coordinator Box */
 .event-coordinator-card {
   background: var(--surface);

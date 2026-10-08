@@ -542,9 +542,9 @@ export function openEventDossier(eventId) {
     ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Have a team code? Join your team</button>` : ""}
   </div>
   ${section("ABOUT", `<p class="event-dossier-text">${e(ev.overview)}</p>`)}
-  ${rulesHtml ? section("RULES", `<ul class="event-dossier-list">${rulesHtml}</ul>`) : ""}
+  ${rulesHtml || ev.rulebook ? section("RULES", `${ev.rulebook ? `<a class="event-rulebook-btn" href="${e(ev.rulebook)}" target="_blank" rel="noopener">↓ Download full rulebook (PDF)</a>` : ""}${rulesHtml ? `<ul class="event-dossier-list">${rulesHtml}</ul>` : ""}`) : ""}
   ${roundsHtml ? section("ROUNDS", `<div class="event-rounds">${roundsHtml}</div>`) : ""}
-  ${scoringHtml ? section(ev.id === "esports-bgmi" ? "SCORING" : "HOW WE JUDGE", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
+  ${scoringHtml ? section(ev.category === "esports" || ev.id === "competitive-programming" ? "SCORING" : "HOW WE JUDGE", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
   ${section("WHO CAN TAKE PART", `
     <dl class="event-dossier-facts">
       <div><dt>REGISTRATION</dt><dd>${e(typeLabel)}</dd></div>
