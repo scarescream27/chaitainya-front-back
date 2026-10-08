@@ -101,13 +101,6 @@ function buildHtml() {
         </section>
       </div>
 
-      <section class="m-accom-block m-accom-faq" aria-labelledby="accom-faq">
-        <h2 class="m-h" id="accom-faq">FAQ</h2>
-        <div class="sgfm-faq-list">${faq
-          .map(([q, a]) => `<details class="sgfm-qa" name="accom-faq"><summary><span>${esc(q)}</span>${CHEVRON}</summary><div class="sgfm-a"><p>${a}</p></div></details>`)
-          .join("")}</div>
-      </section>
-
       <!-- Price and booking come last: what you get first, then what it costs. -->
       <section class="m-accom-block m-accom-booksec" aria-labelledby="accom-book">
         <h2 class="m-h" id="accom-book">Book your stay</h2>
@@ -117,6 +110,13 @@ function buildHtml() {
           <p class="m-accom-note">Pay by UPI at booking; the fest team confirms your payment.</p>
           <div data-accom-slot>${buttonHtml()}</div>
         </div>
+      </section>
+
+      <section class="m-accom-block m-accom-faq" aria-labelledby="accom-faq">
+        <h2 class="m-h" id="accom-faq">FAQ</h2>
+        <div class="sgfm-faq-list">${faq
+          .map(([q, a]) => `<details class="sgfm-qa" name="accom-faq"><summary><span>${esc(q)}</span>${CHEVRON}</summary><div class="sgfm-a"><p>${a}</p></div></details>`)
+          .join("")}</div>
       </section>
 
       <section class="privacy-cta-box">
