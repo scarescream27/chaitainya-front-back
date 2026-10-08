@@ -15,7 +15,7 @@ An immersive, futuristic digital experience combining cutting-edge WebGL 3D grap
   - Sticky category toolbar with frosted glass morphing dock.
   - Floating brutalist scroll HUD with dynamic progress metric and 1-click smooth return to top.
   - GPU-accelerated staggered card reveals on scroll and interactive 3D perspective tilt on hover.
-- **Interactive Rules Dossier Drawer**: Slides out from the right displaying official competition rules, multi-round schedules, weighted judging rubrics, and direct Call & WhatsApp student/faculty coordinators.
+- **Interactive Rules Dossier Drawer**: Slides out from the right displaying official competition rules, multi-round schedules, weighted judging rubrics, and the student heads of each event.
 - **Team & Solo Registration with UPI payments**:
   - Team leaders create a team (and pay the team fee) and get a team code (e.g. `BYTE-4F8K`); teammates join with the code.
   - Paid events take a 12-digit UPI UTR. Payments stay **pending** until an admin verifies the UTR against the bank statement.
@@ -74,12 +74,12 @@ All fest-wide values live in [`_nuxt/fest-config.js`](_nuxt/fest-config.js):
 
 | Setting | Meaning |
 | --- | --- |
-| `datesLabel` | Official dates, e.g. `"10 – 11 OCTOBER 2026"`. `null` shows "DATES TBA". |
+| `datesLabel` | Official dates, e.g. `"30 OCT – 1 NOV 2026"`. `null` shows "DATES TBA". |
 | `upiId` | Verified UPI ID for collecting fees. `null` keeps paid registrations closed. |
 | `upiQrImage` | Optional path to the bank-issued QR image. |
 | `contactEmail` | Shown wherever no coordinator is listed. |
 
-Event details (venues, times, fees, prizes, coordinators) are in [`_nuxt/events-data.js`](_nuxt/events-data.js); they are provisional placeholders until the committee confirms them. After editing, regenerate `events_catalog.json` and re-run **Admin → Setup → Sync** so the security rules see the new fees.
+Event details (venues, times, fees, prizes, coordinators) are in [`_nuxt/events-data.js`](_nuxt/events-data.js); fields the committee has not confirmed yet show "To be notified". After editing, regenerate `events_catalog.json` and re-run **Admin → Setup → Sync** so the security rules see the new fees.
 
 ### Launch checklist
 

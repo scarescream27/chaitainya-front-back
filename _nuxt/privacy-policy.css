@@ -23,7 +23,14 @@
   pointer-events: none !important;
 }
 
-body:has(.privacy-page-root) .transition-component,
+body:has(.privacy-page-root) .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  clip-path: circle(0 at 50% 50%) !important;
+  -webkit-clip-path: circle(0 at 50% 50%) !important;
+}
+
+/* Separate rule: browsers without :has() drop a whole selector list. */
 .has-privacy-policy .transition-component {
   display: none !important;
   opacity: 0 !important;

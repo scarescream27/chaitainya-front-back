@@ -91,6 +91,9 @@
   text-decoration: none;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.78) 100%),
+    var(--bg, linear-gradient(160deg, var(--tint), #000));
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.78) 100%),
     var(--bg, linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 45%, #000)));
   background-size: cover;
   background-position: center;
@@ -441,6 +444,9 @@
   color: #fff;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.8) 100%),
+    var(--bg, linear-gradient(160deg, var(--tint), #000));
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.8) 100%),
     var(--bg, linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 40%, #000)));
   background-size: cover;
   background-position: center;
@@ -645,6 +651,7 @@
   border-radius: 20px;
   color: #fff;
   text-decoration: none;
+  background: linear-gradient(160deg, var(--tint), #000);
   background: linear-gradient(160deg, var(--tint), color-mix(in srgb, var(--tint) 45%, #000));
 }
 
@@ -1401,6 +1408,7 @@
   }
 
   .events-cat-btn:not(.active):hover {
+    background: var(--surface);
     background: color-mix(in srgb, var(--ink) 6%, var(--surface));
   }
 }

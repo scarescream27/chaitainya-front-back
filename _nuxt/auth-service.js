@@ -1514,12 +1514,15 @@ async function setPaymentStatus(payment, status, extra) {
     batch.update(doc(firebaseFirestore, "payments", payment.paymentId), patch);
     try {
       // update (not set+merge) so deregistered docs aren't recreated as stubs; skip missing ones.
+      // Only docs that point back at THIS payment: items are client-written, so a
+      // second ₹1 payment listing a ₹199 event must not mark that event paid.
+      const linked = (d) => d.exists() && (d.data().payment_id ?? d.data().paymentId) === payment.paymentId;
       for (const item of items) {
         const regRef = doc(firebaseFirestore, "registrations", registrationId(item.eventId, payment.payerUid));
-        if ((await getDoc(regRef)).exists()) batch.update(regRef, { payment_status: status });
+        if (linked(await getDoc(regRef))) batch.update(regRef, { payment_status: status });
         if (ownTeam(item)) {
           const teamRef = doc(firebaseFirestore, "teams", item.teamId);
-          if ((await getDoc(teamRef)).exists()) batch.update(teamRef, { paymentStatus: teamStatus });
+          if (linked(await getDoc(teamRef))) batch.update(teamRef, { paymentStatus: teamStatus });
         }
       }
       await batch.commit();

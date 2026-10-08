@@ -102,6 +102,7 @@ header .header .right-menu {
    enlarged text. */
 @media (max-width: 991px) {
   header .header .mobile-menu {
+    height: 100vh;
     height: 100dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -189,9 +190,17 @@ header .header .menu-switch .line {
 header::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: -1;
   pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--sky-top) 78%,
+    transparent
+  );
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--sky-top) 97%, transparent) 78%,

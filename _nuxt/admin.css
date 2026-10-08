@@ -121,6 +121,7 @@ html body:has(.admin-page-root) header {
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   text-align: left;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 86.7%, var(--surface)); /* #222 in light */
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -320,6 +321,7 @@ ol.adm-list li span::before {
 .adm-bar-track {
   height: 10px;
   border-radius: 10px;
+  background: var(--surface);
   background: color-mix(in srgb, var(--sky-bottom) 32%, var(--surface)); /* ≈ #e7edf8 in light */
   overflow: hidden;
 }

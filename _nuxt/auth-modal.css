@@ -29,7 +29,10 @@
 /* Modal Root Overlay - Frosted luminous blur */
 .chaitanya-modal-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1000; /* above the events floating buttons (990) */
   display: flex;
   align-items: center;
@@ -191,6 +194,7 @@ html.pp-open .chaitanya-modal-backdrop {
   gap: 12px;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-body);
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 93.3%, var(--surface)); /* #111 in light */
   line-height: 1.45;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
@@ -658,6 +662,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .btn-action-approve:hover {
+  background: var(--ok);
   background: color-mix(in srgb, var(--ok) 75%, var(--ink));
 }
 
@@ -675,6 +680,7 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 .btn-action-reject:hover {
+  background: var(--danger-ink);
   background: color-mix(in srgb, var(--danger-ink) 75%, var(--ink));
 }
 
@@ -797,6 +803,7 @@ html.pp-open .chaitanya-modal-backdrop {
 
 .admin-table code {
   font-size: var(--fs-label);
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 6%, var(--surface)); /* #f0f0f0 in light */
   color: var(--ink);
   padding: 2px 4px;
@@ -895,7 +902,10 @@ html:not(.is-fest-admin) header .header .right-menu a[href="/admin"] {
    ========================================================================== */
 .pp-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 100001;
   background: var(--am-pp-scrim);
   opacity: 0;
@@ -914,6 +924,7 @@ html:not(.is-fest-admin) header .header .right-menu a[href="/admin"] {
   top: 76px;
   right: 24px;
   width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 100px);
   max-height: calc(100dvh - 100px);
   display: flex;
   flex-direction: column;
@@ -1378,6 +1389,7 @@ html.pp-open {
 }
 
 .pp-idcard.none .pp-idcard-status {
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 5%, var(--surface)); /* #f2f2f2 in light */
   color: var(--ink-muted);
 }
@@ -1440,6 +1452,7 @@ html.pp-open {
     right: 12px;
     left: 12px;
     width: auto;
+    max-height: calc(100vh - 24px);
     max-height: calc(100dvh - 24px);
     transform-origin: top center;
   }
@@ -2160,6 +2173,7 @@ header .header .nav-account {
 
   .pp-panel {
     top: max(12px, env(safe-area-inset-top));
+    max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
 

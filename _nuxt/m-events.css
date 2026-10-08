@@ -158,11 +158,13 @@
 
 @media (hover: hover) and (pointer: fine) {
   .event-cart-toggle:hover {
+    background: var(--surface);
     background: color-mix(in srgb, var(--ink) 6%, var(--surface));
     transform: translateY(-1px);
   }
 
   .event-cart-toggle.is-added:hover {
+    background: var(--ink);
     background: color-mix(in srgb, var(--ink) 87%, var(--surface));
   }
 
@@ -295,7 +297,7 @@
 
 .event-org-link {
   display: inline-block;
-  padding: 6px 0;
+  padding: 10px 0;
   color: var(--ink);
   font-weight: 600;
   text-decoration: underline;
@@ -355,7 +357,10 @@
 }
 .event-card-visual.has-poster .event-poster {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: block;
   width: 100%;
   height: 100%;

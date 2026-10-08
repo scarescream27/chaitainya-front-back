@@ -148,7 +148,7 @@ let a,
           meta: [
             {
               name: "description",
-              content: "The people behind Chaitanya 2k26 at HPTU Hamirpur: the core team and the student heads of every event team.",
+              content: "The people behind Chaitanya 2k26 at HPTU Hamirpur: the fest coordinators, website developers and the coordinators of every organising team.",
             },
           ],
           link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/organisers" }],

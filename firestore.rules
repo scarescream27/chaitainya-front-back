@@ -66,38 +66,47 @@ service cloud.firestore {
     }
 
     // Item i of a list of maps (team members, payment items): field has no tags.
+    // (noTags inlined to save expressions; string() turns null into "null".)
     function noTagsAt(l, i, f) {
-      return l.size() <= i || noTags(l[i].get(f, ''));
+      return l.size() <= i || !string(l[i].get(f, '')).matches('[\\s\\S]*<[A-Za-z/!?][\\s\\S]*');
     }
 
-    // Every item's field in a list of at most 25 maps (rules can't loop).
+    // Every item's field in a list of at most 25 maps has no tags. Rules can't
+    // loop, so this is unrolled in blocks of 5 that stop at the end of the
+    // list: Firestore allows 1000 expressions per request and a team sign-up
+    // batch writes 5 docs, so checking all 25 slots every time hit the limit.
     function listNoTags(l, f) {
       return l is list && l.size() <= 25 &&
-        noTagsAt(l, 0, f) &&
-        noTagsAt(l, 1, f) &&
-        noTagsAt(l, 2, f) &&
-        noTagsAt(l, 3, f) &&
-        noTagsAt(l, 4, f) &&
-        noTagsAt(l, 5, f) &&
-        noTagsAt(l, 6, f) &&
-        noTagsAt(l, 7, f) &&
-        noTagsAt(l, 8, f) &&
-        noTagsAt(l, 9, f) &&
-        noTagsAt(l, 10, f) &&
-        noTagsAt(l, 11, f) &&
-        noTagsAt(l, 12, f) &&
-        noTagsAt(l, 13, f) &&
-        noTagsAt(l, 14, f) &&
-        noTagsAt(l, 15, f) &&
-        noTagsAt(l, 16, f) &&
-        noTagsAt(l, 17, f) &&
-        noTagsAt(l, 18, f) &&
-        noTagsAt(l, 19, f) &&
-        noTagsAt(l, 20, f) &&
-        noTagsAt(l, 21, f) &&
-        noTagsAt(l, 22, f) &&
-        noTagsAt(l, 23, f) &&
-        noTagsAt(l, 24, f);
+        (l.size() <= 0 || (
+          noTagsAt(l, 0, f) &&
+          noTagsAt(l, 1, f) &&
+          noTagsAt(l, 2, f) &&
+          noTagsAt(l, 3, f) &&
+          noTagsAt(l, 4, f) &&
+        (l.size() <= 5 || (
+          noTagsAt(l, 5, f) &&
+          noTagsAt(l, 6, f) &&
+          noTagsAt(l, 7, f) &&
+          noTagsAt(l, 8, f) &&
+          noTagsAt(l, 9, f) &&
+        (l.size() <= 10 || (
+          noTagsAt(l, 10, f) &&
+          noTagsAt(l, 11, f) &&
+          noTagsAt(l, 12, f) &&
+          noTagsAt(l, 13, f) &&
+          noTagsAt(l, 14, f) &&
+        (l.size() <= 15 || (
+          noTagsAt(l, 15, f) &&
+          noTagsAt(l, 16, f) &&
+          noTagsAt(l, 17, f) &&
+          noTagsAt(l, 18, f) &&
+          noTagsAt(l, 19, f) &&
+        (l.size() <= 20 || (
+          noTagsAt(l, 20, f) &&
+          noTagsAt(l, 21, f) &&
+          noTagsAt(l, 22, f) &&
+          noTagsAt(l, 23, f) &&
+          noTagsAt(l, 24, f)))))))))));
     }
 
     // Profile photo: empty, or a plain https URL with no quotes, brackets or spaces.
@@ -119,6 +128,10 @@ service cloud.firestore {
     // REGISTRATIONS_PAUSED_UNTIL in _nuxt/events-data.js.
     function registrationsPaused() {
       return false; // pause lifted 8 Oct 2026
+    }
+
+    function isTeamCode(value) {
+      return value is string && value.matches('^[A-Z0-9]{2,6}-[A-Z0-9]{3,6}$');
     }
 
     function isPassId(value) {
@@ -145,7 +158,11 @@ service cloud.firestore {
         noTags(data().displayName) && noTags(data().get('college', '')) &&
         noTags(data().get('year', '')) && noTags(data().get('phone', '')) &&
         isSafePhotoUrl(data().get('photoURL', '')) &&
-        !('role' in data());
+        isShortString(data().get('name', ''), 120) && noTags(data().get('name', '')) &&
+        data().get('registeredEvents', []).size() <= 60 &&
+        data().get('registeredEventIds', []).size() <= 60 &&
+        data().keys().hasOnly(['uid', 'name', 'displayName', 'email', 'photoURL', 'college', 'year', 'phone',
+                               'studentId', 'registeredEvents', 'registeredEventIds', 'createdAt', 'updatedAt']);
 
       allow update: if isAdmin() || (
         isUser(userId) &&
@@ -155,6 +172,9 @@ service cloud.firestore {
         isShortString(data().get('college', ''), 120) &&
         isShortString(data().get('year', ''), 40) &&
         isShortString(data().get('phone', ''), 20) &&
+        isShortString(data().get('name', ''), 120) &&
+        data().get('registeredEvents', []).size() <= 60 &&
+        data().get('registeredEventIds', []).size() <= 60 &&
         noTags(data().displayName) && noTags(data().get('name', '')) &&
         noTags(data().get('college', '')) && noTags(data().get('year', '')) &&
         noTags(data().get('phone', '')) && isSafePhotoUrl(data().get('photoURL', '')) &&
@@ -189,6 +209,7 @@ service cloud.firestore {
       // The leader registers their team's code in the same batch as the team.
       allow create: if isAdmin() || (
         isAuthenticated() &&
+        isTeamCode(code) &&
         data().keys().hasOnly(['teamId', 'eventId']) &&
         data().teamId == 'team_' + data().eventId + '_' + request.auth.uid &&
         getAfter(/databases/$(database)/documents/teams/$(data().teamId)).data.teamCode == code
@@ -216,11 +237,18 @@ service cloud.firestore {
         data().members.size() <= data().maxTeamSize &&
         data().maxTeamSize <= 20 &&
         data().teamSize == data().members.size() &&
-        isShortString(data().teamName, 60) &&
+        data().keys().hasOnly(['id', 'teamId', 'event_id', 'eventId', 'eventName', 'team_name', 'teamName',
+                               'team_code', 'teamCode', 'leader_id', 'leaderUid', 'leaderName', 'college',
+                               'members', 'memberUids', 'linkedMembers', 'teamSize', 'minTeamSize',
+                               'maxTeamSize', 'paymentStatus', 'paymentId', 'created_at', 'registeredAt']) &&
+        isShortString(data().teamName, 60) && isShortString(data().get('team_name', ''), 60) &&
+        isShortString(data().get('leaderName', ''), 120) && isShortString(data().get('college', ''), 120) &&
+        isShortString(data().get('eventName', ''), 200) &&
         noTags(data().teamName) && noTags(data().get('team_name', '')) &&
         noTags(data().get('leaderName', '')) && noTags(data().get('college', '')) &&
+        noTags(data().get('eventName', '')) &&
         listNoTags(data().members, 'name') && listNoTags(data().linkedMembers, 'name') &&
-        data().teamCode is string &&
+        isTeamCode(data().teamCode) &&
         data().paymentStatus in ['free', 'pending'] &&
         (data().paymentStatus == 'pending' || eventIsFree(data().eventId));
 
@@ -236,6 +264,7 @@ service cloud.firestore {
         data().linkedMembers.hasAll(resource.data.linkedMembers) &&
         data().linkedMembers[data().linkedMembers.size() - 1].uid == request.auth.uid &&
         noTags(data().linkedMembers[data().linkedMembers.size() - 1].get('name', '')) &&
+        isShortString(data().linkedMembers[data().linkedMembers.size() - 1].get('name', ''), 120) &&
         data().memberUids.size() <= resource.data.maxTeamSize
       ) || (
         // A linked teammate (not the leader) may take only themself off the team.
@@ -282,21 +311,39 @@ service cloud.firestore {
       allow create: if isAuthenticated() && !registrationsPaused() &&
         regId == 'reg_' + data().event_id + '_' + request.auth.uid &&
         data().user_id == request.auth.uid &&
+        data().user_email == request.auth.token.email &&
+        data().keys().hasOnly(['id', 'user_id', 'user_name', 'user_email', 'user_phone', 'user_college',
+                               'user_year', 'student_id', 'event_id', 'event_title', 'participation_type',
+                               'team_id', 'team_code', 'team_role', 'team_members', 'registration_status',
+                               'payment_status', 'payment_id', 'amount_due', 'registration_qr_id',
+                               'registered_at', 'qr_payload']) &&
+        isShortString(data().get('user_name', ''), 120) && isShortString(data().get('user_college', ''), 120) &&
+        isShortString(data().get('user_year', ''), 40) && isShortString(data().get('user_phone', ''), 20) &&
+        isShortString(data().get('event_title', ''), 200) && isShortString(data().get('qr_payload', ''), 600) &&
+        (data().get('team_code', null) == null || isTeamCode(data().team_code)) &&
+        (data().get('student_id', null) == null || isStudentId(data().student_id)) &&
         data().participation_type in ['individual', 'team'] &&
         data().registration_status == 'registered' &&
         isPassId(data().registration_qr_id) &&
         noTags(data().get('user_name', '')) && noTags(data().get('user_college', '')) &&
         noTags(data().get('user_year', '')) && noTags(data().get('user_phone', '')) &&
         listNoTags(data().get('team_members', []), 'name') &&
-        listNoTags(data().get('team_members', []), 'email') &&
+        // team_members emails: no tag check (expression budget; admin-only, escaped there).
         (
-          data().payment_status == 'pending_verification' ||
+          // A pending registration must come with the payer's own payment doc
+          // (same batch), so it can't sit "pending" with nothing to verify.
+          (data().payment_status == 'pending_verification' &&
+            data().payment_id is string &&
+            data().payment_id.matches('^pay_' + request.auth.uid + '_[0-9]+$') &&
+            getAfter(/databases/$(database)/documents/payments/$(data().payment_id)).data.payerUid == request.auth.uid) ||
           (data().payment_status == 'free' && eventIsFree(data().event_id)) ||
           // Teammates are covered by their leader's team payment.
           (data().payment_status == 'team' &&
             data().participation_type == 'team' &&
             getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.eventId == data().event_id &&
             request.auth.uid in getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.memberUids &&
+            // The leader is covered by their own payment, never by 'team'.
+            request.auth.uid != getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.leaderUid &&
             data().team_code == getAfter(/databases/$(database)/documents/teams/$(data().team_id)).data.teamCode)
         );
 
@@ -332,6 +379,12 @@ service cloud.firestore {
         paymentId.matches('^pay_' + request.auth.uid + '_[0-9]+$') &&
         data().items is list && data().items.size() >= 1 && data().items.size() <= 25 &&
         data().payerUid == request.auth.uid &&
+        data().payerEmail == request.auth.token.email &&
+        data().keys().hasOnly(['paymentId', 'payerUid', 'payerName', 'payerEmail', 'payerPhone', 'items',
+                               'amount', 'method', 'transactionRef', 'status', 'createdAt',
+                               'verifiedAt', 'verifiedBy']) &&
+        data().get('method', 'upi') in ['upi', 'razorpay'] &&
+        isShortString(data().get('payerName', ''), 120) && isShortString(data().get('payerPhone', ''), 20) &&
         data().status == 'pending_verification' &&
         data().verifiedAt == null &&
         data().verifiedBy == null &&
@@ -347,6 +400,7 @@ service cloud.firestore {
         resource.data.status == 'rejected' &&
         data().status == 'pending_verification' &&
         isPaymentRef(resource.data.get('method', 'upi'), data().transactionRef) &&
+        isShortString(data().get('resubmittedAt', ''), 40) &&
         changedKeys().hasOnly(['transactionRef', 'status', 'resubmittedAt'])
       );
 
@@ -383,6 +437,8 @@ service cloud.firestore {
         isShortString(data().get('email', ''), 200) &&
         isShortString(data().get('phone', ''), 20) &&
         isShortString(data().get('team_name', ''), 120) &&
+        isShortString(data().get('id', ''), 100) &&
+        isShortString(data().get('created_at', ''), 40) && isShortString(data().get('updated_at', ''), 40) &&
         isShortString(data().subject, 200) &&
         isShortString(data().message, 5000) &&
         noTags(data().get('name', '')) && noTags(data().get('email', '')) &&

@@ -5,8 +5,8 @@
  * Source: "Event Student Heads" list from the organising committee.
  * Fest days: Day 1 = 30 Oct, Day 2 = 31 Oct, Day 3 = 1 Nov 2026.
  *
- * Fields the committee has not confirmed yet (entry fee, prizes, rules) are
- * marked "To be notified". Team limits below are PROVISIONAL.
+ * Fields the committee has not confirmed yet (venue, date, rules) are
+ * marked "To be notified". Entry fees are flat per team / per entry.
  *
  * To open registration for an event: set `entryFeeNum` (0 = free) and
  * `registrationOpen: true`. Set FEST_REGISTRATION_OPEN below to open all.
@@ -305,7 +305,7 @@ export const EVENTS_DATA = [
     entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
     registrationType: "team", minTeam: 1, maxTeam: 4, startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
     title: "AD IN HUSTLE",
-    tagline: "Pitch contest: present your startup idea to the house",
+    tagline: "Pitch contest: present your startup idea to the panel",
     category: "business",
     date: "DAY 3",
     time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",

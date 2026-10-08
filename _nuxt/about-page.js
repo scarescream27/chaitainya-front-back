@@ -110,7 +110,7 @@ let a,
           meta: [
             {
               name: "description",
-              content: "About Chaitanya 2k26, the annual tech and cultural fest of HPTU Hamirpur: the university, the fest, the organising team and sponsors.",
+              content: "About Chaitanya 2k26, the annual tech and cultural fest of HPTU Hamirpur: the university, the fest and its sponsors.",
             },
           ],
           link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/about" }],

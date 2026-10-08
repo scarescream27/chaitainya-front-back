@@ -24,7 +24,15 @@
   position: relative;
 }
 
-body:has(.events-page-root) .transition-component,
+body:has(.events-page-root) .transition-component {
+  display: none !important;
+  opacity: 0 !important;
+  clip-path: circle(0 at 50% 50%) !important;
+  -webkit-clip-path: circle(0 at 50% 50%) !important;
+  pointer-events: none !important;
+}
+
+/* Separate rule: browsers without :has() drop a whole selector list. */
 .has-events-page .transition-component {
   display: none !important;
   opacity: 0 !important;
@@ -80,6 +88,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 500;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 75%, transparent);
   letter-spacing: var(--track-body);
   text-transform: none;
@@ -361,6 +370,7 @@ body:has(.events-page-root) .transition-component,
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 80%, var(--surface));
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   padding: 4px 8px;
@@ -389,6 +399,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
   font-weight: 500;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 70%, transparent);
   line-height: 1.4;
   margin-bottom: 16px;
@@ -472,6 +483,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-btn-details:hover {
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 6%, var(--surface));
   transform: translateY(-1px);
 }
@@ -495,6 +507,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-btn-register:hover {
+  background: var(--ink);
   background: color-mix(in srgb, var(--ink) 87%, var(--surface));
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
@@ -528,8 +541,12 @@ body:has(.events-page-root) .transition-component,
  * ============================================================================ */
 .event-dossier-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 99999 !important;
+  background: var(--sky-top);
   background: color-mix(in srgb, color-mix(in srgb, var(--sky-bottom) 40%, var(--sky-top)) 60%, transparent);
   opacity: 0;
   pointer-events: none;
@@ -626,6 +643,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 500;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 73%, var(--surface));
   margin-bottom: 24px;
   line-height: 1.4;
@@ -696,6 +714,7 @@ body:has(.events-page-root) .transition-component,
 .event-dossier-text {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 87%, var(--surface));
   line-height: 1.6;
 }
@@ -713,6 +732,7 @@ body:has(.events-page-root) .transition-component,
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   line-height: 1.5;
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 93%, var(--surface));
   position: relative;
   padding-left: 24px;
@@ -791,8 +811,12 @@ body:has(.events-page-root) .transition-component,
  * ============================================================================ */
 .event-reg-modal {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 100000 !important;
+  background: var(--sky-top);
   background: color-mix(in srgb, color-mix(in srgb, var(--sky-bottom) 40%, var(--sky-top)) 60%, transparent);
   opacity: 0;
   pointer-events: none;
@@ -939,6 +963,7 @@ body:has(.events-page-root) .transition-component,
   max-width: 100%;
   min-width: 0;
   overflow-wrap: anywhere;
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 6%, var(--surface));
   padding: 8px 12px;
   border-radius: 20px;
@@ -979,6 +1004,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-submit-btn:hover {
+  background: var(--ink);
   background: color-mix(in srgb, var(--ink) 87%, var(--surface));
   transform: translateY(-1px);
 }
@@ -1191,6 +1217,7 @@ body:has(.events-page-root) .transition-component,
 }
 
 .event-reg-input[readonly] {
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
   color: var(--ink-muted);
 }
@@ -1242,6 +1269,7 @@ body:has(.events-page-root) .transition-component,
 .event-upi-help {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--fs-label);
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 73%, var(--surface));
   line-height: 1.5;
   margin: 0;
@@ -1369,6 +1397,7 @@ body:has(.events-page-root) .transition-component,
 
 .event-pass-note {
   font-size: var(--fs-label);
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 73%, var(--surface));
   line-height: 1.5;
   margin: 0 0 12px;
@@ -1414,6 +1443,7 @@ body:has(.events-page-root) .transition-component,
   .event-dossier-overlay {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    background: var(--sky-top);
     background: color-mix(in srgb, color-mix(in srgb, var(--sky-top) 89%, var(--ink)) 75%, transparent);
   }
 }
@@ -1530,8 +1560,12 @@ body:has(.events-page-root) .transition-component,
 /* Cart drawer */
 .events-cart-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 99999;
+  background: var(--sky-top);
   background: color-mix(in srgb, color-mix(in srgb, var(--sky-top) 87%, var(--ink)) 60%, transparent);
   opacity: 0;
   visibility: hidden;
@@ -1805,6 +1839,7 @@ body:has(.events-page-root) .transition-component,
   font-size: 12px;
   padding: 12px 16px;
   border-radius: 12px;
+  background: var(--surface);
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
 }
 
@@ -1912,6 +1947,7 @@ select.event-reg-input {
   .events-cart-overlay {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+    background: var(--sky-top);
     background: color-mix(in srgb, color-mix(in srgb, var(--sky-top) 87%, var(--ink)) 75%, transparent);
   }
 }
@@ -1947,6 +1983,7 @@ select.event-reg-input {
 .event-round p {
   margin: 4px 0 0;
   font-size: var(--fs-label);
+  color: var(--ink);
   color: color-mix(in srgb, var(--ink) 80%, var(--surface));
   line-height: 1.5;
 }

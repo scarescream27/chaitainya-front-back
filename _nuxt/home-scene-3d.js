@@ -6215,6 +6215,8 @@ let Ws,
             pi = et(null),
             Bt = et(null);
           (i.$onAction(({ name: N, args: A }) => {
+            // No WebGL: none of the 3D objects these handlers drive exist.
+            if (document.documentElement.classList.contains("no-webgl")) return;
             if (
               (N === "setJelMaterialOpacity" &&
                 i.getPreloaderDone &&
@@ -6274,11 +6276,11 @@ let Ws,
               N === "updateScrollVelocity")
             ) {
               let G = A[0];
-              (G < 0 && (G = -G), (li.timeScale = 1 + G / 800));
+              (G < 0 && (G = -G), li && (li.timeScale = 1 + G / 800));
             }
             if (
-              (N === "updateProgress" && Le.progress(A[0]),
-              N === "finishProgress")
+              (N === "updateProgress" && Le && Le.progress(A[0]),
+              N === "finishProgress" && Le) // Le: model loaded (the slow-network reveal can fire first)
             ) {
               ((di = !0),
                 i.hideCursor("", "none"),
@@ -6378,15 +6380,36 @@ let Ws,
             Fa = () => {
               (r.hide(),
                 (v = document.getElementById("home-scene")),
-                (m = new rl()),
-                (y = new al({
+                (m = new rl()));
+              // No WebGL (blocked/old GPU/in-app webview/context limit): three
+              // throws here and the page used to stay an empty gradient forever
+              // (header, texts and footer all wait on the scene). Skip the 3D
+              // and run the normal reveal so the page is still usable.
+              try {
+                y = new al({
                   powerPreference: PERF_LOW ? "default" : "high-performance",
                   // High-DPI phones don't need MSAA; it is the costliest pass there.
                   antialias: !PERF_LOW,
                   stencil: !1,
                   depth: !0,
                   alpha: !0,
-                })));
+                });
+              } catch (err) {
+                y = null;
+                document.documentElement.classList.add("no-webgl");
+                i.setPreloaderDone(!0);
+                i.setSceneStartingPosition();
+                return;
+              }
+              // Slow network: the model/HDR (~5 MB) can take a minute, and the
+              // header and texts wait on it. ~6 s after page start (at least 2.5 s after mount) reveal them anyway; the
+              // jellyfish fades in behind once it loads (that path re-runs
+              // showScene/setSceneStartingPosition and keeps the text shown).
+              setTimeout(() => {
+                if (fs || Ms.__disposed || !v.isConnected) return;
+                i.getPreloaderDone || i.setPreloaderDone(!0);
+                i.setSceneStartingPosition();
+              }, Math.max(2500, 6e3 - performance.now())); // ~6 s after page start
               let N = Math.min(window.devicePixelRatio || 1, PERF_LOW ? 1.25 : 1.5);
               (window.innerWidth > 1920 && (N = Math.min(N, 1.25)),
                 (prCap = prNow = N),

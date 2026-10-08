@@ -57,6 +57,11 @@
   html.not-home header {
     background: linear-gradient(
       180deg,
+      var(--sky-top) 80%,
+      transparent
+    );
+    background: linear-gradient(
+      180deg,
       color-mix(in srgb, var(--sky-top) 97%, transparent) 80%,
       color-mix(in srgb, var(--sky-top) 0%, transparent)
     );
@@ -102,7 +107,9 @@
   /* Menu fills the visible screen (not 100vh, which runs under the browser
      toolbar) and scrolls on its own when a short phone can't fit it. */
   header .header .mobile-menu {
+    height: 100vh;
     height: 100dvh;
+    padding: clamp(88px, 18vh, 144px) max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     padding: clamp(88px, 18dvh, 144px) max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -111,10 +118,12 @@
 
   header .header .mobile-menu .top a {
     font-size: clamp(36px, 12vw, 48px);
+    margin-bottom: clamp(16px, 4vh, 32px) !important;
     margin-bottom: clamp(16px, 4dvh, 32px) !important;
   }
 
   header .header .mobile-menu .bottom a:last-child {
+    margin-top: clamp(24px, 5vh, 48px);
     margin-top: clamp(24px, 5dvh, 48px);
   }
 }
@@ -128,6 +137,7 @@
   .chaitanya-modal-backdrop,
   .event-dossier-overlay,
   .event-reg-modal {
+    height: 100vh;
     height: 100dvh;
   }
 
@@ -137,10 +147,12 @@
        the dialog is the costliest thing a phone can composite. */
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+    background: var(--sky-top);
     background: color-mix(in srgb, var(--sky-top) 82%, transparent);
   }
 
   .chaitanya-modal-card {
+    max-height: calc(100vh - 24px);
     max-height: calc(100dvh - 24px);
     padding: 24px 24px 24px;
     border-radius: 22px;

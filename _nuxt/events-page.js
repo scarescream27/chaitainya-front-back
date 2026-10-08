@@ -882,6 +882,12 @@ let leaveDialog = null;
 function confirmLeave(title, desc) {
   if (leaveDialog) return;
   const dlg = document.createElement("dialog");
+  // iOS Safari < 15.4 / older webviews: no <dialog>.showModal(); calling it
+  // threw and the checkout could never be closed.
+  if (typeof dlg.showModal !== "function") {
+    if (window.confirm(`${title}\n\n${desc}`) && isCheckoutOpen && !submitting) closeCheckout();
+    return;
+  }
   dlg.className = "sgf-confirm";
   dlg.setAttribute("aria-labelledby", "co-leave-t");
   dlg.setAttribute("aria-describedby", "co-leave-d");
@@ -1354,10 +1360,10 @@ function onCheckoutClick(evt) {
 
   if (action === "co-close") return requestCloseCheckout();
   if (action === "co-copy-upi") {
-    navigator.clipboard?.writeText(FEST_CONFIG.upiId).then(
-      () => flashToast("UPI ID copied"),
-      () => flashToast(`Couldn't copy. The UPI ID is ${FEST_CONFIG.upiId}`)
-    );
+    const failCopy = () => flashToast(`Couldn't copy. The UPI ID is ${FEST_CONFIG.upiId}`);
+    // No navigator.clipboard in some in-app webviews: say so instead of doing nothing.
+    if (!navigator.clipboard) return failCopy();
+    navigator.clipboard.writeText(FEST_CONFIG.upiId).then(() => flashToast("UPI ID copied"), failCopy);
     return;
   }
   if (action === "co-back-cart") {

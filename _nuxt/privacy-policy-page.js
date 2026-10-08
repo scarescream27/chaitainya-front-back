@@ -64,7 +64,7 @@ let a,
                 <span>•</span>
                 <span>Revision: 3.0 (Fest Edition)</span>
                 <span>•</span>
-                <span>Looked after by: Organizing Committee & Tech Council</span>
+                <span>Looked after by: Organising Committee</span>
               </div>
             </div>
 
@@ -114,7 +114,7 @@ let a,
                 <p>To run the events and keep the fest safe, we collect these kinds of data:</p>
                 <ul>
                   <li><strong>Account and identity:</strong> Your name, email address and profile photo from your Google account. Also the college or institute you type in.</li>
-                  <li><strong>Event sign-ups and teams:</strong> The events you sign up for, your team name, team code and the names of your team members.</li>
+                  <li><strong>Event sign-ups and teams:</strong> The events and accommodation you sign up for, your team name, team code and the names of your team members.</li>
                   <li><strong>Contact details:</strong> The mobile or WhatsApp number you give us. We use it to send schedule updates and to plan with you.</li>
 <li><strong>Payment details:</strong> For paid events, the amount and the 12-digit UPI transaction number (UTR) you enter. The organising committee uses it to match your payment with the bank statement. We never ask for or keep your UPI PIN, bank account or card details.</li>
                   <li><strong>Messages to us:</strong> Your name, team name, email, phone number and message, sent through our contact form (run by Web3Forms).</li>
@@ -131,7 +131,7 @@ let a,
                 <p>When you sign in with Google and sign up for an event, we store this in Cloud Firestore:</p>
                 <ul>
                   <li><strong>Your profile:</strong> name, email address, profile photo, college, year of study, mobile number, a participant ID made by the site, and the list of events you signed up for.</li>
-                  <li><strong>Each sign-up:</strong> the event, whether you joined alone or as a team, your team name, team code and team members, whether you have paid and how much is due, and the ID of your entry pass (QR code).</li>
+                  <li><strong>Each sign-up or accommodation booking:</strong> the event, whether you joined alone or as a team, your team name, team code and team members, whether you have paid and how much is due, and the ID of your entry pass (QR code).</li>
                   <li><strong>Payments:</strong> for paid events, the amount and the UPI transaction number (UTR) you enter, and whether the organising committee has checked it.</li>
                 </ul>
                 <p>Team leaders type in the names of their team members. Please only share details your teammates have agreed to.</p>
@@ -145,7 +145,7 @@ let a,
                 </div>
                 <p>We use this data only to run the fest and to check who took part:</p>
                 <ul>
-                  <li><strong>Entry and access:</strong> Checking who has signed up, so they can enter the gate, workshops and competitions.</li>
+                  <li><strong>Entry and access:</strong> Checking who has signed up, so they can enter the campus and their events.</li>
                   <li><strong>Hackathons and competitions:</strong> Handling project entries, judging groups, mentors and winner lists.</li>
                   <li><strong>Official messages:</strong> Sending important schedule updates, room details, rules and emergency alerts.</li>
                   <li><strong>Certificates and prizes:</strong> Making checked certificates of participation and merit, and keeping prize records.</li>
@@ -208,7 +208,7 @@ let a,
                   <strong>Your code belongs to you:</strong> All code, designs, pitch decks and prototypes made during Chaitanya 2k26 hackathons belong 100% to the participants and teams who made them. Only they own them.
                 </p>
                 <p>
-                  <strong>Event photos and live streams:</strong> By coming to campus events, you allow the organizing committee to take photos and videos of events and stage shows. This permission is non-exclusive. We will use them only for university records, aftermovies and non-commercial promotion.
+                  <strong>Event photos and videos:</strong> By coming to campus events, you allow the organising committee to take photos and videos of events and stage shows. This permission is non-exclusive. We will use them only for university records, aftermovies and non-commercial promotion.
                 </p>
               </article>
 
@@ -260,12 +260,12 @@ let a,
                   <h2>Contact</h2>
                 </div>
                 <p>
-                  Have a question about your data, a complaint, or need a certificate checked? Write to the fest tech council:
+                  Have a question about your data, a complaint, or need a certificate checked? Write to the fest team:
                 </p>
                 <div class="privacy-callout">
                   <strong>Official Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:var(--ink); text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
                   <strong>Institution:</strong> Himachal Pradesh Technical University (HPTU), Hamirpur, H.P., India<br/>
-                  <strong>Fest Office:</strong> Chaitanya 2k26 Organizing Committee
+                  <strong>Fest Office:</strong> Chaitanya 2k26 Organising Committee
                 </div>
               </article>
             </div>
