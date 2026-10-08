@@ -29,3 +29,6 @@ __pycache__/
 # Firebase CLI deploy cache
 .firebase/
 .gstack/
+
+# Cloudflare Pages build output (scripts/build-pages.mjs)
+dist/

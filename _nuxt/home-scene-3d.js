@@ -6470,7 +6470,21 @@ let Ws,
               // Pillars are non-clickable
               return;
             },
+            // Resolves true when this scene mounted only on the way to another
+            // page (direct visit to /events…): see the note in Ra.
+            offHome = async () => {
+              if (!window.__deepLinkPending || !(window.__INITIAL_PATH__ || "/").split(/[?#]/)[0].replace(/\/$/, "")) return !1;
+              offHome.__p || (offHome.__p = new Promise((r) => setTimeout(r, 1500)));
+              await offHome.__p;
+              return Ms.__disposed || !!location.pathname.replace(/\/$/, "");
+            },
             Ra = async () => {
+              // A direct visit to another page (/events…) mounts the home page
+              // for a moment before routing there. Give that routing a moment;
+              // if this scene was torn down (or we're off the home page), skip
+              // the 3D downloads (~4 MB). Opening the home page later builds a
+              // fresh scene that loads them.
+              if (await offHome()) return;
               try {
                 // Static hosts may answer a missing file with the HTML page;
                 // only hand the loader a real HDR, otherwise use the fallback.
@@ -6481,7 +6495,7 @@ let Ws,
                 const early = window.__homeAssets && window.__homeAssets.hdr;
                 early && (window.__homeAssets.hdr = null);
                 const res =
-                  (early && (await early.catch(() => null))) || (await fetch("/hdri/photo_studio_01_1k.hdr"));
+                  (early && (await early.catch(() => null))) || (await fetch("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/hdri/photo_studio_01_1k.hdr"));
                 const type = res.headers.get("content-type") || "";
                 if (!res.ok || type.includes("text/html")) throw new Error("HDR missing");
                 const blobUrl = URL.createObjectURL(await res.blob());
@@ -6546,6 +6560,7 @@ let Ws,
                 i.setPreloaderPercentage(20));
             },
             Ia = async () => {
+              if (await offHome()) return;
               ((w = {
                 customBackground: m.background,
                 backside: !0,
@@ -6693,8 +6708,8 @@ let Ws,
               const early = window.__homeAssets && window.__homeAssets.glb;
               early && (window.__homeAssets.glb = null);
               const N = await (early
-                  ? early.then((buf) => s.parseAsync(buf, "/models/")).catch(() => s.loadAsync("/models/Scene14.glb"))
-                  : s.loadAsync("/models/Scene14.glb")),
+                  ? early.then((buf) => s.parseAsync(buf, "/models/")).catch(() => s.loadAsync("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/models/Scene14.glb"))
+                  : s.loadAsync("https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v1/models/Scene14.glb")),
                 A = N.scene,
                 G = N.animations;
               ((pe = A.children[7]),

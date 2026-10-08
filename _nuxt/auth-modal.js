@@ -398,7 +398,7 @@ function renderRegisterView(container, isConfigured) {
 
       <div class="chaitanya-form-group">
         <label class="chaitanya-form-label" for="reg-phone">WhatsApp number *</label>
-        <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
+        <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" />
       </div>
 
       <div class="chaitanya-divider"><span>Finish with Google</span></div>

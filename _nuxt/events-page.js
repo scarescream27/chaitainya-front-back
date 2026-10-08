@@ -996,7 +996,7 @@ function detailsFieldsHtml(d, user) {
       </div>
       <div class="event-reg-group">
         <label class="event-reg-label" for="co-phone">WhatsApp number *</label>
-        <input type="tel" class="event-reg-input" id="co-phone" maxlength="20" value="${e(d.phone)}" autocomplete="tel" placeholder="+91 9XXXX XXXXX" />
+        <input type="tel" class="event-reg-input" id="co-phone" maxlength="20" value="${e(d.phone)}" autocomplete="tel" />
       </div>
     </div>`;
 }

@@ -271,7 +271,7 @@ function detailsFormHtml(user) {
         </select>
       </label>
       <label class="pp-field"><span>WhatsApp number *</span>
-        <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" placeholder="+91 9XXXX XXXXX" autocomplete="tel" required />
+        <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" autocomplete="tel" required />
       </label>
       <div class="pp-msg" role="status" aria-live="polite" hidden></div>
       <div class="prof-actions">
