@@ -575,6 +575,112 @@ export function mountShutterFooter(root, opts = {}) {
     sm ? sm.scrollTo(0, true) : window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
   });
 
+  // ---- tap guard + "leave the home page?" confirm -----------------------------
+  // On phones GSAP's normalizeScroll drives touch scrolling, and the end of a
+  // swipe can land as a click on a card. Clicks in the footer only count when
+  // the finger stayed put (< MOVE px), the page didn't scroll meanwhile, the
+  // press was short and no scroll happened just before. Listens on window in
+  // the capture phase so it runs before index.html's document-capture router.
+  const MOVE = 10, SCROLLED = 4, HOLD = 600, QUIET = 350;
+  const scrollPos = () => window.ScrollSmoother?.get?.()?.scrollTop?.() ?? window.scrollY;
+  let press = null;
+  let lastScroll = -1e9;
+  const moved = (x, y) => press && (press.moved = Math.max(press.moved, Math.hypot(x - press.x, y - press.y)));
+  on(window, "pointerdown", (e) => {
+    press = { id: e.pointerId, touch: e.pointerType !== "mouse", x: e.clientX, y: e.clientY, t: performance.now(), y0: scrollPos(), moved: 0, cancel: false };
+  }, { capture: true, passive: true });
+  on(window, "pointermove", (e) => press && e.pointerId === press.id && moved(e.clientX, e.clientY), { capture: true, passive: true });
+  // Native panning cancels pointer events, so follow the finger through touch events too.
+  on(window, "touchmove", (e) => e.touches[0] && moved(e.touches[0].clientX, e.touches[0].clientY), { capture: true, passive: true });
+  on(window, "pointercancel", () => press && (press.cancel = true), { capture: true, passive: true });
+  on(window, "scroll", () => (lastScroll = performance.now()), { capture: true, passive: true });
+  const deliberate = (e) => {
+    if (e.detail === 0 || !press) return true; // keyboard (Enter) or programmatic click
+    if (press.cancel || press.moved >= MOVE || Math.abs(scrollPos() - press.y0) > SCROLLED) return false;
+    if (!press.touch) return true; // mouse: a click that didn't drag stays instant
+    const now = performance.now();
+    return now - press.t < HOLD && now - lastScroll > QUIET;
+  };
+
+  const PAGES = { "/events": "Events", "/about": "About", "/organisers": "Organisers", "/contact-us": "Contact", "/sponsors": "Sponsors", "/privacy-policy": "Privacy Policy" };
+  // Where a link leaves the home page to, or null for in-page targets (#faq, #top, "/").
+  const destination = (a) => {
+    const href = a.getAttribute("href") || "";
+    if (href.startsWith("mailto:")) return ["Open your email app?", `This starts an email to ${href.slice(7).split("?")[0]}.`];
+    if (/^https?:/i.test(href)) {
+      const host = new URL(href, location.href).host;
+      return [`Open ${host}?`, `This takes you to ${host}, outside the Chaitanya 2k26 site.`];
+    }
+    if (!href.startsWith("/") || href === "/") return null;
+    const path = href.split(/[?#]/)[0].replace(/\/$/, "");
+    const ev = /^\/events\/([^/]+)$/.exec(path);
+    if (ev) {
+      const title = EVENTS_DATA.find((x) => x.id === decodeURIComponent(ev[1]))?.title || "this event";
+      return [`Open ${title}?`, `This takes you to the ${title} event page.`];
+    }
+    if (/^\/organisers\/./.test(path)) {
+      const name = a.querySelector("strong")?.textContent.trim() || "this organiser";
+      return [`Open ${name}'s profile?`, `This takes you to ${name}'s page in Organisers.`];
+    }
+    const page = PAGES[path];
+    return page ? [`Open ${page}?`, `This takes you to the ${page} page.`] : ["Leave the home page?", `This takes you to ${path}.`];
+  };
+
+  // <dialog> in <body>: top layer (ScrollSmoother transforms can't trap it),
+  // showModal() makes the page inert (focus trap) and Esc closes it.
+  const dlg = document.createElement("dialog");
+  dlg.className = "sgf-confirm";
+  dlg.setAttribute("aria-labelledby", `${uid}-cf-t`);
+  dlg.setAttribute("aria-describedby", `${uid}-cf-d`);
+  dlg.innerHTML = `<form method="dialog" class="sgf-confirm-card">
+      <h2 class="sgf-confirm-title" id="${uid}-cf-t"></h2>
+      <p class="sgf-confirm-desc" id="${uid}-cf-d"></p>
+      <div class="sgf-confirm-actions">
+        <button class="sgf-confirm-stay" value="stay">Stay</button>
+        <button class="sgf-confirm-go" value="go">Go</button>
+      </div></form>`;
+  document.body.appendChild(dlg);
+  cleanups.push(() => dlg.remove());
+  let trigger = null;
+  let confirmed = null;
+  const ask = (a, [title, desc]) => {
+    trigger = a;
+    dlg.querySelector("h2").textContent = title;
+    dlg.querySelector("p").textContent = desc;
+    dlg.returnValue = "";
+    dlg.showModal();
+    dlg.querySelector(".sgf-confirm-go").focus();
+  };
+  // Backdrop tap (the dialog box itself is only the backdrop area around the card).
+  on(dlg, "click", (e) => e.target === dlg && dlg.close());
+  on(dlg, "close", () => {
+    const a = trigger;
+    trigger = null;
+    if (!a?.isConnected) return;
+    if (dlg.returnValue === "go") {
+      // Replay the original link click: index.html's router / the handler below
+      // / the browser (mailto, external) navigate exactly as before.
+      confirmed = a;
+      try { a.click(); } finally { confirmed = null; }
+    } else a.focus({ preventScroll: true });
+  });
+
+  on(window, "click", (e) => {
+    if (!root.contains(e.target)) return;
+    if (dlg.open || !deliberate(e)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    const a = e.target.closest?.("a[href]");
+    if (!a || a === confirmed || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const dest = destination(a);
+    if (!dest) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    ask(a, dest);
+  }, true);
+
   // Footer sections and links: in-page targets scroll (through ScrollSmoother when it
   // runs), other internal paths go through the router like the rest of the
   // site. index.html's capture handler already routes /events, /about and

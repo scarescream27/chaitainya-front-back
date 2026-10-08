@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: m-pages.js
- * Purpose: Pages linked from the phone menu and the phone /organisers page:
+ * Purpose: Pages linked from the menu and the /organisers page:
  *   /contact-us       Contact (form + email + who runs what)
  *   /sponsors         Sponsors
  *   /organisers/:slug One organiser's details

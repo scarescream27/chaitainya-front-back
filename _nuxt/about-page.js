@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: about-page.js
- * Purpose: /about — the university, the fest, the organising team, sponsors.
+ * Purpose: /about — the university, the fest (with its events row), sponsors.
  * Reuses the privacy page's card/hero styles (privacy-policy.css); grids live
  * in about.css.
  * ============================================================================
@@ -10,39 +10,7 @@ import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b } from "./vue-runtime.js";
 import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
 import { EVENT_CATEGORIES, EVENTS_DATA } from "./events-data.js";
-import { TEAMS, PHOTOS, initials } from "./teams-data.js";
 import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
-
-function avatarHtml(name) {
-  const src = PHOTOS[name];
-  return src
-    ? `<img src="${esc(src)}" alt="${esc(name)}" loading="lazy" width="300" height="300" />`
-    : `<span aria-hidden="true">${esc(initials(name))}</span>`;
-}
-
-// Card tints rotate through the event category colours (the original used
-// destructive / muted / warning).
-const TINTS = ["--cat-cultural", "--cat-tech", "--cat-innovation", "--cat-esports", "--cat-business"];
-
-// One group of person cards (photo from PHOTOS, else initials).
-function teamSectionHtml(team) {
-  const cards = team.people
-    .map(
-      (m, i) => `
-        <li class="about-team-card" style="--tint: var(${TINTS[i % TINTS.length]}); --i: ${i}">
-          <div class="about-team-wave" aria-hidden="true"></div>
-          <div class="about-team-photo">${avatarHtml(m.name)}</div>
-          <h4>${esc(m.name)}</h4>
-          <p>${esc(m.role)}</p>
-        </li>`
-    )
-    .join("");
-  return `
-    <div class="about-team">
-      <h3 class="about-sub">${esc(team.name)}</h3>
-      <ul class="about-team-grid">${cards}</ul>
-    </div>`;
-}
 
 function card(num, id, title, body, cls = "") {
   return `
@@ -73,11 +41,6 @@ function buildHtml() {
 
   return `
     <div class="privacy-container about-container">
-      <div class="privacy-top-bar d-only">
-        <a href="/" class="privacy-back-btn"><span>←</span> RETURN TO HOME</a>
-        <a href="/events" class="privacy-contact-btn">EXPLORE EVENTS</a>
-      </div>
-
       <div class="privacy-hero">
         <span class="privacy-tag-badge">${esc(getFestDatesLabel())} · HPTU Hamirpur</span>
         <h1>About Chaitanya 2k26</h1>
@@ -100,7 +63,7 @@ function buildHtml() {
             <li><b>${EVENTS_DATA.length}</b><span>Events</span></li>
             ${categories.map((c) => `<li><b>${c.count}</b><span>${esc(c.name)}</span></li>`).join("")}
           </ul>
-          <div class="m-only about-m-events">${marqueeHtml(
+          <div class="about-m-events">${marqueeHtml(
             EVENTS_DATA.map((ev) => {
               const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
               return eventCardHtml(ev, c?.accent, c?.shortCode);
@@ -109,21 +72,16 @@ function buildHtml() {
           )}</div>
           <a href="/events" class="privacy-contact-btn about-inline-cta">BROWSE ALL EVENTS</a>`)}
 
-        ${card("03", "about-team", "Organising Team", `
-          ${TEAMS.map(teamSectionHtml).join("")}
-          <a href="/organisers" class="privacy-contact-btn about-inline-cta about-org-link">MEET THE ORGANISERS</a>`, "d-only")}
-
-        ${card(`<span class="d-only">04</span><span class="m-only">03</span>`, "about-sponsors", "Sponsors", `
+        ${card("03", "about-sponsors", "Sponsors", `
           ${sponsorsBody}
           <a href="mailto:${mail}?subject=${encodeURIComponent("Sponsorship: Chaitanya 2k26")}" class="privacy-contact-btn about-inline-cta">BECOME A SPONSOR</a>
-          <a href="/sponsors" class="privacy-contact-btn about-inline-cta m-only">SEE SPONSORS</a>`)}
+          <a href="/sponsors" class="privacy-contact-btn about-inline-cta">SEE SPONSORS</a>`)}
       </div>
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
         <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
-        <a href="/contact" class="privacy-cta-btn d-only">CONTACT US</a>
-        <a href="/contact-us" class="privacy-cta-btn m-only">CONTACT US</a>
+        <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;
 }

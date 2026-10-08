@@ -69,6 +69,11 @@ export function eventCardHtml(ev, accent, mark) {
  * itself through `animationstart` (plus a sweep for rows already running).
  * Hidden tabs need nothing: browsers stop CSS animations there on their own.
  */
+// iOS Safari only applies :active (the touch pause in m-pages.css) when a
+// touchstart listener exists. Drags never count as taps: the home footer's
+// tap guard (shutter-footer.js) swallows clicks after the finger moved.
+if (typeof document !== "undefined") document.addEventListener("touchstart", () => {}, { passive: true });
+
 if (typeof window !== "undefined" && "IntersectionObserver" in window) {
   const io = new IntersectionObserver((entries) => {
     for (const en of entries) {

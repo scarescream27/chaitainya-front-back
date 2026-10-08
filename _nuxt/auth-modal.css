@@ -815,7 +815,12 @@ html.pp-open .chaitanya-modal-backdrop {
 }
 
 html:not(.is-fest-admin) a[href="#admin"],
-html:not(.is-fest-admin) a[href="/admin"] {
+html:not(.is-fest-admin) a[href="/admin"],
+/* The phone menu styles its links with `header .header .mobile-menu .top a
+   { display: flex !important }`, which outranked the rule above and showed
+   Admin to everyone on phones. Same rule, stronger selector. */
+html:not(.is-fest-admin) header .header .mobile-menu .top a[href="/admin"],
+html:not(.is-fest-admin) header .header .right-menu a[href="/admin"] {
   display: none !important;
 }
 

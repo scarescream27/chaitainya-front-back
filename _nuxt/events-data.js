@@ -17,6 +17,10 @@
 
 // Master switch: true opens every event that doesn't set registrationOpen itself.
 export const FEST_REGISTRATION_OPEN = true;
+
+// Kill switch: set to true to shut down registration for EVERY event at once
+// (e.g. on the fest day). Overrides everything else; shows "REGISTRATION CLOSED".
+export const REGISTRATIONS_CLOSED = false;
 export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
@@ -447,7 +451,11 @@ export function getCategories() {
   return EVENT_CATEGORIES;
 }
 
+// Closed for good: the kill switch is on, the deadline has passed, or the
+// event has started (registration shuts automatically at its start time).
 export function isPastDeadline(ev, now = Date.now()) {
+  if (REGISTRATIONS_CLOSED) return true;
+  if (ev?.startsAt && now >= Date.parse(ev.startsAt)) return true;
   return Boolean(ev?.deadline && now > Date.parse(ev.deadline));
 }
 

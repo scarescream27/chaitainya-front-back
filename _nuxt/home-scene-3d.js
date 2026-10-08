@@ -7341,8 +7341,14 @@ let Ws,
           const tmpF = new h(),
             tmpG = new h(),
             tmpQ = new ks();
-          // Adaptive resolution: rolling ~1s windows of frame intervals.
-          // ponytail: avg >22ms for 2 windows -> pixel ratio x0.85 (floor 0.6 low / 0.75), avg <18ms for 3 windows -> back up to the initial cap. (18 not 14: the ticker is capped at 60fps so ~16.7ms is the best case.)
+          // Adaptive resolution, low-end devices only (PERF_LOW): rolling ~1s
+          // windows of frame intervals. Desktop / capable devices never change
+          // resolution, so the 3D object stays sharp. Changing it back and
+          // forth (e.g. hover raycasts briefly slowing frames) re-rendered the
+          // canvas at a different sharpness and read as flickering pixels, so
+          // it now only steps DOWN, at most twice, never below 1.0 (one CSS
+          // pixel per device pixel), and only after sustained heavy lag.
+          // ponytail: avg >30ms for 3 windows -> x0.85, floor 1.0, no step up.
           let prCap = 1,
             prNow = 1,
             govLast = 0,
@@ -7350,7 +7356,6 @@ let Ws,
             govSum = 0,
             govN = 0,
             govBad = 0,
-            govGood = 0,
             govSteady = 0;
           const setPR = (r) => {
               r = Math.round(r * 100) / 100;
@@ -7374,17 +7379,9 @@ let Ws,
                 capped = govSteady >= govN * 0.8;
               govSum = govN = govSteady = 0;
               govStart = now;
-              capped
-                ? (govBad = govGood = 0)
-                : avg > 22
-                ? ((govGood = 0),
-                  ++govBad >= 2 &&
-                    ((govBad = 0),
-                    setPR(Math.max(Math.min(PERF_LOW ? 0.6 : 0.75, prCap), prNow * 0.85))))
-                : avg < 18
-                  ? ((govBad = 0),
-                    ++govGood >= 3 && ((govGood = 0), setPR(Math.min(prCap, prNow / 0.85))))
-                  : (govBad = govGood = 0);
+              !capped && avg > 30
+                ? ++govBad >= 3 && ((govBad = 0), setPR(Math.max(Math.min(1, prCap), prNow * 0.85)))
+                : (govBad = 0);
             };
           const Ua = () => {
               Gt.setFromCamera(ue, f);
@@ -7465,7 +7462,7 @@ let Ws,
               // doesn't jump on return). Saves the GPU while people type.
               // Hidden tab: rAF normally stops, but guard any fallback ticks.
               if (window.__sgfCovers || document.hidden) return void govFrame(!0);
-              govFrame(!1);
+              PERF_LOW && govFrame(!1);
               (fs && qa(),
                 Kt && Ka(N),
                 ms && !Kt && $a(),

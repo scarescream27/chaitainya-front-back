@@ -1,25 +1,19 @@
 /* ============================================================================
- * Chaitanya 2k26 — phone-only layouts (< 768px)
- * Drifting card rows (m-marquee.js), the phone /organisers layout, the
- * /contact-us, /sponsors and /organisers/<slug> pages, the phone About page
- * and the register dialog backdrop. Desktop never renders .m-only blocks.
+ * Chaitanya 2k26 — the phone-first design, at every width
+ * Drifting / swipeable card rows (m-marquee.js), /organisers, the
+ * /contact-us, /sponsors and /organisers/<slug> pages, the About events row,
+ * /events header + chips, plain-cross close buttons and the home sections.
+ * Rules are written for phones; "Tablet & desktop" at the end adapts them
+ * (768px+ / 992px+). .m-only shows everywhere; .d-only is retired.
  * ============================================================================ */
 
-@media (min-width: 768px) {
-  .m-only {
-    display: none !important;
-  }
+.d-only {
+  display: none !important;
 }
 
-@media (max-width: 767px) {
-  .d-only {
-    display: none !important;
-  }
-
-  /* Register / sign-in dialog: solid black behind the card, not a see-through scrim. */
-  .chaitanya-modal-backdrop {
-    background: #000;
-  }
+/* Register / sign-in dialog: solid black behind the card, not a see-through scrim. */
+.chaitanya-modal-backdrop {
+  background: #000;
 }
 
 /* ---- Drifting row: moves left to right, pauses on touch/hover/focus ------- */
@@ -193,7 +187,7 @@
   color: var(--ink-muted);
 }
 
-/* ---- Phone /organisers ---------------------------------------------------- */
+/* ---- /organisers ------------------------------------------------------------ */
 
 .m-org {
   display: grid;
@@ -206,7 +200,7 @@
   scroll-margin-top: 80px;
 }
 
-/* ---- Phone pages (contact, sponsors, organiser) --------------------------- */
+/* ---- Pages (contact, sponsors, organiser) --------------------------------- */
 
 .m-page-root {
   overflow-x: clip;
@@ -509,7 +503,7 @@
   margin-top: 24px;
 }
 
-/* ---- Phone About: events row sits inside its card -------------------------- */
+/* ---- About: events row sits inside its card -------------------------------- */
 
 .about-m-events {
   margin: 16px 0 8px;
@@ -547,7 +541,7 @@
   color: inherit;
 }
 
-/* ---- Phone /events: one-line header and compact cards with the basics ---- */
+/* ---- /events: one-line header and compact cards with the basics ---------- */
 
 .events-m-head {
   margin: 8px 0 16px;
@@ -574,21 +568,19 @@
   color: var(--ink-muted);
 }
 
-/* Phone event cards keep the 60/40 picture/text split from m-events.css. */
+/* Event cards keep the 60/40 picture/text split from m-events.css. */
 
-/* Phone /events: no [ ↑ TOP ] button; the cart takes its bottom-right spot. */
-@media (max-width: 767px) {
-  .events-scroll-hud {
-    display: none !important;
-  }
-
-  .events-cart-fab {
-    left: auto;
-    right: 16px;
-  }
+/* /events: no [ ↑ TOP ] button; the cart takes its bottom-right spot. */
+.events-scroll-hud {
+  display: none !important;
 }
 
-/* ---- Phone home: bigger event cards and the extra sections ---------------- */
+.events-cart-fab {
+  left: auto;
+  right: 16px;
+}
+
+/* ---- Home: bigger event cards and the extra sections ---------------------- */
 
 .sgfm-events .m-card {
   width: 260px;
@@ -745,7 +737,7 @@
   transform: none;
 }
 
-/* ---- Phone menu: a compact numbered list instead of huge centred words ---- */
+/* ---- Phone menu (phones only): a compact numbered list -------------------- */
 @media (max-width: 767px) {
   header .header .mobile-menu {
     justify-content: flex-start;
@@ -817,83 +809,81 @@
   scroll-snap-align: start;
 }
 
-/* ---- Phone /events: no search, tinted category chips with count badges --- */
+/* ---- /events: chips with count badges; no search on phones -------------- */
 @media (max-width: 767px) {
   .events-search-wrap {
     display: none !important;
   }
-
-  /* No white card behind the chips; all chips in black, not category colours. */
-  .events-toolbar,
-  .events-toolbar.is-pinned {
-    padding: 6px 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .events-categories {
-    gap: 6px;
-  }
-
-  .events-cat-btn {
-    gap: 8px;
-    padding: 6px 6px 6px 14px;
-    border: 1.5px solid var(--ink);
-    background: var(--surface);
-    color: var(--ink);
-  }
-
-  .events-cat-btn .cat-count {
-    display: inline-grid;
-    place-items: center;
-    min-width: 26px;
-    height: 26px;
-    padding: 0 6px;
-    box-sizing: border-box;
-    border-radius: 999px;
-    background: var(--surface-sunken);
-    font-size: 11px;
-    opacity: 1;
-  }
-
-  .events-cat-btn.active {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--ink-on-dark);
-  }
-
-  .events-cat-btn.active .cat-count {
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--ink-on-dark);
-  }
 }
 
-/* ---- Close buttons on phones: a plain cross, no pill --------------------- */
-@media (max-width: 767px) {
-  .event-dossier-close,
-  .cart-close,
-  .event-reg-close,
-  .chaitanya-modal-close {
-    display: inline-grid !important;
-    place-items: center;
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: var(--ink) !important;
-  }
+/* No white card behind the chips; all chips in black, not category colours. */
+.events-toolbar,
+.events-toolbar.is-pinned {
+  padding: 6px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 
-  .m-x {
-    font-size: 24px;
-    line-height: 1;
-  }
+.events-categories {
+  gap: 6px;
+}
+
+.events-cat-btn {
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.events-cat-btn .cat-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  font-size: 11px;
+  opacity: 1;
+}
+
+.events-cat-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ink-on-dark);
+}
+
+.events-cat-btn.active .cat-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--ink-on-dark);
+}
+
+/* ---- Close buttons: a plain cross, no pill (the button carries aria-label) */
+.event-dossier-close,
+.cart-close,
+.event-reg-close,
+.chaitanya-modal-close {
+  display: inline-grid !important;
+  place-items: center;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+}
+
+.m-x {
+  font-size: 24px;
+  line-height: 1;
 }
 
 /* No white fade at the ends of the moving rows. */
@@ -1036,7 +1026,7 @@
 }
 
 
-/* ---- Phone /organisers: two people per team, "View more" shows the rest --- */
+/* ---- /organisers: two people per team on phones, "View more" shows the rest */
 .m-people-grid {
   list-style: none;
   margin: 0;
@@ -1088,4 +1078,349 @@
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   cursor: pointer;
+}
+
+/* ============================================================================
+ * Tablet & desktop: the same design, given room. Wider pages, grids where a
+ * phone shows one column, larger display type, hover on fine pointers.
+ * ============================================================================ */
+
+@media (min-width: 768px) {
+  /* Shared */
+  .m-h {
+    font-size: 40px;
+  }
+
+  .m-page-root .privacy-container,
+  .organisation-page-root .privacy-container {
+    max-width: 1160px;
+  }
+
+  /* /events: bigger header, wrapping chips (no hidden sideways scroll for a
+     mouse), search back as a chip-styled pill, two cards across. */
+  .events-m-head {
+    margin: 16px 0 24px;
+  }
+
+  .events-m-head h1 {
+    font-size: 72px;
+  }
+
+  .events-categories {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .events-search-input {
+    min-height: 40px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+
+  .events-search-input:focus {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+
+  .events-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .events-cart-fab {
+    right: 24px;
+    bottom: 24px;
+  }
+
+  /* /organisers: everyone shows (no "View more"), 3 across, portrait cards. */
+  .m-org {
+    gap: 48px;
+  }
+
+  .m-people-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .m-people-more {
+    display: block;
+  }
+
+  .m-people-btn {
+    display: none;
+  }
+
+  .m-people-grid .m-card {
+    height: auto;
+    aspect-ratio: 4 / 5;
+    padding: 16px;
+  }
+
+  .m-people-grid .m-card-mark {
+    font-size: 120px;
+  }
+
+  .m-people-grid .m-card-body strong {
+    font-size: 26px;
+  }
+
+  /* Contact */
+  .m-quick {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .m-quick-card {
+    padding: 18px;
+  }
+
+  .m-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+
+  .m-form > :nth-child(n + 3) {
+    grid-column: 1 / -1;
+  }
+
+  .m-form button {
+    justify-self: start;
+    min-width: 240px;
+  }
+
+  /* Sponsors and home stats */
+  .m-stats {
+    gap: 12px;
+  }
+
+  .m-stats li {
+    padding: 20px 8px;
+  }
+
+  .m-stats b {
+    font-size: 56px;
+  }
+
+  .m-stats span {
+    font-size: 12px;
+  }
+
+  .m-sponsors {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  /* Organiser page */
+  .m-person-name h1 {
+    font-size: 64px;
+  }
+
+  /* Home extras */
+  .m-home-cta {
+    padding: 24px;
+  }
+
+  .m-home-cta strong {
+    font-size: 36px;
+  }
+
+  .m-home-cats a {
+    min-height: 140px;
+  }
+}
+
+@media (min-width: 992px) {
+  .m-h {
+    font-size: 44px;
+  }
+
+  .events-m-head h1 {
+    font-size: 88px;
+  }
+
+  /* Chips on the left, search on the right of one row. */
+  .events-toolbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .events-categories {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .events-search-wrap {
+    flex: 0 0 300px;
+    width: 300px;
+  }
+
+  .events-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .m-people-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Contact: form on the left, venue card beside it. */
+  .m-contact-root .m-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .m-contact-root .m-page > * {
+    grid-column: 1 / -1;
+  }
+
+  .m-contact-root .m-page > .m-section {
+    grid-column: 1;
+    grid-row: 3;
+    margin-bottom: 0;
+  }
+
+  .m-contact-root .m-page > .m-where {
+    grid-column: 2;
+    grid-row: 3;
+    gap: 10px;
+    margin: 0;
+    padding: 28px;
+  }
+
+  .m-where strong {
+    font-size: 36px;
+  }
+
+  /* Sponsors: "Ways to partner" and "Events you can back" side by side. */
+  .m-sponsors-root .m-page {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+
+  .m-sponsors-root .m-page > * {
+    grid-column: 1 / -1;
+  }
+
+  .m-sponsors-root .m-page > .m-section:nth-of-type(n + 2) {
+    grid-column: auto;
+  }
+
+  /* Organiser: photo beside the details, events row below. */
+  .m-organiser-root .m-person {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .m-organiser-root .m-person > * {
+    grid-column: 1 / -1;
+  }
+
+  .m-organiser-root .m-person > .m-person-hero {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 440px;
+    margin: 0;
+  }
+
+  .m-organiser-root .m-person > .m-section {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+  }
+
+  .m-person-name h1 {
+    font-size: 72px;
+  }
+
+  /* Home extras: glance beside the categories; organisers and CTAs full width. */
+  .m-home-extra {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 72px 48px;
+  }
+
+  .m-home-extra > .m-home-sec:nth-child(n + 3) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Swipe rows: a mouse can't swipe, so give it a thin scrollbar. */
+@media (hover: hover) and (pointer: fine) {
+  .m-swipe {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink) transparent;
+  }
+
+  .m-swipe::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+
+  .m-swipe::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: var(--ink);
+  }
+
+  .m-card,
+  .m-quick-card,
+  .m-team-list a,
+  .m-sponsors a,
+  .m-home-cats a,
+  .m-home-cta {
+    transition: transform var(--motion-150, 150ms) var(--ease-out), box-shadow var(--motion-150, 150ms) var(--ease-out);
+  }
+
+  .m-card:hover,
+  .m-quick-card:hover,
+  .m-team-list a:hover,
+  .m-sponsors a:hover,
+  .m-home-cats a:hover,
+  .m-home-cta:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .m-people-btn:hover,
+  .m-back-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .event-dossier-close:hover,
+  .cart-close:hover,
+  .event-reg-close:hover,
+  .chaitanya-modal-close:hover {
+    background: var(--surface-sunken) !important;
+  }
+
+  .events-cat-btn:not(.active):hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-card,
+  .m-quick-card,
+  .m-team-list a,
+  .m-sponsors a,
+  .m-home-cats a,
+  .m-home-cta {
+    transition: none;
+  }
+
+  .m-card:hover,
+  .m-quick-card:hover,
+  .m-team-list a:hover,
+  .m-sponsors a:hover,
+  .m-home-cats a:hover,
+  .m-home-cta:hover {
+    transform: none;
+  }
 }

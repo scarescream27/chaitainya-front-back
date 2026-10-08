@@ -61,3 +61,21 @@
 .transition-component .wrapper .logo {
   max-width: calc(100vw - 32px);
 }
+
+/* Custom cursor: a live backdrop blur that follows the mouse re-blurred the
+   3D canvas and text under it every frame, which shimmered (pixel flicker on
+   hover) and cost frames. Same look without the blur; its own layer so
+   moving it never repaints what is underneath. */
+#cursor {
+  will-change: transform;
+  contain: layout style;
+}
+#cursor .wrapper {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.78);
+  transition: background-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+#cursor.dif .wrapper {
+  background: #fff;
+}

@@ -238,7 +238,7 @@ export function renderEventsPageHtml() {
       (cat) => `
       <button type="button" class="events-cat-btn ${activeCategory === cat.id ? "active" : ""}" aria-pressed="${activeCategory === cat.id}" data-cat="${e(cat.id)}" style="--tint: ${cat.accent || "var(--ink)"}">
         ${e(cat.name)}
-        <span class="cat-count"><span class="d-only">(</span>${cat.count}<span class="d-only">)</span></span>
+        <span class="cat-count">${cat.count}</span>
       </button>
     `
     )
@@ -249,21 +249,9 @@ export function renderEventsPageHtml() {
       <div id="events-scroll-progress"></div>
 
       <div class="events-container">
-        <div class="events-m-head m-only">
+        <div class="events-m-head">
           <h1>Events</h1>
           <p>${e(totalEvents())} events · ${e(getFestDatesLabel().replace(/\s*\d{4}$/, ""))} · HPTU Hamirpur</p>
-        </div>
-
-        <div class="events-hero d-only">
-          <span class="events-hero-coords">31.7088° N, 76.5273° E // HPTU HAMIRPUR</span>
-          <h1 class="events-hero-title">EVENTS & COMPETITIONS</h1>
-          <p class="events-hero-subtitle">Code, build, pitch, play and perform. Pick your events and register in one go.</p>
-          <ul class="events-stats-strip" aria-label="Fest at a glance">
-            <li class="events-stat-pill highlight">${HERO_ICONS.events}${e(totalEvents())} EVENTS</li>
-            <li class="events-stat-pill">${HERO_ICONS.date}${e(getFestDatesLabel().replace(/\s*\d{4}$/, ""))}</li>
-            <li class="events-stat-pill">${HERO_ICONS.venue}HPTU HAMIRPUR</li>
-          </ul>
-          <p class="events-hero-note">Fees and prizes coming soon · timings may change</p>
         </div>
 
         <div class="events-toolbar">
@@ -482,7 +470,7 @@ export function openEventDossier(eventId) {
   panel.innerHTML = `
   <div class="event-dossier-mbar">
     <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
-    <button type="button" class="event-dossier-close" id="dossier-close-btn" aria-label="Close"><span class="d-only">CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
+    <button type="button" class="event-dossier-close" id="dossier-close-btn" aria-label="Close"><span class="m-x" aria-hidden="true">✕</span></button>
   </div>
   <div class="event-dossier-visual" style="--cat:${accentColor};">
     <span class="event-visual-num" aria-hidden="true">${number}</span>
@@ -620,7 +608,7 @@ function renderCartPanel() {
   panel.innerHTML = `
     <div class="cart-head">
       <h3 id="events-cart-title" tabindex="-1">YOUR CART</h3>
-      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart"><span class="d-only">CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
+      <button type="button" class="cart-close" data-action="cart-close" aria-label="Close cart"><span class="m-x" aria-hidden="true">✕</span></button>
     </div>
     ${items.length
       ? `<ul class="cart-list">${rows}</ul>
@@ -1098,7 +1086,7 @@ function renderCheckout(focusSel) {
   }
 
   card.innerHTML = `
-    <button type="button" class="event-reg-close" data-action="co-close" aria-label="Close"><span class="d-only">ESC / CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
+    <button type="button" class="event-reg-close" data-action="co-close" aria-label="Close"><span class="m-x" aria-hidden="true">✕</span></button>
     ${stepperHtml()}
     <div class="checkout-step" key="${step}">${body}</div>
   `;

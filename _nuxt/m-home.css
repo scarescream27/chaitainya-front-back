@@ -221,3 +221,75 @@
   .sgfm-card { transition: none !important; }
   .sgfm-card:hover { translate: none; }
 }
+
+/* ---- "Leave the home page?" confirm (shutter-footer.js, <dialog> in body) -- */
+.sgf-confirm {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: var(--ink, #000);
+  overscroll-behavior: contain;
+}
+.sgf-confirm::backdrop { background: rgba(0, 0, 0, 0.4); }
+.sgf-confirm-card {
+  box-sizing: border-box;
+  width: min(400px, calc(100vw - 32px));
+  padding: 24px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--ink, #000);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+.sgf-confirm-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.sgf-confirm-desc {
+  margin: 0 0 20px;
+  font-size: var(--fs-body, 14px);
+  line-height: 1.5;
+  color: var(--ink-muted, #4a5160);
+}
+.sgf-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.sgf-confirm-actions button {
+  min-width: 88px;
+  min-height: var(--tap, 44px);
+  padding: 0 20px;
+  border: 1px solid var(--ink, #000);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--surface, #fff);
+  color: var(--ink, #000);
+}
+.sgf-confirm-actions .sgf-confirm-go { background: var(--ink, #000); color: var(--ink-on-dark, #fff); }
+.sgf-confirm-actions button:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+@media (max-width: 600px) {
+  /* Bottom sheet on phones. */
+  .sgf-confirm { margin: auto 0 0; width: 100%; }
+  .sgf-confirm-card {
+    width: 100%;
+    border-width: 1px 0 0;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .sgf-confirm-actions button { flex: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sgf-confirm[open] .sgf-confirm-card { animation: sgf-confirm-in 0.22s var(--ease-out, ease-out); }
+  .sgf-confirm[open]::backdrop { animation: sgf-confirm-fade 0.22s ease-out; }
+  @media (max-width: 600px) {
+    .sgf-confirm[open] .sgf-confirm-card { animation-name: sgf-confirm-up; }
+  }
+}
+@keyframes sgf-confirm-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@keyframes sgf-confirm-up { from { transform: translateY(100%); } }
+@keyframes sgf-confirm-fade { from { opacity: 0; } }

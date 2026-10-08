@@ -113,7 +113,7 @@ export function initAuthModal() {
         <span class="corner corner-bl" aria-hidden="true">+</span>
         <span class="corner corner-br" aria-hidden="true">+</span>
         <div class="chaitanya-modal-topbar">
-          <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn" aria-label="Close"><span class="d-only">ESC / CLOSE</span><span class="m-only m-x" aria-hidden="true">✕</span></button>
+          <button type="button" class="chaitanya-modal-close" id="chaitanya-modal-close-btn" aria-label="Close"><span class="m-x" aria-hidden="true">✕</span></button>
         </div>
         <div id="chaitanya-modal-body"></div>
       </div>
