@@ -12,7 +12,7 @@ import { a as setHead, __tla as o } from "./app-main.js";
 import { k as defineComponent, H as openBlock, F as createBlock, M as h, E as onMounted } from "./vue-runtime.js";
 import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES } from "./events-data.js";
-import { PHOTOS, PROFILES, initials, allPeople, categoryTeams } from "./teams-data.js";
+import { PHOTOS, PROFILES, initials, allPeople, teamGroups } from "./teams-data.js";
 import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
 import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket } from "./auth-service.js";
@@ -182,7 +182,7 @@ function organiserHtml(slug) {
   const extra = PROFILES[p.name] || {};
   const photo = PHOTOS[p.name];
   const team = p.teams[0];
-  const tint = (categoryTeams().find((t) => t.id === team.id) || {}).accent || "var(--cat-tech)";
+  const tint = (teamGroups().find((t) => t.id === team.id) || {}).accent || "var(--cat-tech)";
   const row = (k, v) => (v ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : "");
   const markOf = (id) => (EVENT_CATEGORIES.find((c) => c.id === id) || {}).shortCode;
   return `

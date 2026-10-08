@@ -200,10 +200,14 @@ const eventCard = (ev) => {
   const num = String(EVENTS_DATA.indexOf(ev) + 1).padStart(2, "0");
   return `
     <li class="sgfm-card" style="--cat:${cat?.accent || "var(--ink)"}">
-      <div class="sgfm-vis" aria-hidden="true">
-        <span class="sgfm-num">${num}</span>
+      <div class="sgfm-vis${ev.poster ? " has-poster" : ""}" aria-hidden="true">
+        ${
+          ev.poster
+            ? `<img class="sgfm-poster" src="${esc(ev.poster)}" alt="" width="900" height="900" loading="lazy" decoding="async">`
+            : `<span class="sgfm-num">${num}</span>
         <span class="sgfm-glyph">${CAT_ICONS[ev.category] || ""}</span>
-        <span class="sgfm-cat">${esc(cat?.shortCode || "")}</span>
+        <span class="sgfm-cat">${esc(cat?.shortCode || "")}</span>`
+        }
       </div>
       <div class="sgfm-body">
         <h3 class="sgfm-title">${esc(ev.title)}</h3>

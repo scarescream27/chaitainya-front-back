@@ -1,8 +1,9 @@
 /**
  * ============================================================================
  * File: organisation-page.js
- * Purpose: /organisers — the core team plus one team per event category
- * (anchors like #team-tech, linked from each event's "Organised by" block).
+ * Purpose: /organisers — website developers, event coordinators, then the
+ * student coordinator of each organising team (anchors like #team-technical).
+ * Event student heads are on /events only.
  * Reuses privacy-policy.css (hero/CTA); person/event cards and the team grid
  * live in m-pages.css (.m-org).
  * ============================================================================
@@ -10,44 +11,53 @@
 import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b, E as rt } from "./vue-runtime.js";
 import { FEST_CONFIG, escapeHtml as esc } from "./fest-config.js";
-import { TEAMS, categoryTeams } from "./teams-data.js";
-import { EVENT_CATEGORIES } from "./events-data.js";
-import { marqueeHtml, personCardHtml, eventCardHtml } from "./m-marquee.js";
+import { TEAMS, teamGroups } from "./teams-data.js";
+import { personCardHtml } from "./m-marquee.js";
 
 const TINTS = ["--cat-cultural", "--cat-tech", "--cat-innovation", "--cat-esports", "--cat-business"];
 
 function buildHtml() {
   const mail = esc(FEST_CONFIG.contactEmail);
-  const teams = categoryTeams();
+  const teams = teamGroups();
 
   // Per team: two people (tap for their page) with "View more" for the rest,
   // then a row of its events. Section ids are the #team-… anchors.
-  const peopleGrid = (cards, label) => `
+  // all: every card visible (no "View more"); ids: optional anchor per card.
+  const peopleGrid = (cards, label, { all = false, ids = [] } = {}) => `
     <div class="m-people" aria-label="${esc(label)}">
-      <ul class="m-people-grid">${cards.map((c, i) => `<li${i > 1 ? ' class="m-people-more"' : ""}>${c}</li>`).join("")}</ul>
-      ${cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">View more (${cards.length - 2})</button>` : ""}
+      <ul class="m-people-grid">${cards
+        .map((c, i) => `<li${ids[i] ? ` id="${esc(ids[i])}" class="m-org-anchor"` : ""}${!all && i > 1 ? ' class="m-people-more"' : ""}>${c}</li>`)
+        .join("")}</ul>
+      ${!all && cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">View more (${cards.length - 2})</button>` : ""}
     </div>`;
-  const markOf = (id) => (EVENT_CATEGORIES.find((c) => c.id === id) || {}).shortCode;
+  // Website developers, then the fest's event coordinators (#core-team kept
+  // as the anchor of this block), then each team's coordinators. Event
+  // student heads are on the events page only.
+  const coreHtml = TEAMS.map(
+    (tm, t) => `
+      <section class="m-org-team" id="${esc(tm.id)}">
+        <h2 class="m-h">${esc(tm.name)}</h2>
+        ${peopleGrid(
+          tm.people.map((m, i) => personCardHtml(m, `var(${TINTS[(t * 2 + i) % TINTS.length]})`)),
+          tm.name
+        )}
+      </section>`
+  ).join("");
+  // One "Team Coordinators" grid: each card is a team's student coordinator,
+  // anchored as #team-… (links from organiser pages land on the card).
+  const coords = teams.flatMap((tm) => tm.people.map((m) => ({ ...m, teamId: tm.id, accent: tm.accent })));
+  const seenIds = new Set();
   const teamsHtml = `
     <div class="m-org">
-      <section class="m-org-team" id="core-team">
-        <h2 class="m-h">Core Team</h2>
+      <div id="core-team" class="m-org-core">${coreHtml}</div>
+      <section class="m-org-team" id="team-coordinators">
+        <h2 class="m-h">Team Coordinators</h2>
         ${peopleGrid(
-          TEAMS.flatMap((tm) => tm.people).map((m, i) => personCardHtml(m, `var(${TINTS[i % TINTS.length]})`)),
-          "Core team"
+          coords.map((m) => personCardHtml(m, m.accent)),
+          "Team coordinators",
+          { all: true, ids: coords.map((m) => (seenIds.has(m.teamId) ? "" : (seenIds.add(m.teamId), m.teamId))) }
         )}
       </section>
-      ${teams
-        .map(
-          (tm) => `
-      <section class="m-org-team" id="${esc(tm.id)}">
-        <h2 class="m-h" style="--tint: ${tm.accent}">${esc(tm.name)}</h2>
-        ${tm.people.length ? peopleGrid(tm.people.map((m) => personCardHtml(m, tm.accent)), `${tm.name}: student heads`) : ""}
-        <h3 class="m-sub">Events (${tm.events.length})</h3>
-        ${marqueeHtml(tm.events.map((ev) => eventCardHtml(ev, tm.accent, markOf(tm.categoryId))), { label: `${tm.name}: events`, secsPerCard: 5, still: true })}
-      </section>`
-        )
-        .join("")}
     </div>`;
 
   return `

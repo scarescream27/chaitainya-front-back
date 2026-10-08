@@ -5,18 +5,11 @@
  * "Organised by" block of every event. Real names only.
  * ============================================================================
  */
-import { EVENT_CATEGORIES, EVENTS_DATA } from "./events-data.js";
 
-// Source: "Chaitanya Teams 2026". Names and roles only.
+// Source: "Chaitanya Teams 2026". Names and roles only. Order is the order
+// on /organisers and in the home organisers slider: website developers, then
+// the coordinators of the whole fest, then the team coordinators below.
 export const TEAMS = [
-  {
-    id: "event-coordinators",
-    name: "Event Coordinators",
-    people: [
-      { name: "Aman Singh Ranawat", role: "Event Coordinator" },
-      { name: "Krish Kanha", role: "Event Coordinator" },
-    ],
-  },
   {
     id: "website-developers",
     name: "Website Developers",
@@ -25,6 +18,31 @@ export const TEAMS = [
       { name: "Manas Kapoor", role: "Website Developer" },
     ],
   },
+  {
+    id: "event-coordinators",
+    name: "Event Coordinators",
+    people: [
+      { name: "Aman Singh Ranawat", role: "Event Coordinator" },
+      { name: "Krish Kanha", role: "Event Coordinator" },
+    ],
+  },
+];
+
+// The fest's organising teams and their student coordinators, in the order of
+// "Chaitanya Teams 2026". Names only (no contact or roll numbers on the site).
+// Event student heads are listed on the events page only.
+export const ORG_TEAMS = [
+  { id: "team-technical", name: "Technical Team", coordinators: ["Manas Kapoor"] },
+  { id: "team-finance", name: "Finance Team", coordinators: ["Krish Kanha"] },
+  { id: "team-disciplinary", name: "Disciplinary Team", coordinators: ["Akhil Thakur"] },
+  { id: "team-design", name: "Design Team", coordinators: ["Lavanya Chambial"] },
+  { id: "team-marketing", name: "Marketing Team", coordinators: ["Kashish Chandel"] },
+  { id: "team-requirements", name: "Requirement Gathering & Maintenance Team", coordinators: ["Shahid Ansari"] },
+  { id: "team-cultural", name: "Cultural Management Team", coordinators: ["Ankita Thakur"] },
+  { id: "team-decor", name: "Decor Team", coordinators: ["Ishita Parmar"] },
+  { id: "team-activity", name: "Activity Planning Team", coordinators: ["Rohit Kumar"] },
+  { id: "team-pr", name: "PR Team", coordinators: ["Shriya Verma"] },
+  { id: "team-stage", name: "Stage Handling Team", coordinators: ["Lata"] },
 ];
 
 // Optional photos, keyed by the exact name used above or in events-data.js.
@@ -44,22 +62,21 @@ export const personSlug = (name) =>
   name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /**
- * Everyone on /organisers, merged by name: { slug, name, roles, teams, events }.
- * events are event objects this person heads.
+ * Everyone on /organisers, in page order, merged by name:
+ * { slug, name, roles, teams, events }. Website developers, event
+ * coordinators, then team coordinators. events stays empty: event student
+ * heads are listed on the events page only.
  */
 export function allPeople() {
   const by = new Map();
-  const add = (name, role, team, events = []) => {
+  const add = (name, role, team) => {
     const p = by.get(name) || { slug: personSlug(name), name, roles: [], teams: [], events: [] };
     if (!p.roles.includes(role)) p.roles.push(role);
     if (!p.teams.some((t) => t.id === team.id)) p.teams.push({ id: team.id, name: team.name });
-    for (const ev of events) if (!p.events.includes(ev)) p.events.push(ev);
     by.set(name, p);
   };
-  for (const tm of TEAMS) for (const m of tm.people) add(m.name, m.role, { id: "core-team", name: tm.name });
-  for (const tm of categoryTeams())
-    for (const m of tm.people)
-      add(m.name, m.role, tm, tm.events.filter((ev) => (ev.coordinators || []).some((q) => q.name === m.name)));
+  for (const tm of TEAMS) for (const m of tm.people) add(m.name, m.role, { id: tm.id, name: tm.name });
+  for (const tm of teamGroups()) for (const m of tm.people) add(m.name, m.role, tm);
   return [...by.values()];
 }
 
@@ -73,38 +90,22 @@ export function initials(name) {
     .join("");
 }
 
-/** Anchor id of a category team on /organisers, e.g. "team-tech". */
-export const categoryTeamId = (categoryId) => `team-${categoryId}`;
+const TEAM_TINTS = ["var(--cat-tech)", "var(--cat-innovation)", "var(--cat-business)", "var(--cat-esports)", "var(--cat-cultural)"];
 
 /**
- * One team per event category: its events and their student heads (from
- * events-data.js), e.g. { id: "team-tech", name: "Coding & Tech Team", ... }.
+ * The organising teams with their coordinators as people, e.g.
+ * { id: "team-technical", name: "Technical Team", accent, people: [{ name, role }] }.
  */
-export function categoryTeams() {
-  return EVENT_CATEGORIES.filter((c) => c.id !== "all").map((c) => {
-    const events = EVENTS_DATA.filter((ev) => ev.category === c.id);
-    const seen = new Set();
-    const heads = [];
-    for (const ev of events) {
-      for (const p of ev.coordinators || []) {
-        if (seen.has(p.name)) continue;
-        seen.add(p.name);
-        heads.push({ name: p.name, role: p.role, events: events.filter((x) => (x.coordinators || []).some((q) => q.name === p.name)).map((x) => x.title) });
-      }
-    }
-    return { id: categoryTeamId(c.id), categoryId: c.id, name: `${titleCase(c.name)} Team`, accent: c.accent, events, people: heads };
-  });
+export function teamGroups() {
+  return ORG_TEAMS.map((t, i) => ({
+    id: t.id,
+    name: t.name,
+    accent: TEAM_TINTS[i % TEAM_TINTS.length],
+    people: t.coordinators.map((name) => ({ name, role: `${t.name.replace(/ Team$/, "")} Coordinator` })),
+  }));
 }
 
-/** The team that organises an event: { name, href } for its "Organised by" block. */
-export function organiserFor(ev) {
-  const c = EVENT_CATEGORIES.find((x) => x.id === ev.category);
-  return {
-    name: c ? `${titleCase(c.name)} Team` : "Organising Committee",
-    href: c ? `/organisers#${categoryTeamId(c.id)}` : "/organisers",
-  };
-}
-
-function titleCase(s) {
-  return s.toLowerCase().replace(/(^|[\s&])([a-z])/g, (m, sep, ch) => sep + ch.toUpperCase());
+/** "Organised by" on an event: the fest's organising teams on /organisers. */
+export function organiserFor() {
+  return { name: "Chaitanya 2k26 Organising Teams", href: "/organisers" };
 }

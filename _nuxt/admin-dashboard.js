@@ -23,6 +23,8 @@ import {
   approvePayment,
   rejectPayment,
   backfillTeamCodes,
+  adminSetField,
+  adminDeleteDoc,
   passId,
   legacyPassId,
   paymentCovers,
@@ -42,6 +44,7 @@ const SECTIONS = [
   { id: "attendees", label: "Accounts" },
   { id: "queries", label: "Queries" },
   { id: "setup", label: "Setup" },
+  { id: "security", label: "Security" },
 ];
 
 const state = {
@@ -61,6 +64,7 @@ const state = {
   errors: [],
   devServer: false,
   checkin: null, // { query, results }
+  scan: null, // { hits, at } from scanSuspicious()
   rejecting: null, // paymentId whose inline "reject reason" form is open
   actionError: "",
   unsubAuth: null,
@@ -196,6 +200,7 @@ async function loadData() {
   }
   state.loading = false;
   state.loadedAt = new Date();
+  runScan();
   renderShell();
 }
 
@@ -276,6 +281,8 @@ function sectionCount(id, data) {
       return state.attendees.length;
     case "queries":
       return state.queries.filter((q) => q.status !== "resolved").length || "";
+    case "security":
+      return state.scan?.hits.length || "";
     default:
       return "";
   }
@@ -287,7 +294,7 @@ function renderShell() {
   if (!box || !user) return;
   const data = computeData();
   const sections = [...SECTIONS, ...(state.devServer ? [{ id: "redis", label: "Dev cache" }] : [])];
-  const alertIds = new Set(["payments", "queries"]);
+  const alertIds = new Set(["payments", "queries", "security"]);
   // Re-rendering replaces every control; remember which top-bar/sidebar
   // button had focus so keyboard users are not dropped back to <body>.
   const focused = document.activeElement?.closest?.(".adm-top [data-adm], .adm-nav [data-adm]");
@@ -344,6 +351,7 @@ function renderMain() {
     attendees: renderAttendees,
     queries: renderQueries,
     setup: renderSetup,
+    security: renderSecurity,
     redis: renderRedis,
   }[state.section] || renderOverview;
   const actionError = state.actionError
@@ -766,9 +774,153 @@ function renderSetup() {
     </section>`;
 }
 
+// ---- Security ---------------------------------------------------------------
+
+// Patterns that should never appear in participant-entered text.
+const SUSPICIOUS = [
+  [/<[a-z\/!?]/i, "HTML tag"],
+  [/<script/i, "script tag"],
+  [/javascript\s*:/i, "javascript: URL"],
+  [/data\s*:\s*text\/html/i, "data:text/html URL"],
+  [/\bon\w+\s*=/i, "event handler"],
+  [/&#(x0*3[ce]|0*6[02]);?/i, "encoded < or >"],
+];
+
+// [state key, collection, doc id, owner label]
+const SCAN_SOURCES = [
+  ["attendees", "users", (d) => d._docId || d.uid, (d) => d.email || d.uid],
+  ["teams", "teams", (d) => d._docId || d.teamId, (d) => d.leaderEmail || d.leaderUid],
+  ["registrations", "registrations", (d) => d._docId || d.id, (d) => d.user_email || d.user_id],
+  ["payments", "payments", (d) => d._docId || d.paymentId, (d) => d.payerEmail || d.payerUid],
+  ["queries", "queries", (d) => d._docId || d.id, (d) => d.email || d.uid],
+];
+
+function suspicionReasons(key, value) {
+  const reasons = SUSPICIOUS.filter(([re]) => re.test(value)).map(([, label]) => label);
+  if (key === "photoURL" && value && !value.startsWith("https://")) reasons.push("photoURL not https");
+  return reasons;
+}
+
+// Walks strings inside nested maps/arrays; skips Firestore Timestamps and _docId.
+function walkStrings(value, path, visit) {
+  if (typeof value === "string") return visit(path, value);
+  if (!value || typeof value !== "object" || typeof value.toDate === "function") return;
+  if (Array.isArray(value)) return value.forEach((v, i) => walkStrings(v, [...path, i], visit));
+  Object.keys(value).forEach((k) => !k.startsWith("_") && walkStrings(value[k], [...path, k], visit));
+}
+
+function scanSuspicious() {
+  const hits = [];
+  SCAN_SOURCES.forEach(([key, col, idOf, ownerOf]) =>
+    state[key].forEach((doc) =>
+      walkStrings(doc, [], (path, value) => {
+        const reasons = suspicionReasons(path[path.length - 1], value);
+        if (reasons.length) hits.push({ key, col, doc, id: idOf(doc), owner: ownerOf(doc) || "—", path, value, reasons });
+      })
+    )
+  );
+  return hits;
+}
+
+function runScan() {
+  state.scan = { hits: scanSuspicious(), at: new Date() };
+}
+
+/** Strip tags/handlers/script URLs; fall back to "Removed" if anything is left. */
+function cleanValue(key, value) {
+  if (key === "photoURL") return "";
+  let s = value;
+  for (let prev; prev !== s; ) {
+    prev = s;
+    s = s
+      .replace(/&#(x0*3[ce]|0*6[02]);?/gi, "")
+      .replace(/<[^>]*>?/g, "")
+      .replace(/\bon\w+\s*=\s*("[^"]*"|'[^']*'|\S*)/gi, "")
+      .replace(/javascript\s*:|data\s*:\s*text\/html/gi, "");
+  }
+  s = s.trim();
+  return !s || suspicionReasons(key, s).length ? "Removed" : s;
+}
+
+// Copy only the containers along `path` so Timestamps elsewhere stay intact.
+function setAtPath(value, path, next) {
+  if (!path.length) return next;
+  const copy = Array.isArray(value) ? [...value] : { ...value };
+  copy[path[0]] = setAtPath(value[path[0]], path.slice(1), next);
+  return copy;
+}
+
+const fieldPath = (path) => path.map((p) => (typeof p === "number" ? `[${p}]` : p)).join(".").replace(/\.\[/g, "[");
+const truncate = (s, n = 140) => (s.length > n ? `${s.slice(0, n)}…` : s);
+
+function renderSecurity() {
+  const { hits, at } = state.scan || { hits: [], at: null };
+  const when = at ? at.toLocaleTimeString("en-IN", { timeStyle: "medium" }) : "—";
+  const rows = hits.map(
+    (h, i) => `
+      <tr>
+        <td><strong>${e(h.col)}</strong><br/><small class="mono">${e(h.id || "—")}</small></td>
+        <td><code>${e(fieldPath(h.path))}</code><br/>${h.reasons.map((r) => `<span class="admin-flag">${e(r.toUpperCase())}</span>`).join("")}</td>
+        <td>${e(h.owner)}</td>
+        <td class="adm-message"><code class="adm-sec-value">${e(truncate(h.value))}</code></td>
+        <td><div class="admin-action-btn-group">
+          <button type="button" class="pp-action" data-adm="sec-clean" data-index="${i}">Clean</button>
+          ${h.col === "users" ? `<button type="button" class="btn-action-reject" data-adm="sec-delete" data-index="${i}">Delete profile document</button>` : ""}
+        </div></td>
+      </tr>`
+  );
+  return `
+    ${sectionHead("09 // SECURITY", "Suspicious data", "Scans every loaded account, team, registration, payment and query for HTML tags, event handlers, script URLs, encoded angle brackets and non-https photo URLs. Values are shown escaped.")}
+    <section class="adm-card">
+      <p class="pp-hint">Also disable the Google account in Firebase console → Authentication if it looks malicious.</p>
+      <div class="prof-actions"><button type="button" class="pp-action subtle" data-adm="sec-rescan">↻ Re-scan</button></div>
+    </section>
+    ${hits.length
+      ? `<p class="adm-result-count">${hits.length} suspicious value${hits.length === 1 ? "" : "s"} · scanned ${e(when)}</p>
+        <div class="admin-table-wrap" role="region" tabindex="0" aria-label="Suspicious data table">
+          <table class="admin-table">
+            <caption class="sr-only">Suspicious data, ${hits.length} found</caption>
+            <thead><tr>${["Document", "Field", "Owner", "Value (escaped)", "Action"].map((h) => `<th scope="col">${e(h)}</th>`).join("")}</tr></thead>
+            <tbody>${rows.join("")}</tbody>
+          </table>
+        </div>`
+      : `<section class="adm-card"><p class="pp-hint">✓ No suspicious data found · scanned ${e(when)}</p></section>`}`;
+}
+
+async function securityAction(hit, kind, btn) {
+  const label = `${hit.col}/${hit.id}`;
+  const top = hit.path[0];
+  const ask = kind === "delete"
+    ? `Delete the profile document ${label} (${hit.owner})? This cannot be undone.`
+    : `Clean ${fieldPath(hit.path)} on ${label} (${hit.owner})?`;
+  if (!hit.id || !confirm(ask)) return;
+  state.actionError = "";
+  btn.disabled = true;
+  let message;
+  try {
+    if (kind === "delete") {
+      await adminDeleteDoc(hit.col, hit.id);
+      state[hit.key] = state[hit.key].filter((d) => d !== hit.doc);
+      message = `Deleted ${label}.`;
+    } else {
+      const next = setAtPath(hit.doc[top], hit.path.slice(1), cleanValue(hit.path[hit.path.length - 1], hit.value));
+      await adminSetField(hit.col, hit.id, top, next);
+      hit.doc[top] = next;
+      message = `Cleaned ${fieldPath(hit.path)} on ${label}.`;
+    }
+  } catch (err) {
+    state.actionError = `Could not ${kind === "delete" ? "delete" : "clean"} ${label}: ${err.message}`;
+    message = state.actionError;
+  }
+  runScan();
+  renderShell();
+  focusMain();
+  announce(`${message} ${state.scan.hits.length} suspicious value${state.scan.hits.length === 1 ? "" : "s"} left.`);
+}
+
 function renderRedis() {
   return `
-    ${sectionHead("09 // DEV CACHE", "Local dev server cache")}
+    ${sectionHead("10 // DEV CACHE", "Local dev server cache")}
     <section class="adm-card">
       <p class="pp-hint" id="redis-stat-meta">Loading /api/cache/stats…</p>
       <div class="prof-actions">
@@ -897,6 +1049,19 @@ async function onClick(evt) {
       state.actionError = `Could not update the query from ${query.name || "this sender"}: ${err.message}`;
     }
     renderShell();
+    return;
+  }
+
+  if (action === "sec-rescan") {
+    runScan();
+    renderShell();
+    focusMain();
+    announce(`Scan complete: ${state.scan.hits.length} suspicious value${state.scan.hits.length === 1 ? "" : "s"}.`);
+    return;
+  }
+  if (action === "sec-clean" || action === "sec-delete") {
+    const hit = state.scan?.hits[Number(btn.dataset.index)];
+    if (hit) await securityAction(hit, action === "sec-delete" ? "delete" : "clean", btn);
     return;
   }
 

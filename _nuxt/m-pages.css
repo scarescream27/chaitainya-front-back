@@ -1424,3 +1424,30 @@
     transform: none;
   }
 }
+
+/* /organisers: website developers + event coordinators share the #core-team
+   anchor wrapper; give it the page's section spacing. Team cards are anchors
+   (#team-…) that must clear the fixed header. */
+.m-org-core {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: inherit;
+}
+.m-org-anchor {
+  scroll-margin-top: 80px;
+}
+
+/* Event cards with a poster: the poster carries the name, so no dark fade and
+   the text is kept for screen readers only. */
+.m-card.m-card-poster {
+  /* Whole poster (square or 4:5) inside the taller card: never crop its text. */
+  background: var(--bg) center / contain no-repeat, #000;
+}
+.m-card.m-card-poster .m-card-body {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -25,6 +25,21 @@ export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
 
+// Events that have a poster: images/events/<event id>.webp (900px wide,
+// square or 4:5). To add one, drop the file in and add the id here; events
+// without a poster keep the category glyph.
+const POSTERS = new Set([
+  "codeforge-reforged",
+  "capture-the-flag",
+  "error-404",
+  "prompt-engineering",
+  "cube-conquest",
+  "esports-cs2",
+  "treasure-hunt",
+  "cultural-walk",
+  "dance-competition",
+]);
+
 // Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
 // they pass WCAG AA (4.5:1) for 12px labels on the cards. Change the hues in
 // tokens.css, not here.
@@ -77,6 +92,7 @@ function event(e) {
     judgingCriteria: [],
     coordinators: [],
     ...e,
+    poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp` : null,
     registrationType: type,
     minTeam,
     maxTeam,

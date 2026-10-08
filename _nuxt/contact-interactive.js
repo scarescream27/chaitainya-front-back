@@ -100,7 +100,7 @@ export function initContactForm5Fields() {
 
   // Build the 5 fields + Send + Heart HTML
   wrapper.innerHTML = `
-    <form class="contact-chaitanya-form" onsubmit="return false;" novalidate>
+    <form class="contact-chaitanya-form" novalidate>
       <div class="input-wrapper" data-field="name">
         <input type="text" name="name" aria-label="Your name" placeholder="YOUR NAME" autocomplete="name" autocapitalize="words" spellcheck="false" />
         <div class="outline"></div>
@@ -128,6 +128,8 @@ export function initContactForm5Fields() {
       <p class="contact-status sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     </form>
   `;
+  // No inline onsubmit (the CSP blocks inline handlers): stop native submits here.
+  wrapper.querySelector("form")?.addEventListener("submit", (ev) => ev.preventDefault());
 
   const form = wrapper.querySelector("form");
   const nameWrap = form.querySelector('[data-field="name"]');

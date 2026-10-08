@@ -357,7 +357,12 @@ const HERO_ICONS = {
   venue: svg('<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'),
 };
 
-// One glyph per category: the card's visual identity (there are no event posters yet).
+// Event poster (images/events/<id>.webp, see POSTERS in events-data.js). The
+// poster carries the event name, so it replaces the number / glyph overlays.
+const posterImg = (ev, { eager = false } = {}) =>
+  `<img class="event-poster" src="${e(ev.poster)}" alt="${e(ev.title)} poster" width="900" height="900" decoding="async"${eager ? "" : ' loading="lazy"'}>`;
+
+// One glyph per category: the visual identity of events without a poster.
 const CATEGORY_ICONS = {
   tech: svg('<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/>'),
   innovation: svg('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/>'),
@@ -382,10 +387,14 @@ function renderEventCardHtml(ev) {
   return `
     <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
-      <button type="button" class="event-card-visual" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
-        <span class="event-visual-num" aria-hidden="true">${number}</span>
+      <button type="button" class="event-card-visual${ev.poster ? " has-poster" : ""}" aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
+        ${
+          ev.poster
+            ? posterImg(ev)
+            : `<span class="event-visual-num" aria-hidden="true">${number}</span>
         <span class="event-visual-icon">${CATEGORY_ICONS[ev.category] || ""}</span>
-        ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}
+        ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}`
+        }
       </button>
 
       <div class="event-card-body">
@@ -482,10 +491,14 @@ export function openEventDossier(eventId) {
     <button type="button" class="event-dossier-back" data-action="dossier-back">← All events</button>
     <button type="button" class="event-dossier-close" id="dossier-close-btn" aria-label="Close"><span class="m-x" aria-hidden="true">✕</span></button>
   </div>
-  <div class="event-dossier-visual" style="--cat:${accentColor};">
-    <span class="event-visual-num" aria-hidden="true">${number}</span>
+  <div class="event-dossier-visual${ev.poster ? " has-poster" : ""}" style="--cat:${accentColor};">
+    ${
+      ev.poster
+        ? posterImg(ev, { eager: true })
+        : `<span class="event-visual-num" aria-hidden="true">${number}</span>
     <span class="event-visual-icon">${CATEGORY_ICONS[ev.category] || ""}</span>
-    ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}
+    ${flagship ? `<span class="event-visual-flag">${e(flagship)}</span>` : ""}`
+    }
   </div>
   <span class="event-dossier-kicker" style="color:${accentColor};">${e(ev.categoryName)}</span>
   <h2 class="event-dossier-title" id="event-dossier-title" tabindex="-1">${e(ev.title)}</h2>

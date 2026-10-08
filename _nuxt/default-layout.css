@@ -181,3 +181,34 @@ header .header .menu-switch .line {
     transition: none;
   }
 }
+
+/* Light header background whenever page content sits behind the header
+   (html.header-over-content, set from nuxt-router-utils.js): same sky tone
+   as the phone header on inner pages, fading in. Drawn as a ::before layer
+   so it can fade (gradients can't transition). */
+header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sky-top) 97%, transparent) 78%,
+    color-mix(in srgb, var(--sky-top) 0%, transparent)
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+html.header-over-content header::before {
+  opacity: 1;
+}
+/* The open phone menu brings its own background. */
+html:has(header .menu-switch.active) header::before {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  header::before {
+    transition: none;
+  }
+}

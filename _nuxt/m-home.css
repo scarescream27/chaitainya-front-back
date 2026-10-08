@@ -293,3 +293,17 @@
 @keyframes sgf-confirm-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 @keyframes sgf-confirm-up { from { transform: translateY(100%); } }
 @keyframes sgf-confirm-fade { from { opacity: 0; } }
+
+/* Home event cards: poster fills the 60% visual (images/events/<id>.webp). */
+.sgfm-vis.has-poster {
+  overflow: hidden;
+  background: #000;
+}
+.sgfm-vis.has-poster .sgfm-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}

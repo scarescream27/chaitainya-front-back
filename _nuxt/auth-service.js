@@ -1422,6 +1422,41 @@ export async function setQueryStatus(query, status) {
   return { ...query, ...patch };
 }
 
+// Admin security cleanup: overwrite one top-level field, or delete a doc.
+const CLEANUP_COLLECTIONS = ["users", "teams", "registrations", "payments", "queries"];
+
+export async function adminSetField(col, id, field, value) {
+  requireAdmin();
+  if (!CLEANUP_COLLECTIONS.includes(col) || !id || !field) throw new Error("Unknown document.");
+  if (isLive()) {
+    const { doc, updateDoc } = fsMod;
+    try {
+      await updateDoc(doc(firebaseFirestore, col, id), { [field]: value });
+    } catch (err) {
+      throw friendlyError(err, "Could not clean the field.");
+    }
+  } else {
+    demoUpdate(col, id, { [field]: value });
+  }
+}
+
+export async function adminDeleteDoc(col, id) {
+  requireAdmin();
+  if (!CLEANUP_COLLECTIONS.includes(col) || !id) throw new Error("Unknown document.");
+  if (isLive()) {
+    const { doc, deleteDoc } = fsMod;
+    try {
+      await deleteDoc(doc(firebaseFirestore, col, id));
+    } catch (err) {
+      throw friendlyError(err, "Could not delete the document.");
+    }
+  } else {
+    const db = demoDb();
+    if (db[col]) delete db[col][id];
+    demoSave(db);
+  }
+}
+
 /**
  * Items covered by a payment (supports legacy single-event payments).
  */

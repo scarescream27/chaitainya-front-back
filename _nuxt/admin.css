@@ -614,3 +614,9 @@ ol.adm-list li span::before {
     padding: 12px;
   }
 }
+
+/* Security tab: escaped suspicious values */
+.adm-sec-value {
+  white-space: pre-wrap;
+  word-break: break-all;
+}

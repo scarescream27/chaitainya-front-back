@@ -246,8 +246,20 @@ let st,
               const syncHeaderTone = () => {
                 darkQueued = false;
                 if (!headerEl) return;
+                // Light header background whenever page content would sit
+                // behind the header: on home once the footer sections reach
+                // it (the 3D scene keeps a clear header), elsewhere once the
+                // page is scrolled. The backdrop is a fading ::before layer.
+                const hh = headerEl.getBoundingClientRect().height || 60;
+                const home = !document.documentElement.classList.contains("not-home");
+                const footer = home && document.querySelector("#contact");
+                // Native scroll position: the smooth scroller only catches up later.
+                const scrolled = window.scrollY > 8;
+                const overContent = home ? !!footer && footer.getBoundingClientRect().top < hh : scrolled;
+                document.documentElement.classList.toggle("header-over-content", overContent);
                 const own = getComputedStyle(headerEl);
-                const opaque = own.backgroundImage !== "none" || (own.backgroundColor.match(/[\d.]+/g)?.[3] ?? 1) > 0.5;
+                const opaque =
+                  overContent || own.backgroundImage !== "none" || (own.backgroundColor.match(/[\d.]+/g)?.[3] ?? 1) > 0.5;
                 headerEl
                   .querySelectorAll(".header-logo, .right-menu > a, .right-menu > .nav-account > a, .menu-switch")
                   .forEach((el) => {
@@ -257,7 +269,15 @@ let st,
                   });
               };
               const queueTone = () => darkQueued || ((darkQueued = true), requestAnimationFrame(syncHeaderTone));
-              window.addEventListener("scroll", queueTone, { passive: true });
+              // The smooth scroller keeps moving content after the last native
+              // scroll event, so check again once it has settled.
+              let settleTimer = 0;
+              const onScrollTone = () => {
+                queueTone();
+                clearTimeout(settleTimer);
+                settleTimer = setTimeout(queueTone, 450);
+              };
+              window.addEventListener("scroll", onScrollTone, { passive: true });
               window.addEventListener("resize", queueTone, { passive: true });
               setTimeout(queueTone, 300);
               try {

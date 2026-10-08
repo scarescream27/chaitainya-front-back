@@ -57,6 +57,55 @@ service cloud.firestore {
         (method != 'razorpay' && isUtr(ref));
     }
 
+    // No HTML tags in user-entered text: blocks '<' followed by a letter, '/',
+    // '!' or '?' (e.g. <img onerror=...>, <script>, </b>, <!-- ) so markup can
+    // never be stored, while "<3" or "a < b" in a message still pass. The site
+    // also escapes everything it renders; this keeps payloads out of the data.
+    function noTags(value) {
+      return !(value is string) || !value.matches('[\\s\\S]*<[A-Za-z/!?][\\s\\S]*');
+    }
+
+    // Item i of a list of maps (team members, payment items): field has no tags.
+    function noTagsAt(l, i, f) {
+      return l.size() <= i || noTags(l[i].get(f, ''));
+    }
+
+    // Every item's field in a list of at most 25 maps (rules can't loop).
+    function listNoTags(l, f) {
+      return l is list && l.size() <= 25 &&
+        noTagsAt(l, 0, f) &&
+        noTagsAt(l, 1, f) &&
+        noTagsAt(l, 2, f) &&
+        noTagsAt(l, 3, f) &&
+        noTagsAt(l, 4, f) &&
+        noTagsAt(l, 5, f) &&
+        noTagsAt(l, 6, f) &&
+        noTagsAt(l, 7, f) &&
+        noTagsAt(l, 8, f) &&
+        noTagsAt(l, 9, f) &&
+        noTagsAt(l, 10, f) &&
+        noTagsAt(l, 11, f) &&
+        noTagsAt(l, 12, f) &&
+        noTagsAt(l, 13, f) &&
+        noTagsAt(l, 14, f) &&
+        noTagsAt(l, 15, f) &&
+        noTagsAt(l, 16, f) &&
+        noTagsAt(l, 17, f) &&
+        noTagsAt(l, 18, f) &&
+        noTagsAt(l, 19, f) &&
+        noTagsAt(l, 20, f) &&
+        noTagsAt(l, 21, f) &&
+        noTagsAt(l, 22, f) &&
+        noTagsAt(l, 23, f) &&
+        noTagsAt(l, 24, f);
+    }
+
+    // Profile photo: empty, or a plain https URL with no quotes, brackets or spaces.
+    function isSafePhotoUrl(value) {
+      return value == null || value == '' ||
+        (value is string && value.size() <= 2048 && value.matches('^https://[^"\'<>\\s]+$'));
+    }
+
     // Entry fee as seeded by the admin "Sync events" action. An event that is
     // not seeded is treated as paid, so free sign-ups need the events synced.
     function eventIsFree(eventId) {
@@ -85,6 +134,9 @@ service cloud.firestore {
         isShortString(data().get('year', ''), 40) &&
         isShortString(data().get('phone', ''), 20) &&
         isStudentId(data().studentId) &&
+        noTags(data().displayName) && noTags(data().get('college', '')) &&
+        noTags(data().get('year', '')) && noTags(data().get('phone', '')) &&
+        isSafePhotoUrl(data().get('photoURL', '')) &&
         !('role' in data());
 
       allow update: if isAdmin() || (
@@ -95,6 +147,9 @@ service cloud.firestore {
         isShortString(data().get('college', ''), 120) &&
         isShortString(data().get('year', ''), 40) &&
         isShortString(data().get('phone', ''), 20) &&
+        noTags(data().displayName) && noTags(data().get('name', '')) &&
+        noTags(data().get('college', '')) && noTags(data().get('year', '')) &&
+        noTags(data().get('phone', '')) && isSafePhotoUrl(data().get('photoURL', '')) &&
         // Chaitanya ID: set once (for older profiles), never changed afterwards.
         (resource.data.get('studentId', null) == data().get('studentId', null) ||
           (resource.data.get('studentId', null) == null && isStudentId(data().studentId))) &&
@@ -154,6 +209,9 @@ service cloud.firestore {
         data().maxTeamSize <= 20 &&
         data().teamSize == data().members.size() &&
         isShortString(data().teamName, 60) &&
+        noTags(data().teamName) && noTags(data().get('team_name', '')) &&
+        noTags(data().get('leaderName', '')) && noTags(data().get('college', '')) &&
+        listNoTags(data().members, 'name') && listNoTags(data().linkedMembers, 'name') &&
         data().teamCode is string &&
         data().paymentStatus in ['free', 'pending'] &&
         (data().paymentStatus == 'pending' || eventIsFree(data().eventId));
@@ -169,6 +227,7 @@ service cloud.firestore {
         data().linkedMembers.size() == resource.data.linkedMembers.size() + 1 &&
         data().linkedMembers.hasAll(resource.data.linkedMembers) &&
         data().linkedMembers[data().linkedMembers.size() - 1].uid == request.auth.uid &&
+        noTags(data().linkedMembers[data().linkedMembers.size() - 1].get('name', '')) &&
         data().memberUids.size() <= resource.data.maxTeamSize
       ) || (
         // A linked teammate (not the leader) may take only themself off the team.
@@ -218,6 +277,10 @@ service cloud.firestore {
         data().participation_type in ['individual', 'team'] &&
         data().registration_status == 'registered' &&
         isPassId(data().registration_qr_id) &&
+        noTags(data().get('user_name', '')) && noTags(data().get('user_college', '')) &&
+        noTags(data().get('user_year', '')) && noTags(data().get('user_phone', '')) &&
+        listNoTags(data().get('team_members', []), 'name') &&
+        listNoTags(data().get('team_members', []), 'email') &&
         (
           data().payment_status == 'pending_verification' ||
           (data().payment_status == 'free' && eventIsFree(data().event_id)) ||
@@ -265,6 +328,8 @@ service cloud.firestore {
         data().verifiedAt == null &&
         data().verifiedBy == null &&
         isPaymentRef(data().get('method', 'upi'), data().transactionRef) &&
+        noTags(data().get('payerName', '')) && noTags(data().get('payerPhone', '')) &&
+        listNoTags(data().items, 'teamName') &&
         data().amount is number && data().amount > 0;
 
       // Payer may correct the UTR only after a rejection; admins verify/reject.
@@ -312,6 +377,9 @@ service cloud.firestore {
         isShortString(data().get('team_name', ''), 120) &&
         isShortString(data().subject, 200) &&
         isShortString(data().message, 5000) &&
+        noTags(data().get('name', '')) && noTags(data().get('email', '')) &&
+        noTags(data().get('phone', '')) && noTags(data().get('team_name', '')) &&
+        noTags(data().subject) && noTags(data().message) &&
         data().status == 'open' &&
         (data().user_id == null || (isAuthenticated() && data().user_id == request.auth.uid));
 

@@ -51,8 +51,10 @@ export function personCardHtml(p, tint = "var(--cat-tech)") {
 
 /** Event card: event.image as the background when set, else the category mark. */
 export function eventCardHtml(ev, accent, mark) {
+  // Poster (images/events/<id>.webp) as the card background when there is one.
+  ev = ev.image || !ev.poster ? ev : { ...ev, image: ev.poster };
   return `
-    <a class="m-card m-card-event" href="/events/${encodeURIComponent(ev.id)}" style="--tint: ${accent || "var(--cat-tech)"}${
+    <a class="m-card m-card-event${ev.poster && ev.image === ev.poster ? " m-card-poster" : ""}" href="/events/${encodeURIComponent(ev.id)}" style="--tint: ${accent || "var(--cat-tech)"}${
       ev.image ? `; --bg: url('${esc(ev.image)}')` : ""
     }">
       ${ev.image ? "" : `<span class="m-card-mark" aria-hidden="true">${esc(mark || "")}</span>`}
