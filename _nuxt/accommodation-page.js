@@ -33,6 +33,7 @@ const ICONS = {
   meals: svg('<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1.5-3 4-3 7h3"/>'),
   dates: svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   price: svg('<path d="M7 5h10M7 9h10M7 5c5 0 6 8 0 8l7 7"/>'),
+  pass: svg('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>'),
 };
 // Lucide ChevronDown, same as the home FAQ.
 const CHEVRON =
@@ -50,7 +51,7 @@ function buildHtml() {
     ["stay", "Stay", "All three fest nights on the HPTU Hamirpur campus."],
     ["meals", "Meals", "Breakfast, lunch and dinner."],
     ["dates", "Check in / out", "29 Oct evening → 1 Nov."],
-    ["price", "Price", "₹999 per person, paid online at booking."],
+    ["pass", "Booking pass", "A QR pass in your profile, shown at check-in."],
   ];
   const steps = [
     ["Sign in", "Use your Chaitanya 2k26 account."],
@@ -72,11 +73,6 @@ function buildHtml() {
           <span class="privacy-tag-badge">Chaitanya 2k26 · HPTU Hamirpur</span>
           <h1>Accommodation</h1>
           <p class="subtitle">Stay on campus for all three fest nights — meals included.</p>
-        </div>
-        <div class="m-accom-price">
-          <p><b>₹999</b> <span>per person</span></p>
-          <p class="m-accom-when">29 Oct – 1 Nov · 3 nights · All meals</p>
-          <div data-accom-slot>${buttonHtml()}</div>
         </div>
       </div>
 
@@ -110,6 +106,17 @@ function buildHtml() {
         <div class="sgfm-faq-list">${faq
           .map(([q, a]) => `<details class="sgfm-qa" name="accom-faq"><summary><span>${esc(q)}</span>${CHEVRON}</summary><div class="sgfm-a"><p>${a}</p></div></details>`)
           .join("")}</div>
+      </section>
+
+      <!-- Price and booking come last: what you get first, then what it costs. -->
+      <section class="m-accom-block m-accom-booksec" aria-labelledby="accom-book">
+        <h2 class="m-h" id="accom-book">Book your stay</h2>
+        <div class="m-accom-price">
+          <p><b>₹999</b> <span>per person</span></p>
+          <p class="m-accom-when">29 Oct – 1 Nov · 3 nights · All meals</p>
+          <p class="m-accom-note">Pay by UPI at booking; the fest team confirms your payment.</p>
+          <div data-accom-slot>${buttonHtml()}</div>
+        </div>
       </section>
 
       <section class="privacy-cta-box">

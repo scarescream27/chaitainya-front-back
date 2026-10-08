@@ -1584,8 +1584,17 @@
 @media (min-width: 600px) {
   .m-accom-root .m-accom-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Price + book: the last section, a centred card. */
+.m-accom-root .m-accom-booksec .m-accom-price { max-width: 520px; }
+.m-accom-root .m-accom-note {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
 @media (min-width: 768px) {
-  .m-accom-root .m-accom-hero { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); }
+  .m-accom-root .m-accom-booksec { text-align: center; }
+  .m-accom-root .m-accom-booksec .m-h::after { margin-left: auto; margin-right: auto; }
+  .m-accom-root .m-accom-booksec .m-accom-price { margin: 0 auto; padding: 28px; }
 }
 @media (min-width: 992px) {
   .m-accom-root .m-accom-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
