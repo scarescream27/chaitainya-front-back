@@ -19,7 +19,8 @@ import {
   isFirebaseConfigured,
   isAdminUser,
 } from "./firebase-config.js";
-import { getEventById, isRegistrationOpen } from "./events-data.js";
+import { getEventById, isRegistrationOpen, isPastDeadline, EVENTS_DATA, ACCOMMODATION } from "./events-data.js";
+import { getCartItems, setCartOwner } from "./cart.js";
 import { FEST_CONFIG, isPaymentConfigured, isRazorpayEnabled } from "./fest-config.js";
 
 const SDK_VERSION = "10.12.0";
@@ -458,6 +459,8 @@ export function subscribeAuthState(callback) {
 }
 
 function notifyListeners() {
+  // The cart is per user on every route (accommodationState and the profile read it too).
+  setCartOwner(currentUser?.uid);
   for (const listener of authListeners) {
     try {
       listener(currentUser);
@@ -602,6 +605,13 @@ function checkCart(items, details, teams) {
     }
     return { ev, isTeam, team, amount: Number(ev.entryFeeNum) || 0 };
   });
+
+  if (lines.some((l) => l.ev.isAccommodation)) {
+    if (!isPaymentConfigured() && !isRazorpayEnabled()) throw new Error("Accommodation booking opens soon.");
+    if (!lines.some((l) => !l.ev.isAccommodation) && !isRegisteredForAnyEvent()) {
+      throw new Error("Accommodation is for registered participants — register for an event first (you can add both to the cart).");
+    }
+  }
 
   const total = lines.reduce((sum, l) => sum + l.amount, 0);
   return { user, phone, college, year, name, lines, total };
@@ -1113,6 +1123,25 @@ export function isEventRegistered(eventIdOrTitle) {
   const ids = (user.registeredEventIds || []).map((x) => String(x).toLowerCase());
   const titles = (user.registeredEvents || []).map((x) => String(x).toLowerCase().trim());
   return ids.includes(target) || titles.includes(target);
+}
+
+export function isRegisteredForAnyEvent() {
+  return EVENTS_DATA.some((ev) => isEventRegistered(ev.id));
+}
+
+/**
+ * Accommodation booking state for buttons/banners: { state, label }.
+ * state: "booked" | "closed" | "soon" | "needs-event" | "open".
+ * Signed out counts as "open" (the booking action asks them to sign in).
+ */
+export function accommodationState() {
+  if (isEventRegistered(ACCOMMODATION.id)) return { state: "booked", label: "BOOKED" };
+  if (!isRegistrationOpen(ACCOMMODATION) || isPastDeadline(ACCOMMODATION)) return { state: "closed", label: "BOOKING CLOSED" };
+  if (!isPaymentConfigured() && !isRazorpayEnabled()) return { state: "soon", label: "BOOKING OPENS SOON" };
+  if (currentUser && !isRegisteredForAnyEvent() && !getCartItems().some((i) => !i.event.isAccommodation)) {
+    return { state: "needs-event", label: "REGISTER FOR AN EVENT FIRST" };
+  }
+  return { state: "open", label: `BOOK FOR ₹${ACCOMMODATION.entryFeeNum}` };
 }
 
 // ----------------------------------------------------------------------------

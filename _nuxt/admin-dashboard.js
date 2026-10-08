@@ -32,7 +32,7 @@ import {
 } from "./auth-service.js";
 import { isAdminUser } from "./firebase-config.js";
 import { applySchemaToFirestore } from "./firebase-schema-seeder.js";
-import { EVENTS_DATA, getEventById } from "./events-data.js";
+import { EVENTS_DATA, ACCOMMODATION, getEventById } from "./events-data.js";
 import { FEST_CONFIG, escapeHtml as e } from "./fest-config.js";
 
 const SECTIONS = [
@@ -400,7 +400,7 @@ function toolbar({ events = false, statuses = null, placeholder = "Search name, 
       </label>
       ${events ? `<label class="adm-select"><span class="sr-only">Event</span><select data-adm-filter="event">
         <option value="all">All events</option>
-        ${EVENTS_DATA.map((ev) => `<option value="${e(ev.id)}" ${state.eventFilter === ev.id ? "selected" : ""}>${e(ev.title)}</option>`).join("")}
+        ${[...EVENTS_DATA, ACCOMMODATION].map((ev) => `<option value="${e(ev.id)}" ${state.eventFilter === ev.id ? "selected" : ""}>${e(ev.title)}</option>`).join("")}
       </select></label>` : ""}
       ${statuses ? `<label class="adm-select"><span class="sr-only">Status</span><select data-adm-filter="status">
         <option value="all">All statuses</option>
@@ -468,7 +468,7 @@ function renderOverview({ regRows }) {
   const smallTeams = state.teams.filter((t) => (t.teamSize || 1) < (t.minTeamSize || 1));
   const openQueries = state.queries.filter((q) => q.status !== "resolved");
 
-  const perEvent = EVENTS_DATA.map((ev) => {
+  const perEvent = [...EVENTS_DATA, ACCOMMODATION].map((ev) => {
     const regs = regRows.filter((r) => r.event_id === ev.id);
     return { ev, total: regs.length, teams: state.teams.filter((t) => t.eventId === ev.id).length };
   }).sort((a, b) => b.total - a.total);
@@ -669,7 +669,8 @@ function renderRegistrations({ regRows }) {
     ${sectionHead("04 // REGISTRATIONS", "All registrations", "UNPAID means a paid event has no verified payment for this entry. Don't admit until it's verified.")}
     <div class="adm-stats">
       ${stat(regRows.length, "Registrations")}
-      ${stat(new Set(regRows.map((r) => r.event_id)).size, "Events with entries")}
+      ${stat(new Set(regRows.filter((r) => r.event_id !== ACCOMMODATION.id).map((r) => r.event_id)).size, "Events with entries")}
+      ${stat(regRows.filter((r) => r.event_id === ACCOMMODATION.id).length, "Accommodation bookings")}
       ${stat(unpaid.length, "Unpaid / rejected", { alert: unpaid.length > 0 })}
     </div>
     ${toolbar({ events: true, statuses: ["free", "verified", "pending_verification", "unpaid", "rejected"] })}

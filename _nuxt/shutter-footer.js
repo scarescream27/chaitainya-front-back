@@ -250,6 +250,7 @@ const MNAV = [
   ["About", "/about"],
   ["Events", "/events"],
   ["Organisers", "/organisers"],
+  ["Accommodation", "/accommodation"],
   ["Sponsors", "/sponsors"],
   ["FAQ", "#faq"],
   ["Register", "#register"],
@@ -352,6 +353,7 @@ const DEFAULTS = {
     { label: "About", href: "/about" },
     { label: "Events", href: "/events" },
     { label: "Organisers", href: "/organisers" },
+    { label: "Accommodation", href: "/accommodation" },
     { label: "FAQ", href: "#faq" },
   ],
   legal: [
@@ -606,7 +608,7 @@ export function mountShutterFooter(root, opts = {}) {
     return now - press.t < HOLD && now - lastScroll > QUIET;
   };
 
-  const PAGES = { "/events": "Events", "/about": "About", "/organisers": "Organisers", "/contact-us": "Contact", "/sponsors": "Sponsors", "/privacy-policy": "Privacy Policy" };
+  const PAGES = { "/events": "Events", "/about": "About", "/organisers": "Organisers", "/accommodation": "Accommodation", "/contact-us": "Contact", "/sponsors": "Sponsors", "/privacy-policy": "Privacy Policy" };
   // Where a link leaves the home page to, or null for in-page targets (#faq, #top, "/").
   const destination = (a) => {
     const href = a.getAttribute("href") || "";
@@ -668,6 +670,72 @@ export function mountShutterFooter(root, opts = {}) {
       try { a.click(); } finally { confirmed = null; }
     } else a.focus({ preventScroll: true });
   });
+
+  // ---- event cards: press and hold 3 s to open ------------------------------
+  // A tap or a swipe on an event card never opens it (accidental taps while
+  // scrolling). Holding fills a bar across the card; at 3 s the event opens
+  // the same way "Go" does. Moving, scrolling, releasing or leaving cancels.
+  // Keyboard users (no way to hold) get the confirm dialog instead.
+  const HOLD_MS = 3000;
+  const eventLink = (el) => {
+    const a = el?.closest?.('a[href^="/events/"]');
+    return a && root.contains(a) ? a : null;
+  };
+  const cardOf = (a) => a.closest(".m-card, .sgfm-card") || a;
+  let hold = null;
+  const hint = document.createElement("div");
+  hint.className = "sgf-hold-hint";
+  hint.setAttribute("role", "status");
+  hint.setAttribute("aria-live", "polite");
+  document.body.appendChild(hint);
+  cleanups.push(() => hint.remove());
+  let hintTimer = 0;
+  const showHint = () => {
+    hint.textContent = "Hold for 3 seconds to open";
+    hint.classList.add("is-on");
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => hint.classList.remove("is-on"), 1600);
+  };
+  const endHold = (cancelled) => {
+    if (!hold) return;
+    clearTimeout(hold.timer);
+    hold.card.classList.remove("is-holding");
+    const h = hold;
+    hold = null;
+    if (cancelled && !h.done && performance.now() - h.t > 120) showHint();
+  };
+  on(root, "pointerdown", (e) => {
+    const a = eventLink(e.target);
+    if (!a || e.button) return;
+    endHold(false);
+    const card = cardOf(a);
+    hold = { a, card, id: e.pointerId, x: e.clientX, y: e.clientY, y0: scrollPos(), t: performance.now(), done: false };
+    card.classList.add("is-holding");
+    hold.timer = setTimeout(() => {
+      if (!hold || hold.a !== a) return;
+      hold.done = true;
+      card.classList.remove("is-holding");
+      confirmed = a;
+      try { a.click(); } finally { confirmed = null; }
+      hold = null;
+    }, HOLD_MS);
+  });
+  const moveCancel = (x, y) => hold && Math.hypot(x - hold.x, y - hold.y) >= MOVE && endHold(true);
+  on(window, "pointermove", (e) => hold && e.pointerId === hold.id && moveCancel(e.clientX, e.clientY), { passive: true });
+  on(window, "touchmove", (e) => e.touches[0] && moveCancel(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  on(window, "scroll", () => hold && Math.abs(scrollPos() - hold.y0) > SCROLLED && endHold(true), { passive: true, capture: true });
+  on(window, "pointerup", () => endHold(true), { capture: true });
+  on(window, "pointercancel", () => endHold(true), { capture: true });
+  on(root, "pointerleave", (e) => hold && !root.contains(e.relatedTarget) && endHold(true));
+  // Long-press menus (copy link / open in new tab) would hijack the hold.
+  on(root, "contextmenu", (e) => eventLink(e.target) && e.preventDefault());
+  // Pointer clicks on event cards never navigate (only a completed hold does).
+  on(window, "click", (e) => {
+    const a = eventLink(e.target);
+    if (!a || a === confirmed || e.detail === 0) return; // keyboard -> confirm dialog below
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
 
   on(window, "click", (e) => {
     if (!root.contains(e.target)) return;

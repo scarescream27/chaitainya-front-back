@@ -30,16 +30,18 @@ const TBN = "To be notified";
 // rest of a box so the whole poster shows with no cropping and no black bars.
 // To add one, drop both files in and add the id here; events without a
 // poster keep the category glyph.
-const POSTERS = new Set([
-  "codeforge-reforged",
-  "capture-the-flag",
-  "error-404",
-  "prompt-engineering",
-  "cube-conquest",
-  "esports-cs2",
-  "treasure-hunt",
-  "cultural-walk",
-  "dance-competition",
+// Value: the poster's shape (width / height); cards and boxes take this exact
+// shape so the poster fills them with no border.
+const POSTERS = new Map([
+  ["codeforge-reforged", "1 / 1"],
+  ["capture-the-flag", "4 / 5"],
+  ["error-404", "1 / 1"],
+  ["prompt-engineering", "4 / 5"],
+  ["cube-conquest", "1 / 1"],
+  ["esports-cs2", "1 / 1"],
+  ["treasure-hunt", "1 / 1"],
+  ["cultural-walk", "1 / 1"],
+  ["dance-competition", "4 / 5"],
 ]);
 
 // Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
@@ -96,6 +98,7 @@ function event(e) {
     ...e,
     poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp` : null,
     posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp` : null,
+    posterRatio: POSTERS.get(e.id) || null,
     registrationType: type,
     minTeam,
     maxTeam,
@@ -457,13 +460,44 @@ export const EVENTS_DATA = [
     coordinators: heads("Ankita Thakur", "Gargi"),
   }),
 ];
+// Accommodation package, booked through the same cart / checkout / pass flow
+// as an event. Deliberately NOT in EVENTS_DATA, so event counts, grids,
+// filters and the home rows don't include it; getEventById() still finds it.
+export const ACCOMMODATION = event({
+  id: "accommodation",
+  title: "ACCOMMODATION",
+  category: "accommodation",
+  categoryName: "ACCOMMODATION",
+  badge: "ACCOMMODATION",
+  registrationType: "solo",
+  entryFeeNum: 999,
+  entryFee: "₹999",
+  tagline: "Stay on campus for all three fest nights, meals included",
+  date: "29 OCT – 1 NOV",
+  time: "Check in 29 Oct (evening) · Check out 1 Nov",
+  allDay: ["2026-10-29", "2026-11-01"],
+  venue: "HPTU Hamirpur campus",
+  status: "BOOKING",
+  overview:
+    "Stay on the HPTU Hamirpur campus for all three fest nights. Check in on the evening of 29 Oct and check out on 1 Nov. Breakfast, lunch and dinner are included.",
+  rules: [
+    "One booking per person.",
+    "Carry your college ID and a government photo ID.",
+    "You must be registered for at least one event (you can add an event and accommodation to the cart together).",
+  ],
+  coordinators: [],
+  isAccommodation: true,
+});
+
 export function getEventCatalog() {
   return EVENTS_DATA;
 }
 
 export function getEventById(id) {
   if (!id) return null;
-  return EVENTS_DATA.find((ev) => ev.id.toLowerCase() === id.toLowerCase()) || null;
+  const key = String(id).toLowerCase();
+  if (key === ACCOMMODATION.id) return ACCOMMODATION;
+  return EVENTS_DATA.find((ev) => ev.id.toLowerCase() === key) || null;
 }
 
 export function getCategories() {

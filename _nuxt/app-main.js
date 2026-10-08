@@ -4224,6 +4224,15 @@ let At,
             import("./organisation-page.js").then(async (t) => (await t.__tla, t.default || t)),
         },
         {
+          name: "accommodation",
+          path: "/accommodation",
+          meta: {},
+          alias: [],
+          redirect: void 0,
+          component: () =>
+            import("./accommodation-page.js").then(async (t) => (await t.__tla, t.default || t)),
+        },
+        {
           // Phone-only pages (linked from the mobile menu and /organisers).
           name: "organiser",
           path: "/organisers/:slug",

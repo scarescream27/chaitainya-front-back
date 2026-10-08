@@ -6,7 +6,7 @@
  * Cloud Firestore collections and seeds initial fest datasets.
  */
 
-import { EVENTS_DATA } from "./events-data.js";
+import { EVENTS_DATA, ACCOMMODATION } from "./events-data.js";
 import { getFirebaseConfig, isFirebaseConfigured } from "./firebase-config.js";
 
 export const SCHEMA_COLLECTIONS = [
@@ -94,8 +94,10 @@ export async function applySchemaToFirestore(onProgress = () => {}) {
   };
 
   // 1. Seed Events matching 'events' table
-  onProgress({ stage: "events", message: `Seeding ${EVENTS_DATA.length} events to the events collection...` });
-  for (const ev of EVENTS_DATA) {
+  // Accommodation is booked like an event, so it needs its fee doc too (rules: eventIsFree).
+  const catalog = [...EVENTS_DATA, ACCOMMODATION];
+  onProgress({ stage: "events", message: `Seeding ${catalog.length} events to the events collection...` });
+  for (const ev of catalog) {
     try {
       const eventDoc = {
         id: ev.id,

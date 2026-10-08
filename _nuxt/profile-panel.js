@@ -367,6 +367,7 @@ function renderRegistrations() {
   }
 
   const regs = page.regs;
+  const regTitle = (ev, title) => (ev?.isAccommodation ? "Accommodation · 29 Oct – 1 Nov" : title);
   const cart = getCartItems().filter((c) => !regs.some((r) => r.registration.event_id === c.eventId));
   const rows = regs.map(({ registration: r, payment, team, status }) => {
     const ev = getEventById(r.event_id);
@@ -377,10 +378,10 @@ function renderRegistrations() {
       <li class="pp-reg prof-reg">
         <div class="prof-reg-info">
           <div class="pp-reg-top">
-            <strong>${e(r.event_title)}</strong>
+            <strong>${e(regTitle(ev, r.event_title))}</strong>
             <span class="pp-chip ${chip.cls}">${chip.label}</span>
           </div>
-          ${ev ? `<span class="pp-reg-meta">${e(`${ev.date} · ${ev.time}`)}</span>` : ""}
+          ${ev ? `<span class="pp-reg-meta">${e(ev.isAccommodation ? ev.time : `${ev.date} · ${ev.time}`)}</span>` : ""}
           <dl class="prof-reg-dl">
             <dt>Name</dt><dd>${e(r.user_name)}</dd>
             <dt>College</dt><dd>${e(r.user_college || "—")}</dd>
@@ -415,7 +416,7 @@ function renderRegistrations() {
       <li class="pp-reg prof-reg">
         <div class="prof-reg-info">
           <div class="pp-reg-top">
-            <strong>${e(c.event.title)}</strong>
+            <strong>${e(regTitle(c.event, c.event.title))}</strong>
             <span class="pp-chip cart">${STATUS_CHIP.cart.label}</span>
           </div>
           <span class="pp-reg-meta">${e(`${c.event.date} · ${c.event.time}`)}</span>

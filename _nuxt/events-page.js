@@ -18,6 +18,7 @@ import {
   isPastDeadline,
   formatDeadline,
   feeLabel,
+  ACCOMMODATION,
 } from "./events-data.js";
 
 import {
@@ -28,6 +29,8 @@ import {
   payWithRazorpay,
   joinTeamWithCode,
   isEventRegistered,
+  isRegisteredForAnyEvent,
+  accommodationState,
   YEAR_OPTIONS,
 } from "./auth-service.js";
 
@@ -274,6 +277,8 @@ export function renderEventsPageHtml() {
           </div>
         </div>
 
+        <div class="events-stay" id="events-stay">${stayBannerHtml()}</div>
+
         <div class="events-grid" id="events-card-grid">${renderGridHtml(events)}</div>
       </div>
 
@@ -303,6 +308,23 @@ export function renderEventsPageHtml() {
       </div>
     </div>
   `;
+}
+
+// Accommodation strip above the grid: not an event card, not filtered or counted.
+function stayBannerHtml() {
+  const { state, label } = accommodationState();
+  const status = ["booked", "soon", "closed"].includes(state) ? `<span class="events-stay-status">${e(label)}</span>` : "";
+  const cart = ["open", "needs-event"].includes(state) ? cartToggleHtml(ACCOMMODATION) : "";
+  return `
+    <div class="events-stay-text">
+      <strong>Stay on campus — ₹${e(ACCOMMODATION.entryFeeNum)} incl. meals</strong>
+      <span>${e(ACCOMMODATION.date)} · all three fest nights · breakfast, lunch &amp; dinner</span>
+    </div>
+    <div class="events-stay-actions">
+      ${status}
+      <a class="events-stay-link" href="/accommodation" data-action="route-link">View accommodation</a>
+      ${cart}
+    </div>`;
 }
 
 function renderGridHtml(events) {
@@ -385,7 +407,7 @@ function renderEventCardHtml(ev) {
   const teamChip = ev.registrationType === "solo" ? "SOLO" : ev.registrationType === "team" ? `TEAM ${ev.teamSize}` : `SOLO / TEAM`;
 
   return `
-    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor}; --visual-ratio: ${ev.posterRatio || "1 / 1"};">
 
       <button type="button" class="event-card-visual${ev.poster ? " has-poster" : ""}"${ev.posterBg ? ` style="--poster-bg: url('${e(ev.posterBg)}')"` : ""} aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
         ${
@@ -421,8 +443,14 @@ function renderEventCardHtml(ev) {
 // DETAILS DRAWER
 // ----------------------------------------------------------------------------
 
+// Accommodation has no details drawer (it has its own page, /accommodation).
+const dossierEvent = (id) => {
+  const ev = getEventById(id);
+  return ev && !ev.isAccommodation ? ev : null;
+};
+
 export function openEventDossier(eventId) {
-  const ev = getEventById(eventId);
+  const ev = dossierEvent(eventId);
   if (!ev) return;
   const overlay = document.getElementById("event-dossier-overlay");
   const panel = document.getElementById("event-dossier-panel");
@@ -576,7 +604,7 @@ function hookRouter() {
     const m = to.path.match(DEEP_LINK);
     if (m) {
       const id = decodeURIComponent(m[1]);
-      if (!getEventById(id)) return router.replace("/events");
+      if (!dossierEvent(id)) return router.replace("/events");
       if (!isDossierOpen || dossierEventId !== id) openEventDossier(id);
     } else if (EVENTS_PATH.test(to.path) && isDossierOpen) {
       closeEventDossier();
@@ -690,6 +718,10 @@ export function closeCart() {
 function handleToggleCart(eventId) {
   const ev = getEventById(eventId);
   if (!ev) return;
+  if (ev.isAccommodation && !isInCart(ev.id)) {
+    const { state } = accommodationState();
+    if (!["open", "needs-event"].includes(state)) return flashToast(ACCOMMODATION_TOASTS[state]);
+  }
   if (isInCart(ev.id)) {
     removeFromCart(ev.id);
     return flashToast(`${ev.title} removed from cart`);
@@ -1532,6 +1564,8 @@ export function refreshEventsGrid() {
   const focusEventId = focused?.dataset?.eventId;
   const focusAction = focused?.dataset?.action;
   grid.innerHTML = renderGridHtml(filterEvents(activeCategory, activeSearchQuery));
+  const stay = document.getElementById("events-stay");
+  if (stay) stay.innerHTML = stayBannerHtml();
   if (focusEventId) {
     const card = grid.querySelector(`.event-card[data-event-id="${CSS.escape(focusEventId)}"]`);
     const target =
@@ -1575,6 +1609,14 @@ function bindGlobalListeners() {
         skipCloseNav = false;
         return router.push(btn.getAttribute("href"));
       }
+      case "route-link": {
+        const router = getRouter();
+        if (!router || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.button !== 0) return;
+        evt.preventDefault();
+        return router.push(btn.getAttribute("href"));
+      }
+      case "book-accommodation":
+        return openAccommodationBooking();
       case "view-booking":
         closeEventDossier();
         if (typeof window.openProfilePanel === "function") window.openProfilePanel("registrations");
@@ -1706,12 +1748,7 @@ export function initEventsPage() {
     ["events-cart-overlay", closeCart],
     ["event-reg-modal", requestCloseCheckout],
   ];
-  outside.forEach(([id, close]) => {
-    const el = document.getElementById(id);
-    el?.addEventListener("click", (evt) => evt.target === el && close());
-    // Wheel on the dimmed backdrop would scroll the page behind the dialog.
-    el?.addEventListener("wheel", (evt) => evt.target === el && evt.preventDefault(), { passive: false });
-  });
+  outside.forEach(([id, close]) => bindBackdrop(document.getElementById(id), close));
 
   setCartOwner(getCurrentUser()?.uid);
   pruneRegisteredFromCart();
@@ -1733,7 +1770,7 @@ export function initEventsPage() {
   const deep = location.pathname.match(DEEP_LINK);
   if (deep) {
     const id = decodeURIComponent(deep[1]);
-    if (getEventById(id)) openEventDossier(id);
+    if (dossierEvent(id)) openEventDossier(id);
     else if (getRouter()) getRouter().replace("/events");
     else history.replaceState(history.state, "", "/events");
   }
@@ -1748,6 +1785,79 @@ export function initEventsPage() {
       resumeOnlyId = draft.only || null;
     }
   }
+}
+
+function bindBackdrop(el, close) {
+  el?.addEventListener("click", (evt) => evt.target === el && close());
+  // Wheel on the dimmed backdrop would scroll the page behind the dialog.
+  el?.addEventListener("wheel", (evt) => evt.target === el && evt.preventDefault(), { passive: false });
+}
+
+// ----------------------------------------------------------------------------
+// ACCOMMODATION (bookable from any route, e.g. /accommodation)
+// ----------------------------------------------------------------------------
+
+const ACCOMMODATION_TOASTS = {
+  booked: "You've already booked accommodation. Your pass is in My registrations.",
+  closed: "Accommodation booking is closed.",
+  soon: "Accommodation booking opens soon.",
+  "needs-event": "Accommodation is for registered participants — register for an event first (you can add both to the cart).",
+};
+
+// Off /events the checkout and cart dialogs don't exist yet: add the same
+// markup to <body> (initEventsPage replaces it with the page's own copies).
+function ensureBookingContainers() {
+  bindGlobalListeners();
+  ensureToast();
+  const add = (id, html, close) => {
+    if (document.getElementById(id)) return;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = html;
+    const el = wrap.firstElementChild;
+    document.body.appendChild(el);
+    bindBackdrop(el, close);
+  };
+  add(
+    "event-reg-modal",
+    `<div class="event-reg-modal" id="event-reg-modal"><div class="event-reg-card" id="event-reg-card" role="dialog" aria-modal="true" aria-labelledby="co-title"></div></div>`,
+    requestCloseCheckout
+  );
+  add(
+    "events-cart-overlay",
+    `<div class="events-cart-overlay" id="events-cart-overlay"><aside class="events-cart-panel" id="events-cart-panel" role="dialog" aria-modal="true" aria-labelledby="events-cart-title"></aside></div>`,
+    closeCart
+  );
+}
+
+/**
+ * Book accommodation from any page: sign in if needed, then the same checkout
+ * as REGISTER. Registered for an event already → checks out just the stay
+ * (cart untouched); otherwise an event in the cart is required and the stay
+ * is added to the cart and the cart is checked out together.
+ */
+export function openAccommodationBooking() {
+  ensureBookingContainers();
+  const { state } = accommodationState();
+  if (state === "soon" || state === "closed") return flashToast(ACCOMMODATION_TOASTS[state]);
+  if (!getCurrentUser()) {
+    closeEventDossier();
+    closeCart();
+    openAuthModal("login", { afterSignIn: () => openAccommodationBooking() });
+    return;
+  }
+  if (state === "booked") {
+    flashToast(ACCOMMODATION_TOASTS.booked);
+    return window.openProfilePanel?.("registrations");
+  }
+  if (state === "needs-event") return flashToast(ACCOMMODATION_TOASTS[state]);
+  closeEventDossier();
+  if (isRegisteredForAnyEvent()) return startCheckout(ACCOMMODATION.id);
+  try {
+    addToCart(ACCOMMODATION.id);
+  } catch (err) {
+    return flashToast(err.message);
+  }
+  startCheckout();
 }
 
 /**
@@ -1800,6 +1910,7 @@ if (typeof window !== "undefined") {
   window.openEventDossier = openEventDossier;
   window.openEventRegistration = openEventRegistration;
   window.openEventsCart = openCart;
+  window.openAccommodationBooking = openAccommodationBooking;
   window.initEventsPage = initEventsPage;
   window.initScrollMotion = initScrollMotion;
   window.triggerCardsReveal = triggerCardsReveal;
