@@ -15,7 +15,7 @@
  */
 import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket, getCurrentUser } from "./auth-service.js";
-import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel } from "./fest-config.js";
+import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel, phoneLinksHtml } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES, REGISTRATION_DEADLINE, formatDeadline, feeLabel } from "./events-data.js";
 import { marqueeHtml, eventCardHtml, personCardHtml } from "./m-marquee.js";
 import { allPeople } from "./teams-data.js";
@@ -241,7 +241,7 @@ const faqItems = () => {
     ["Where can I find event times?",
       `Each event's page shows its day and time. The fest runs ${esc(getFestDatesLabel())}. Some times are not out yet.`],
     ["Who can I ask for help?",
-      `Email ${mail}, or send us a message with the <a href="#contact" data-sgfm-link>contact form</a> below.`],
+      `Email ${mail}, call ${phoneLinksHtml()}, or send us a message with the <a href="#contact" data-sgfm-link>contact form</a> below.`],
   ];
 };
 

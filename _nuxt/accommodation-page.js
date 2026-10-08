@@ -10,7 +10,7 @@
  */
 import { a as setHead, __tla as o } from "./app-main.js";
 import { k as defineComponent, H as openBlock, F as createBlock, M as h, E as onMounted, o as onBeforeUnmount } from "./vue-runtime.js";
-import { FEST_CONFIG, escapeHtml as esc } from "./fest-config.js";
+import { FEST_CONFIG, escapeHtml as esc, phoneLinksHtml } from "./fest-config.js";
 import { subscribeAuthState, accommodationState } from "./auth-service.js";
 // Loads the shared checkout so booking works when this page is opened directly.
 import { openAccommodationBooking } from "./events-page.js";
@@ -122,7 +122,7 @@ function buildHtml() {
 
       <section class="privacy-cta-box">
         <h3>QUESTIONS ABOUT YOUR STAY?</h3>
-        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or use the contact form.</p>
+        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a>, call ${phoneLinksHtml()}, or use the contact form.</p>
         <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;

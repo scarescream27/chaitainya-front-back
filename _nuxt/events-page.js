@@ -57,6 +57,7 @@ import {
   isRazorpayEnabled,
   buildUpiLink,
   escapeHtml as e,
+  phoneLinksHtml,
 } from "./fest-config.js";
 
 const UTR_PATTERN = /^\d{12}$/;
@@ -555,7 +556,7 @@ export function openEventDossier(eventId) {
   ${section("ORGANISED BY", `
     <p class="event-dossier-text"><a class="event-org-link" href="${e(org.href)}" data-action="org-link">${e(org.name)} →</a></p>
     <p class="event-dossier-text">${heads ? `Student heads: ${heads}` : "Student heads will be announced soon"}</p>`)}
-  ${section("CONTACT", `<div>${coordinatorsHtml}</div>`)}
+  ${section("CONTACT", `<div>${coordinatorsHtml}</div><p class="event-dossier-text">Or call ${phoneLinksHtml()}</p>`)}
 `;
 
   const wasOpen = isDossierOpen && activeDialog === "dossier";

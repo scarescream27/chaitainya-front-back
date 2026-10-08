@@ -49,6 +49,9 @@ function contactHtml() {
       <a class="m-quick-card m-quick-dark" href="mailto:${mail()}">
         ${ico("M3 6h18v12H3zM3 6l9 7 9-7")}
         <span>Email us</span><strong>${mail()}</strong></a>
+      ${FEST_CONFIG.contactPhones.map((p) => `<a class="m-quick-card" href="tel:${p.replace(/\s+/g, "")}">
+        ${ico("M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z")}
+        <span>Call or WhatsApp</span><strong>${esc(p)}</strong></a>`).join("")}
       <a class="m-quick-card" href="/events">
         ${ico("M4 5h16v15H4zM4 10h16M9 3v4M15 3v4")}
         <span>Event details</span><strong>Rules, places and times</strong></a>

@@ -8,7 +8,7 @@
  */
 import { a as t, __tla as o } from "./app-main.js";
 import { k as e, H as be, F as xe, M as b } from "./vue-runtime.js";
-import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
+import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc, phoneLinksHtml } from "./fest-config.js";
 import { EVENT_CATEGORIES, EVENTS_DATA } from "./events-data.js";
 import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
 
@@ -80,7 +80,7 @@ function buildHtml() {
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
-        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or use the contact form.</p>
+        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a>, call ${phoneLinksHtml()}, or use the contact form.</p>
         <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;

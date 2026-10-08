@@ -11,6 +11,8 @@ export const FEST_CONFIG = {
   name: "Chaitanya 2k26",
   university: "Himachal Pradesh Technical University (HPTU), Hamirpur",
   contactEmail: "chaitanyahptu@gmail.com",
+  // Phone numbers shown next to the email (call or WhatsApp).
+  contactPhones: ["+91 85808 78500", "+91 75910 63221"],
 
   // Fest dates shown in the events hero and passes (null shows "DATES TBA").
   datesLabel: "30 OCT – 1 NOV 2026",
@@ -67,6 +69,13 @@ export function buildUpiLink(amount, note) {
 /**
  * Escape a value for safe interpolation into innerHTML templates.
  */
+/** The contact numbers as tap-to-call links: "<a>…</a> or <a>…</a>". */
+export function phoneLinksHtml() {
+  return FEST_CONFIG.contactPhones
+    .map((p) => `<a href="tel:${p.replace(/\s+/g, "")}" style="color:inherit;text-decoration:underline;white-space:nowrap;">${escapeHtml(p)}</a>`)
+    .join(" or ");
+}
+
 export function escapeHtml(value) {
   if (value === null || value === undefined) return "";
   return String(value)
