@@ -56,6 +56,14 @@ export async function submitToWeb3Forms(formData) {
   };
 
   if (isLive) {
+    // AbortSignal.timeout() is missing on iOS/Safari 15: build the same signal by hand there.
+    let signal;
+    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") signal = AbortSignal.timeout(15000);
+    else if (typeof AbortController !== "undefined") {
+      const ctl = new AbortController();
+      setTimeout(() => ctl.abort(), 15000);
+      signal = ctl.signal;
+    }
     const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
       headers: {
@@ -63,14 +71,15 @@ export async function submitToWeb3Forms(formData) {
         Accept: "application/json",
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000),
+      signal,
     });
 
-    const result = await response.json();
+    const isJson = (response.headers.get("content-type") || "").includes("json");
+    const result = isJson ? await response.json().catch(() => ({})) : {};
     if (response.ok && result.success) {
       return { success: true, mode: "live", result };
     } else {
-      throw new Error(result.message || "Failed to deliver message via Web3Forms.");
+      throw new Error(result.message || `Failed to deliver message via Web3Forms (HTTP ${response.status}).`);
     }
   } else {
     // Demo Mode Simulation: Simulates network transmission latency for immediate testing

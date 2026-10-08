@@ -121,6 +121,11 @@ function writeTab(ss, name, headers, rows) {
 
 // ---- Main ---------------------------------------------------------------------
 
+// Users can store odd shapes in their own documents: treat a non-list as empty.
+function list(v) {
+  return Array.isArray(v) ? v : [];
+}
+
 function refresh() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) return; // a refresh is already running
@@ -132,9 +137,9 @@ function refresh() {
     const users = fetchAll("users");
     const queries = fetchAll("queries");
 
-    const teamById = {};
+    const teamById = Object.create(null);
     teams.forEach((t) => (teamById[t.teamId || t._id] = t));
-    const payById = {};
+    const payById = Object.create(null);
     payments.forEach((p) => (payById[p.paymentId || p._id] = p));
 
     // Effective payment status: a teammate's status is their leader's payment.
@@ -173,7 +178,7 @@ function refresh() {
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
         .map((p) => [
           STATUS[p.status] || p.status, p.payerName, p.payerEmail, p.payerPhone,
-          (p.items || []).map((i) => i.eventTitle + (i.teamName ? ` (team ${i.teamName})` : "")).join("; "),
+          list(p.items).map((i) => i.eventTitle + (i.teamName ? ` (team ${i.teamName})` : "")).join("; "),
           p.amount, p.method || "upi", p.transactionRef, when(p.createdAt), p.verifiedBy || "", p.rejectionReason || "", p.paymentId || p._id,
         ])
     );
@@ -186,8 +191,8 @@ function refresh() {
         .sort((a, b) => String(a.eventName).localeCompare(String(b.eventName)))
         .map((t) => [
           t.eventName, t.teamName, t.teamCode, t.leaderName, t.college, t.teamSize,
-          (t.members || []).map((m) => m.name).join(", "),
-          (t.linkedMembers || []).length,
+          list(t.members).map((m) => m.name).join(", "),
+          list(t.linkedMembers).length,
           t.paymentId && payById[t.paymentId] ? STATUS[payById[t.paymentId].status] : STATUS[t.paymentStatus] || t.paymentStatus,
         ])
     );
@@ -196,7 +201,7 @@ function refresh() {
       ss,
       "Accounts",
       ["Name", "Email", "Phone", "College", "Year", "Student ID", "Events"],
-      users.map((u) => [u.displayName || u.name, u.email, u.phone, u.college, u.year, u.studentId, (u.registeredEvents || []).join(", ")])
+      users.map((u) => [u.displayName || u.name, u.email, u.phone, u.college, u.year, u.studentId, list(u.registeredEvents).join(", ")])
     );
 
     writeTab(
@@ -209,7 +214,8 @@ function refresh() {
     );
 
     // Summary: one line per event.
-    const byEvent = {};
+    // No prototype: an event title like "constructor" must not hit Object's keys.
+    const byEvent = Object.create(null);
     regs.forEach((r) => {
       const e = (byEvent[r.event_title] = byEvent[r.event_title] || { total: 0, solo: 0, teams: new Set(), paid: 0, toCheck: 0, free: 0, rejected: 0 });
       e.total++;

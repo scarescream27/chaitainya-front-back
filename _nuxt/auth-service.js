@@ -134,7 +134,13 @@ function slugify(value) {
 }
 
 function cleanText(value, max = 120) {
-  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    // firestore.rules noTags() refuses "<" followed by a letter, / ! or ? (markup);
+    // "< /Coders>" passes and reads the same, so a name can't fail the checkout.
+    .replace(/<(?=[A-Za-z/!?])/g, "< ")
+    .slice(0, max);
 }
 
 function cleanPhone(value) {
@@ -1205,7 +1211,12 @@ export async function cancelRegistration(eventId) {
     if (registration) batch.delete(doc(firebaseFirestore, "registrations", regId));
     if (teamAction === "delete") {
       batch.delete(doc(firebaseFirestore, "teams", team.teamId));
-      if (team.teamCode) batch.delete(doc(firebaseFirestore, "team_codes", team.teamCode));
+      // Older teams may have no team_codes doc; deleting a missing one is denied
+      // by the rules and would fail the whole batch.
+      if (team.teamCode) {
+        const code = await getDocData("team_codes", team.teamCode);
+        code && code.teamId === team.teamId && batch.delete(doc(firebaseFirestore, "team_codes", team.teamCode));
+      }
     }
     if (teamAction === "leave") {
       batch.update(doc(firebaseFirestore, "teams", team.teamId), {

@@ -2383,11 +2383,13 @@ let At,
     function CT() {
       var e;
       const t = (e = v_().nuxt) == null ? void 0 : e.buildId;
+      // Bounded and retried; if it still fails (flaky mobile data), carry on
+      // without route rules for this visit instead of an unhandled rejection
+      // (the only rule is a redirect the router already has).
       return (
-        (Mc = $fetch(_c(`builds/meta/${t}.json`))),
-        Mc.then((i) => {
-          S_ = kw(i.matcher);
-        }),
+        (Mc = $fetch(_c(`builds/meta/${t}.json`), { timeout: 8e3, retry: 2, retryDelay: 500 })
+          .catch(() => ({ id: t, matcher: { static: {}, wildcard: {}, dynamic: {} }, prerendered: [] }))
+          .then((i) => ((S_ = kw(i.matcher)), i))),
         Mc
       );
     }

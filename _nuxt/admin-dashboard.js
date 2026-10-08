@@ -192,11 +192,19 @@ async function loadData() {
       state.errors.push(`${key}: ${r.reason?.message || r.reason}`);
     }
   });
-  try {
-    const res = await fetch("/api/health", { cache: "no-store" });
-    state.devServer = res.ok && (res.headers.get("content-type") || "").includes("json");
-  } catch {
-    state.devServer = false;
+  // /api/* exists only in the local dev server (server.py). In production the
+  // host answers with the HTML page, so only probe on localhost, and briefly.
+  state.devServer = false;
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    const ctl = new AbortController();
+    const tid = setTimeout(() => ctl.abort(), 3000);
+    try {
+      const res = await fetch("/api/health", { cache: "no-store", signal: ctl.signal });
+      state.devServer = res.ok && (res.headers.get("content-type") || "").includes("json");
+    } catch {
+    } finally {
+      clearTimeout(tid);
+    }
   }
   state.loading = false;
   state.loadedAt = new Date();
@@ -728,7 +736,7 @@ function renderAttendees() {
         <td>${e(a.college)}<br/><small>${e(a.year || "")}</small></td>
         <td>${e(a.phone)}</td>
         <td><code>${e(a.studentId)}</code></td>
-        <td>${e((a.registeredEvents || []).join(", ") || "—")}</td>
+        <td>${e((Array.isArray(a.registeredEvents) ? a.registeredEvents : []).join(", ") || "—")}</td>
       </tr>`
   );
   return `
@@ -1196,7 +1204,7 @@ function exportRows({ regRows, leaderContact }, filtered = false) {
     attendees: {
       name: "Accounts",
       headers: ["Name", "Email", "College", "Year", "Phone", "Chaitanya ID", "Registered Events"],
-      rows: pick(state.attendees, keepAttendee).map((a) => [a.displayName || a.name, a.email, a.college, a.year, a.phone, a.studentId, (a.registeredEvents || []).join("; ")]),
+      rows: pick(state.attendees, keepAttendee).map((a) => [a.displayName || a.name, a.email, a.college, a.year, a.phone, a.studentId, (Array.isArray(a.registeredEvents) ? a.registeredEvents : []).join("; ")]),
     },
     queries: {
       name: "Queries",

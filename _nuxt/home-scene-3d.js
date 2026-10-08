@@ -6450,7 +6450,7 @@ let Ws,
                 (Y = { gl: y, scene: m, camera: f }),
                 Ra(),
                 Na(),
-                Ia(),
+                Ia().catch((e) => console.warn("[home] 3D model unavailable:", e)),
                 window.addEventListener("resize", Ss, !1));
             },
             // Coalesce resize bursts to one renderer resize per frame
@@ -7071,7 +7071,7 @@ let Ws,
                   (ls = A.clone()),
                   m.add(A),
                   Da(),
-                  ja(),
+                  ja().catch((e) => console.warn("[home] textures unavailable:", e)),
                   i.setPreloaderPercentage(95));
               });
             },
