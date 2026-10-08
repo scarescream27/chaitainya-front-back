@@ -127,6 +127,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "codeforge-reforged",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹7,000 · 2nd ₹4,500 · 3rd ₹3,500",
     registrationType: "team", minTeam: 2, maxTeam: 4, startsAt: "2026-10-30T18:00:00+05:30", endsAt: "2026-10-31T18:00:00+05:30",
     title: "CODEFORGE: REFORGED 2.0",
     tagline: "24-hour open-source hackathon: build something real from scratch",
@@ -141,6 +142,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-flag",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹4,000 · 2nd ₹3,000 · 3rd ₹2,000",
     registrationType: "both", maxTeam: 3, startsAt: "2026-11-01T08:00:00+05:30", endsAt: "2026-11-01T16:00:00+05:30",
     title: "CTF: CAPTURE THE FLAG",
     tagline: "Hacking puzzles: find the flags, climb the scoreboard",
@@ -154,6 +156,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "competitive-programming",
+    entryFeeNum: 49, entryFee: "₹49", prizePool: "Mementos for the top 3",
     registrationType: "solo", startsAt: "2026-10-31T10:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
     title: "COMPETITIVE PROGRAMMING",
     tagline: "Solve coding problems against the clock",
@@ -167,6 +170,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "error-404",
+    entryFeeNum: 20, entryFee: "₹20", prizePool: "1st Memento · 2nd Memento · 3rd Medal",
     registrationType: "solo", startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
     title: "ERROR 404",
     tagline: "Code not found. Find it. Fix it. Finish it.",
@@ -175,7 +179,6 @@ export const EVENTS_DATA = [
     date: "DAY 3",
     time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs, all rounds)",
     venue: "Rooms 207 & 208 (computer lab)",
-    prizePool: "Top 3 win · prizes to be announced",
     overview:
       "A C++ contest where you fix and finish code. It is also listed as Glitch Code. Each round shows code on a big screen. Find the bug, fix it or write the missing part, faster and better than everyone else. Solo entry, C++ only. There are three rounds, and each one is harder than the last.",
     rules: [
@@ -212,6 +215,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "prompt-engineering",
+    entryFeeNum: 49, entryFee: "₹49", prizePool: "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
     registrationType: "solo",
     title: "PROMPT ENGINEERING",
     tagline: "Write the prompt that gets AI to the right answer",
@@ -222,6 +226,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "ui-ux-designathon",
+    entryFeeNum: 49, entryFee: "₹49", prizePool: "1st Memento · 2nd Memento · 3rd Medal",
     registrationType: "both", maxTeam: 2, startsAt: "2026-11-01T14:00:00+05:30", endsAt: "2026-11-01T17:00:00+05:30",
     title: "UI/UX DESIGNATHON",
     tagline: "Design app screens that solve a given problem",
@@ -237,6 +242,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "cadcraft",
+    entryFeeNum: 49, entryFee: "₹49", prizePool: "Mementos for the top 3",
     registrationType: "solo", startsAt: "2026-10-30T13:00:00+05:30", endsAt: "2026-10-30T17:00:00+05:30",
     title: "CADCRAFT",
     tagline: "CAD modelling: build it in 3D and get the design right",
@@ -249,6 +255,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cube-conquest",
+    entryFeeNum: 25, entryFee: "₹25", prizePool: "Medals for the top 3",
     registrationType: "solo", startsAt: "2026-10-31T09:00:00+05:30", endsAt: "2026-10-31T10:00:00+05:30",
     title: "CUBE CONQUEST",
     tagline: "Speedcubing: three rounds, one Mirror Cube final",
@@ -281,6 +288,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "innovation-fair",
+    entryFeeNum: 0, entryFee: "Free", prizePool: "1st ₹1,500 · 2nd ₹1,000 · 3rd ₹500",
     registrationType: "team", minTeam: 1, maxTeam: 4,
     title: "INNOVATION FAIR",
     tagline: "Project show: bring what you built and explain it",
@@ -294,8 +302,9 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "pitch-sansad",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
     registrationType: "team", minTeam: 1, maxTeam: 4, startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
-    title: "PITCH SANSAD",
+    title: "AD IN HUSTLE",
     tagline: "Pitch contest: present your startup idea to the house",
     category: "business",
     date: "DAY 3",
@@ -305,6 +314,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "marketmind",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
     registrationType: "team", minTeam: 1, maxTeam: 3,
     title: "MARKETMIND: THE PRODUCT CASE CHALLENGE",
     tagline: "Solve a product problem and present your plan",
@@ -315,6 +325,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "model-lok-sabha",
+    entryFeeNum: 49, entryFee: "₹49", prizePool: "Mementos for the top 3",
     registrationType: "both", maxTeam: 2, startsAt: "2026-10-31T14:00:00+05:30", endsAt: "2026-10-31T17:00:00+05:30",
     title: "MODEL LOK SABHA",
     tagline: "Mock Indian Parliament: play an MP, debate and make laws",
@@ -323,7 +334,6 @@ export const EVENTS_DATA = [
     date: "DAY 2",
     time: "31 Oct, 2:00 PM – 5:00 PM (3 hrs)",
     venue: "Open Air Theatre (OAT)",
-    prizePool: "Best Delegate · High Commendation · Special Mention · certificates for all delegates",
     overview:
       "A mock Parliament (MUN) that follows the Lok Sabha (House of the People) format. Each delegate plays a current MP and follows Lok Sabha rules. Topic: The Public Examinations (Prevention of Unfair Means) Legislation, and the problem of paper leaks and cheating in national and state exams like NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register alone or as a pair (double delegation). The secretariat (organisers) decides which MP you play.",
     rules: [
@@ -359,6 +369,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "esports-cs2",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
     registrationType: "team", minTeam: 5, maxTeam: 6,
     title: "ESPORTS: COUNTER-STRIKE 2",
     tagline: "Team shooter, 5 vs 5, on campus",
@@ -368,6 +379,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-bgmi",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹3,000 · 2nd ₹2,000 · 3rd ₹1,500",
     registrationType: "team", minTeam: 4, maxTeam: 4, allDay: ["2026-10-30", "2026-10-31"],
     title: "ESPORTS: BGMI",
     tagline: "Four-player squads, two days, twelve matches",
@@ -408,6 +420,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-free-fire",
+    entryFeeNum: 299, entryFee: "₹299", prizePool: "1st ₹4,000 · 2nd ₹2,500 · 3rd ₹1,500",
     registrationType: "team", minTeam: 4, maxTeam: 5, startsAt: "2026-11-01T11:00:00+05:30", endsAt: "2026-11-01T15:00:00+05:30",
     title: "ESPORTS: FREE FIRE",
     tagline: "Squad battle royale on Day 3",
@@ -423,6 +436,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "nerd-wars",
+    entryFeeNum: 75, entryFee: "₹75", prizePool: "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
     registrationType: "team", minTeam: 2, maxTeam: 3, startsAt: "2026-10-31T11:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
     title: "NERD WARS",
     tagline: "The fest quiz: general knowledge, puzzles and quick thinking",
@@ -435,6 +449,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "treasure-hunt",
+    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹2,000 · 2nd ₹1,000 · 3rd ₹500",
     registrationType: "team", minTeam: 3, maxTeam: 4, startsAt: "2026-10-30T11:00:00+05:30", endsAt: "2026-10-30T14:00:00+05:30",
     title: "TREASURE HUNT",
     tagline: "Follow the clues across campus",
@@ -446,6 +461,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-moment",
+    entryFeeNum: 20, entryFee: "₹20", prizePool: "Medals for the top 3",
     registrationType: "solo",
     title: "CAPTURE THE MOMENT",
     tagline: "Photography: tell the fest's story in one photo",
@@ -458,6 +474,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cultural-walk",
+    entryFeeNum: 50, entryFee: "₹50", prizePool: "1st ₹2,000 · 2nd ₹1,500 · 3rd ₹1,000",
     registrationType: "both", maxTeam: 10,
     title: "UNLEASHED",
     tagline: "A walk through the cultures of India",
@@ -467,6 +484,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "dance-competition",
+    entryFeeNum: 0, entryFee: "Free", prizePool: "1st Memento · 2nd Memento · 3rd Medal",
     registrationType: "both", maxTeam: 12,
     title: "RHYTHMIC RUMBLE",
     tagline: "Own the stage",
@@ -547,7 +565,7 @@ export function feeLabel(ev) {
   if (!ev) return "";
   if (!ev.registrationOpen && !ev.entryFeeNum) return ev.entryFee || "To be notified";
   if (!ev.entryFeeNum) return "Free";
-  return `₹${ev.entryFeeNum}${ev.registrationType === "solo" ? "" : " per entry"}`;
+  return `₹${ev.entryFeeNum}${ev.registrationType === "solo" ? "" : " per person"}`;
 }
 
 /**
