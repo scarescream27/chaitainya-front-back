@@ -49,14 +49,14 @@ let a,
               </a>
               <div style="display:flex; gap:12px;">
                 <a href="/contact" class="privacy-contact-btn" id="btn-privacy-contact">
-                  CONTACT FEST DESK
+                  CONTACT US
                 </a>
               </div>
             </div>
 
             <!-- Hero Header -->
             <div class="privacy-hero">
-              <span class="privacy-tag-badge">Official Directive & Data Protection</span>
+              <span class="privacy-tag-badge">Official Policy & Data Protection</span>
               <h1>Privacy Policy</h1>
               <p class="subtitle">Chaitanya 2k26 — Himachal Pradesh Technical University (HPTU)</p>
               <div class="privacy-meta-row">
@@ -64,21 +64,21 @@ let a,
                 <span>•</span>
                 <span>Revision: 3.0 (Fest Edition)</span>
                 <span>•</span>
-                <span>Custodian: Organizing Committee & Tech Council</span>
+                <span>Looked after by: Organizing Committee & Tech Council</span>
               </div>
             </div>
 
             <!-- Quick Jump Nav -->
             <nav class="privacy-quick-nav" aria-label="On this page">
               <a href="#sec-overview" class="quick-nav-pill">01. Introduction</a>
-              <a href="#sec-collect" class="quick-nav-pill">02. Data Collected</a>
-              <a href="#sec-registration" class="quick-nav-pill">03. Registration</a>
+              <a href="#sec-collect" class="quick-nav-pill">02. What We Collect</a>
+              <a href="#sec-registration" class="quick-nav-pill">03. Sign-up Data</a>
               <a href="#sec-usage" class="quick-nav-pill">04. How We Use It</a>
               <a href="#sec-cookies" class="quick-nav-pill">05. Cookies & Analytics</a>
-              <a href="#sec-thirdparty" class="quick-nav-pill">06. Third Parties</a>
+              <a href="#sec-thirdparty" class="quick-nav-pill">06. Other Services</a>
               <a href="#sec-security" class="quick-nav-pill">07. Security</a>
-              <a href="#sec-intellectual" class="quick-nav-pill">08. Media & Code IP</a>
-              <a href="#sec-retention" class="quick-nav-pill">09. Retention</a>
+              <a href="#sec-intellectual" class="quick-nav-pill">08. Photos & Your Work</a>
+              <a href="#sec-retention" class="quick-nav-pill">09. How Long We Keep It</a>
               <a href="#sec-rights" class="quick-nav-pill">10. Your Rights</a>
               <a href="#sec-changes" class="quick-nav-pill">11. Changes</a>
               <a href="#sec-grievance" class="quick-nav-pill">12. Contact</a>
@@ -93,15 +93,15 @@ let a,
                   <h2>Introduction</h2>
                 </div>
                 <p>
-                  This Privacy Policy governs the access and usage of the official digital portal for <strong>Chaitanya 2k26</strong>, 
-                  the annual technical and cultural festival hosted by <strong>Himachal Pradesh Technical University (HPTU)</strong>.
+                  This Privacy Policy covers how you use the official website of <strong>Chaitanya 2k26</strong>.
+                  Chaitanya is the yearly tech and cultural fest of <strong>Himachal Pradesh Technical University (HPTU)</strong>.
                 </p>
                 <p>
-                  By registering for events, participating in hackathons, logging into the participant portal, or submitting inquiries 
-                  via our contact interfaces, you acknowledge and agree to the data management practices described in this directive.
+                  You may sign up for events, join hackathons, log in to your account or send us a question.
+                  When you do, you agree to how we handle data as this policy explains.
                 </p>
                 <div class="privacy-callout">
-                  Core Commitment: We treat all student, participant, and sponsor data with institutional integrity. No personal information is ever sold, leased, or exploited for unauthorized marketing.
+                  Our promise: We handle the data of every student, participant and sponsor honestly and with care. We never sell or rent your personal information. We never misuse it for marketing you did not agree to.
                 </div>
               </article>
 
@@ -109,16 +109,16 @@ let a,
               <article class="privacy-card" id="sec-collect">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">02</span>
-                  <h2>Information We Collect</h2>
+                  <h2>What We Collect</h2>
                 </div>
-                <p>To coordinate competitive tracks and security clearance, we collect the following categories of data:</p>
+                <p>To run the events and keep the fest safe, we collect these kinds of data:</p>
                 <ul>
-                  <li><strong>Account & Identification:</strong> Your name, email address and profile photo from your Google account, plus the college/institute you enter.</li>
-                  <li><strong>Event Registrations & Teams:</strong> The events you register for, your team name, team code and the names of your team members.</li>
-                  <li><strong>Contact Details:</strong> The mobile/WhatsApp number you enter, used for schedule updates and coordination.</li>
-<li><strong>Payment Details:</strong> For paid events, the amount and the 12-digit UPI transaction reference (UTR) you submit, so the organising committee can match it with the bank statement. We never ask for or store your UPI PIN, bank account or card details.</li>
-                  <li><strong>Direct Queries:</strong> Name, Team Name, Email, Contact Number, and specific message text transmitted through our Web3Forms-integrated contact system.</li>
-                  <li><strong>Usage Analytics:</strong> Google Analytics for Firebase collects standard usage data (pages viewed, device and browser type, approximate location) to help us improve the site. See section 05 for how to opt out.</li>
+                  <li><strong>Account and identity:</strong> Your name, email address and profile photo from your Google account. Also the college or institute you type in.</li>
+                  <li><strong>Event sign-ups and teams:</strong> The events you sign up for, your team name, team code and the names of your team members.</li>
+                  <li><strong>Contact details:</strong> The mobile or WhatsApp number you give us. We use it to send schedule updates and to plan with you.</li>
+<li><strong>Payment details:</strong> For paid events, the amount and the 12-digit UPI transaction number (UTR) you enter. The organising committee uses it to match your payment with the bank statement. We never ask for or keep your UPI PIN, bank account or card details.</li>
+                  <li><strong>Messages to us:</strong> Your name, team name, email, phone number and message, sent through our contact form (run by Web3Forms).</li>
+                  <li><strong>How you use the site:</strong> Google Analytics for Firebase collects basic usage data. This includes pages viewed, device and browser type, and rough location. It helps us make the site better. See section 05 to learn how to turn it off.</li>
                 </ul>
               </article>
 
@@ -126,29 +126,29 @@ let a,
               <article class="privacy-card" id="sec-registration">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">03</span>
-                  <h2>Registration Information</h2>
+                  <h2>Sign-up Data</h2>
                 </div>
-                <p>When you sign in with Google and register for an event, we keep the following in Cloud Firestore:</p>
+                <p>When you sign in with Google and sign up for an event, we store this in Cloud Firestore:</p>
                 <ul>
-                  <li><strong>Your profile:</strong> name, email address, profile photo, college, year of study, mobile number, a participant ID generated by the site, and the list of events you have registered for.</li>
-                  <li><strong>Each registration:</strong> the event, whether you entered alone or as a team, your team name, team code and team members, the payment status and amount due, and the ID of your entry pass (QR code).</li>
-                  <li><strong>Payments:</strong> for paid events, the amount and the UPI transaction reference (UTR) you submit, and whether the organising committee has verified it.</li>
+                  <li><strong>Your profile:</strong> name, email address, profile photo, college, year of study, mobile number, a participant ID made by the site, and the list of events you signed up for.</li>
+                  <li><strong>Each sign-up:</strong> the event, whether you joined alone or as a team, your team name, team code and team members, whether you have paid and how much is due, and the ID of your entry pass (QR code).</li>
+                  <li><strong>Payments:</strong> for paid events, the amount and the UPI transaction number (UTR) you enter, and whether the organising committee has checked it.</li>
                 </ul>
-                <p>Team leaders enter the names of their team members, so please share only details your teammates have agreed to.</p>
+                <p>Team leaders type in the names of their team members. Please only share details your teammates have agreed to.</p>
               </article>
 
               <!-- Section 3 -->
               <article class="privacy-card" id="sec-usage">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">04</span>
-                  <h2>How We Use Information</h2>
+                  <h2>How We Use It</h2>
                 </div>
-                <p>Collected information is utilized strictly for festival administration and academic verification:</p>
+                <p>We use this data only to run the fest and to check who took part:</p>
                 <ul>
-                  <li><strong>Accreditation & Access:</strong> Validating registered attendees for gate access, workshop entry, and competition eligibility.</li>
-                  <li><strong>Hackathon & Competition Logistics:</strong> Organizing project submissions, judging brackets, mentor allocations, and winner leaderboards.</li>
-                  <li><strong>Official Communications:</strong> Disseminating critical schedule updates, room allocations, rules briefings, and emergency broadcasts.</li>
-                  <li><strong>Certificate & Prize Distribution:</strong> Generating verified Certificates of Participation, Certificates of Merit, and processing prize distribution records.</li>
+                  <li><strong>Entry and access:</strong> Checking who has signed up, so they can enter the gate, workshops and competitions.</li>
+                  <li><strong>Hackathons and competitions:</strong> Handling project entries, judging groups, mentors and winner lists.</li>
+                  <li><strong>Official messages:</strong> Sending important schedule updates, room details, rules and emergency alerts.</li>
+                  <li><strong>Certificates and prizes:</strong> Making checked certificates of participation and merit, and keeping prize records.</li>
                 </ul>
               </article>
 
@@ -160,24 +160,24 @@ let a,
                   <h2>Cookies, Local Storage & Analytics</h2>
                 </div>
                 <ul>
-                  <li><strong>Browser storage:</strong> your event cart is kept in your browser's local storage, and your event filters and an unfinished checkout are kept in session storage until you close the tab. Firebase Authentication keeps your sign-in session in your browser so you stay signed in.</li>
-                  <li><strong>Analytics:</strong> Google Analytics for Firebase loads after the page has finished loading and may set its own cookies. It does not load at all if your browser sends a Do Not Track or Global Privacy Control signal.</li>
-                  <li><strong>No advertising:</strong> we do not use advertising or retargeting cookies.</li>
+                  <li><strong>Browser storage:</strong> Your event cart is saved in your browser's local storage. Your event filters and an unfinished checkout are saved in session storage until you close the tab. Firebase Authentication saves your sign-in in your browser, so you stay signed in.</li>
+                  <li><strong>Analytics:</strong> Google Analytics for Firebase starts after the page has fully loaded. It may set its own cookies. It does not load at all if your browser sends a Do Not Track or Global Privacy Control signal.</li>
+                  <li><strong>No ads:</strong> We do not use advertising or retargeting cookies.</li>
                 </ul>
-                <p>You can clear this data at any time from your browser settings. Clearing it signs you out and empties your cart.</p>
+                <p>You can clear this data any time in your browser settings. Doing so signs you out and empties your cart.</p>
               </article>
 
               <!-- Section 5 -->
               <article class="privacy-card" id="sec-thirdparty">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">06</span>
-                  <h2>Third-Party Services & Integrations</h2>
+                  <h2>Other Services We Use</h2>
                 </div>
-                <p>We utilize carefully audited external services to power portal capabilities:</p>
+                <p>We use these carefully checked outside services to run the website:</p>
                 <ul>
-                  <li><strong>Google Firebase:</strong> Sign-in (Firebase Authentication), storage of registrations and payment submissions (Cloud Firestore), and usage analytics (Google Analytics for Firebase).</li>
-                  <li><strong>Web3Forms:</strong> Delivers contact form messages by email to <code>chaitanyahptu@gmail.com</code> over HTTPS. A copy of each message is also saved in Cloud Firestore so the organising committee can track and answer it.</li>
-                  <li><strong>Interactive 3D Engine:</strong> Client-side Three.js and WebGL animations render entirely on your local GPU without exporting biometric or device profiling data.</li>
+                  <li><strong>Google Firebase:</strong> Sign-in (Firebase Authentication), storing sign-ups and payment details (Cloud Firestore), and usage analytics (Google Analytics for Firebase).</li>
+                  <li><strong>Web3Forms:</strong> Sends contact form messages by email to <code>chaitanyahptu@gmail.com</code> over HTTPS. We also save a copy of each message in Cloud Firestore. This lets the organising committee track and answer it.</li>
+                  <li><strong>3D animations:</strong> Three.js and WebGL animations run only on your own device's graphics chip. They do not send out any biometric data or data that profiles your device.</li>
                 </ul>
               </article>
 
@@ -186,29 +186,29 @@ let a,
               <article class="privacy-card" id="sec-security">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">07</span>
-                  <h2>Data Security</h2>
+                  <h2>Keeping Data Safe</h2>
                 </div>
                 <p>
-                  Security is baked into our portal architecture from the ground up:
+                  We built the website with safety in mind from the start:
                 </p>
                 <ul>
-                  <li><strong>Firebase Authentication:</strong> Identity sessions and authentication tokens are safeguarded via Google Firebase Infrastructure adhering to ISO/IEC 27001 and SOC standards.</li>
-                  <li><strong>Restricted Admin Access:</strong> Registration and payment records can be viewed only by you and by authorised organising-committee accounts, enforced by Cloud Firestore security rules.</li>
-                  <li><strong>HTTPS & Transport Security:</strong> All client-server communications are conducted over end-to-end encrypted TLS/HTTPS channels.</li>
-                  <li><strong>No Passwords Stored:</strong> Sign-in uses Google; we never see or store your Google password.</li>
+                  <li><strong>Firebase Authentication:</strong> Your sign-in sessions and login tokens are protected by Google Firebase. Firebase follows the ISO/IEC 27001 and SOC security standards.</li>
+                  <li><strong>Limited admin access:</strong> Only you and approved organising-committee accounts can see sign-up and payment records. Cloud Firestore security rules enforce this.</li>
+                  <li><strong>HTTPS:</strong> All data between your device and our servers is fully encrypted (TLS/HTTPS).</li>
+                  <li><strong>No passwords stored:</strong> You sign in with Google. We never see or keep your Google password.</li>
                 </ul>
               </article>
               <!-- Section 6 -->
               <article class="privacy-card" id="sec-intellectual">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">08</span>
-                  <h2>Media, Photography & Code Submissions</h2>
+                  <h2>Photos, Videos & Your Work</h2>
                 </div>
                 <p>
-                  <strong>Intellectual Property of Code:</strong> All source code, designs, pitch decks, and prototypes built during Chaitanya 2k26 hackathons remain the 100% exclusive intellectual property of the respective participants and teams.
+                  <strong>Your code belongs to you:</strong> All code, designs, pitch decks and prototypes made during Chaitanya 2k26 hackathons belong 100% to the participants and teams who made them. Only they own them.
                 </p>
                 <p>
-                  <strong>Event Photography & Livestreams:</strong> By attending campus events, attendees grant the organizing committee non-exclusive permission to capture event photography, video recordings, and stage performances solely for university archives, aftermovies, and non-commercial publicity.
+                  <strong>Event photos and live streams:</strong> By coming to campus events, you allow the organizing committee to take photos and videos of events and stage shows. This permission is non-exclusive. We will use them only for university records, aftermovies and non-commercial promotion.
                 </p>
               </article>
 
@@ -216,12 +216,12 @@ let a,
               <article class="privacy-card" id="sec-retention">
                 <div class="privacy-card-header">
                   <span class="privacy-card-num">09</span>
-                  <h2>Data Retention</h2>
+                  <h2>How Long We Keep Data</h2>
                 </div>
                 <p>
-                  Registration, payment and contact records are kept for as long as the organising committee needs them to run
-                  Chaitanya 2k26, verify payments and issue certificates. Data stored only in your browser stays there until you
-                  clear it. You can ask us to delete your records at any time using the contact details below.
+                  We keep sign-up, payment and contact records as long as the organising committee needs them.
+                  We need them to run Chaitanya 2k26, check payments and give out certificates. Data saved only in your
+                  browser stays there until you clear it. You can ask us to delete your records at any time. Use the contact details below.
                 </p>
               </article>
 
@@ -232,12 +232,12 @@ let a,
                   <h2>Your Rights</h2>
                 </div>
                 <p>
-                  As an attendee or participant, you possess the right to:
+                  As a visitor or participant, you have the right to:
                 </p>
                 <ul>
-                  <li>Request a digital summary of your personal registration details.</li>
-                  <li>Update inaccurate contact numbers, team member names, or institutional records.</li>
-                  <li>Request account deactivation or removal of non-essential registration records once fest auditing and certificate dispatches are finalized.</li>
+                  <li>Ask for a digital copy of your personal sign-up details.</li>
+                  <li>Fix wrong phone numbers, team member names or college details.</li>
+                  <li>Ask us to close your account or remove sign-up records we no longer need. We can do this once the fest's checks are done and certificates are sent.</li>
                 </ul>
               </article>
 
@@ -248,8 +248,8 @@ let a,
                   <h2>Changes to This Policy</h2>
                 </div>
                 <p>
-                  We may update this policy as the fest's services change. The current version is always on this page, and the
-                  effective date at the top shows when it last changed.
+                  We may update this policy when the fest's services change. The latest version is always on this page.
+                  The effective date at the top shows when it last changed.
                 </p>
               </article>
 
@@ -260,21 +260,21 @@ let a,
                   <h2>Contact</h2>
                 </div>
                 <p>
-                  For questions regarding data privacy, grievance redressal, or certificate verification, please reach out directly to the festival tech council:
+                  Have a question about your data, a complaint, or need a certificate checked? Write to the fest tech council:
                 </p>
                 <div class="privacy-callout">
-                  <strong>Official Nodal Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:var(--ink); text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
+                  <strong>Official Email:</strong> <a href="mailto:chaitanyahptu@gmail.com" style="color:var(--ink); text-decoration:underline;">chaitanyahptu@gmail.com</a><br/>
                   <strong>Institution:</strong> Himachal Pradesh Technical University (HPTU), Hamirpur, H.P., India<br/>
-                  <strong>Festival Secretariat:</strong> Chaitanya 2k26 Organizing Committee
+                  <strong>Fest Office:</strong> Chaitanya 2k26 Organizing Committee
                 </div>
               </article>
             </div>
 
             <!-- Bottom CTA -->
             <section class="privacy-cta-box">
-              <h3>HAVE QUESTIONS OR NEED ASSISTANCE?</h3>
-              <p>Our festival coordination and technical desk will respond to your questions by email as soon as possible.</p>
-              <a href="/contact" class="privacy-cta-btn" id="btn-privacy-cta-contact">OPEN CONTACT US DESK</a>
+              <h3>HAVE QUESTIONS OR NEED HELP?</h3>
+              <p>Our fest team will reply to your questions by email as soon as we can.</p>
+              <a href="/contact" class="privacy-cta-btn" id="btn-privacy-cta-contact">CONTACT US</a>
             </section>
 
             <!-- Footer Credits -->

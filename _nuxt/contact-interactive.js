@@ -114,11 +114,11 @@ export function initContactForm5Fields() {
         <div class="outline"></div>
       </div>
       <div class="input-wrapper" data-field="contact_no">
-        <input type="tel" name="contact_no" aria-label="Contact number" placeholder="CONTACT NO" autocomplete="tel" inputmode="tel" spellcheck="false" />
+        <input type="tel" name="contact_no" aria-label="Phone number" placeholder="PHONE NUMBER" autocomplete="tel" inputmode="tel" spellcheck="false" />
         <div class="outline"></div>
       </div>
       <div class="input-wrapper input-wrapper-text" data-field="query">
-        <textarea name="query" aria-label="Your query" placeholder="YOUR QUERY" rows="1" autocomplete="off" spellcheck="false"></textarea>
+        <textarea name="query" aria-label="Your question" placeholder="YOUR QUESTION" rows="1" autocomplete="off" spellcheck="false"></textarea>
         <div class="outline"></div>
       </div>
       <div class="input-wrapper send" data-field="send" role="button" tabindex="0" aria-label="Send message">
@@ -143,8 +143,8 @@ export function initContactForm5Fields() {
   enhanceBubble(nameWrap, "ENTER NAME");
   enhanceBubble(teamWrap, "ENTER TEAM NAME");
   enhanceBubble(emailWrap, "ENTER EMAIL");
-  enhanceBubble(contactWrap, "ENTER CONTACT NO");
-  enhanceBubble(queryWrap, "ENTER YOUR QUERY");
+  enhanceBubble(contactWrap, "ENTER PHONE NUMBER");
+  enhanceBubble(queryWrap, "ENTER YOUR QUESTION");
 
   const nameInput = nameWrap.querySelector("input");
   const teamInput = teamWrap.querySelector("input");
@@ -275,9 +275,9 @@ export function initContactForm5Fields() {
     heartWrap.innerHTML = `
       <div class="heart-dispatch-inner">
         <span class="heart-check">✓</span>
-        <h3 class="heart-success-title">MESSAGE DISPATCHED</h3>
+        <h3 class="heart-success-title">MESSAGE SENT</h3>
         <p class="heart-success-subtitle">
-          Thank you, <strong>${escapeHtml(nameVal || "Friend")}</strong>${teamVal ? " (Team: <strong>" + escapeHtml(teamVal) + "</strong>)" : ""}! Your query has been forwarded directly to <strong>chaitanyahptu@gmail.com</strong>.
+          Thank you, <strong>${escapeHtml(nameVal || "Friend")}</strong>${teamVal ? " (Team: <strong>" + escapeHtml(teamVal) + "</strong>)" : ""}! We have sent your question to <strong>chaitanyahptu@gmail.com</strong>.
         </p>
         <button type="button" class="heart-reset-btn" id="btn-contact-reset">SEND ANOTHER MESSAGE</button>
       </div>
@@ -351,8 +351,8 @@ export function initContactForm5Fields() {
         updateProgress(nameWrap, 0, "ENTER NAME");
         updateProgress(teamWrap, 0, "ENTER TEAM NAME");
         updateProgress(emailWrap, 0, "ENTER EMAIL");
-        updateProgress(contactWrap, 0, "ENTER CONTACT NO");
-        updateProgress(queryWrap, 0, "ENTER YOUR QUERY");
+        updateProgress(contactWrap, 0, "ENTER PHONE NUMBER");
+        updateProgress(queryWrap, 0, "ENTER YOUR QUESTION");
         announce("Form cleared. You can send another message.");
         if (nameInput) nameInput.focus();
       });
@@ -396,7 +396,7 @@ export function initContactForm5Fields() {
       // Validation 3: Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailVal || !emailRegex.test(emailVal)) {
-        updateProgress(emailWrap, 0, "ERROR: VALID EMAIL REQUIRED");
+        updateProgress(emailWrap, 0, "ERROR: ENTER A VALID EMAIL");
         markInvalid(emailInput);
         if (emailInput) emailInput.focus();
         triggerRipple(emailWrap, true);
@@ -407,27 +407,27 @@ export function initContactForm5Fields() {
       // Validation 4: Contact No
       const digits = contactVal.replace(/[^0-9]/g, "");
       if (!contactVal || digits.length < 10) {
-        updateProgress(contactWrap, 0, "ERROR: 10-DIGIT PHONE REQUIRED");
+        updateProgress(contactWrap, 0, "ERROR: ENTER A 10-DIGIT PHONE");
         markInvalid(contactInput);
         if (contactInput) contactInput.focus();
         triggerRipple(contactWrap, true);
-        announce("Please enter a contact number with at least 10 digits.");
+        announce("Please enter a phone number with at least 10 digits.");
         return;
       }
 
       // Validation 5: Query
       if (!queryVal || queryVal.length < 3) {
-        updateProgress(queryWrap, 0, "ERROR: ENTER YOUR QUERY");
+        updateProgress(queryWrap, 0, "ERROR: ENTER YOUR QUESTION");
         markInvalid(queryInput);
         if (queryInput) queryInput.focus();
         triggerRipple(queryWrap, true);
-        announce("Please enter your query, at least 3 characters.");
+        announce("Please enter your question, at least 3 characters.");
         return;
       }
 
       // Enter Transmitting Radar State
       sendWrap.classList.add("transmitting");
-      sendWrap.innerHTML = `<p><span class="radar-spinner" aria-hidden="true"></span> TRANSMITTING...</p>`;
+      sendWrap.innerHTML = `<p><span class="radar-spinner" aria-hidden="true"></span> SENDING...</p>`;
       sendWrap.setAttribute("aria-disabled", "true");
       announce("Sending your message…");
 
@@ -471,8 +471,8 @@ export function initContactForm5Fields() {
         sendWrap.innerHTML = `<p>RETRY →</p>`;
         sendWrap.removeAttribute("aria-disabled");
         sendWrap.setAttribute("aria-label", "Retry sending message");
-        announce("Your message could not be sent. Check your connection and press Retry.");
-        alert("Transmission error: " + (err.message || "Failed to deliver. Please check connection."));
+        announce("We could not send your message. Check your internet and press Retry.");
+        alert("Sending failed: " + (err.message || "We could not send it. Please check your internet."));
       }
     });
   }

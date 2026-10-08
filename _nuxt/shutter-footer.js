@@ -213,7 +213,7 @@ const eventCard = (ev) => {
         <h3 class="sgfm-title">${esc(ev.title)}</h3>
         <p class="sgfm-tag">${esc(ev.tagline)}</p>
         <p class="sgfm-meta">${esc(ev.date)} · ${esc(ev.venue === "To be notified" ? "Venue to be notified" : ev.venue)}</p>
-        <a class="sgfm-more" href="/events/${encodeURIComponent(ev.id)}" data-sgfm-link>View details <span aria-hidden="true">→</span><span class="sr-only">: ${esc(ev.title)}</span></a>
+        <a class="sgfm-more" href="/events/${encodeURIComponent(ev.id)}" data-sgfm-link>See details <span aria-hidden="true">→</span><span class="sr-only">: ${esc(ev.title)}</span></a>
       </div>
     </li>`;
 };
@@ -224,24 +224,24 @@ const faqItems = () => {
   const mail = `<a href="mailto:${esc(FEST_CONFIG.contactEmail)}">${esc(FEST_CONFIG.contactEmail)}</a>`;
   return [
     ["What is " + FEST_CONFIG.name + "?",
-      `${esc(FEST_CONFIG.name)} is the fest of ${esc(FEST_CONFIG.university)}, running ${esc(getFestDatesLabel())} over ${FEST_CONFIG.festDays} days, with ${EVENTS_DATA.length} events across ${esc(cats.join(", "))}.`],
-    ["Who can participate?",
-      "All bona fide undergraduate and postgraduate students from recognized colleges, universities and polytechnics with a valid student ID card."],
+      `${esc(FEST_CONFIG.name)} is the fest of ${esc(FEST_CONFIG.university)}. It runs ${esc(getFestDatesLabel())}, over ${FEST_CONFIG.festDays} days. It has ${EVENTS_DATA.length} events in ${esc(cats.join(", "))}.`],
+    ["Who can take part?",
+      "Any enrolled student of a college, university or polytechnic can take part. This means undergraduate and postgraduate students. You need a valid student ID card."],
     ["How can I register?",
-      `Sign in (or create an account), open <a href="/events" data-sgfm-link>Events</a>, pick an event and register from its details. Registration closes on ${esc(deadline)} IST. For team events, the team leader registers the team and gets a unique team code; teammates sign in and join with that code on the same event.`],
+      `Sign in, or make an account. Open <a href="/events" data-sgfm-link>Events</a>, pick an event and sign up from its page. Sign-ups close on ${esc(deadline)} IST. For team events, the team leader signs up the team and gets a team code. Teammates sign in and use that code to join the same event.`],
     ["Is registration free?",
       // Same source as the event pages' FEE line, so the two never disagree.
       EVENTS_DATA.every((ev) => feeLabel(ev) === "Free")
-        ? "Yes, every event currently lists entry as free. Each event's details page shows its fee, so check there before you register."
-        : "Entry fees are listed on each event's details page (some are free, some are still to be notified), so check the event before you register."],
-    ["Where are the events conducted?",
-      `On the ${esc(FEST_CONFIG.university)} campus. Each event's page lists its venue; some venues are still to be announced.`],
-    ["Can I participate in multiple events?",
-      "Yes. You can register for multiple events as long as their timings don't clash."],
-    ["Where can I find event timings?",
-      `Each event's details page shows its day and time. The fest runs ${esc(getFestDatesLabel())}; some timings are still to be announced.`],
-    ["Who can I contact for help?",
-      `Write to ${mail}, or send us a message with the <a href="#contact" data-sgfm-link>contact form</a> below.`],
+        ? "Yes, right now every event is free to enter. Each event's page shows its fee, so check it before you sign up."
+        : "Each event's page shows its entry fee. Some are free, and some fees are not out yet. Check the event before you sign up."],
+    ["Where are the events held?",
+      `On the ${esc(FEST_CONFIG.university)} campus. Each event's page shows its venue. Some venues are not out yet.`],
+    ["Can I join more than one event?",
+      "Yes. You can sign up for many events, as long as their times don't clash."],
+    ["Where can I find event times?",
+      `Each event's page shows its day and time. The fest runs ${esc(getFestDatesLabel())}. Some times are not out yet.`],
+    ["Who can I ask for help?",
+      `Email ${mail}, or send us a message with the <a href="#contact" data-sgfm-link>contact form</a> below.`],
   ];
 };
 
@@ -267,7 +267,7 @@ const phoneExtras = () => {
   return `
       <div class="m-only m-home-extra">
         <section class="m-home-sec m-reveal">
-          <h2 class="m-h">Fest at a glance</h2>
+          <h2 class="m-h">The fest in short</h2>
           <ul class="m-stats m-home-stats">
             <li><b data-count="${FEST_CONFIG.festDays}">${FEST_CONFIG.festDays}</b><span>Days</span></li>
             <li><b data-count="${EVENTS_DATA.length}">${EVENTS_DATA.length}</b><span>Events</span></li>
@@ -315,8 +315,8 @@ const mobileSections = (uid) => `
       ${phoneExtras()}
       <section class="sgfm-faq" id="faq" aria-labelledby="${uid}-faq">
         <div class="sgfm-faq-head">
-          <h2 class="sgfm-faq-title" id="${uid}-faq">Frequently asked questions</h2>
-          <p class="sgfm-faq-desc">Answers to common questions about Chaitanya 2k26. Can't find what you're looking for? <a href="#contact" data-sgfm-link>Contact the team</a>.</p>
+          <h2 class="sgfm-faq-title" id="${uid}-faq">Common questions</h2>
+          <p class="sgfm-faq-desc">Quick answers about Chaitanya 2k26. Can't find what you need? <a href="#contact" data-sgfm-link>Ask the team</a>.</p>
         </div>
         <div class="sgfm-faq-list">
           ${faqItems().map(([q, a]) => `<details class="sgfm-qa" name="${uid}-faq"><summary><span>${esc(q)}</span>${CHEVRON}</summary><div class="sgfm-a"><p>${a}</p></div></details>`).join("")}
@@ -345,7 +345,7 @@ const DEFAULTS = {
   wordmark: "CHAITANYA",
   shutterAt: 2,
   copy: "© 2026\nChaitanya 2k26 · HPTU Hamirpur",
-  contactLabel: "Ask us about events, registration or anything else",
+  contactLabel: "Ask us about events, sign-ups or anything else",
   email: "chaitanyahptu@gmail.com",
   // Desktop link columns (phones show the compact .sgfm-nav instead).
   connect: [
@@ -612,10 +612,10 @@ export function mountShutterFooter(root, opts = {}) {
   // Where a link leaves the home page to, or null for in-page targets (#faq, #top, "/").
   const destination = (a) => {
     const href = a.getAttribute("href") || "";
-    if (href.startsWith("mailto:")) return ["Open your email app?", `This starts an email to ${href.slice(7).split("?")[0]}.`];
+    if (href.startsWith("mailto:")) return ["Open your email app?", `This opens a new email to ${href.slice(7).split("?")[0]}.`];
     if (/^https?:/i.test(href)) {
       const host = new URL(href, location.href).host;
-      return [`Open ${host}?`, `This takes you to ${host}, outside the Chaitanya 2k26 site.`];
+      return [`Open ${host}?`, `This takes you to ${host}. It is not part of the Chaitanya 2k26 site.`];
     }
     if (!href.startsWith("/") || href === "/") return null;
     const path = href.split(/[?#]/)[0].replace(/\/$/, "");
@@ -835,8 +835,8 @@ export function mountShutterFooter(root, opts = {}) {
     const message = input("message").value.trim();
     const problems = [
       [name.length < 2, "name", "Enter your name"],
-      [!isEmail(email), "email", "Enter an email like name@example.com"],
-      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Phone needs 10 digits, or leave it empty"],
+      [!isEmail(email), "email", "Type an email like name@example.com"],
+      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Phone needs 10 digits, or leave it blank"],
       [message.length < 3, "message", "Write a short message"],
     ].filter(([bad]) => bad);
     form.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
@@ -856,7 +856,7 @@ export function mountShutterFooter(root, opts = {}) {
         console.warn("Contact ticket not saved:", err),
       );
     } catch (err) {
-      setState("failed", `Couldn't send. Try again or write to ${o.email}`);
+      setState("failed", `Couldn't send. Try again, or email ${o.email}`);
       // The button was disabled while sending, so focus fell to <body>; hand it back.
       if (!document.activeElement || document.activeElement === document.body) sendBtn.focus();
       shake();

@@ -28,7 +28,7 @@ function buildHtml() {
       <ul class="m-people-grid">${cards
         .map((c, i) => `<li${ids[i] ? ` id="${esc(ids[i])}" class="m-org-anchor"` : ""}${!all && i > 1 ? ' class="m-people-more"' : ""}>${c}</li>`)
         .join("")}</ul>
-      ${!all && cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">View more (${cards.length - 2})</button>` : ""}
+      ${!all && cards.length > 2 ? `<button type="button" class="m-people-btn" data-more aria-expanded="false">See more (${cards.length - 2})</button>` : ""}
     </div>`;
   // The Chaitanya coordinators, then the website developers (#core-team kept
   // as the anchor of this block), then each team's coordinators. Event
@@ -65,14 +65,14 @@ function buildHtml() {
       <div class="privacy-hero">
         <span class="privacy-tag-badge">Chaitanya 2k26 · HPTU Hamirpur</span>
         <h1>The Organisers</h1>
-        <p class="subtitle">Chaitanya 2k26 is planned and run by students of HPTU Hamirpur with guidance from faculty coordinators.</p>
+        <p class="subtitle">Students of HPTU Hamirpur plan and run Chaitanya 2k26, with help from teachers.</p>
       </div>
 
       ${teamsHtml}
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
-        <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
+        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or use the contact form.</p>
         <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;
@@ -99,7 +99,7 @@ function onClick(ev) {
     const box = more.closest(".m-people");
     const open = box.classList.toggle("is-open");
     more.setAttribute("aria-expanded", String(open));
-    more.textContent = open ? "View less" : `View more (${box.querySelectorAll(".m-people-more").length})`;
+    more.textContent = open ? "See less" : `See more (${box.querySelectorAll(".m-people-more").length})`;
     return;
   }
   const a = ev.target.closest && ev.target.closest("a[href]");

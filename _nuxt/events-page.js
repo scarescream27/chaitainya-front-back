@@ -273,7 +273,7 @@ export function renderEventsPageHtml() {
           <div class="events-search-wrap" role="search">
             <svg class="events-search-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
             <input type="search" class="events-search-input" id="events-search-box"
-              placeholder="Search events, venues, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
+              placeholder="Search events, places, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
             <button type="button" class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
           </div>
         </div>
@@ -318,7 +318,7 @@ function stayBannerHtml() {
   const cart = ["open", "needs-event"].includes(state) ? cartToggleHtml(ACCOMMODATION) : "";
   return `
     <div class="events-stay-text">
-      <strong>Stay on campus — ₹${e(ACCOMMODATION.entryFeeNum)} incl. meals</strong>
+      <strong>Stay on campus — ₹${e(ACCOMMODATION.entryFeeNum)} with meals</strong>
       <span>${e(ACCOMMODATION.date)} · all three fest nights · breakfast &amp; dinner</span>
     </div>
     <div class="events-stay-actions">
@@ -333,7 +333,7 @@ function renderGridHtml(events) {
     ? events.map((ev) => renderEventCardHtml(ev)).join("")
     : `
       <div class="events-empty">
-        <h3>No events match</h3>
+        <h3>No events found</h3>
         <p>Try another category or clear the search box.</p>
       </div>
     `;
@@ -538,13 +538,13 @@ export function openEventDossier(eventId) {
   </dl>
   <div class="event-dossier-cta">
     <div class="event-cta-row">${actionButtonHtml(ev)}${cartToggleHtml(ev)}</div>
-    ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Join your team with a team code</button>` : ""}
+    ${canJoin ? `<button type="button" class="event-link-btn" data-action="join-team" data-event-id="${e(ev.id)}">Have a team code? Join your team</button>` : ""}
   </div>
   ${section("ABOUT", `<p class="event-dossier-text">${e(ev.overview)}</p>`)}
   ${rulesHtml ? section("RULES", `<ul class="event-dossier-list">${rulesHtml}</ul>`) : ""}
-  ${roundsHtml ? section("FORMAT & ROUNDS", `<div class="event-rounds">${roundsHtml}</div>`) : ""}
-  ${scoringHtml ? section(ev.id === "esports-bgmi" ? "SCORING" : "JUDGING CRITERIA", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
-  ${section("ELIGIBILITY", `
+  ${roundsHtml ? section("ROUNDS", `<div class="event-rounds">${roundsHtml}</div>`) : ""}
+  ${scoringHtml ? section(ev.id === "esports-bgmi" ? "SCORING" : "HOW WE JUDGE", `<div class="event-scoring">${scoringHtml}</div>`) : ""}
+  ${section("WHO CAN TAKE PART", `
     <dl class="event-dossier-facts">
       <div><dt>REGISTRATION</dt><dd>${e(typeLabel)}</dd></div>
       <div><dt>TEAM SIZE</dt><dd>${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</dd></div>
@@ -863,10 +863,10 @@ function requestCloseCheckout() {
   const typedUtr = document.getElementById("co-utr")?.value || checkout?.utr;
   if (checkout?.step === "teams" || (checkout?.step === "review" && (typedUtr || getCartTotal(checkout.items) > 0))) {
     const desc = checkout.paidId
-      ? `Your payment went through but the registration isn't saved yet. Note your payment ID ${checkout.paidId} and email ${FEST_CONFIG.contactEmail} if you leave.`
+      ? `Your payment went through, but your registration is not saved yet. If you leave, write down your payment ID ${checkout.paidId} and email ${FEST_CONFIG.contactEmail}.`
       : checkout.only
-      ? "What you entered here will be cleared."
-      : "Your cart stays, but what you entered here will be cleared.";
+      ? "What you typed here will be lost."
+      : "Your cart stays, but what you typed here will be lost.";
     return confirmLeave(checkout.paidId ? "Leave anyway?" : "Leave registration?", desc);
   }
   closeCheckout();
@@ -1004,7 +1004,7 @@ function readDetails(card) {
   if (!d.displayName) throw new Error("Enter your full name.");
   if (!d.college) throw new Error("Enter your college or university.");
   if (!d.year) throw new Error("Select your year.");
-  if (d.phone.replace(/\D/g, "").length < 10) throw new Error("Enter a valid WhatsApp number (10 digits; country code optional).");
+  if (d.phone.replace(/\D/g, "").length < 10) throw new Error("Enter a WhatsApp number with 10 digits. Country code is optional.");
 }
 
 function readTeams(card) {
@@ -1026,8 +1026,8 @@ function validateTeams() {
       const t = checkout.teams[ev.id];
       const size = t.members.filter((m) => m.name).length + 1;
       if (!t.teamName) throw new Error(`Enter a team name for ${ev.title}.`);
-      if (size < ev.minTeam) throw new Error(`${ev.title} needs at least ${ev.minTeam} members including you.`);
-      if (size > ev.maxTeam) throw new Error(`${ev.title} allows at most ${ev.maxTeam} members including you.`);
+      if (size < ev.minTeam) throw new Error(`${ev.title} needs at least ${ev.minTeam} members, including you.`);
+      if (size > ev.maxTeam) throw new Error(`${ev.title} can have at most ${ev.maxTeam} members, including you.`);
     });
 }
 
@@ -1045,7 +1045,7 @@ function renderCheckout(focusSel) {
       <div class="event-reg-head">
         <span class="event-reg-kicker">STEP 1 // CONFIRM YOUR DETAILS</span>
         <h3 class="event-reg-title" id="co-title" tabindex="-1">Your details</h3>
-        <p class="event-reg-sub">These appear on your registrations and Digital ID.</p>
+        <p class="event-reg-sub">These show on your registrations and Digital ID.</p>
       </div>
       <form class="event-reg-form" id="co-form" novalidate>
         ${detailsFieldsHtml(checkout.details, user)}
@@ -1118,11 +1118,11 @@ function renderCheckout(focusSel) {
       total <= 0
         ? `<div class="event-reg-free-note">✓ NO PAYMENT NEEDED</div>`
         : checkout.paidId
-          ? `<div class="event-reg-closed-note"><strong>PAYMENT RECEIVED · ID <span class="mono">${e(checkout.paidId)}</span></strong><span>Your registration isn't saved yet. Retry below. If it keeps failing, contact ${e(FEST_CONFIG.contactEmail)} with this payment ID.</span></div>`
+          ? `<div class="event-reg-closed-note"><strong>PAYMENT RECEIVED · ID <span class="mono">${e(checkout.paidId)}</span></strong><span>Your registration is not saved yet. Try again below. If it still fails, email ${e(FEST_CONFIG.contactEmail)} with this payment ID.</span></div>`
         : useRazorpay(total)
           ? `<div class="event-upi-payment-box">
               <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
-              <p class="event-upi-help">You'll pay securely with Razorpay (UPI, cards, netbanking). Test mode — no real money is charged.</p>
+              <p class="event-upi-help">You'll pay safely with Razorpay (UPI, cards, net banking). Test mode — no real money is taken.</p>
             </div>`
         : payReady
           ? `<div class="event-upi-payment-box">
@@ -1130,13 +1130,13 @@ function renderCheckout(focusSel) {
               ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
               ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">PAY ₹${e(total)} WITH A UPI APP</a>` : ""}
               <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
-              <p class="event-upi-help">After paying, enter the 12-digit UTR from the receipt. The fest team matches it with the bank statement, then confirms your registration.</p>
+              <p class="event-upi-help">After you pay, type the 12-digit UTR number from your receipt. The fest team checks it against the bank record, then confirms your registration.</p>
               <div class="event-reg-group">
                 <label class="event-reg-label" for="co-utr">12-digit UTR *</label>
                 <input type="text" class="event-reg-input event-reg-utr" id="co-utr" inputmode="numeric" maxlength="12" autocomplete="off" value="${e(checkout.utr || "")}" />
               </div>
             </div>`
-          : `<div class="event-reg-closed-note"><strong>TOTAL: ₹${e(total)}</strong><span>Online payment opens soon. Paid registrations open once the official UPI details are published.</span></div>`;
+          : `<div class="event-reg-closed-note"><strong>TOTAL: ₹${e(total)}</strong><span>Online payment opens soon. Paid events open once the official UPI details are shared.</span></div>`;
     body = `
       <div class="event-reg-head">
         <span class="event-reg-kicker">STEP ${stepList().length} // CONFIRM & PAY</span>
@@ -1164,9 +1164,9 @@ function renderCheckout(focusSel) {
       .join("");
     body = `
       <div class="event-reg-head">
-        <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ PAYMENT VERIFICATION PENDING" : "✓ REGISTERED"}</span>
+        <span class="event-pass-status ${pending ? "pending" : "ok"}">${r.teamPending ? "⏳ TEAM PAYMENT PENDING" : pending ? "⏳ WAITING FOR PAYMENT CHECK" : "✓ REGISTERED"}</span>
         <h3 class="event-reg-title" id="co-title" tabindex="-1">Registration received</h3>
-        <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.razorpayId ? ` Payment received (ID ${e(r.razorpayId)}). The fest team will confirm it shortly.` : r.total > 0 ? " Your registrations are confirmed once the fest team verifies your payment." : r.teamPending ? " Your registration is confirmed once the fest team verifies your team leader's payment." : ""}</p>
+        <p class="event-reg-sub">${r.joinedTeam ? `You joined team ${e(r.joinedTeam)}.` : `Registered for ${r.eventIds.length} event${r.eventIds.length > 1 ? "s" : ""}.`}${r.razorpayId ? ` Payment received (ID ${e(r.razorpayId)}). The fest team will confirm it soon.` : r.total > 0 ? " Your registrations are confirmed once the fest team checks your payment." : r.teamPending ? " Your registration is confirmed once the fest team checks your team leader's payment." : ""}</p>
       </div>
       ${codes ? `<div class="checkout-codes"><span class="event-reg-label">Share these team codes with your teammates</span><ul>${codes}</ul></div>` : ""}
       ${qrs ? `<div class="checkout-qrs"><span class="event-reg-label">Your entry QR code${r.registrations.length > 1 ? "s" : ""} · also saved in your profile</span><ul>${qrs}</ul></div>` : ""}
@@ -1180,7 +1180,7 @@ function renderCheckout(focusSel) {
       <div class="event-reg-head">
         <span class="event-reg-kicker">JOIN A TEAM</span>
         <h3 class="event-reg-title" id="co-title" tabindex="-1">${e(ev.title)}</h3>
-        <p class="event-reg-sub">Enter the code your team leader received after registering.</p>
+        <p class="event-reg-sub">Enter the code your team leader got after registering.</p>
       </div>
       <form class="event-reg-form" id="co-form" novalidate>
         <div class="event-reg-group">
@@ -1286,7 +1286,7 @@ async function onCheckoutSubmit(evt, card) {
           renderCheckout();
           const box = document.getElementById("co-error");
           if (box) {
-            box.textContent = `${err.message || "Registration could not be saved."} Keep your payment ID ${co.paidId}.`;
+            box.textContent = `${err.message || "We couldn't save your registration."} Keep your payment ID ${co.paidId}.`;
             box.hidden = false;
           }
         }
@@ -1328,7 +1328,7 @@ async function onCheckoutSubmit(evt, card) {
     if (checkout !== co) return;
     // role="alert": show it a beat after hiding so a repeated message is
     // announced again.
-    const message = err.message || "Couldn't complete that. Check your connection and try again.";
+    const message = err.message || "Something went wrong. Check your internet and try again.";
     setTimeout(() => {
       errBox.textContent = message;
       errBox.hidden = false;
@@ -1848,10 +1848,10 @@ function bindBackdrop(el, close) {
 // ----------------------------------------------------------------------------
 
 const ACCOMMODATION_TOASTS = {
-  booked: "You've already booked accommodation. Your pass is in My registrations.",
+  booked: "You've already booked a stay. Your pass is in My registrations.",
   closed: "Accommodation booking is closed.",
   soon: "Accommodation booking opens soon.",
-  "needs-event": "Accommodation is for registered participants — register for an event first (you can add both to the cart).",
+  "needs-event": "Accommodation is only for people registered for an event. Register for an event first. You can add both to the cart.",
 };
 
 // Off /events the checkout and cart dialogs don't exist yet: add the same

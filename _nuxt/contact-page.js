@@ -3959,18 +3959,18 @@ attempted value: ${i}
             } = Qr({
               validationSchema: Wt({
                 email: Ne()
-                  .required("Email is a required")
-                  .email("This field must be a valid email")
+                  .required("Enter your email")
+                  .email("Enter a valid email")
                   .matches(
                     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-                    "Invalid email",
+                    "Enter a valid email",
                   ),
                 name: Ne()
-                  .required("Name is a required")
-                  .min(2, "First Name must be at least 2 characters"),
+                  .required("Enter your name")
+                  .min(2, "Name needs at least 2 letters"),
                 message: Ne()
-                  .required("Message is a required")
-                  .min(2, "Message must be at least 2 characters"),
+                  .required("Write a message")
+                  .min(2, "Message needs at least 2 characters"),
               }),
               initialValues: { selected: "none" },
             }),
@@ -4356,7 +4356,7 @@ attempted value: ${i}
                 {
                   name: "description",
                   content:
-                    "Let\u2019s discuss your next engaging website or activation campaign.",
+                    "Questions about Chaitanya 2k26? Write to the fest team.",
                 },
                 {
                   name: "og:title",
@@ -4367,13 +4367,13 @@ attempted value: ${i}
                   name: "og:description",
                   property: "og:description",
                   content:
-                    "Let\u2019s discuss your next engaging website or activation campaign.",
+                    "Questions about Chaitanya 2k26? Write to the fest team.",
                 },
                 { name: "twitter:title", content: "Chaitanya 2k26 | Connect" },
                 {
                   name: "twitter:description",
                   content:
-                    "Let\u2019s discuss your next engaging website or activation campaign.",
+                    "Questions about Chaitanya 2k26? Write to the fest team.",
                 },
               ],
             }),

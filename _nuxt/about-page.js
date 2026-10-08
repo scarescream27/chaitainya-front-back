@@ -36,8 +36,8 @@ function buildHtml() {
           ${s.logo ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" loading="lazy" />` : `<strong>${esc(s.name)}</strong>`}
           ${s.tier ? `<span>${esc(s.tier)}</span>` : ""}</a></li>`
       ).join("")}</ul>`
-    : `<p>Sponsorship for Chaitanya 2k26 is open. Title, event and stall partnerships put your brand in front of
-         engineering and management students from colleges across Himachal Pradesh.</p>`;
+    : `<p>You can now sponsor Chaitanya 2k26. Sponsor the whole fest, one event or a stall.
+         Your brand will reach engineering and management students from colleges all over Himachal Pradesh.</p>`;
 
   return `
     <div class="privacy-container about-container">
@@ -49,16 +49,16 @@ function buildHtml() {
 
       <div class="privacy-sections">
         ${card("01", "about-university", "The University", `
-          <p><strong>Himachal Pradesh Technical University (HPTU)</strong> is the state technical university of
-            Himachal Pradesh, set up in 2010 and based in Hamirpur. It brings together engineering, management,
-            pharmacy and applied-science programmes, and affiliates technical institutes across the state.</p>
-          <p>HPTU's campus in Hamirpur hosts Chaitanya every year, opening its labs, halls and grounds to students
-            from colleges across the region.</p>`)}
+          <p><strong>Himachal Pradesh Technical University (HPTU)</strong> is the state's technical university.
+            It was set up in 2010 and is based in Hamirpur. It offers engineering, management,
+            pharmacy and applied-science courses. Technical colleges across the state are linked to it.</p>
+          <p>Chaitanya is held every year at HPTU's Hamirpur campus. Students from colleges all over the region
+            come to use its labs, halls and grounds.</p>`)}
 
         ${card("02", "about-fest", "The Fest", `
-          <p><strong>Chaitanya</strong> is HPTU's flagship fest: ${FEST_CONFIG.festDays} days of code, design,
-            debate, esports and culture. Students plan and run it with guidance from faculty coordinators, and
-            participants from every college can register.</p>
+          <p><strong>Chaitanya</strong> is HPTU's biggest fest: ${FEST_CONFIG.festDays} days of code, design,
+            debate, esports and culture. Students plan and run it, with help from teachers.
+            Students from any college can sign up.</p>
           <ul class="about-stats">
             <li><b>${EVENTS_DATA.length}</b><span>Events</span></li>
             ${categories.map((c) => `<li><b>${c.count}</b><span>${esc(c.name)}</span></li>`).join("")}
@@ -80,7 +80,7 @@ function buildHtml() {
 
       <section class="privacy-cta-box">
         <h3>GET IN TOUCH</h3>
-        <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
+        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or use the contact form.</p>
         <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;

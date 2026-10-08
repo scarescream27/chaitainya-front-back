@@ -7541,14 +7541,14 @@ let Ws,
       (Ao = O(
         "p",
         null,
-        " Twenty events across coding, design, business, esports and culture ",
+        " Twenty events in coding, design, business, esports and culture ",
         -1,
       )),
       (To = [Ao]),
       (Mo = O(
         "p",
         null,
-        " Browse the events, build your team and register online before seats fill up. ",
+        " Look through the events, make your team and sign up online before seats run out. ",
         -1,
       )),
       (Po = [Mo]),
@@ -7692,7 +7692,7 @@ let Ws,
                       [
                         So,
                         Lt(
-                          " Welcome to Chaitanya 2k26, the annual technical and cultural fest of HPTU Hamirpur ",
+                          " Welcome to Chaitanya 2k26, the yearly tech and culture fest of HPTU Hamirpur ",
                         ),
                       ],
                       512,
@@ -7707,7 +7707,7 @@ let Ws,
                       [
                         zo,
                         Lt(
-                          " Three days of hackathons, CTF, esports, debates, design challenges and cultural events ",
+                          " Three days of hackathons, CTF, esports, debates, design contests and cultural events ",
                         ),
                       ],
                       512,
@@ -7722,7 +7722,7 @@ let Ws,
                       [
                         Co,
                         Lt(
-                          " Compete, learn and perform alongside students from colleges across Himachal and beyond ",
+                          " Compete, learn and perform with students from colleges across Himachal and beyond ",
                         ),
                       ],
                       512,

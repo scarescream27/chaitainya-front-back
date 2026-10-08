@@ -48,23 +48,23 @@ function buttonHtml() {
 function buildHtml() {
   const mail = esc(FEST_CONFIG.contactEmail);
   const included = [
-    ["stay", "Stay", "All three fest nights on the HPTU Hamirpur campus."],
+    ["stay", "Stay", "Stay all three fest nights on the HPTU Hamirpur campus."],
     ["meals", "Meals", "Breakfast and dinner: 2 meals a day for 3 days (6 meals). Dinner on arrival, 29 October."],
     ["dates", "Check in / out", "29 Oct evening → 1 Nov."],
-    ["pass", "Booking pass", "A QR pass in your profile, shown at check-in."],
+    ["pass", "Booking pass", "A QR pass in your profile. Show it when you check in."],
   ];
   const steps = [
-    ["Sign in", "Use your Chaitanya 2k26 account."],
+    ["Sign in", "Log in to your Chaitanya 2k26 account."],
     ["Register for an event", 'Pick any event on the <a href="/events">events page</a>.'],
-    ["Book accommodation and pay", "Add it to the cart with your event or on its own later."],
-    ["Show your booking pass", "Show the pass QR at check-in."],
+    ["Book accommodation and pay", "Add it to the cart with your event, or on its own later."],
+    ["Show your booking pass", "Show the QR code on your pass when you check in."],
   ];
   const faq = [
     ["Is food included?", "Yes. 2 meals a day, breakfast and dinner, for 3 days: 6 meals in all. Day 1: breakfast + dinner · Day 2: breakfast + dinner · Day 3: breakfast + dinner."],
     ["Will dinner be provided on the day of arrival?", "Yes. Dinner will be provided on your arrival on 29 October."],
-    ["Can I book without an event?", "No — register for at least one event first; you can add both to the cart."],
-    ["Can I cancel?", `Contact the fest team at <a href="mailto:${mail}">${mail}</a>.`],
-    ["Where do I check in?", "At the fest help desk on campus; details will be shared with your booking."],
+    ["Can I book without an event?", "No. Sign up for at least one event first. You can add both to the cart together."],
+    ["Can I cancel?", `Email the fest team at <a href="mailto:${mail}">${mail}</a>.`],
+    ["Where do I check in?", "At the fest help desk on campus. We will send you the details with your booking."],
   ];
 
   return `
@@ -73,7 +73,7 @@ function buildHtml() {
         <div>
           <span class="privacy-tag-badge">Chaitanya 2k26 · HPTU Hamirpur</span>
           <h1>Accommodation</h1>
-          <p class="subtitle">Stay on campus for all three fest nights — breakfast and dinner included.</p>
+          <p class="subtitle">Stay on campus for all three fest nights. Breakfast and dinner are included.</p>
         </div>
       </div>
 
@@ -88,9 +88,9 @@ function buildHtml() {
         <section class="m-accom-block" aria-labelledby="accom-who">
           <h2 class="m-h" id="accom-who">Who can book</h2>
           <ul class="m-accom-list">
-            <li>Registered participants of at least one Chaitanya 2k26 event.</li>
+            <li>Anyone signed up for at least one Chaitanya 2k26 event.</li>
             <li>One booking per person.</li>
-            <li>Carry your college ID and a government photo ID at check-in.</li>
+            <li>Bring your college ID and a government photo ID when you check in.</li>
           </ul>
         </section>
 
@@ -108,7 +108,7 @@ function buildHtml() {
         <div class="m-accom-price">
           <p><b>₹999</b> <span>per person</span></p>
           <p class="m-accom-when">29 Oct – 1 Nov · 3 nights · 6 meals (breakfast + dinner)</p>
-          <p class="m-accom-note">Pay by UPI at booking; the fest team confirms your payment.</p>
+          <p class="m-accom-note">Pay by UPI when you book. The fest team will then confirm your payment.</p>
           <div data-accom-slot>${buttonHtml()}</div>
         </div>
       </section>
@@ -122,7 +122,7 @@ function buildHtml() {
 
       <section class="privacy-cta-box">
         <h3>QUESTIONS ABOUT YOUR STAY?</h3>
-        <p>Email <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or send a message through the contact form.</p>
+        <p>Email us at <a href="mailto:${mail}" style="color:inherit;text-decoration:underline;">${mail}</a> or use the contact form.</p>
         <a href="/contact-us" class="privacy-cta-btn">CONTACT US</a>
       </section>
     </div>`;

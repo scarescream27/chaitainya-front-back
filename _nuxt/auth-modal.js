@@ -19,7 +19,7 @@ import { openProfilePanel } from "./profile-panel.js";
 const DEMO_BANNER = `
   <div class="chaitanya-modal-banner">
     <span aria-hidden="true">⚡</span>
-    <div><strong>Demo mode:</strong> Firebase is not configured, so data is stored only in this browser.</div>
+    <div><strong>Demo mode:</strong> Firebase is not set up, so your data is saved only in this browser.</div>
   </div>
 `;
 
@@ -332,7 +332,7 @@ function renderLoginView(container, isConfigured) {
   container.innerHTML = `
     <div class="chaitanya-modal-header">
       <h2 class="chaitanya-modal-title" id="chaitanya-modal-title">Sign in</h2>
-      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to register for events and see your entry QR codes.</p>
+      <p class="chaitanya-modal-subtitle" id="chaitanya-modal-subtitle">Sign in with Google to sign up for events and see your entry QR codes.</p>
     </div>
 
     ${isConfigured ? "" : DEMO_BANNER}
@@ -360,7 +360,7 @@ function renderLoginView(container, isConfigured) {
       closeAuthModal();
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {
-      showAuthError(err.message || "Google sign-in didn't finish. Please try again.");
+      showAuthError(err.message || "Google sign-in didn't work. Please try again.");
       setBusy(btnLogin, false, `${GOOGLE_ICON_SVG}<span>Continue with Google</span>`);
     }
   });
@@ -423,7 +423,7 @@ function renderRegisterView(container, isConfigured) {
     const year = container.querySelector("#reg-year").value;
     if (!college) return showAuthError("Enter your college or university.");
     if (!year) return showAuthError("Select your year.");
-    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Enter a valid WhatsApp number (10 digits; country code optional).");
+    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Enter a 10-digit WhatsApp number. The country code is optional.");
 
     const btn = container.querySelector("#btn-do-google-register");
     setBusy(btn, true, "Creating your account…");

@@ -480,6 +480,8 @@ ol.adm-list li span::before {
   .adm-nav {
     flex-direction: row;
     overflow-x: auto;
+    /* A swipe that hits the end stops here instead of paging back / scrolling the page. */
+    overscroll-behavior-x: contain;
     scrollbar-width: none;
     border-radius: 18px;
   }

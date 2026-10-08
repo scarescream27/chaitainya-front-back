@@ -43,7 +43,7 @@ function contactHtml() {
   return shell(
     "Chaitanya 2k26 · HPTU Hamirpur",
     "Contact Us",
-    "Questions about events, registration, sponsorship or anything else? Write to us.",
+    "Have a question about events, signing up, sponsoring or anything else? Write to us.",
     `
     <div class="m-quick">
       <a class="m-quick-card m-quick-dark" href="mailto:${mail()}">
@@ -51,7 +51,7 @@ function contactHtml() {
         <span>Email us</span><strong>${mail()}</strong></a>
       <a class="m-quick-card" href="/events">
         ${ico("M4 5h16v15H4zM4 10h16M9 3v4M15 3v4")}
-        <span>Event details</span><strong>Rules, venues and timings</strong></a>
+        <span>Event details</span><strong>Rules, places and times</strong></a>
       <a class="m-quick-card" href="/organisers">
         ${ico("M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6")}
         <span>Organisers</span><strong>Who runs each event</strong></a>
@@ -96,7 +96,7 @@ function wireForm(root) {
     const bad = [
       [name.length < 2, "name", "Enter your name"],
       [!isEmail(email), "email", "Enter an email like name@example.com"],
-      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Phone needs 10 digits, or leave it empty"],
+      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Enter a 10-digit phone number, or leave it empty"],
       [message.length < 3, "message", "Write a short message"],
     ].filter(([b]) => b);
     if (bad.length) {
@@ -113,7 +113,7 @@ function wireForm(root) {
       form.reset();
       say("Message sent. We'll reply by email.", "ok");
     } catch {
-      say(`Couldn't send. Try again or write to ${FEST_CONFIG.contactEmail}`, "error");
+      say(`We couldn't send it. Try again or email ${FEST_CONFIG.contactEmail}`, "error");
     } finally {
       btn.disabled = false;
     }
@@ -131,16 +131,16 @@ function sponsorsHtml() {
           ${s.logo ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" loading="lazy" />` : `<strong>${esc(s.name)}</strong>`}
           ${s.tier ? `<span>${esc(s.tier)}</span>` : ""}</a></li>`
       ).join("")}</ul>`
-    : `<div class="m-sponsor-empty"><strong>Your brand here</strong><span>2026 sponsors will be announced on this page.</span></div>`;
+    : `<div class="m-sponsor-empty"><strong>Your brand here</strong><span>We will list our 2026 sponsors on this page.</span></div>`;
   const kinds = [
-    ["01", "Title partnership", "Your name on the fest itself."],
-    ["02", "Event partnership", `Back one of the ${EVENTS_DATA.length} events or a whole category.`],
-    ["03", "Stall partnership", "Meet students on campus during the fest."],
+    ["01", "Title partner", "Your name on the fest itself."],
+    ["02", "Event partner", `Support one of the ${EVENTS_DATA.length} events or a whole category.`],
+    ["03", "Stall partner", "Set up a stall and meet students on campus during the fest."],
   ];
   return shell(
     `${esc(getFestDatesLabel())} · HPTU Hamirpur`,
     "Sponsors",
-    "Put your brand in front of engineering and management students from colleges across Himachal Pradesh.",
+    "Show your brand to engineering and management students from colleges all over Himachal Pradesh.",
     `
     <ul class="m-stats m-sponsor-stats">
       <li><b>${FEST_CONFIG.festDays}</b><span>Days</span></li>
@@ -149,20 +149,20 @@ function sponsorsHtml() {
     </ul>
     ${section("Our sponsors", list)}
     ${section(
-      "Ways to partner",
+      "Ways to sponsor",
       `<ol class="m-kinds">${kinds
         .map(([n, t, d]) => `<li><span>${n}</span><div><strong>${t}</strong><p>${d}</p></div></li>`)
         .join("")}</ol>`
     )}
     ${section(
-      "Events you can back",
+      "Events you can sponsor",
       `<ul class="m-chips">${cats
         .map((c) => `<li>${esc(c.name)} · ${EVENTS_DATA.filter((ev) => ev.category === c.id).length}</li>`)
         .join("")}</ul>`
     )}
     <section class="privacy-cta-box">
       <h3>BECOME A SPONSOR</h3>
-      <p>Write to <a href="mailto:${mail()}?subject=${subject}" style="color:inherit;text-decoration:underline;">${mail()}</a> and we'll send the partnership details.</p>
+      <p>Write to <a href="mailto:${mail()}?subject=${subject}" style="color:inherit;text-decoration:underline;">${mail()}</a> and we'll send you the sponsor details.</p>
       <a href="mailto:${mail()}?subject=${subject}" class="privacy-cta-btn">EMAIL THE TEAM</a>
     </section>`
   );
@@ -176,7 +176,7 @@ function organiserHtml(slug) {
     return shell(
       "Organisers",
       "Organiser not found",
-      "This link may be out of date.",
+      "This link may be old.",
       `<a href="/organisers" class="privacy-cta-btn m-back">ALL ORGANISERS</a>`
     );
   const extra = PROFILES[p.name] || {};

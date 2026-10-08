@@ -41,7 +41,7 @@ let a,
             <div class="privacy-hero">
               <span class="privacy-tag-badge">Error 404</span>
               <h1>Page not found</h1>
-              <p class="subtitle">This page doesn't exist or has moved. Head back home or browse the events.</p>
+              <p class="subtitle">We can't find this page. It may have moved. Go back home or look at the events.</p>
             </div>
           </div>`;
 

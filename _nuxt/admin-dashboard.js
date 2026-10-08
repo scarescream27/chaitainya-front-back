@@ -155,14 +155,14 @@ function renderGate(user) {
       <section class="prof-card adm-gate">
         <span class="pp-kicker">403 • ACCESS RESTRICTED</span>
         <h1 class="prof-title">Organisers only</h1>
-        <p class="pp-hint">${e(user.email)} isn't a fest organiser account. Sign in with an organiser Google account to open the dashboard.</p>
+        <p class="pp-hint">${e(user.email)} is not an organiser account. Sign in with an organiser Google account to open this page.</p>
         <div class="prof-actions"><a class="pp-primary" href="/profile" data-adm="nav" data-path="/profile">Go to my profile</a></div>
       </section>`
     : `
       <section class="prof-card adm-gate">
         <span class="pp-kicker">CHAITANYA 2K26 • ADMIN</span>
-        <h1 class="prof-title">Fest Command Center</h1>
-        <p class="pp-hint">Sign in with an authorised organiser Google account.</p>
+        <h1 class="prof-title">Fest Admin</h1>
+        <p class="pp-hint">Sign in with an organiser Google account.</p>
         <div class="prof-actions"><button type="button" class="pp-primary" data-adm="login">Sign in</button></div>
       </section>`;
   refreshScroll();
@@ -302,45 +302,55 @@ function renderShell() {
     ? `[data-adm="${focused.dataset.adm}"]${focused.dataset.section ? `[data-section="${focused.dataset.section}"]` : ""}`
     : "";
 
-  box.innerHTML = `
+  const top = `
     <div class="adm-top">
       <div>
         <span class="pp-kicker">CHAITANYA 2K26 • ADMIN</span>
-        <h1 class="prof-title">Fest Command Center</h1>
-        <p class="pp-hint">Signed in as ${e(user.email)}${state.loadedAt ? ` · data loaded ${e(state.loadedAt.toLocaleTimeString("en-IN", { timeStyle: "short" }))}` : ""}</p>
+        <h1 class="prof-title">Fest Admin</h1>
+        <p class="pp-hint">Signed in as ${e(user.email)}${state.loadedAt ? ` · updated ${e(state.loadedAt.toLocaleTimeString("en-IN", { timeStyle: "short" }))}` : ""}</p>
       </div>
       <div class="adm-top-actions">
-        <button type="button" class="pp-action subtle" data-adm="reload">${state.loading ? "Loading…" : "↻ Reload data"}</button>
-        <button type="button" class="pp-action" data-adm="excel">⬇ Excel (all sheets)</button>
+        <button type="button" class="pp-action subtle" data-adm="reload">${state.loading ? "Loading…" : "↻ Reload"}</button>
+        <button type="button" class="pp-action" data-adm="excel">⬇ Download Excel</button>
       </div>
-    </div>
-    <div class="adm-layout">
-      <nav class="adm-nav" aria-label="Dashboard sections">
-        ${sections
-          .map((s) => {
-            const count = sectionCount(s.id, data);
-            return `<button type="button" class="adm-nav-btn ${state.section === s.id ? "active" : ""}" data-adm="section" data-section="${s.id}" aria-current="${state.section === s.id ? "page" : "false"}">
+    </div>`;
+  const nav = sections
+    .map((s) => {
+      const count = sectionCount(s.id, data);
+      return `<button type="button" class="adm-nav-btn ${state.section === s.id ? "active" : ""}" data-adm="section" data-section="${s.id}" aria-current="${state.section === s.id ? "page" : "false"}">
               <span>${e(s.label)}</span>${count !== "" ? `<span class="adm-count ${alertIds.has(s.id) && count ? "alert" : ""}">${e(count)}</span>` : ""}
             </button>`;
-          })
-          .join("")}
-      </nav>
+    })
+    .join("");
+  // Phones scroll the nav sideways. Rebuilding it reset that scroll to the
+  // first tab and swapped buttons out from under a finger, so once it exists
+  // keep the same <nav> and only touch its buttons when they actually change.
+  const navEl = box.querySelector(".adm-nav");
+  if (navEl) {
+    box.querySelector(".adm-top").outerHTML = top;
+    if (navEl.dataset.html !== nav) navEl.innerHTML = nav;
+  } else {
+    box.innerHTML = `${top}
+    <div class="adm-layout">
+      <nav class="adm-nav" aria-label="Dashboard sections">${nav}</nav>
       <main class="adm-main" id="adm-main"></main>
     </div>`;
+  }
+  box.querySelector(".adm-nav").dataset.html = nav;
   renderMain();
-  if (refocus) box.querySelector(refocus)?.focus();
+  if (refocus) box.querySelector(refocus)?.focus({ preventScroll: true });
 }
 
 function renderMain() {
   const main = state.root?.querySelector("#adm-main");
   if (!main) return;
   if (state.loading && !state.loadedAt) {
-    main.innerHTML = `<div class="pp-loading">Loading fest database…</div>`;
+    main.innerHTML = `<div class="pp-loading">Loading data…</div>`;
     return;
   }
   const data = computeData();
   const errors = state.errors.length
-    ? `<div class="chaitanya-modal-banner danger" role="alert"><div><strong>Some data failed to load:</strong> ${e(state.errors.join(" · "))}</div></div>`
+    ? `<div class="chaitanya-modal-banner danger" role="alert"><div><strong>Some data didn't load:</strong> ${e(state.errors.join(" · "))}</div></div>`
     : "";
   const render = {
     overview: renderOverview,
@@ -478,28 +488,28 @@ function renderOverview({ regRows }) {
   const topColleges = [...colleges.values()].sort((a, b) => b.users.size - a.users.size).slice(0, 8);
 
   const attention = [
-    pending.length && { text: `${pending.length} payment${pending.length > 1 ? "s" : ""} waiting for verification`, section: "payments" },
-    unpaid.length && { text: `${unpaid.length} registration${unpaid.length > 1 ? "s" : ""} for paid events without a verified payment`, section: "registrations" },
-    smallTeams.length && { text: `${smallTeams.length} team${smallTeams.length > 1 ? "s" : ""} below the minimum size`, section: "teams" },
-    openQueries.length && { text: `${openQueries.length} unanswered contact quer${openQueries.length > 1 ? "ies" : "y"}`, section: "queries" },
+    pending.length && { text: `${pending.length} payment${pending.length > 1 ? "s" : ""} to check`, section: "payments" },
+    unpaid.length && { text: `${unpaid.length} registration${unpaid.length > 1 ? "s" : ""} not paid yet`, section: "registrations" },
+    smallTeams.length && { text: `${smallTeams.length} team${smallTeams.length > 1 ? "s" : ""} too small`, section: "teams" },
+    openQueries.length && { text: `${openQueries.length} unanswered quer${openQueries.length > 1 ? "ies" : "y"}`, section: "queries" },
   ].filter(Boolean);
 
   return `
-    ${sectionHead("01 // OVERVIEW", "At a glance")}
+    ${sectionHead("01 // OVERVIEW", "Summary")}
     <div class="adm-stats">
       ${stat(state.attendees.length, "Accounts")}
-      ${stat(regRows.length, "Registrations", { hint: `${participants.size} unique participants` })}
+      ${stat(regRows.length, "Registrations", { hint: `${participants.size} people` })}
       ${stat(state.teams.length, "Teams")}
       ${stat(colleges.size, "Colleges")}
       ${stat(pending.length, "Payments pending", { alert: pending.length > 0 })}
-      ${stat(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Verified collections")}
+      ${stat(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Money received")}
     </div>
 
     <section class="adm-card">
-      <h3 class="adm-h3">Needs attention</h3>
+      <h3 class="adm-h3">To do</h3>
       ${attention.length
         ? `<ul class="adm-attention">${attention.map((a) => `<li><span>${e(a.text)}</span><button type="button" class="pp-action subtle" data-adm="section" data-section="${a.section}">Open →</button></li>`).join("")}</ul>`
-        : `<p class="pp-hint">✓ Nothing waiting. All payments, teams and queries are handled.</p>`}
+        : `<p class="pp-hint">✓ All done. No payments, teams or queries need you.</p>`}
     </section>
 
     <section class="adm-card">
@@ -581,13 +591,13 @@ function renderCheckin({ regRows }) {
           </li>`;
           })
           .join("")}</ul>`
-      : `<div class="pp-verify bad"><strong>✕ NOT FOUND</strong><p>No registration matches “${e(c.query)}”.</p></div>`;
+      : `<div class="pp-verify bad"><strong>✕ NOT FOUND</strong><p>No one found for “${e(c.query)}”.</p></div>`;
   }
   return `
-    ${sectionHead("02 // CHECK-IN", "Venue check-in", "Scan a participant's entry QR (most scanner apps paste the text), or type a pass ID (CH26-XXXX-0000000), Chaitanya ID (CH26-XXXXXXXX), name, email or phone.")}
+    ${sectionHead("02 // CHECK-IN", "Check people in", "Scan their entry QR, or type a pass ID (CH26-XXXX-0000000), Chaitanya ID (CH26-XXXXXXXX), name, email or phone.")}
     <form class="adm-checkin-form" data-adm-form="checkin" novalidate>
-      <input type="text" name="q" value="${e(c?.query || "")}" placeholder="Paste QR text or type an ID / name" autocomplete="off" aria-label="Pass ID, Chaitanya ID, QR text, name, email or phone" />
-      <button type="submit" class="pp-primary">Look up</button>
+      <input type="text" name="q" value="${e(c?.query || "")}" placeholder="Paste QR text, ID or name" autocomplete="off" aria-label="Pass ID, Chaitanya ID, QR text, name, email or phone" />
+      <button type="submit" class="pp-primary">Find</button>
     </form>
     <div data-adm-checkin-results role="status" aria-live="polite">${results}</div>`;
 }
@@ -619,12 +629,12 @@ function renderPayments({ utrCounts }) {
           ? `<small>${e(p.status === "verified" ? `By ${(p.verifiedBy || "").split("@")[0]}` : p.rejectionReason || "")}</small>`
           : state.rejecting === p.paymentId
             ? `<form class="adm-reject-form" data-adm-form="reject" data-id="${e(p.paymentId)}" novalidate>
-                <label class="pp-field"><span>Reason shown to the participant</span>
+                <label class="pp-field"><span>Reason (the participant sees this)</span>
                   <input type="text" name="reason" maxlength="200" value="UTR not found in bank statement" required aria-describedby="adm-reject-msg" />
                 </label>
                 <p class="pp-msg bad" id="adm-reject-msg" role="alert" aria-live="assertive"></p>
                 <div class="admin-action-btn-group">
-                  <button type="submit" class="btn-action-reject">Confirm reject</button>
+                  <button type="submit" class="btn-action-reject">Reject payment</button>
                   <button type="button" class="pp-action subtle" data-adm="reject-cancel">Cancel</button>
                 </div>
               </form>`
@@ -635,14 +645,14 @@ function renderPayments({ utrCounts }) {
       </tr>`;
   });
   return `
-    ${sectionHead("03 // PAYMENTS", "UPI payment verification", `Match each UTR against the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before approving.`)}
+    ${sectionHead("03 // PAYMENTS", "Check UPI payments", `Find each UTR in the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before you approve it.`)}
     <div class="adm-stats">
-      ${stat(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Verified collections")}
-      ${stat(pending.length, "Pending verification", { alert: pending.length > 0 })}
-      ${stat(state.payments.length, "Total submissions")}
+      ${stat(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Money received")}
+      ${stat(pending.length, "Waiting", { alert: pending.length > 0 })}
+      ${stat(state.payments.length, "All payments")}
     </div>
     ${toolbar({ statuses: ["pending_verification", "verified", "rejected"], placeholder: "Search payer, UTR, event…" })}
-    ${table(["Events", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"], rows, "No payment submissions", state.payments.length)}`;
+    ${table(["Events", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"], rows, "No payments yet", state.payments.length)}`;
 }
 
 // ---- Registrations ----------------------------------------------------------
@@ -666,15 +676,15 @@ function renderRegistrations({ regRows }) {
       </tr>`
   );
   return `
-    ${sectionHead("04 // REGISTRATIONS", "All registrations", "UNPAID means a paid event has no verified payment for this entry. Don't admit until it's verified.")}
+    ${sectionHead("04 // REGISTRATIONS", "All registrations", "UNPAID means this paid event has no approved payment. Don't let them in until it's approved.")}
     <div class="adm-stats">
       ${stat(regRows.length, "Registrations")}
       ${stat(new Set(regRows.filter((r) => r.event_id !== ACCOMMODATION.id).map((r) => r.event_id)).size, "Events with entries")}
-      ${stat(regRows.filter((r) => r.event_id === ACCOMMODATION.id).length, "Accommodation bookings")}
+      ${stat(regRows.filter((r) => r.event_id === ACCOMMODATION.id).length, "Stays booked")}
       ${stat(unpaid.length, "Unpaid / rejected", { alert: unpaid.length > 0 })}
     </div>
     ${toolbar({ events: true, statuses: ["free", "verified", "pending_verification", "unpaid", "rejected"] })}
-    ${table(["Event", "Participant", "Phone", "College", "Type", "Pass ID", "Registered", "Payment"], rows, "No registrations match", regRows.length)}`;
+    ${table(["Event", "Participant", "Phone", "College", "Type", "Pass ID", "Registered", "Payment"], rows, "No matching registrations", regRows.length)}`;
 }
 
 // ---- Teams ------------------------------------------------------------------
@@ -700,10 +710,10 @@ function renderTeams({ leaderContact }) {
     <div class="adm-stats">
       ${stat(state.teams.length, "Teams")}
       ${stat(state.teams.reduce((sum, t) => sum + (t.teamSize || 1), 0), "Team members")}
-      ${stat(state.teams.filter((t) => (t.teamSize || 1) < (t.minTeamSize || 1)).length, "Below minimum size")}
+      ${stat(state.teams.filter((t) => (t.teamSize || 1) < (t.minTeamSize || 1)).length, "Too small")}
     </div>
     ${toolbar({ events: true, placeholder: "Search team, code, leader, member…" })}
-    ${table(["Team", "Code", "Event", "Leader", "Size", "Payment"], rows, "No teams match", state.teams.length)}`;
+    ${table(["Team", "Code", "Event", "Leader", "Size", "Payment"], rows, "No matching teams", state.teams.length)}`;
 }
 
 // ---- Accounts ---------------------------------------------------------------
@@ -722,14 +732,14 @@ function renderAttendees() {
       </tr>`
   );
   return `
-    ${sectionHead("06 // ACCOUNTS", "Participant accounts")}
+    ${sectionHead("06 // ACCOUNTS", "Accounts")}
     <div class="adm-stats">
       ${stat(state.attendees.length, "Accounts")}
       ${stat(new Set(state.attendees.map((a) => (a.college || "").toLowerCase()).filter(Boolean)).size, "Colleges")}
       ${stat(state.attendees.filter((a) => (a.registeredEventIds || a.registeredEvents || []).length).length, "With registrations")}
     </div>
     ${toolbar({ placeholder: "Search name, email, college, phone, ID…" })}
-    ${table(["Name", "Email", "College", "Phone", "Chaitanya ID", "Events"], rows, "No accounts match", state.attendees.length)}`;
+    ${table(["Name", "Email", "College", "Phone", "Chaitanya ID", "Events"], rows, "No matching accounts", state.attendees.length)}`;
 }
 
 // ---- Queries ----------------------------------------------------------------
@@ -753,24 +763,24 @@ function renderQueries() {
   );
   const open = state.queries.filter((q) => q.status !== "resolved").length;
   return `
-    ${sectionHead("07 // QUERIES", "Contact form messages")}
+    ${sectionHead("07 // QUERIES", "Messages")}
     <div class="adm-stats">
       ${stat(open, "Open", { alert: open > 0 })}
       ${stat(state.queries.length - open, "Resolved")}
       ${stat(state.queries.length, "Total")}
     </div>
     ${toolbar({ statuses: ["open", "resolved"], placeholder: "Search name, email, message…" })}
-    ${table(["From", "Message", "Received", "Status", "Action"], rows, "No queries match", state.queries.length)}`;
+    ${table(["From", "Message", "Received", "Status", "Action"], rows, "No matching messages", state.queries.length)}`;
 }
 
 // ---- Setup / Dev cache ------------------------------------------------------
 
 function renderSetup() {
   return `
-    ${sectionHead("08 // SETUP", "Event catalog sync")}
+    ${sectionHead("08 // SETUP", "Sync events")}
     <section class="adm-card">
-      <p class="pp-hint">Writes the event catalog (with entry fees) to the <code>events</code> collection. The security rules use these fees to stop paid events being registered as free. Run it again after editing <code>_nuxt/events-data.js</code>.</p>
-      <button type="button" class="pp-primary" data-adm="seed">Sync events &amp; FAQs to Firestore</button>
+      <p class="pp-hint">Saves the event list and entry fees to the <code>events</code> collection. The security rules use these fees so no one can sign up for a paid event for free. Run it again after you edit <code>_nuxt/events-data.js</code>.</p>
+      <button type="button" class="pp-primary" data-adm="seed">Sync events &amp; FAQs</button>
       <p class="pp-hint" data-adm-seed-progress role="status" aria-live="polite" hidden></p>
     </section>`;
 }
@@ -866,15 +876,15 @@ function renderSecurity() {
         <td class="adm-message"><code class="adm-sec-value">${e(truncate(h.value))}</code></td>
         <td><div class="admin-action-btn-group">
           <button type="button" class="pp-action" data-adm="sec-clean" data-index="${i}">Clean</button>
-          ${h.col === "users" ? `<button type="button" class="btn-action-reject" data-adm="sec-delete" data-index="${i}">Delete profile document</button>` : ""}
+          ${h.col === "users" ? `<button type="button" class="btn-action-reject" data-adm="sec-delete" data-index="${i}">Delete profile</button>` : ""}
         </div></td>
       </tr>`
   );
   return `
-    ${sectionHead("09 // SECURITY", "Suspicious data", "Scans every loaded account, team, registration, payment and query for HTML tags, event handlers, script URLs, encoded angle brackets and non-https photo URLs. Values are shown escaped.")}
+    ${sectionHead("09 // SECURITY", "Suspicious data", "Checks every account, team, registration, payment and query for HTML tags, event handlers, script links, coded &lt; &gt; signs and non-https photo links. Values are shown as plain text.")}
     <section class="adm-card">
-      <p class="pp-hint">Also disable the Google account in Firebase console → Authentication if it looks malicious.</p>
-      <div class="prof-actions"><button type="button" class="pp-action subtle" data-adm="sec-rescan">↻ Re-scan</button></div>
+      <p class="pp-hint">If an account looks harmful, also turn it off in Firebase console → Authentication.</p>
+      <div class="prof-actions"><button type="button" class="pp-action subtle" data-adm="sec-rescan">↻ Scan again</button></div>
     </section>
     ${hits.length
       ? `<p class="adm-result-count">${hits.length} suspicious value${hits.length === 1 ? "" : "s"} · scanned ${e(when)}</p>
@@ -885,15 +895,15 @@ function renderSecurity() {
             <tbody>${rows.join("")}</tbody>
           </table>
         </div>`
-      : `<section class="adm-card"><p class="pp-hint">✓ No suspicious data found · scanned ${e(when)}</p></section>`}`;
+      : `<section class="adm-card"><p class="pp-hint">✓ Nothing suspicious · scanned ${e(when)}</p></section>`}`;
 }
 
 async function securityAction(hit, kind, btn) {
   const label = `${hit.col}/${hit.id}`;
   const top = hit.path[0];
   const ask = kind === "delete"
-    ? `Delete the profile document ${label} (${hit.owner})? This cannot be undone.`
-    : `Clean ${fieldPath(hit.path)} on ${label} (${hit.owner})?`;
+    ? `Delete the profile ${label} (${hit.owner})? You can't undo this.`
+    : `Remove the bad text from ${fieldPath(hit.path)} on ${label} (${hit.owner})?`;
   if (!hit.id || !confirm(ask)) return;
   state.actionError = "";
   btn.disabled = true;
@@ -921,12 +931,12 @@ async function securityAction(hit, kind, btn) {
 
 function renderRedis() {
   return `
-    ${sectionHead("10 // DEV CACHE", "Local dev server cache")}
+    ${sectionHead("10 // DEV CACHE", "Local dev cache")}
     <section class="adm-card">
       <p class="pp-hint" id="redis-stat-meta">Loading /api/cache/stats…</p>
       <div class="prof-actions">
         <button type="button" class="pp-action subtle" data-adm="redis-refresh">Refresh</button>
-        <button type="button" class="pp-action" data-adm="redis-purge">Purge cache</button>
+        <button type="button" class="pp-action" data-adm="redis-purge">Clear cache</button>
       </div>
     </section>`;
 }
@@ -957,8 +967,18 @@ function setSection(id) {
   if (id !== "registrations" && id !== "teams") state.eventFilter = "all";
   history.replaceState(history.state, "", `/admin#${id}`);
   renderShell();
-  // renderShell rebuilt the sidebar: keep focus on the (now current) button.
-  state.root?.querySelector(`.adm-nav-btn[data-section="${id}"]`)?.focus();
+  // Keep focus on the (now current) button and, on the phone's sideways bar,
+  // slide it to the middle. Only here, on a tap, never on a data refresh.
+  const btn = state.root?.querySelector(`.adm-nav-btn[data-section="${id}"]`);
+  if (!btn) return;
+  btn.focus({ preventScroll: true });
+  const nav = btn.parentElement;
+  const n = nav.getBoundingClientRect();
+  const b = btn.getBoundingClientRect();
+  nav.scrollTo({
+    left: nav.scrollLeft + b.left - n.left - (n.width - b.width) / 2,
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+  });
 }
 
 async function updatePayment(payment, kind, reason, btn) {
@@ -1021,7 +1041,7 @@ async function onClick(evt) {
     state.rejecting = btn.dataset.id;
     renderMain();
     state.root.querySelector(".adm-reject-form input")?.select();
-    announce(`Rejecting the payment from ${payment?.payerName || "this participant"}. Enter the reason shown to them, then confirm.`);
+    announce(`Rejecting the payment from ${payment?.payerName || "this participant"}. Type the reason they will see, then press Reject payment.`);
     return;
   }
   if (action === "reject-cancel") {
@@ -1030,7 +1050,7 @@ async function onClick(evt) {
     renderMain();
     // Return focus to the row's Reject button instead of dropping it on <body>.
     state.root.querySelector(`[data-adm="reject"][data-id="${CSS.escape(id || "")}"]`)?.focus();
-    announce("Rejection cancelled.");
+    announce("Reject cancelled.");
     return;
   }
   if (action === "approve") {
@@ -1070,13 +1090,13 @@ async function onClick(evt) {
     const progress = state.root.querySelector("[data-adm-seed-progress]");
     btn.disabled = true;
     progress.hidden = false;
-    progress.textContent = "Connecting to Firestore…";
+    progress.textContent = "Connecting…";
     try {
       const res = await applySchemaToFirestore((p) => (progress.textContent = p.message));
       const codes = await backfillTeamCodes(state.teams || []);
       progress.textContent = `✓ Synced ${res.eventsCreated} events, ${res.faqsCreated} FAQs and ${codes} team codes.${res.errors?.length ? ` Errors: ${res.errors.join("; ")}` : ""}`;
     } catch (err) {
-      progress.textContent = `Sync failed: ${err.message}`;
+      progress.textContent = `Sync didn't work: ${err.message}`;
     } finally {
       btn.disabled = false;
     }
@@ -1085,7 +1105,7 @@ async function onClick(evt) {
 
   if (action === "redis-refresh") return loadRedisStats(state.root);
   if (action === "redis-purge") {
-    if (!confirm("Purge the local dev server cache?")) return;
+    if (!confirm("Clear the local dev cache?")) return;
     await fetch("/api/cache/purge", { method: "POST" }).catch(() => {});
     return loadRedisStats(state.root);
   }
