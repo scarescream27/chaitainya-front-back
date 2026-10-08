@@ -6280,11 +6280,18 @@ let Ws,
             }
             if (
               (N === "updateProgress" && Le && Le.progress(A[0]),
-              N === "finishProgress" && Le) // Le: model loaded (the slow-network reveal can fire first)
+              // Le: model loaded (the slow-network reveal can fire first).
+              // Once per visit: a second call re-ran the glass burst.
+              N === "finishProgress" && Le && !Le.__finished)
             ) {
-              ((di = !0),
+              ((Le.__finished = !0),
+                (di = !0),
                 i.hideCursor("", "none"),
-                Le.progress(1),
+                // Grow the jellyfish to full size smoothly: jumping there in
+                // one frame while the scene faded in read as a flicker.
+                REDUCED_MOTION
+                  ? Le.progress(1)
+                  : c.add(() => V.to(Le, { progress: 1, duration: 1.2, ease: "power2.out" })),
                 Pt.forEach(({ body: U }) => {
                   ye(U, 1.5);
                 }),
