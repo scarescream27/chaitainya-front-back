@@ -174,7 +174,7 @@ let a,
               content: "Stay on the HPTU Hamirpur campus for all three Chaitanya 2k26 fest nights, 29 Oct – 1 Nov, with breakfast and dinner (6 meals): ₹999 per person.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/accommodation" }],
+          link: [{ rel: "canonical", href: "https://chaitanyahptu.dev/accommodation" }],
         });
 
         let unsub = null;

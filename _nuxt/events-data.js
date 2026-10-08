@@ -885,7 +885,7 @@ export function googleCalendarLink(ev) {
     action: "TEMPLATE",
     text: `${ev.title} — Chaitanya 2k26`,
     dates,
-    details: `${ev.tagline}\n\n${ev.time}\nhttps://chaitanya2k26.hptu.ac.in/events`,
+    details: `${ev.tagline}\n\n${ev.time}\nhttps://chaitanyahptu.dev/events`,
     location: `${ev.venue !== "To be notified" ? ev.venue + ", " : ""}HPTU Hamirpur, Himachal Pradesh`,
     ctz: "Asia/Kolkata",
   });

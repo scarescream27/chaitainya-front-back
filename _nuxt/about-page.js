@@ -113,7 +113,7 @@ let a,
               content: "About Chaitanya 2k26, the annual tech and cultural fest of HPTU Hamirpur: the university, the fest and its sponsors.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/about" }],
+          link: [{ rel: "canonical", href: "https://chaitanyahptu.dev/about" }],
         });
 
         const html = buildHtml();

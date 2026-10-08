@@ -37,7 +37,7 @@ let a,
               content: "How Chaitanya 2k26 at HPTU Hamirpur collects, uses and protects participant data for registrations, payments and event entry.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/privacy-policy" }],
+          link: [{ rel: "canonical", href: "https://chaitanyahptu.dev/privacy-policy" }],
         });
 
         const policyHtml = `

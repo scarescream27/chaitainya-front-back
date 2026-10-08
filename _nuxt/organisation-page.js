@@ -151,7 +151,7 @@ let a,
               content: "The people behind Chaitanya 2k26 at HPTU Hamirpur: the fest coordinators, website developers and the coordinators of every organising team.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/organisers" }],
+          link: [{ rel: "canonical", href: "https://chaitanyahptu.dev/organisers" }],
         });
 
         rt(() => {

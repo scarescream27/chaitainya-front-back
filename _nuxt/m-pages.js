@@ -17,7 +17,7 @@ import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
 import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket } from "./auth-service.js";
 
-const SITE = "https://chaitanya2k26.hptu.ac.in";
+const SITE = "https://chaitanyahptu.dev";
 const mail = () => esc(FEST_CONFIG.contactEmail);
 
 const shell = (badge, title, subtitle, body) => `

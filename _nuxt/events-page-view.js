@@ -38,7 +38,7 @@ let a,
               content: "All 20 Chaitanya 2k26 events at HPTU Hamirpur, 30 Oct – 1 Nov 2026: hackathon, CTF, coding, design, debate, esports and cultural. Rules and registration.",
             },
           ],
-          link: [{ rel: "canonical", href: "https://chaitanya2k26.hptu.ac.in/events" }],
+          link: [{ rel: "canonical", href: "https://chaitanyahptu.dev/events" }],
         });
 
         rt(() => {
