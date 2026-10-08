@@ -30,18 +30,16 @@ const TBN = "To be notified";
 // rest of a box so the whole poster shows with no cropping and no black bars.
 // To add one, drop both files in and add the id here; events without a
 // poster keep the category glyph.
-// Value: the poster's shape (width / height); cards and boxes take this exact
-// shape so the poster fills them with no border.
-const POSTERS = new Map([
-  ["codeforge-reforged", "1 / 1"],
-  ["capture-the-flag", "4 / 5"],
-  ["error-404", "1 / 1"],
-  ["prompt-engineering", "4 / 5"],
-  ["cube-conquest", "1 / 1"],
-  ["esports-cs2", "1 / 1"],
-  ["treasure-hunt", "1 / 1"],
-  ["cultural-walk", "1 / 1"],
-  ["dance-competition", "4 / 5"],
+const POSTERS = new Set([
+  "codeforge-reforged",
+  "capture-the-flag",
+  "error-404",
+  "prompt-engineering",
+  "cube-conquest",
+  "esports-cs2",
+  "treasure-hunt",
+  "cultural-walk",
+  "dance-competition",
 ]);
 
 // Accents are the --cat-* tokens in tokens.css (rendered as inline CSS colours);
@@ -98,7 +96,6 @@ function event(e) {
     ...e,
     poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp` : null,
     posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp` : null,
-    posterRatio: POSTERS.get(e.id) || null,
     registrationType: type,
     minTeam,
     maxTeam,

@@ -1604,11 +1604,3 @@
   .m-accom-root .m-accom-book { transition: none; }
   .m-accom-root .m-accom-book:active { transform: none; }
 }
-
-/* Event cards with a poster take the poster's own shape (no border). */
-.m-card.m-card-poster,
-.sgfm-events .m-card.m-card-poster {
-  height: auto;
-  aspect-ratio: var(--visual-ratio, 1 / 1);
-  background: var(--bg) center / cover no-repeat, #000;
-}

@@ -56,7 +56,7 @@ export function eventCardHtml(ev, accent, mark) {
   return `
     <a class="m-card m-card-event${ev.poster && ev.image === ev.poster ? " m-card-poster" : ""}" href="/events/${encodeURIComponent(ev.id)}" style="--tint: ${accent || "var(--cat-tech)"}${
       ev.image ? `; --bg: url('${esc(ev.image)}')` : ""
-    }${ev.posterBg ? `; --poster-bg: url('${esc(ev.posterBg)}')` : ""}${ev.posterRatio ? `; --visual-ratio: ${esc(ev.posterRatio)}` : ""
+    }${ev.posterBg ? `; --poster-bg: url('${esc(ev.posterBg)}')` : ""
     }">
       ${ev.image ? "" : `<span class="m-card-mark" aria-hidden="true">${esc(mark || "")}</span>`}
       <span class="m-card-body">

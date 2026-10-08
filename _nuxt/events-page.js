@@ -407,7 +407,7 @@ function renderEventCardHtml(ev) {
   const teamChip = ev.registrationType === "solo" ? "SOLO" : ev.registrationType === "team" ? `TEAM ${ev.teamSize}` : `SOLO / TEAM`;
 
   return `
-    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor}; --visual-ratio: ${ev.posterRatio || "1 / 1"};">
+    <div class="event-card${isEventRegistered(ev.id) ? " is-registered" : isInCart(ev.id) ? " is-added" : ""}" data-event-id="${e(ev.id)}" style="--cat:${accentColor};">
 
       <button type="button" class="event-card-visual${ev.poster ? " has-poster" : ""}"${ev.posterBg ? ` style="--poster-bg: url('${e(ev.posterBg)}')"` : ""} aria-haspopup="dialog" tabindex="-1" data-action="view-details" data-event-id="${e(ev.id)}" aria-label="View details: ${e(ev.title)}">
         ${

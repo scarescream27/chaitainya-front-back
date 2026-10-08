@@ -464,34 +464,3 @@
     padding: 12px;
   }
 }
-
-/* ---- Cards sized to their poster (no border around the poster) ----------- */
-/* The visual takes the poster's own shape (square or 4:5, --visual-ratio set
-   per card from POSTERS in events-data.js; square for events without one),
-   and the card grows to fit instead of a fixed height. */
-.event-card {
-  height: auto;
-  grid-template-rows: auto auto;
-  contain-intrinsic-size: none auto 640px;
-}
-.event-card .event-card-visual {
-  height: auto;
-  aspect-ratio: var(--visual-ratio, 1 / 1);
-}
-.event-card .event-card-visual.has-poster .event-poster {
-  object-fit: cover;
-}
-.events-grid {
-  align-items: start;
-}
-@media (min-width: 992px) {
-  .event-card {
-    height: auto;
-    grid-template-rows: auto auto;
-    contain-intrinsic-size: none auto 640px;
-  }
-}
-/* Details: the whole poster at its own size, no height cap (no side border). */
-.event-dossier-visual.has-poster .event-poster {
-  max-height: none;
-}
