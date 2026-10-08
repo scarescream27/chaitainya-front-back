@@ -25,7 +25,7 @@ export const FEST_CONFIG = {
   upiPayeeName: "Chaitanya HPTU",
   // Optional: path to the official bank-issued QR image (e.g. "/images/upi-qr.png").
   // When null, only the UPI ID + a "Pay with UPI app" button are shown.
-  upiQrImage: null,
+  upiQrImage: "/images/upi-qr.png", // decoded: upi://pay?pa=bilibiryani@ptaxis (8 Oct 2026)
 
   // Razorpay Checkout. TEST MODE ONLY; see RAZORPAY_SETUP.md. keyId is the
   // public test key id ("rzp_test_..."), never the key secret. When enabled,

@@ -1135,7 +1135,7 @@ function renderCheckout(focusSel) {
         : payReady
           ? `<div class="event-upi-payment-box">
               <div class="event-upi-amount">PAY ₹${e(total)} TO COMPLETE REGISTRATION</div>
-              ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
+              ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code for ${e(FEST_CONFIG.upiId)}" width="200" height="200" /></div><p class="event-upi-help">Scan with any UPI app (GPay, PhonePe, Paytm) and enter <strong>₹${e(total)}</strong>.</p>` : ""}
               ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">PAY ₹${e(total)} WITH A UPI APP</a>` : ""}
               <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
               <p class="event-upi-help">After you pay, type the 12-digit Transaction ID from your payment receipt in your UPI app. The fest team checks it against the bank record, then confirms your registration.</p>

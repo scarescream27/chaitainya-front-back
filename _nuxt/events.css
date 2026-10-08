@@ -940,9 +940,11 @@ body:has(.events-page-root) .transition-component {
 }
 
 .event-qr-display {
-  width: 140px;
-  height: 140px;
-  background: var(--surface);
+  /* Big enough to scan from a laptop screen; always white (dark mode too). */
+  width: 200px;
+  height: 200px;
+  margin: 4px auto;
+  background: #ffffff;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   padding: 8px;
