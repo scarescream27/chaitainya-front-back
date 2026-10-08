@@ -543,7 +543,7 @@ export function registrationQrPayload(reg) {
 
 function assertUtr(utr) {
   if (!/^\d{12}$/.test(utr || "")) {
-    throw new Error("Enter the 12-digit UPI transaction reference (UTR) exactly as shown in your UPI app.");
+    throw new Error("Enter the 12-digit Transaction ID exactly as shown in your UPI app.");
   }
 }
 
@@ -1038,7 +1038,7 @@ export async function resubmitPaymentUtr(paymentIdValue, utr) {
     try {
       await updateDoc(doc(firebaseFirestore, "payments", paymentIdValue), patch);
     } catch (err) {
-      throw friendlyError(err, "Could not update the UTR. Please try again.");
+      throw friendlyError(err, "Could not update the Transaction ID. Please try again.");
     }
   } else {
     const p = demoGet("payments", paymentIdValue);
@@ -1548,7 +1548,7 @@ export async function approvePayment(payment) {
   });
 }
 
-export async function rejectPayment(payment, reason = "UTR not found / payment not received") {
+export async function rejectPayment(payment, reason = "Transaction ID not found / payment not received") {
   const admin = requireAdmin();
   return setPaymentStatus(payment, PAYMENT_STATUS.REJECTED, {
     rejectionReason: cleanText(reason, 200),

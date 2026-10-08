@@ -116,7 +116,7 @@ let a,
                   <li><strong>Account and identity:</strong> Your name, email address and profile photo from your Google account. Also the college or institute you type in.</li>
                   <li><strong>Event sign-ups and teams:</strong> The events and accommodation you sign up for, your team name, team code and the names of your team members.</li>
                   <li><strong>Contact details:</strong> The mobile or WhatsApp number you give us. We use it to send schedule updates and to plan with you.</li>
-<li><strong>Payment details:</strong> For paid events, the amount and the 12-digit UPI transaction number (UTR) you enter. The organising committee uses it to match your payment with the bank statement. We never ask for or keep your UPI PIN, bank account or card details.</li>
+<li><strong>Payment details:</strong> For paid events, the amount and the 12-digit UPI Transaction ID you enter. The organising committee uses it to match your payment with the bank statement. We never ask for or keep your UPI PIN, bank account or card details.</li>
                   <li><strong>Messages to us:</strong> Your name, team name, email, phone number and message, sent through our contact form (run by Web3Forms).</li>
                   <li><strong>How you use the site:</strong> Google Analytics for Firebase collects basic usage data. This includes pages viewed, device and browser type, and rough location. It helps us make the site better. See section 05 to learn how to turn it off.</li>
                 </ul>
@@ -132,7 +132,7 @@ let a,
                 <ul>
                   <li><strong>Your profile:</strong> name, email address, profile photo, college, year of study, mobile number, a participant ID made by the site, and the list of events you signed up for.</li>
                   <li><strong>Each sign-up or accommodation booking:</strong> the event, whether you joined alone or as a team, your team name, team code and team members, whether you have paid and how much is due, and the ID of your entry pass (QR code).</li>
-                  <li><strong>Payments:</strong> for paid events, the amount and the UPI transaction number (UTR) you enter, and whether the organising committee has checked it.</li>
+                  <li><strong>Payments:</strong> for paid events, the amount and the UPI Transaction ID you enter, and whether the organising committee has checked it.</li>
                 </ul>
                 <p>Team leaders type in the names of their team members. Please only share details your teammates have agreed to.</p>
               </article>

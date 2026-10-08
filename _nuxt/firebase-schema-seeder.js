@@ -39,7 +39,7 @@ export const DEFAULT_FAQS = [
   {
     id: "faq_payments",
     question: "How do I pay the registration fee via UPI?",
-    answer: "Pay the entry fee to the official fest UPI ID shown in the registration form, then enter the 12-digit UTR from your payment receipt. The fest team verifies every UTR against the bank statement; your pass shows the verification status.",
+    answer: "Pay the entry fee to the official fest UPI ID shown in the registration form, then enter the 12-digit Transaction ID from your payment receipt. The fest team verifies every Transaction ID against the bank statement; your pass shows the verification status.",
     display_order: 3,
     published: true,
   },

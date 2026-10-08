@@ -1137,9 +1137,9 @@ function renderCheckout(focusSel) {
               ${FEST_CONFIG.upiQrImage ? `<div class="event-qr-display"><img src="${e(FEST_CONFIG.upiQrImage)}" alt="UPI QR code" /></div>` : ""}
               ${upiLink ? `<a class="event-upi-app-btn" href="${e(upiLink)}">PAY ₹${e(total)} WITH A UPI APP</a>` : ""}
               <div class="event-upi-id-copy"><span>UPI ID: <strong>${e(FEST_CONFIG.upiId)}</strong></span><button type="button" class="event-upi-copy-btn" data-action="co-copy-upi">COPY</button></div>
-              <p class="event-upi-help">After you pay, type the 12-digit UTR number from your receipt. The fest team checks it against the bank record, then confirms your registration.</p>
+              <p class="event-upi-help">After you pay, type the 12-digit Transaction ID from your payment receipt in your UPI app. The fest team checks it against the bank record, then confirms your registration.</p>
               <div class="event-reg-group">
-                <label class="event-reg-label" for="co-utr">12-digit UTR *</label>
+                <label class="event-reg-label" for="co-utr">12-digit Transaction ID *</label>
                 <input type="text" class="event-reg-input event-reg-utr" id="co-utr" inputmode="numeric" maxlength="12" autocomplete="off" value="${e(checkout.utr || "")}" />
               </div>
             </div>`
@@ -1251,7 +1251,7 @@ async function onCheckoutSubmit(evt, card) {
       const total = getCartTotal(checkout.items);
       const viaRazorpay = useRazorpay(total) || Boolean(co.paidId);
       checkout.utr = card.querySelector("#co-utr")?.value.trim() || "";
-      if (total > 0 && !viaRazorpay && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit UTR from your UPI payment receipt.");
+      if (total > 0 && !viaRazorpay && !UTR_PATTERN.test(checkout.utr)) throw new Error("Enter the 12-digit Transaction ID from your UPI payment receipt.");
       const btn = card.querySelector("#co-submit");
       const cartLines = co.items.map((i) => ({ eventId: i.eventId, mode: i.mode }));
       if (viaRazorpay && !co.paidId) {

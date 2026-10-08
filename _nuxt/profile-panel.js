@@ -402,9 +402,9 @@ function renderRegistrations() {
           ${status === "rejected" && payment?.method === "razorpay" ? `<span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this payment.")} Contact the fest team with your payment ID.</span>` : ""}
           ${status === "rejected" && payment && payment.method !== "razorpay" ? `
             <form class="pp-utr" data-form="utr" data-payment="${e(payment.paymentId)}" novalidate>
-              <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this UTR. Enter the correct one below.")}</span>
-              <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit UTR" aria-label="Correct 12-digit UTR" />
-              <button type="submit" class="pp-action">Resubmit UTR</button>
+              <span class="pp-reg-note">${e(payment.rejectionReason || "We couldn't match this Transaction ID. Enter the correct one below.")}</span>
+              <input type="text" name="utr" inputmode="numeric" maxlength="12" placeholder="Correct 12-digit Transaction ID" aria-label="Correct 12-digit Transaction ID" />
+              <button type="submit" class="pp-action">Resubmit Transaction ID</button>
             </form>` : ""}
         </div>
         ${registrationQrHtml(r)}

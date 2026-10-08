@@ -614,7 +614,7 @@ function renderPayments({ utrCounts }) {
     const items = paymentItems(p);
     const expected = items.reduce((sum, it) => sum + eventFee(it.eventId), 0);
     const flags = [
-      utrCounts.get(p.transactionRef) > 1 ? `<span class="admin-flag">DUPLICATE UTR</span>` : "",
+      utrCounts.get(p.transactionRef) > 1 ? `<span class="admin-flag">DUPLICATE TRANSACTION ID</span>` : "",
       expected > 0 && Number(p.amount) !== expected ? `<span class="admin-flag">FEE IS ₹${e(expected)}</span>` : "",
     ].join("");
     return `
@@ -630,7 +630,7 @@ function renderPayments({ utrCounts }) {
           : state.rejecting === p.paymentId
             ? `<form class="adm-reject-form" data-adm-form="reject" data-id="${e(p.paymentId)}" novalidate>
                 <label class="pp-field"><span>Reason (the participant sees this)</span>
-                  <input type="text" name="reason" maxlength="200" value="UTR not found in bank statement" required aria-describedby="adm-reject-msg" />
+                  <input type="text" name="reason" maxlength="200" value="Transaction ID not found in bank statement" required aria-describedby="adm-reject-msg" />
                 </label>
                 <p class="pp-msg bad" id="adm-reject-msg" role="alert" aria-live="assertive"></p>
                 <div class="admin-action-btn-group">
@@ -645,14 +645,14 @@ function renderPayments({ utrCounts }) {
       </tr>`;
   });
   return `
-    ${sectionHead("03 // PAYMENTS", "Check UPI payments", `Find each UTR in the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before you approve it.`)}
+    ${sectionHead("03 // PAYMENTS", "Check UPI payments", `Find each transaction ID in the bank statement for ${e(FEST_CONFIG.upiId || "the fest UPI account")} before you approve it.`)}
     <div class="adm-stats">
       ${stat(`₹${verifiedTotal.toLocaleString("en-IN")}`, "Money received")}
       ${stat(pending.length, "Waiting", { alert: pending.length > 0 })}
       ${stat(state.payments.length, "All payments")}
     </div>
-    ${toolbar({ statuses: ["pending_verification", "verified", "rejected"], placeholder: "Search payer, UTR, event…" })}
-    ${table(["Events", "Payer", "Amount", "UTR", "Submitted", "Status", "Action"], rows, "No payments yet", state.payments.length)}`;
+    ${toolbar({ statuses: ["pending_verification", "verified", "rejected"], placeholder: "Search payer, transaction ID, event…" })}
+    ${table(["Events", "Payer", "Amount", "Transaction ID", "Submitted", "Status", "Action"], rows, "No payments yet", state.payments.length)}`;
 }
 
 // ---- Registrations ----------------------------------------------------------
@@ -1165,7 +1165,7 @@ function exportRows({ regRows, leaderContact }, filtered = false) {
   return {
     payments: {
       name: "Payments",
-      headers: ["Payment ID", "Events", "Teams", "Payer", "Email", "Phone", "Amount (INR)", "UTR", "Status", "Submitted", "Verified/Rejected By", "Reason"],
+      headers: ["Payment ID", "Events", "Teams", "Payer", "Email", "Phone", "Amount (INR)", "Transaction ID", "Status", "Submitted", "Verified/Rejected By", "Reason"],
       rows: pick(state.payments, keepPayment).map((p) => [
         p.paymentId,
         paymentItems(p).map((it) => it.eventTitle).join("; "),
