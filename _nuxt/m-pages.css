@@ -1254,14 +1254,25 @@
     gap: 16px;
   }
 
+  /* One line: chips never wrap; if the window is too narrow for all of
+     them, the chip row scrolls sideways (right edge fades) instead. */
   .events-categories {
     flex: 1 1 auto;
     min-width: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .events-cat-btn {
+    flex-shrink: 0;
   }
 
   .events-search-wrap {
-    flex: 0 0 300px;
-    width: 300px;
+    flex: 0 1 240px;
+    width: auto;
+    min-width: 200px;
   }
 
   .events-grid {
@@ -1639,4 +1650,13 @@
   margin-left: auto;
   margin-right: auto;
   max-width: 34ch;
+}
+
+/* 992–1279px: not every chip fits beside the search, so fade the right edge
+   of the (sideways-scrolling) chip row to show there's more. */
+@media (min-width: 992px) and (max-width: 1279px) {
+  .events-categories {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  }
 }

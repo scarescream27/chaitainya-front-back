@@ -274,7 +274,7 @@ export function renderEventsPageHtml() {
           <div class="events-search-wrap" role="search">
             <svg class="events-search-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
             <input type="search" class="events-search-input" id="events-search-box"
-              placeholder="Search events, places, student heads..." value="${e(activeSearchQuery)}" aria-label="Search events" />
+              placeholder="Search events…" value="${e(activeSearchQuery)}" aria-label="Search events" />
             <button type="button" class="events-search-clear ${activeSearchQuery ? "active" : ""}" id="events-search-clear-btn" aria-label="Clear search">✕</button>
           </div>
         </div>
