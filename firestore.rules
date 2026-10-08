@@ -113,6 +113,14 @@ service cloud.firestore {
       return exists(path) && get(path).data.entryFeeNum == 0;
     }
 
+    // Temporary pause (8 Oct 2026, site link leaked early): no new
+    // registrations, teams, payments or team joins until 9 Oct 2026 00:00 IST
+    // (= 8 Oct 18:30 UTC). Lifts by itself. Keep in sync with
+    // REGISTRATIONS_PAUSED_UNTIL in _nuxt/events-data.js.
+    function registrationsPaused() {
+      return request.time < timestamp.date(2026, 10, 8) + duration.time(18, 30, 0, 0);
+    }
+
     function isPassId(value) {
       // CH26-<event hash>-<7 digits>; legacy CH26-<event prefix>-<5 digits> still valid.
       return value is string && value.matches('^CH26-([A-Z0-9]{4}-[0-9]{7}|[A-Z0-9]{1,4}-[0-9]{5})$');
@@ -198,7 +206,7 @@ service cloud.firestore {
       allow list: if isAdmin();
 
       // Leader creates the team: roster of names, only their own account linked.
-      allow create: if isAuthenticated() &&
+      allow create: if isAuthenticated() && !registrationsPaused() &&
         teamId == 'team_' + data().eventId + '_' + request.auth.uid &&
         data().leaderUid == request.auth.uid &&
         data().leader_id == request.auth.uid &&
@@ -219,7 +227,7 @@ service cloud.firestore {
       // A teammate links their account: they may only append themself, and only
       // alongside their registration carrying this team's code (proves they know it).
       allow update: if isAdmin() || (
-        isAuthenticated() &&
+        isAuthenticated() && !registrationsPaused() &&
         !(request.auth.uid in resource.data.memberUids) &&
         getAfter(/databases/$(database)/documents/registrations/$('reg_' + resource.data.eventId + '_' + request.auth.uid)).data.team_code == resource.data.teamCode &&
         changedKeys().hasOnly(['memberUids', 'linkedMembers']) &&
@@ -271,7 +279,7 @@ service cloud.firestore {
       // "My registrations" query must filter on user_id == own uid.
       allow list: if isAuthenticated() && (isAdmin() || resource.data.user_id == request.auth.uid);
 
-      allow create: if isAuthenticated() &&
+      allow create: if isAuthenticated() && !registrationsPaused() &&
         regId == 'reg_' + data().event_id + '_' + request.auth.uid &&
         data().user_id == request.auth.uid &&
         data().participation_type in ['individual', 'team'] &&
@@ -320,7 +328,7 @@ service cloud.firestore {
       allow list: if isAdmin();
 
       // One payment per checkout: pay_{uid}_{timestamp}, covering `items`.
-      allow create: if isAuthenticated() &&
+      allow create: if isAuthenticated() && !registrationsPaused() &&
         paymentId.matches('^pay_' + request.auth.uid + '_[0-9]+$') &&
         data().items is list && data().items.size() >= 1 && data().items.size() <= 25 &&
         data().payerUid == request.auth.uid &&

@@ -19,7 +19,7 @@ import {
   isFirebaseConfigured,
   isAdminUser,
 } from "./firebase-config.js";
-import { getEventById, isRegistrationOpen, isPastDeadline, EVENTS_DATA, ACCOMMODATION } from "./events-data.js";
+import { getEventById, isRegistrationOpen, isRegistrationPaused, isPastDeadline, EVENTS_DATA, ACCOMMODATION } from "./events-data.js";
 import { getCartItems, setCartOwner } from "./cart.js";
 import { FEST_CONFIG, isPaymentConfigured, isRazorpayEnabled } from "./fest-config.js";
 
@@ -801,6 +801,7 @@ export async function checkoutCart(items, details = {}, teams = {}, utr = "", { 
  * Join a team using the leader's team code (links your account to the team).
  */
 export async function joinTeamWithCode(rawCode, ev = null, details = {}) {
+  if (isRegistrationPaused()) throw new Error("Registration is paused for now. Please try again later.");
   const user = requireUser();
   const code = String(rawCode || "").trim().toUpperCase();
   if (!/^[A-Z0-9]{2,6}-[A-Z0-9]{3,6}$/.test(code)) {
@@ -1136,6 +1137,7 @@ export function isRegisteredForAnyEvent() {
  */
 export function accommodationState() {
   if (isEventRegistered(ACCOMMODATION.id)) return { state: "booked", label: "BOOKED" };
+  if (isRegistrationPaused()) return { state: "soon", label: "BOOKING OPENS SOON" };
   if (!isRegistrationOpen(ACCOMMODATION) || isPastDeadline(ACCOMMODATION)) return { state: "closed", label: "BOOKING CLOSED" };
   if (!isPaymentConfigured() && !isRazorpayEnabled()) return { state: "soon", label: "BOOKING OPENS SOON" };
   if (currentUser && !isRegisteredForAnyEvent() && !getCartItems().some((i) => !i.event.isAccommodation)) {

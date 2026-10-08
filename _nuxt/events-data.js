@@ -21,6 +21,16 @@ export const FEST_REGISTRATION_OPEN = true;
 // Kill switch: set to true to shut down registration for EVERY event at once
 // (e.g. on the fest day). Overrides everything else; shows "REGISTRATION CLOSED".
 export const REGISTRATIONS_CLOSED = false;
+
+// Temporary pause: no registrations or bookings until this moment (IST); they
+// reopen by themselves afterwards, no redeploy needed. Shows "REGISTRATION
+// SOON". Set to null for no pause. Keep in sync with registrationsPaused()
+// in firestore.rules. (Paused 8 Oct 2026 after the site link leaked early.)
+export const REGISTRATIONS_PAUSED_UNTIL = "2026-10-09T00:00:00+05:30";
+
+export function isRegistrationPaused(now = Date.now()) {
+  return Boolean(REGISTRATIONS_PAUSED_UNTIL) && now < Date.parse(REGISTRATIONS_PAUSED_UNTIL);
+}
 export const REGISTRATION_DEADLINE = "2026-10-29T23:59:00+05:30";
 
 const TBN = "To be notified";
@@ -518,7 +528,7 @@ export function isPastDeadline(ev, now = Date.now()) {
 }
 
 export function isRegistrationOpen(ev) {
-  return Boolean(ev && ev.registrationOpen && !isPastDeadline(ev));
+  return Boolean(ev && ev.registrationOpen && !isPastDeadline(ev) && !isRegistrationPaused());
 }
 
 export function formatDeadline(ev) {
