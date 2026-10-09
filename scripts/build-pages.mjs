@@ -12,7 +12,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const out = join(root, "dist");
 
 // Public files only (everything else in the repo stays private).
-const PUBLIC = ["index.html", "_nuxt", "images", "models", "hdri", "textures", "fonts", "fav.png", "OpenGraph.jpg", "robots.txt", "sitemap.xml"];
+const PUBLIC = ["index.html", "_nuxt", "images", "models", "hdri", "textures", "fonts", "fav.png", "OpenGraph.jpg", "robots.txt", "sitemap.xml", "rulebooks"];
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out);

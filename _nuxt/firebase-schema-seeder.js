@@ -78,7 +78,7 @@ export async function applySchemaToFirestore(onProgress = () => {}) {
   const { initializeApp, getApps, getApp } = await import(
     "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"
   );
-  const { getFirestore, doc, setDoc } = await import(
+  const { getFirestore, doc, setDoc, deleteField } = await import(
     "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
   );
 
@@ -122,7 +122,9 @@ export async function applySchemaToFirestore(onProgress = () => {}) {
         tagline: ev.tagline,
         entryFee: ev.entryFee,
         entryFeeNum: ev.entryFeeNum || 0,
-        prizePool: ev.prizePool,
+        // Prizes are not published: the events collection is publicly
+        // readable, so a sync removes any amount stored by older versions.
+        prizePool: deleteField(),
         minTeam: ev.minTeam || 1,
         maxTeam: ev.maxTeam || 1,
         rules: ev.rules || [],

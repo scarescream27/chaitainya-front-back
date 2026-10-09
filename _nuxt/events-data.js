@@ -66,10 +66,8 @@ const POSTERS = new Set([
   "competitive-programming",
 ]);
 
-// Official rulebook PDFs (rulebooks/<event id>.pdf). Served from jsDelivr,
-// pinned to a git tag, so downloads don't use the site's hosting bandwidth.
-// After replacing a PDF: commit, push a new tag, and update RULEBOOK_TAG.
-const RULEBOOK_TAG = "cdn-v2";
+// Official rulebook PDFs (rulebooks/<event id>.pdf), served by the site
+// itself (Cloudflare Pages has no bandwidth cap). Replace a PDF and push.
 const RULEBOOKS = new Set([
   "codeforge-reforged", "capture-the-flag", "competitive-programming", "error-404",
   "prompt-engineering", "ui-ux-designathon", "cadcraft", "cube-conquest",
@@ -120,7 +118,6 @@ function event(e) {
     endsAt: null,
     entryFee: TBN,
     entryFeeNum: 0,
-    prizePool: TBN,
     venue: TBN,
     date: "Day TBA",
     time: TBN,
@@ -133,7 +130,7 @@ function event(e) {
     poster: POSTERS.has(e.id) ? `/images/events/${e.id}.webp?v=${POSTER_V}` : null,
     posterBg: POSTERS.has(e.id) ? `/images/events/${e.id}-bg.webp?v=${POSTER_V}` : null,
     rulebook: RULEBOOKS.has(e.id)
-      ? `https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@${RULEBOOK_TAG}/rulebooks/${e.id}.pdf`
+      ? `/rulebooks/${e.id}.pdf`
       : null,
     registrationType: type,
     minTeam,
@@ -148,7 +145,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "codeforge-reforged",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹7,000 · 2nd ₹4,500 · 3rd ₹3,500",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 2, maxTeam: 4, startsAt: "2026-10-30T15:00:00+05:30", endsAt: "2026-10-31T16:00:00+05:30",
     title: "CODEFORGE: REFORGED 2.0",
     tagline: "24-hour open-source hackathon: build something real from scratch",
@@ -188,7 +185,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-flag",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹15,000 · 2nd ₹10,000 · 3rd ₹5,000",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "both", maxTeam: 4, startsAt: "2026-11-01T08:00:00+05:30", endsAt: "2026-11-01T16:00:00+05:30",
     title: "CTF: CAPTURE THE FLAG",
     tagline: "Hacking puzzles: find the flags, climb the scoreboard",
@@ -213,7 +210,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "competitive-programming",
-    entryFeeNum: 49, entryFee: "₹49", prizePool: "Mementos for the top 3",
+    entryFeeNum: 49, entryFee: "₹49",
     registrationType: "solo", startsAt: "2026-10-31T10:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
     title: "COMPETITIVE PROGRAMMING",
     tagline: "Solve coding problems against the clock",
@@ -243,7 +240,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "error-404",
-    entryFeeNum: 20, entryFee: "₹20", prizePool: "1st Memento · 2nd Memento · 3rd Medal",
+    entryFeeNum: 20, entryFee: "₹20",
     registrationType: "solo", startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
     title: "ERROR 404",
     tagline: "Code not found. Find it. Fix it. Finish it.",
@@ -287,7 +284,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "prompt-engineering",
-    entryFeeNum: 49, entryFee: "₹49", prizePool: "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
+    entryFeeNum: 49, entryFee: "₹49",
     registrationType: "solo",
     title: "PROMPT ENGINEERING",
     tagline: "Write the prompt that gets AI to the right answer",
@@ -322,7 +319,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "ui-ux-designathon",
-    entryFeeNum: 49, entryFee: "₹49", prizePool: "1st Memento · 2nd Memento · 3rd Medal",
+    entryFeeNum: 49, entryFee: "₹49",
     registrationType: "both", maxTeam: 2, startsAt: "2026-11-01T14:00:00+05:30", endsAt: "2026-11-01T16:00:00+05:30",
     title: "UI/UX DESIGNATHON",
     tagline: "Redesign two app screens around a surprise theme",
@@ -354,7 +351,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "cadcraft",
-    entryFeeNum: 49, entryFee: "₹49", prizePool: "Mementos for the top 3",
+    entryFeeNum: 49, entryFee: "₹49",
     registrationType: "solo", startsAt: "2026-10-30T13:00:00+05:30", endsAt: "2026-10-30T16:00:00+05:30",
     title: "CADCRAFT",
     tagline: "CAD modelling: build it in 3D and get the design right",
@@ -383,7 +380,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cube-conquest",
-    entryFeeNum: 25, entryFee: "₹25", prizePool: "Medals for the top 3",
+    entryFeeNum: 25, entryFee: "₹25",
     registrationType: "solo", startsAt: "2026-10-31T09:00:00+05:30", endsAt: "2026-10-31T10:00:00+05:30",
     title: "CUBE CONQUEST",
     tagline: "Speedcubing: three rounds, one Mirror Cube final",
@@ -416,7 +413,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "innovation-fair",
-    entryFeeNum: 0, entryFee: "Free", prizePool: "1st ₹1,500 · 2nd ₹1,000 · 3rd ₹500",
+    entryFeeNum: 0, entryFee: "Free",
     registrationType: "both", maxTeam: 4,
     title: "INNOVATION FAIR",
     tagline: "Project show: bring what you built and explain it",
@@ -450,7 +447,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "pitch-sansad",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 1, maxTeam: 4, startsAt: "2026-11-01T10:00:00+05:30", endsAt: "2026-11-01T12:00:00+05:30",
     title: "AD IN HUSTLE",
     tagline: "Pitch contest: present your startup idea to the panel",
@@ -461,7 +458,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "marketmind",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 2, maxTeam: 4,
     title: "MARKETMIND: THE PRODUCT CASE CHALLENGE",
     tagline: "Solve a product problem and present your plan",
@@ -489,7 +486,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "model-lok-sabha",
-    entryFeeNum: 49, entryFee: "₹49", prizePool: "Best Delegate · High Commendation · Special Mention",
+    entryFeeNum: 49, entryFee: "₹49",
     registrationType: "both", maxTeam: 2, allDay: ["2026-10-30", "2026-10-31"],
     title: "MODEL LOK SABHA",
     tagline: "Mock Indian Parliament: play an MP, debate and make laws",
@@ -533,7 +530,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "esports-cs2",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 5, maxTeam: 7,
     title: "ESPORTS: COUNTER-STRIKE 2",
     tagline: "Team shooter, 5 vs 5, on campus",
@@ -553,7 +550,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-bgmi",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹3,000 · 2nd ₹2,000 · 3rd ₹1,500",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 4, maxTeam: 4, allDay: ["2026-10-30", "2026-10-31"],
     title: "ESPORTS: BGMI",
     tagline: "Four-player squads, two days, twelve matches",
@@ -594,7 +591,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "esports-free-fire",
-    entryFeeNum: 299, entryFee: "₹299", prizePool: "1st ₹4,000 · 2nd ₹2,500 · 3rd ₹1,500",
+    entryFeeNum: 299, entryFee: "₹299",
     registrationType: "team", minTeam: 4, maxTeam: 5, startsAt: "2026-11-01T11:00:00+05:30", endsAt: "2026-11-01T15:00:00+05:30",
     title: "ESPORTS: FREE FIRE",
     tagline: "Squad battle royale on Day 3",
@@ -638,7 +635,7 @@ export const EVENTS_DATA = [
   // --------------------------------------------------------------------------
   event({
     id: "nerd-wars",
-    entryFeeNum: 75, entryFee: "₹75", prizePool: "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
+    entryFeeNum: 75, entryFee: "₹75",
     registrationType: "team", minTeam: 3, maxTeam: 3, startsAt: "2026-10-31T11:00:00+05:30", endsAt: "2026-10-31T13:00:00+05:30",
     title: "NERD WARS",
     tagline: "The fest quiz: science, tech and AI in three rounds",
@@ -665,7 +662,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "treasure-hunt",
-    entryFeeNum: 199, entryFee: "₹199", prizePool: "1st ₹2,000 · 2nd ₹1,000 · 3rd ₹500",
+    entryFeeNum: 199, entryFee: "₹199",
     registrationType: "team", minTeam: 3, maxTeam: 4, startsAt: "2026-10-30T11:00:00+05:30", endsAt: "2026-10-30T14:00:00+05:30",
     title: "TREASURE HUNT",
     tagline: "Follow the clues across campus",
@@ -691,7 +688,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "capture-the-moment",
-    entryFeeNum: 20, entryFee: "₹20", prizePool: "Medals for the top 3",
+    entryFeeNum: 20, entryFee: "₹20",
     registrationType: "solo",
     title: "CAPTURE THE MOMENT",
     tagline: "Photography: tell the fest's story in one photo",
@@ -721,7 +718,7 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "cultural-walk",
-    entryFeeNum: 50, entryFee: "₹50", prizePool: "1st ₹2,000 · 2nd ₹1,500 · 3rd ₹1,000",
+    entryFeeNum: 50, entryFee: "₹50",
     registrationType: "solo",
     title: "UNLEASHED",
     tagline: "Style without boundaries: culture and cosplay on the ramp",
@@ -736,7 +733,6 @@ export const EVENTS_DATA = [
       "Prop weapons must be fake, light and safe. No real weapons, fire, sharp objects, liquids, powders or glass. Unsuitable props lose marks.",
       "Outfits, actions and messages must not mock any culture, religion, community or gender. Costumes and lyrics must be decent.",
       "Ties go to the higher Introduction & Message score. The judges' decisions are final.",
-      "1st, 2nd and 3rd prizes are given separately for Cultural Showcase and Cosplay.",
     ],
     rounds: [
       { name: "Round 1: Qualifying walk", time: "50 marks", description: "Ramp walk to your BGM, with poses, character actions and approved props. Judges pick the finalists from each category." },
@@ -754,14 +750,14 @@ export const EVENTS_DATA = [
   }),
   event({
     id: "dance-competition",
-    entryFeeNum: 0, entryFee: "Free", prizePool: "A winner in each category: Solo and Group",
+    entryFeeNum: 0, entryFee: "Free",
     registrationType: "both", maxTeam: 12,
     title: "RHYTHMIC RUMBLE",
     tagline: "Own the stage",
     category: "cultural",
-    overview: "Dance solo or in a group (2 or more), in any style, for 5–8 minutes. Solo and Group are judged separately, with a winner in each.",
+    overview: "Dance solo or in a group (2 or more), in any style, for 5–8 minutes. Solo and Group are judged separately.",
     rules: [
-      "Two separate categories: Solo (1 dancer) and Group (2 or more). One winner in each.",
+      "Two separate categories: Solo (1 dancer) and Group (2 or more).",
       "Any style: classical, folk, hip-hop, contemporary, freestyle, fusion and more.",
       "Perform for 5 to 8 minutes. Timing starts at the first beat or first move. Shorter or longer loses marks.",
       "Report 30 minutes before the event. Send your music (MP3 or link) to the coordinators in advance and keep a backup.",

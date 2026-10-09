@@ -25,7 +25,6 @@
       "scripts/**",
       "scratch/**",
       "dist/**",
-      "*.pdf",
       "*.sql",
       "*.md",
       "package.json",

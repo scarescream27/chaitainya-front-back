@@ -552,7 +552,6 @@ export function openEventDossier(eventId) {
       <div><dt>TEAM SIZE</dt><dd>${ev.registrationType === "solo" ? "1 (solo)" : `${e(ev.minTeam)}–${e(ev.maxTeam)} members`}</dd></div>
       <div><dt>REGISTER BY</dt><dd>${e(formatDeadline(ev))}</dd></div>
       <div><dt>FEE</dt><dd>${e(feeLabel(ev))}</dd></div>
-      <div><dt>PRIZES</dt><dd>${e(ev.prizePool)}</dd></div>
     </dl>`)}
   ${section("ORGANISED BY", `
     <p class="event-dossier-text"><a class="event-org-link" href="${e(org.href)}" data-action="org-link">${e(org.name)} →</a></p>
