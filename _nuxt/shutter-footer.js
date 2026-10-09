@@ -212,7 +212,7 @@ const eventCard = (ev) => {
       <div class="sgfm-body">
         <h3 class="sgfm-title">${esc(ev.title)}</h3>
         <p class="sgfm-tag">${esc(ev.tagline)}</p>
-        <p class="sgfm-meta">${esc(ev.date)} · ${esc(ev.venue === "To be notified" ? "Venue to be notified" : ev.venue)}</p>
+        <p class="sgfm-meta">${esc(ev.date)}${ev.venue && ev.venue !== "To be notified" ? ` · ${esc(ev.venue)}` : ""}</p>
         <a class="sgfm-more" href="/events/${encodeURIComponent(ev.id)}" data-sgfm-link>See details <span aria-hidden="true">→</span><span class="sr-only">: ${esc(ev.title)}</span></a>
       </div>
     </li>`;
@@ -235,7 +235,7 @@ const faqItems = () => {
         ? "Yes, right now every event is free to enter. Each event's page shows its fee, so check it before you sign up."
         : "Most events have a small entry fee, from ₹20 to ₹299. A few are free. For team events the fee is for the whole team, and the team leader pays it once. Each event's page shows its fee and prizes."],
     ["Where are the events held?",
-      `On the ${esc(FEST_CONFIG.university)} campus. Each event's page shows its venue. Some venues are not out yet.`],
+      `On the ${esc(FEST_CONFIG.university)} campus. Venues for each event will be announced closer to the fest.`],
     ["Can I join more than one event?",
       "Yes. You can sign up for many events, as long as their times don't clash."],
     ["Where can I find event times?",

@@ -535,7 +535,7 @@ export function openEventDossier(eventId) {
   <p class="event-dossier-tagline">${e(ev.tagline)}</p>
   <dl class="event-dossier-facts">
     <div><dt>DATE · TIME</dt><dd>${e(ev.date)} · ${e(ev.time)}</dd></div>
-    <div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>
+    ${ev.venue && ev.venue !== "To be notified" ? `<div><dt>VENUE</dt><dd>${e(ev.venue)}</dd></div>` : ""}
   </dl>
   <div class="event-dossier-cta">
     <div class="event-cta-row">${actionButtonHtml(ev)}${cartToggleHtml(ev)}</div>

@@ -156,7 +156,6 @@ export const EVENTS_DATA = [
     badge: "FLAGSHIP HACKATHON",
     date: "DAY 1 – 2",
     time: "30 Oct, 4:00 PM – 31 Oct, 4:00 PM (24 hrs) · opening at 3:00 PM",
-    venue: "Electrical Labs 307 & 308, 3rd floor",
     overview:
       "The main hackathon of Chaitanya 2k26. Teams get 24 hours to plan, design and build a working open-source project through the night. When time is up, they show it to the judges.",
     rules: [
@@ -196,7 +195,6 @@ export const EVENTS_DATA = [
     category: "tech",
     date: "DAY 3",
     time: "1 Nov, 8:00 AM – 4:00 PM (8 hrs)",
-    venue: "Online (official CTF platform)",
     overview:
       "An online, jeopardy-style Capture The Flag for teams of up to 4 (one captain). 30+ security puzzles in web exploitation, cryptography, binary exploitation, reverse engineering and misc. Solve a puzzle to find its hidden flag, then submit the flag for points on a live scoreboard.",
     rules: [
@@ -221,7 +219,6 @@ export const EVENTS_DATA = [
     category: "tech",
     date: "DAY 2",
     time: "31 Oct, 10:00 AM – 1:00 PM (3 hrs)",
-    venue: "2 computer labs (rooms to be announced)",
     overview:
       "Solve 6 coding problems (1000 points) in 3 hours, in C++, Python or Java. Your code must give the right answer and run fast. Solo entry, in a supervised lab.",
     rules: [
@@ -253,7 +250,6 @@ export const EVENTS_DATA = [
     badge: "C++ DEBUGGING",
     date: "DAY 3",
     time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs, all rounds)",
-    venue: "Rooms 207 & 208 (computer lab)",
     overview:
       "A C++ contest where you fix and finish code. It is also listed as Glitch Code. Each round shows code on a big screen. Find the bug, fix it or write the missing part, faster and better than everyone else. Solo entry, C++ only. There are three rounds, and each one is harder than the last.",
     rules: [
@@ -296,10 +292,9 @@ export const EVENTS_DATA = [
     tagline: "Write the prompt that gets AI to the right answer",
     category: "tech",
     time: "Rounds 1–4: 60 min · final: 30 min (date to be announced)",
-    venue: "Labs 1 & 2",
     overview: "Solve four AI challenges in 60 minutes with free AI tools; the top 5 play a 30-minute final. Judges score your prompts, the output and how efficiently you got there.",
     rules: [
-      "Solo event, open to registered students with a valid college ID. Report to Labs 1 & 2 30 minutes before the start.",
+      "Solo event, open to registered students with a valid college ID. Report to the venue 30 minutes before the start.",
       "Bring your own laptop. Internet is provided.",
       "Use only free, public AI tools (like the free versions of ChatGPT, Gemini or Claude). No paid or private tools unless everyone gets them.",
       "Each task allows at most 5 prompt attempts.",
@@ -333,7 +328,6 @@ export const EVENTS_DATA = [
     category: "tech",
     date: "DAY 3",
     time: "1 Nov, 2:00 PM – 4:00 PM (2 hrs)",
-    venue: "Room 108",
     overview: "A 2-hour design contest for one person or a pair. Everyone gets the same two app screens and a surprise theme, then redesigns both screens to fit it. No AI tools.",
     rules: [
       "Everyone gets the same 2-screen base wireframe: a Home / Event Discovery screen and an Event Details screen. A surprise theme is revealed at the start.",
@@ -366,7 +360,6 @@ export const EVENTS_DATA = [
     category: "innovation",
     date: "DAY 1",
     time: "30 Oct, 1:00 PM – 4:00 PM (3 hrs, 2 rounds)",
-    venue: "2 computer labs (rooms to be announced)",
     overview: "A solo CAD modelling contest in FreeCAD, in two rounds: build an original assembled model for a design challenge, then recreate a 3D-printed part as exactly as you can.",
     rules: [
       "Solo event. All work is done in FreeCAD on the lab computers.",
@@ -397,7 +390,6 @@ export const EVENTS_DATA = [
     badge: "SPEED CUBING",
     date: "DAY 2",
     time: "31 Oct, 9:00 AM – 10:00 AM (1 hr)",
-    venue: "Open Air Theatre (OAT)",
     overview:
       "Three rounds of speedcubing. Each round has two sub-rounds. Cubers move up round by round, and the Mirror Cube final picks the winners. The organisers give every puzzle, timer and scramble card.",
     rules: [
@@ -464,7 +456,6 @@ export const EVENTS_DATA = [
     category: "business",
     date: "DAY 3",
     time: "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",
-    venue: "Conference Hall & labs",
     overview: "Pitch your startup idea to the panel. Answer their questions and win their vote. Enter solo or as a team of up to 4.",
   }),
   event({
@@ -475,7 +466,6 @@ export const EVENTS_DATA = [
     tagline: "Solve a product problem and present your plan",
     category: "business",
     time: "2 hrs (date to be announced)",
-    venue: "Conference Hall",
     overview: "Teams of 2–4 get a real product or business case. Analyse it and hand in a written answer, then present your strategy and defend it to the judges. Both rounds count; nobody is knocked out.",
     rules: [
       "Two rounds and no elimination: every team plays both, and both are marked together at the end.",
@@ -506,7 +496,6 @@ export const EVENTS_DATA = [
     badge: "PARLIAMENTARY MUN",
     date: "DAY 1 – 2",
     time: "30 & 31 Oct (session times to be announced)",
-    venue: "Conference Hall",
     overview:
       "A mock Parliament (MUN) that follows the Lok Sabha (House of the People) format. Each delegate plays a current MP and follows Lok Sabha rules. Topic: The Public Examinations (Prevention of Unfair Means) Legislation, and the problem of paper leaks and cheating in national and state exams like NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register alone or as a pair (double delegation). The secretariat (organisers) decides which MP you play.",
     rules: [
@@ -655,7 +644,6 @@ export const EVENTS_DATA = [
     category: "cultural",
     date: "DAY 2",
     time: "31 Oct, 11:00 AM – 1:00 PM (2 hrs)",
-    venue: "Open Air Theatre (OAT)",
     overview: "The official Chaitanya 2k26 quiz for teams of exactly 3, in three rounds: science and maths, then computers and tech, then an AI finale.",
     rules: [
       "Open to registered students with a valid college ID. Report to the venue at least 30 minutes early.",
@@ -708,7 +696,6 @@ export const EVENTS_DATA = [
     category: "cultural",
     date: "DAY 1 – 3",
     time: "Rounds 1 & 2: 1 hr each · final photo by 1 Nov, 9:00 AM",
-    venue: "Ground floor",
     overview: "A photo contest across the fest: a Colour Hunt and a Theme Challenge (1 hour each), then a final theme photo with the story behind it, due by 1 Nov, 9:00 AM. Bring your own phone or camera.",
     rules: [
       "Bring your own smartphone, DSLR or digital camera.",
