@@ -52,20 +52,75 @@
       "format": "Team (2–4 members)",
       "teamSize": "2–4",
       "deadline": "2026-10-29T23:59:00+05:30",
-      "startsAt": "2026-10-30T18:00:00+05:30",
-      "endsAt": "2026-10-31T18:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Electrical Labs 307 & 308, 3rd floor",
+      "startsAt": "2026-10-30T15:00:00+05:30",
+      "endsAt": "2026-10-31T16:00:00+05:30",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹7,000 · 2nd ₹4,500 · 3rd ₹3,500",
+      "venue": "To be notified",
       "date": "DAY 1 – 2",
-      "time": "30 Oct, 6:00 PM – 31 Oct, 6:00 PM (24 hrs)",
+      "time": "30 Oct, 4:00 PM – 31 Oct, 4:00 PM (24 hrs) · opening at 3:00 PM",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Each team picks one Team Leader, who talks to the organisers for the team.",
+        "Use any language, framework, tool or platform. Open-source libraries are allowed; follow their licences and give credit.",
+        "AI coding tools are allowed, but your team must understand and be able to explain everything you submit.",
+        "Build the project during the hackathon. Projects finished before the event are not accepted.",
+        "Mentors give advice and feedback. They do not build your project for you.",
+        "Use Git and keep backups. The organisers are not responsible for work lost to device or network problems.",
+        "Submit by the code-freeze deadline: team details, problem statement, solution overview, key features, tech stack, Git repository link and a live demo link if you have one. Late entries may lose marks or be rejected.",
+        "Final round: a 3–5 minute presentation, a live demo, then questions. Judges may ask about design, scale, security and who built what.",
+        "No harassment, plagiarism, cheating or tampering with another team's work.",
+        "The organising committee's decisions are final."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Opening, briefing & mentor check",
+          "time": "30 Oct, 3:00 – 4:00 PM",
+          "description": "Opening, rules and problem statements, then a talk with mentors to check your idea."
+        },
+        {
+          "name": "Progress review 1",
+          "time": "30 Oct, 5:30 – 6:30 PM",
+          "description": "Show your idea, scope and plan."
+        },
+        {
+          "name": "Final progress review",
+          "time": "31 Oct, 11:00 AM – 12:00 PM",
+          "description": "Testing and demo readiness check."
+        },
+        {
+          "name": "Code freeze, demos & judging",
+          "time": "31 Oct, 4:00 PM onwards",
+          "description": "Final submission, then presentations, live demos and judging."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Technical implementation",
+          "weight": "25%"
+        },
+        {
+          "name": "Innovation & creativity",
+          "weight": "20%"
+        },
+        {
+          "name": "Working prototype",
+          "weight": "20%"
+        },
+        {
+          "name": "Problem relevance & understanding",
+          "weight": "15%"
+        },
+        {
+          "name": "UI/UX",
+          "weight": "10%"
+        },
+        {
+          "name": "Presentation & demo",
+          "weight": "10%"
+        }
+      ],
       "coordinators": [
         {
           "name": "Priyanshu",
@@ -76,29 +131,39 @@
       "title": "CODEFORGE: REFORGED 2.0",
       "tagline": "24-hour open-source hackathon: build something real from scratch",
       "category": "tech",
-      "overview": "The flagship 24-hour open-source hackathon of Chaitanya 2k26. Teams ideate, design and build a working open-source project overnight and present it to the judges at the end of the sprint.",
-      "registrationOpen": false
+      "overview": "The main hackathon of Chaitanya 2k26. Teams get 24 hours to plan, design and build a working open-source project through the night. When time is up, they show it to the judges.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/codeforge-reforged.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CODING & TECH",
       "categoryName": "CODING & TECH",
       "registrationType": "both",
       "minTeam": 1,
-      "maxTeam": 3,
-      "format": "Solo or team (up to 3)",
-      "teamSize": "1–3",
+      "maxTeam": 4,
+      "format": "Solo or team (up to 4)",
+      "teamSize": "1–4",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-11-01T08:00:00+05:30",
       "endsAt": "2026-11-01T16:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "3 computer labs (rooms to be announced)",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹15,000 · 2nd ₹10,000 · 3rd ₹5,000",
+      "venue": "To be notified",
       "date": "DAY 3",
       "time": "1 Nov, 8:00 AM – 4:00 PM (8 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Jeopardy-style CTF with 30+ challenges in Web, Cryptography, Binary Exploitation (Pwn), Reverse Engineering and Misc, from beginner to hard.",
+        "Flag format: HPTU{...}, for example HPTU{_some_l33t_string_l1k3_7hi5_}.",
+        "Points per challenge drop from 500 to 50 as more teams solve it.",
+        "Attack only the official challenges. Any other server or system is off-limits.",
+        "Do not share flags, solutions, hints or logins with other teams.",
+        "No automatic scanners, flag brute-forcing, or abusing bugs in the contest platform. Report platform bugs to the staff instead.",
+        "One team name per team, and each player plays for one team only. No account sharing.",
+        "You must be 13 or older, and players under 18 need a parent's or guardian's consent.",
+        "Announcements and clarifications are posted on the CTF Discord and the website.",
+        "Breaking the rules can mean a warning, or removal and a ban. The organisers' decisions are final."
       ],
       "rounds": [],
       "judgingCriteria": [],
@@ -114,10 +179,11 @@
       ],
       "id": "capture-the-flag",
       "title": "CTF: CAPTURE THE FLAG",
-      "tagline": "Cybersecurity challenges: find the flags, climb the scoreboard",
+      "tagline": "Hacking puzzles: find the flags, climb the scoreboard",
       "category": "tech",
-      "overview": "An 8-hour capture-the-flag contest with challenges across web security, cryptography, forensics and reverse engineering. Solve challenges to capture flags and score points.",
-      "registrationOpen": false
+      "overview": "An online, jeopardy-style Capture The Flag for teams of up to 4 (one captain). 30+ security puzzles in web exploitation, cryptography, binary exploitation, reverse engineering and misc. Solve a puzzle to find its hidden flag, then submit the flag for points on a live scoreboard.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/capture-the-flag.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CODING & TECH",
@@ -130,18 +196,40 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-10-31T10:00:00+05:30",
       "endsAt": "2026-10-31T13:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "2 computer labs (rooms to be announced)",
+      "entryFee": "₹49",
+      "entryFeeNum": 49,
+      "prizePool": "Mementos for the top 3",
+      "venue": "To be notified",
       "date": "DAY 2",
       "time": "31 Oct, 10:00 AM – 1:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Solo contest: one person per computer, 3 hours, 6 problems.",
+        "Languages: C++, Python and Java only. Check the language setting before you submit.",
+        "Submit on the official contest website. Hidden test cases check your code automatically.",
+        "Compilation error, wrong answer, runtime error, time limit or memory limit exceeded all score 0. You may resubmit, within the platform's limits.",
+        "Ranking is by total points. Ties are broken automatically by total submission time.",
+        "You may bring up to 2 handwritten A4 sheets (both sides) of syntax, STL, algorithms and formulas. No printed notes, books or photocopies.",
+        "No search engines (Google, Bing etc.), AI tools (ChatGPT, Claude, Gemini, Copilot etc.), Stack Overflow, online code or outside help.",
+        "No phones, smartwatches, tablets or USB drives at your computer. Lab computers are monitored for other apps and tab switching.",
+        "Plagiarism, code sharing, talking to others, having a banned device or tampering means you are removed at once and your score is cancelled.",
+        "Ask questions about a problem through the platform's clarification feature. Report computer or network faults to lab staff at once; extra time is not given automatically."
       ],
       "rounds": [],
-      "judgingCriteria": [],
+      "judgingCriteria": [
+        {
+          "name": "Problems 1–2 (easy)",
+          "weight": "100 pts each"
+        },
+        {
+          "name": "Problems 3–5 (medium)",
+          "weight": "175 pts each"
+        },
+        {
+          "name": "Problem 6 (hard)",
+          "weight": "275 pts"
+        }
+      ],
       "coordinators": [
         {
           "name": "Manas Kapoor",
@@ -150,10 +238,11 @@
       ],
       "id": "competitive-programming",
       "title": "COMPETITIVE PROGRAMMING",
-      "tagline": "Algorithms against the clock",
+      "tagline": "Solve coding problems against the clock",
       "category": "tech",
-      "overview": "A 3-hour algorithmic programming contest. Solve as many problems as you can, as efficiently as you can, before time runs out.",
-      "registrationOpen": false
+      "overview": "Solve 6 coding problems (1000 points) in 3 hours, in C++, Python or Java. Your code must give the right answer and run fast. Solo entry, in a supervised lab.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/competitive-programming.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "C++ DEBUGGING",
@@ -166,40 +255,40 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-11-01T10:00:00+05:30",
       "endsAt": "2026-11-01T12:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "Top 3 win · prizes to be announced",
-      "venue": "Rooms 207 & 208 (computer lab)",
+      "entryFee": "₹20",
+      "entryFeeNum": 20,
+      "prizePool": "1st Memento · 2nd Memento · 3rd Medal",
+      "venue": "To be notified",
       "date": "DAY 3",
       "time": "1 Nov, 10:00 AM – 12:00 PM (2 hrs, all rounds)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Individual event: one participant per entry, no teams.",
-        "Only C++ may be used in every round.",
-        "Mobile phones are strictly not allowed during the event.",
+        "Solo event: one person per entry, no teams.",
+        "Use only C++ in every round.",
+        "No mobile phones at all during the event.",
         "No internet, AI tools or outside help of any kind.",
         "Do not talk to or copy from other participants.",
         "Time limits are strict. Once time is up, no answers are accepted.",
-        "Code and questions shown on screen are confidential. Do not note them down or share them.",
-        "The decision of the judges and coordinators is final and binding.",
-        "Any malpractice leads to immediate disqualification.",
-        "Be on time and follow the coordinators' instructions at all times."
+        "Code and questions on screen are secret. Do not write them down or share them.",
+        "The judges and coordinators have the final say.",
+        "Anyone caught cheating or breaking the rules is removed at once.",
+        "Be on time and always follow the coordinators' instructions."
       ],
       "rounds": [
         {
           "name": "Round 1: Bug Hunt (easy)",
           "time": "1 min",
-          "description": "A C++ program with multiple errors is shown on screen. Find as many errors as possible and submit them through the Google Form shared at the venue. Top ~50% advance; ties at the cut-off are broken with a harder 30-second code."
+          "description": "A C++ program with many errors is shown on screen. Find as many errors as you can. Send them through the Google Form given at the venue. About the top half (~50%) move on. A tie at the cut-off is broken with a harder 30-second code."
         },
         {
           "name": "Round 2: Fix & Run (medium)",
           "time": "2 min",
-          "description": "Find the error in a new program, correct it and show the correct output. Faster correct answers rank higher. Top ~50% of the remaining advance."
+          "description": "Find the error in a new program, fix it and show the right output. Faster right answers rank higher. About the top half (~50%) of those left move on."
         },
         {
           "name": "Round 3: Complete the Code (hard)",
           "time": "3 min",
-          "description": "Complete an unfinished C++ pattern program (the code itself is the hint) and show the output. The top 3 are declared winners."
+          "description": "Finish an incomplete C++ pattern program and show the output. The code itself is your hint. The top 3 win."
         }
       ],
       "judgingCriteria": [],
@@ -221,8 +310,9 @@
       "title": "ERROR 404",
       "tagline": "Code not found. Find it. Fix it. Finish it.",
       "category": "tech",
-      "overview": "A C++ debugging and code-completion contest (also listed as Glitch Code). Code is shown on a large screen: spot the bug, fix the logic or finish the missing part, faster and more accurately than everyone else. Individual entry, C++ only, three rounds of rising difficulty.",
-      "registrationOpen": false
+      "overview": "A C++ contest where you fix and finish code. It is also listed as Glitch Code. Each round shows code on your desktop screen. Find the bug, fix it or write the missing part, faster and better than everyone else. Solo entry, C++ only. There are three rounds, and each one is harder than the last.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/error-404.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CODING & TECH",
@@ -235,18 +325,63 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹49",
+      "entryFeeNum": 49,
+      "prizePool": "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
       "venue": "To be notified",
       "date": "Day TBA",
-      "time": "3 hrs (date to be announced)",
+      "time": "Rounds 1–4: 60 min · final: 30 min (date to be announced)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Solo event, open to registered students with a valid college ID. Report to the venue 30 minutes before the start.",
+        "Bring your own laptop. Internet is provided.",
+        "Use only free, public AI tools (like the free versions of ChatGPT, Gemini or Claude). No paid or private tools unless everyone gets them.",
+        "Each task allows at most 5 prompt attempts.",
+        "Do all the work during the event. No pre-made solutions.",
+        "After every round, submit your AI Tool Stack (the main tools you used) and your prompt log (screenshots or chat exports). If you don't list your tools, you can be disqualified.",
+        "No phones, no unrelated websites, and no sharing prompts with others.",
+        "No copyrighted, offensive or unethical content.",
+        "Coordinators may announce a surprise 'Twist card' rule in any round.",
+        "Ties are broken by fewer prompt attempts, then less time, then a surprise question. Judges' decisions are final."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Rounds 1–4",
+          "time": "60 min in all",
+          "description": "Data Dash, Prompt Fix, AI Game and AI Image Generation. The top 5 go to the final."
+        },
+        {
+          "name": "Final: AI Story Teller",
+          "time": "30 min",
+          "description": "Tell a story with AI-made text, visuals or audio."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Data Dash",
+          "weight": "15"
+        },
+        {
+          "name": "Prompt Fix",
+          "weight": "10"
+        },
+        {
+          "name": "AI Game",
+          "weight": "20"
+        },
+        {
+          "name": "AI Image Generation",
+          "weight": "20"
+        },
+        {
+          "name": "Final: AI Story Teller",
+          "weight": "35"
+        },
+        {
+          "name": "Bonus (creative prompts, fewer tries, speed)",
+          "weight": "up to 5"
+        }
+      ],
       "coordinators": [
         {
           "name": "Karan",
@@ -255,10 +390,11 @@
       ],
       "id": "prompt-engineering",
       "title": "PROMPT ENGINEERING",
-      "tagline": "Get the best out of AI with the right prompt",
+      "tagline": "Write the prompt that gets AI to the right answer",
       "category": "tech",
-      "overview": "A 3-hour challenge where participants craft prompts to get AI tools to solve the given tasks as accurately as possible.",
-      "registrationOpen": false
+      "overview": "Solve four AI challenges in 60 minutes with free AI tools; the top 5 play a 30-minute final. Judges score your prompts, the output and how efficiently you got there.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/prompt-engineering.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CODING & TECH",
@@ -270,26 +406,52 @@
       "teamSize": "1–2",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-11-01T14:00:00+05:30",
-      "endsAt": "2026-11-01T17:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Room 108",
+      "endsAt": "2026-11-01T16:00:00+05:30",
+      "entryFee": "₹49",
+      "entryFeeNum": 49,
+      "prizePool": "1st Memento · 2nd Memento · 3rd Medal",
+      "venue": "To be notified",
       "date": "DAY 3",
-      "time": "1 Nov, 2:00 PM – 5:00 PM (3 hrs)",
+      "time": "1 Nov, 2:00 PM – 4:00 PM (2 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Everyone gets the same 2-screen base wireframe: a Home / Event Discovery screen and an Event Details screen. A surprise theme is revealed at the start.",
+        "Redesign both screens for the theme. Change styles, fonts, colours, images, spacing and layout freely, but each screen's purpose and information must stay clear and usable.",
+        "Both screens must look like one product with the same design style.",
+        "Tools: Figma (recommended), Adobe XD, Photoshop, Illustrator, GIMP or similar. Install and set them up on your laptop before the event.",
+        "No AI tools of any kind (design generators, screen generators, AI images). Using AI means removal at once.",
+        "Do all the main design work during the 2 hours. Open-source fonts and basic icons are fine. Ready-made UI kits, templates or pre-designed screens are not.",
+        "Submit exactly ONE PNG or JPG with both screens on the official portal, under your Team ID, before the 2 hours end. Submitting late without a valid reason means disqualification.",
+        "No help from other teams or outsiders, and no copying. Designs must be suitable for a campus audience.",
+        "Judging is anonymous by Team ID. Ties go to the higher Creativity score, then Theme score, then the judges' decision."
       ],
       "rounds": [],
-      "judgingCriteria": [],
+      "judgingCriteria": [
+        {
+          "name": "Creativity & originality",
+          "weight": "30"
+        },
+        {
+          "name": "Theme adherence",
+          "weight": "25"
+        },
+        {
+          "name": "Visual design & execution",
+          "weight": "25"
+        },
+        {
+          "name": "UI/UX & usability",
+          "weight": "20"
+        }
+      ],
       "coordinators": [],
       "id": "ui-ux-designathon",
       "title": "UI/UX DESIGNATHON",
-      "tagline": "Design the interface, own the experience",
+      "tagline": "Redesign two app screens around a surprise theme",
       "category": "tech",
-      "overview": "A design sprint to create user interfaces and experiences for a given problem statement. Details will be announced soon.",
-      "registrationOpen": false
+      "overview": "A 2-hour design contest for one person or a pair. Everyone gets the same two app screens and a surprise theme, then redesigns both screens to fit it. No AI tools.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/ui-ux-designathon.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "DESIGN & INNOVATION",
@@ -301,19 +463,49 @@
       "teamSize": "1",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-10-30T13:00:00+05:30",
-      "endsAt": "2026-10-30T17:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "2 computer labs (rooms to be announced)",
+      "endsAt": "2026-10-30T16:00:00+05:30",
+      "entryFee": "₹49",
+      "entryFeeNum": 49,
+      "prizePool": "Mementos for the top 3",
+      "venue": "To be notified",
       "date": "DAY 1",
-      "time": "30 Oct, 1:00 PM – 5:00 PM (4 hrs)",
+      "time": "30 Oct, 1:00 PM – 4:00 PM (3 hrs, 2 rounds)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Solo event. All work is done in FreeCAD on the lab computers.",
+        "Work on your own. Do not talk to other participants.",
+        "No downloaded or ready-made models, online references or outside help. Breaking this means removal.",
+        "In Round 1, all parts must be modelled, assembled and properly constrained.",
+        "In Round 2, you may handle and measure the 3D-printed model you are given.",
+        "Follow the judges' instructions. The judges' decision is final."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Round 1: Creative CAD Modelling",
+          "time": "1 hr 30 min",
+          "description": "Get a design challenge and build an original, assembled CAD model. Marked on creativity (15), modelling quality (15), assembly & constraints (10) and accuracy (10)."
+        },
+        {
+          "name": "Break",
+          "time": "15 min",
+          "description": "Short break between rounds."
+        },
+        {
+          "name": "Round 2: Reverse Engineering",
+          "time": "1 hr 15 min",
+          "description": "Recreate a 3D-printed model in FreeCAD. Marked on dimensions (25), shape & geometry (10), assembly (10) and constraints & organisation (5)."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Round 1",
+          "weight": "50"
+        },
+        {
+          "name": "Round 2",
+          "weight": "50"
+        }
+      ],
       "coordinators": [
         {
           "name": "Mahek",
@@ -326,10 +518,11 @@
       ],
       "id": "cadcraft",
       "title": "CADCRAFT",
-      "tagline": "CAD modelling: model it, engineer it, nail the design",
+      "tagline": "CAD modelling: build it in 3D and get the design right",
       "category": "innovation",
-      "overview": "A 4-hour CAD modelling competition: turn the given problem into a precise, well-engineered 3D design.",
-      "registrationOpen": false
+      "overview": "A solo CAD modelling contest in FreeCAD, in two rounds: build an original assembled model for a design challenge, then recreate a 3D-printed part as exactly as you can.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/cadcraft.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "SPEED CUBING",
@@ -342,41 +535,42 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-10-31T09:00:00+05:30",
       "endsAt": "2026-10-31T10:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Open Air Theatre (OAT)",
+      "entryFee": "₹25",
+      "entryFeeNum": 25,
+      "prizePool": "Medals for the top 3",
+      "venue": "To be notified",
       "date": "DAY 2",
       "time": "31 Oct, 9:00 AM – 10:00 AM (1 hr)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Each cuber gets 1 attempt per sub-round.",
-        "15 seconds of inspection before every solve: you may hold and turn the puzzle in your hands, but make no moves.",
-        "Scrambles are made by the organisers and are identical for all cubers in the same group.",
-        "The timer starts when you lift both hands off the cube/timer pad and stops when you place both hands back.",
-        "The puzzle must be fully solved (or fully in the required pattern) when the timer stops; any visible error is a DNF.",
-        "Ranking in each sub-round is by best single time.",
-        "Penalties: inspection over 15 s = +2 s; over 17 s = DNF; turning the cube during inspection = DNF.",
-        "Cheating, using an unauthorised puzzle or disrupting others leads to disqualification.",
-        "Organisers provide all competition puzzles; bring your own cube only if the judges approve it in advance.",
-        "No talking to or coaching a cuber while they are competing. Spectators stay behind the marked line.",
-        "The judges' decision is final."
+        "Open to students with a valid college ID, including permitted guest colleges. Report at least 30 minutes before your slot.",
+        "Each cuber gets 1 try per sub-round.",
+        "You get 15 seconds to look at the puzzle (inspection) before every solve. You may hold it and turn it around in your hands, but make no moves.",
+        "The organisers mix up (scramble) the puzzles. Everyone in the same group gets the same scramble.",
+        "The timer starts when you lift both hands off the cube/timer pad. It stops when you put both hands back.",
+        "When the timer stops, the puzzle must be fully solved (or fully in the asked pattern). Any visible mistake is a DNF (did not finish).",
+        "In each sub-round, you are ranked by your best single time.",
+        "Penalties: inspection over 15 s = +2 s; over 17 s = DNF; making a move during inspection = DNF.",
+        "Cheating, using a puzzle that is not allowed, or disturbing others gets you removed.",
+        "The organisers give all the puzzles, timers and scramble cards. Bring your own cube only if it passes the judge's check beforehand. Practice puzzles are kept at a set spot before the event.",
+        "Do not talk to or coach a cuber while they are solving. Viewers must stay behind the marked line.",
+        "The judges have the final say."
       ],
       "rounds": [
         {
           "name": "Round 1",
           "time": "2x2 cube · Pyramid",
-          "description": "Opening round. Cubers who beat the time cutoff move to Round 2."
+          "description": "First round. Cubers who beat the cut-off time move to Round 2."
         },
         {
           "name": "Round 2",
           "time": "3x3 cube · Pattern on 3x3",
-          "description": "Solve the Rubik's Cube, then create the announced pattern (e.g. a checkerboard) from a solved cube. Time cutoff decides who advances."
+          "description": "Solve the Rubik's Cube, then make the announced pattern (like a checkerboard) on the 3x3. The top cubers move on to the final."
         },
         {
           "name": "Round 3 (Final)",
           "time": "Mirror Cube",
-          "description": "Solved by shape, not colour. Finalists attempt the same scramble; the fastest valid time wins."
+          "description": "This cube is solved by shape, not colour. All finalists get the same scramble. The fastest correct time wins."
         }
       ],
       "judgingCriteria": [],
@@ -394,32 +588,70 @@
       "title": "CUBE CONQUEST",
       "tagline": "Speedcubing: three rounds, one Mirror Cube final",
       "category": "innovation",
-      "overview": "A three-round speedcubing competition. Each round has two sub-rounds, and cubers advance round by round until the Mirror Cube final decides the winners. The organisers provide all competition puzzles, timers and scramble cards.",
-      "registrationOpen": false
+      "overview": "Three rounds of speedcubing: Rounds 1 and 2 have two sub-rounds each, and the final is the Mirror Cube. Cubers move up round by round. The organisers give every puzzle, timer and scramble card.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/cube-conquest.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "DESIGN & INNOVATION",
       "categoryName": "DESIGN & INNOVATION",
-      "registrationType": "team",
+      "registrationType": "both",
       "minTeam": 1,
       "maxTeam": 4,
-      "format": "Team (1–4 members)",
+      "format": "Solo or team (up to 4)",
       "teamSize": "1–4",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
+      "entryFee": "Free",
       "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "prizePool": "1st ₹1,500 · 2nd ₹1,000 · 3rd ₹500",
       "venue": "To be notified",
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Enter solo or as a team of up to 4.",
+        "Your project must be your own original work.",
+        "Bring and manage everything you need: materials, equipment, posters and slides (PowerPoint, Canva or any tool you like).",
+        "Report on time, and stay at your stand for the whole judging period.",
+        "Projects must be completely safe to demonstrate and for visitors to touch.",
+        "Keep your area clean and behave professionally.",
+        "No copying, no unfair outside help during judging, no false claims about your results or who did the work, and no touching or interfering with other teams' projects.",
+        "Judges may ask you questions about your project.",
+        "Breaking the fair-play rules can mean removal. The judges' and organising committee's decisions are final."
       ],
       "rounds": [],
-      "judgingCriteria": [],
+      "judgingCriteria": [
+        {
+          "name": "Innovation & creativity",
+          "weight": "20%"
+        },
+        {
+          "name": "Scientific concept",
+          "weight": "20%"
+        },
+        {
+          "name": "Relevance & significance",
+          "weight": "15%"
+        },
+        {
+          "name": "Method & technical approach",
+          "weight": "15%"
+        },
+        {
+          "name": "Practical use",
+          "weight": "15%"
+        },
+        {
+          "name": "Presentation & explanation",
+          "weight": "10%"
+        },
+        {
+          "name": "Teamwork",
+          "weight": "5%"
+        }
+      ],
       "coordinators": [
         {
           "name": "Ankush",
@@ -432,10 +664,11 @@
       ],
       "id": "innovation-fair",
       "title": "INNOVATION FAIR",
-      "tagline": "Project exhibition: showcase your projects and prototypes",
+      "tagline": "Project show: bring what you built and explain it",
       "category": "innovation",
-      "overview": "A project exhibition for student projects, prototypes and ideas. Display your work and present it to visitors and judges.",
-      "registrationOpen": false
+      "overview": "A show of student projects, working models and ideas. Set up your work and explain it to visitors and judges. Come solo or in a team of up to 4.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/innovation-fair.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "BUSINESS & DEBATE",
@@ -448,56 +681,91 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-11-01T10:00:00+05:30",
       "endsAt": "2026-11-01T12:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Conference Hall & labs",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
+      "venue": "To be notified",
       "date": "DAY 3",
       "time": "1 Nov, 10:00 AM – 12:00 PM (2 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Full rules and who can take part will be shared soon."
       ],
       "rounds": [],
       "judgingCriteria": [],
       "coordinators": [],
       "id": "pitch-sansad",
-      "title": "PITCH SANSAD",
-      "tagline": "Pitch competition: present your startup idea to the house",
+      "title": "AD IN HUSTLE",
+      "tagline": "Pitch contest: present your startup idea to the panel",
       "category": "business",
-      "overview": "A startup pitch competition. Present your idea, defend it under questioning and convince the panel.",
-      "registrationOpen": false
+      "overview": "Pitch your startup idea to the panel. Answer their questions and win their vote. Enter solo or as a team of up to 4.",
+      "rulebook": null,
+      "registrationOpen": true
     },
     {
       "badge": "BUSINESS & DEBATE",
       "categoryName": "BUSINESS & DEBATE",
       "registrationType": "team",
-      "minTeam": 1,
-      "maxTeam": 3,
-      "format": "Team (1–3 members)",
-      "teamSize": "1–3",
+      "minTeam": 2,
+      "maxTeam": 4,
+      "format": "Team (2–4 members)",
+      "teamSize": "2–4",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Conference Hall",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
+      "venue": "To be notified",
       "date": "Day TBA",
       "time": "2 hrs (date to be announced)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Two rounds and no elimination: every team plays both, and both are marked together at the end.",
+        "Report to the venue at least 15 minutes before the start.",
+        "No outside help, no working with other teams, and no copying. Any malpractice means removal at once.",
+        "Time limits are strict in both rounds.",
+        "Ties go to the higher score in Problem Understanding, then Solution, then Q&A, then Presentation. If still tied, the judges set an extra challenge.",
+        "The judges' and organising committee's decisions are final."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Round I: Case analysis",
+          "time": "30–45 min",
+          "description": "Get a real product, market or business case. Study it and hand in a written answer with your analysis and plan."
+        },
+        {
+          "name": "Round II: Presentation & Q&A",
+          "time": "5–7 min + 3–5 min Q&A",
+          "description": "Present the problem, your strategy, why it works, its risks and impact. Then answer the judges' questions."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Problem understanding & analysis",
+          "weight": "30%"
+        },
+        {
+          "name": "Solution / strategy",
+          "weight": "30%"
+        },
+        {
+          "name": "Presentation & communication",
+          "weight": "20%"
+        },
+        {
+          "name": "Q&A / defence",
+          "weight": "20%"
+        }
+      ],
       "coordinators": [],
       "id": "marketmind",
       "title": "MARKETMIND: THE PRODUCT CASE CHALLENGE",
-      "tagline": "Product management & case studies: crack the case, present the strategy",
+      "tagline": "Solve a product problem and present your plan",
       "category": "business",
-      "overview": "A 2-hour product management and business case challenge. Analyse the case, build a strategy and present your solution.",
-      "registrationOpen": false
+      "overview": "Teams of 2–4 get a real product or business case. Analyse it and hand in a written answer, then present your strategy and defend it to the judges. Both rounds count; nobody is knocked out.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/marketmind.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "PARLIAMENTARY MUN",
@@ -508,37 +776,38 @@
       "format": "Solo or team (up to 2)",
       "teamSize": "1–2",
       "deadline": "2026-10-29T23:59:00+05:30",
-      "startsAt": "2026-10-31T14:00:00+05:30",
-      "endsAt": "2026-10-31T17:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "Best Delegate · High Commendation · Special Mention · certificates for all delegates",
-      "venue": "Open Air Theatre (OAT)",
-      "date": "DAY 2",
-      "time": "31 Oct, 2:00 PM – 5:00 PM (3 hrs)",
+      "startsAt": null,
+      "endsAt": null,
+      "entryFee": "₹49",
+      "entryFeeNum": 49,
+      "prizePool": "Best Delegate · High Commendation · Special Mention",
+      "venue": "To be notified",
+      "date": "DAY 1 – 2",
+      "time": "30 & 31 Oct (session times to be announced)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Address the Chair as \"Hon'ble Speaker\" or \"Mr./Madam Speaker\" and other members as \"Hon'ble Member\" or \"Hon'ble Minister\". All speeches go through the Chair.",
-        "Stand while speaking; stay seated while the Chair or another member speaks, unless raising a point.",
-        "Unparliamentary language is prohibited: personal attacks, abusive, communal, casteist, sexist or derogatory remarks, or disrespect to any religion, community, region or language.",
-        "Dress code: formal Indian or Western attire (Indian formals encouraged). Keep your portfolio placard visible; no party symbols, slogans or campaign material.",
-        "Standard speaking time is 60 seconds; repeated overruns may be penalised.",
-        "Points of Order, Information, Personal Privilege and Parliamentary Inquiry, and procedural motions, follow the rulebook. Procedural motions pass by simple majority.",
-        "Bills and resolutions must be typed, original and approved by the Secretariat before being introduced. Amendments need a proposer and a seconder.",
-        "Communication in the House is by chits through the Marshals; lobbying only during breaks or when the House is suspended.",
-        "Prohibited: plagiarism, fabricated facts or documents, unapproved pre-written bills, pre-formed unofficial blocs, and impersonating another delegate.",
-        "In situations not covered by the rulebook, the Chair's discretion, guided by Lok Sabha practice, prevails."
+        "Call the Chair \"Hon'ble Speaker\" or \"Mr./Madam Speaker\". Call other members \"Hon'ble Member\" or \"Hon'ble Minister\". Speak only through the Chair.",
+        "Stand when you speak. Stay seated while the Chair or another member speaks, unless you are raising a point.",
+        "No rude language. That means no personal attacks and no abusive, communal, casteist, sexist or insulting remarks. Do not disrespect any religion, community, region or language. Such remarks are struck from the record and may be penalised.",
+        "Dress code: formal Indian or Western clothes (kurta, saree, bandhgala welcome). No party symbols or campaign material.",
+        "Answer roll call with \"Present\" or \"Present and Voting\". If you say \"Present and Voting\", you cannot abstain on substantive votes.",
+        "Each speech gets 60 seconds. Going over time gets a warning or a penalty. You cannot give away unused time unless the Chair allows it.",
+        "Points of Order, Information, Personal Privilege and Parliamentary Inquiry follow the rulebook. A motion to extend or close debate passes if more than half vote for it. Suspending or adjourning the House is the Chair's decision. An Adjournment Motion needs written notice and the support of 10 members.",
+        "Bills and resolutions must be typed, your own work, and approved by the Secretariat before you bring them in: at most 1 per delegate (Treasury and Opposition benches table at most 2 each). A change (amendment) must be written, name the clause and the exact change, have a proposer and a seconder, and be handed in before that clause is voted on. The Chair may reject off-topic or contradictory changes.",
+        "In the House, pass notes (chits) only through the Marshals and volunteers. Personal or off-topic chits are taken by the Chair and penalised. Gather support (lobbying) only during breaks or when the House is paused.",
+        "Not allowed: copying others' work, fake facts or documents, pre-written bills that were not approved, unofficial groups formed in advance, and pretending to be another delegate.",
+        "If the rulebook does not cover something, the Chair decides, following Lok Sabha practice."
       ],
       "rounds": [
         {
           "name": "Order of business",
           "time": "Each sitting",
-          "description": "Roll call & quorum → agenda & General Speakers' List → open debate → calling attention motions & special mentions → bills & resolutions → adjournment."
+          "description": "Roll call & quorum check → agenda & General Speakers' List → open debate → calling attention motions & special mentions → bills & resolutions → end of sitting (adjournment)."
         },
         {
-          "name": "Legislative procedure",
+          "name": "How a bill is passed",
           "time": "Bills",
-          "description": "First reading (introduction, no debate) → second reading (debate and clause-by-clause amendments) → third reading (final debate and vote)."
+          "description": "First reading (bill is introduced, no debate) → second reading (debate and changes, clause by clause) → third reading (final debate and vote)."
         }
       ],
       "judgingCriteria": [
@@ -547,7 +816,7 @@
           "weight": "20"
         },
         {
-          "name": "Oratory & Delivery",
+          "name": "Speaking & Delivery",
           "weight": "20"
         },
         {
@@ -555,7 +824,7 @@
           "weight": "15"
         },
         {
-          "name": "Diplomacy & Decorum",
+          "name": "Diplomacy & Good Conduct",
           "weight": "15"
         },
         {
@@ -582,32 +851,44 @@
         }
       ],
       "id": "model-lok-sabha",
+      "allDay": [
+        "2026-10-30",
+        "2026-10-31"
+      ],
       "title": "MODEL LOK SABHA",
-      "tagline": "Indian Parliamentary MUN: debate, legislate and represent",
+      "tagline": "Mock Indian Parliament: play an MP, debate and make laws",
       "category": "business",
-      "overview": "Lok Sabha (House of the People) in an Indian Parliamentary MUN format. Delegates represent sitting MPs and follow Lok Sabha procedure. Agenda: The Public Examinations (Prevention of Unfair Means) Legislation: the crisis of paper leaks and cheating in national and state exams such as NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register individually or as a double delegation; MP portfolios are allotted by the secretariat.",
-      "registrationOpen": false
+      "overview": "A mock Parliament (MUN) that follows the Lok Sabha (House of the People) format. Each delegate plays a current MP and follows Lok Sabha rules. Topic: The Public Examinations (Prevention of Unfair Means) Legislation, and the problem of paper leaks and cheating in national and state exams like NEET, UGC-NET and state PSC exams. Debate in English or Hindi. Register alone or as a pair (double delegation). The secretariat (organisers) decides which MP you play.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/model-lok-sabha.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "ESPORTS",
       "categoryName": "ESPORTS",
       "registrationType": "team",
       "minTeam": 5,
-      "maxTeam": 6,
-      "format": "Team (5–6 members)",
-      "teamSize": "5–6",
+      "maxTeam": 7,
+      "format": "Team (5–7 members)",
+      "teamSize": "5–7",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹1,000 · 2nd ₹600 · 3rd ₹400",
       "venue": "To be notified",
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "5v5 standard competitive. Matches are Best of 1, 3 or 5 (as decided) on Dust and Mirage.",
+        "First team to 13 rounds wins the map. A tie goes to overtime (2 rounds).",
+        "Open to students with a valid college ID. Report 30 minutes before your slot.",
+        "Bring your own gaming laptop, mouse, mousepad and other gear; the organisers do not provide them. Make sure your internet and devices work.",
+        "Substitutes may come in only between maps. Only registered players may play.",
+        "No cheats, hacks, scripts, third-party tools, or bug and map exploits. Only official game features are allowed.",
+        "Voice chat only within your team. No toxic behaviour, spamming or deliberately stalling rounds.",
+        "Cheating, unregistered players, smurfing, exploits, disrespect or ignoring admin rules mean removal. Referee, admin and organiser decisions are final."
       ],
       "rounds": [],
       "judgingCriteria": [],
@@ -619,10 +900,11 @@
       ],
       "id": "esports-cs2",
       "title": "ESPORTS: COUNTER-STRIKE 2",
-      "tagline": "Tactical 5v5 on campus",
+      "tagline": "Team shooter, 5 vs 5, on campus",
       "category": "esports",
-      "overview": "A Counter-Strike 2 tournament. Format and schedule will be announced soon.",
-      "registrationOpen": false
+      "overview": "Counter-Strike 2 tournament, 5 vs 5 standard competitive on Dust and Mirage. Teams of 5 players plus up to 2 substitutes. Bring your own gaming laptop and gear.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/esports-cs2.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "BATTLE ROYALE",
@@ -635,39 +917,39 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹3,000 · 2nd ₹2,000 · 3rd ₹1,500",
       "venue": "To be notified",
       "date": "DAY 1 – 2",
       "time": "30 & 31 Oct, 12:00 PM – 4:00 PM each day",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Squads of exactly 4 players. Mobile devices only; emulators and PC clients are not allowed.",
-        "Use your own BGMI account (no guest accounts) and the in-game name submitted at registration. Only registered players may play.",
-        "Charge your device fully and make sure you have a stable internet connection before every match.",
-        "Carry the event or university ID if organisers ask for it.",
-        "Voice chat only within your registered team. Abusive, threatening or toxic behaviour is not allowed.",
-        "Take a screenshot after every match showing the result/placement; the captain submits it to the organisers within the announced time.",
-        "Prohibited: hacks, cheats, mods, scripts, exploits, unauthorised third-party tools, account sharing, teaming with other squads, abusing glitches, and falsifying screenshots or results. Any of these can lead to disqualification.",
-        "A player who disconnects is treated as eliminated unless organisers announce a technical ruling. Report genuine technical issues to the referee immediately.",
-        "Organisers and referees have final authority on match conduct, disputes, scoring and discipline."
+        "Each squad has exactly 4 players. Mobile devices only. No emulators or PC versions.",
+        "Use your own BGMI account (no guest accounts) and the in-game name you gave when registering. Only registered players can play.",
+        "Fully charge your device and check your internet is steady before every match.",
+        "Carry your event or university ID in case the organisers ask for it.",
+        "Voice chat only with your own registered team. No abuse, threats or toxic behaviour.",
+        "Take a screenshot of your result/placement after every match. The captain sends it to the organisers within the given time.",
+        "Not allowed: hacks, cheats, mods, scripts, exploits, outside tools that are not approved, sharing accounts, teaming up with other squads, using bugs or glitches, and faking screenshots or results. Any of these gets you removed.",
+        "If a player disconnects, they count as eliminated. Your device, battery and internet are your responsibility. Tell the referee about real technical problems right away.",
+        "Organisers and referees have the final say on match play, disputes, scoring and discipline."
       ],
       "rounds": [
         {
           "name": "Qualifiers",
           "time": "If more than 16 teams",
-          "description": "Teams are split into groups; qualifying teams advance on the announced criteria."
+          "description": "Teams are split into groups. Teams that qualify move on, based on the announced rules."
         },
         {
           "name": "Day 1 (30 Oct)",
           "time": "6 matches",
-          "description": "Map rotation: 1 Rondo, 3 Erangel, 2 Miramar."
+          "description": "Map order: 1 Rondo, 3 Erangel, 2 Miramar."
         },
         {
           "name": "Day 2 (31 Oct)",
           "time": "6 matches",
-          "description": "Same map rotation, with the Smash Rule applied as announced by the organisers."
+          "description": "Same map order, with the Smash Rule used as the organisers announce."
         }
       ],
       "judgingCriteria": [
@@ -724,10 +1006,11 @@
         "2026-10-31"
       ],
       "title": "ESPORTS: BGMI",
-      "tagline": "Battle royale squads: play smart, fight together, win together",
+      "tagline": "Four-player squads, two days, twelve matches",
       "category": "esports",
-      "overview": "BGMI battle royale tournament (latest game version) for 4-player squads, on mobile devices only. Six matches per day across Rondo, Erangel and Miramar; earn placement and kill points for the highest overall score.",
-      "registrationOpen": false
+      "overview": "A BGMI battle royale tournament for 4-player squads, on the latest game version. Mobile devices only. Squads play six matches a day on Rondo, Erangel and Miramar. Points for your finishing place and your kills add up to the overall ranking.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/esports-bgmi.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "ESPORTS",
@@ -740,18 +1023,85 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-11-01T11:00:00+05:30",
       "endsAt": "2026-11-01T15:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹299",
+      "entryFeeNum": 299,
+      "prizePool": "1st ₹4,000 · 2nd ₹2,500 · 3rd ₹1,500",
       "venue": "To be notified",
       "date": "DAY 3",
       "time": "1 Nov, 11:00 AM – 3:00 PM (4 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Free Fire MAX squads: 4 players plus up to 1 substitute (recommended). Mobile devices only; no emulators, PCs, laptops, modded games or unapproved third-party tools.",
+        "Carry a valid university or college ID. Only registered players can enter the lobby.",
+        "Play on your own account with the in-game name and UID you registered. No account sharing, smurfing or playing as someone else.",
+        "You are responsible for your battery, game updates, earphones and internet. Device or network problems do not get a match replayed.",
+        "Join the custom room 15–30 minutes before your match. Never share the room ID or password.",
+        "Maps: Bermuda, Purgatory, Alpine and Kalahari. 4 Battle Royale rounds unless the organisers change it.",
+        "Teaming up with other squads, hacks, cheats or scripts: removed at once. Account sharing, smurfing or match fixing: removed at once and banned from the tournament. Bug abuse: lost points, a forfeited match or removal.",
+        "Late to the lobby or not joining it: a warning, a forfeited match or removal. Toxic behaviour: a warning, lost points, a forfeited match or removal. Referee and committee decisions are final."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Battle Royale rounds",
+          "time": "4 rounds",
+          "description": "Placement points plus 1 point per kill add up across rounds."
+        },
+        {
+          "name": "Champion Rush (final)",
+          "time": "Until there is a winner",
+          "description": "Once a squad passes 110 points, it must win (Booyah) the very next match to become champion. If it doesn't, the rush goes on and everyone stays in contention."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Kill",
+          "weight": "1 pt each"
+        },
+        {
+          "name": "1st place (Booyah)",
+          "weight": "12"
+        },
+        {
+          "name": "2nd",
+          "weight": "9"
+        },
+        {
+          "name": "3rd",
+          "weight": "8"
+        },
+        {
+          "name": "4th",
+          "weight": "7"
+        },
+        {
+          "name": "5th",
+          "weight": "6"
+        },
+        {
+          "name": "6th",
+          "weight": "5"
+        },
+        {
+          "name": "7th",
+          "weight": "4"
+        },
+        {
+          "name": "8th",
+          "weight": "3"
+        },
+        {
+          "name": "9th",
+          "weight": "2"
+        },
+        {
+          "name": "10th",
+          "weight": "1"
+        },
+        {
+          "name": "11th–12th",
+          "weight": "0"
+        }
+      ],
       "coordinators": [
         {
           "name": "Dhruv Rangra",
@@ -764,33 +1114,57 @@
       ],
       "id": "esports-free-fire",
       "title": "ESPORTS: FREE FIRE",
-      "tagline": "Fast-paced battle royale",
+      "tagline": "Squad battle royale on Day 3",
       "category": "esports",
-      "overview": "A Free Fire tournament. Squad format and match schedule will be announced soon.",
-      "registrationOpen": false
+      "overview": "Free Fire MAX squad tournament on mobile: 4 Battle Royale rounds, then a Champion Rush final to crown the winner.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/esports-free-fire.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
       "registrationType": "team",
-      "minTeam": 2,
+      "minTeam": 3,
       "maxTeam": 3,
-      "format": "Team (2–3 members)",
-      "teamSize": "2–3",
+      "format": "Team (3 members)",
+      "teamSize": "3–3",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-10-31T11:00:00+05:30",
       "endsAt": "2026-10-31T13:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Open Air Theatre (OAT)",
+      "entryFee": "₹75",
+      "entryFeeNum": 75,
+      "prizePool": "1st ₹1,000 · 2nd ₹750 · 3rd ₹500",
+      "venue": "To be notified",
       "date": "DAY 2",
       "time": "31 Oct, 11:00 AM – 1:00 PM (2 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Open to registered students with a valid college ID. Report to the venue at least 30 minutes early.",
+        "Round 1 only picks who moves on; its score does not count after that. Final ranking = Round 2 + Round 3.",
+        "Each round's marking is announced before it starts. Some questions may have negative marks.",
+        "No phones, smartwatches, laptops or tablets unless you are told you may use them. Being caught with one means removal at once.",
+        "No outside help and no talking to the audience. Breaking this means removal.",
+        "Misbehaving, disrupting the quiz or using unfair means: removal at once. Giving false information on purpose: lost points or removal.",
+        "Ties go to the higher Round 3 score, then Round 2, then less total time, then a sudden-death question.",
+        "The quizmaster's and organisers' decisions on questions and scores are final."
       ],
-      "rounds": [],
+      "rounds": [
+        {
+          "name": "Round 1: Matter, Motion and Numbers",
+          "time": "Qualifier",
+          "description": "Class 11 & 12 Physics, Chemistry and Maths. MCQs, short answers, picture questions and rapid fire."
+        },
+        {
+          "name": "Round 2: The Hardwired Round",
+          "time": "Scored",
+          "description": "Hardware, software, chips, networking, the Internet, AI and gadgets. MCQs, picture questions, short answers and buzzer questions."
+        },
+        {
+          "name": "Round 3: The Turing Point (Final)",
+          "time": "Scored",
+          "description": "AI, machine learning, neural networks, algorithms and the future of computing. Concept, case and data questions, plus buzzer rounds."
+        }
+      ],
       "judgingCriteria": [],
       "coordinators": [
         {
@@ -808,10 +1182,11 @@
       ],
       "id": "nerd-wars",
       "title": "NERD WARS",
-      "tagline": "The quiz: trivia, puzzles and pure nerd power",
+      "tagline": "The fest quiz: science, tech and AI in three rounds",
       "category": "cultural",
-      "overview": "The Chaitanya 2k26 quiz: a battle of wits for the biggest nerds on campus. Format will be announced soon.",
-      "registrationOpen": false
+      "overview": "The official Chaitanya 2k26 quiz for teams of exactly 3, in three rounds: science and maths, then computers and tech, then an AI finale.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/nerd-wars.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CULTURAL & FUN",
@@ -824,17 +1199,35 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": "2026-10-30T11:00:00+05:30",
       "endsAt": "2026-10-30T14:00:00+05:30",
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹199",
+      "entryFeeNum": 199,
+      "prizePool": "1st ₹2,000 · 2nd ₹1,000 · 3rd ₹500",
       "venue": "To be notified",
       "date": "DAY 1",
       "time": "30 Oct, 11:00 AM – 2:00 PM (3 hrs)",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Teams of 3 to 4. Report to the venue at the time the organisers give.",
+        "Final score = Round I score + Round II score.",
+        "Once you hand in your work, you cannot change or add to it.",
+        "Do not touch or interfere with another team's tasks, clues or materials.",
+        "Do not share answers or clues with other teams, or take help from anyone outside your team. The organisers will say beforehand whether phones, internet or AI are allowed.",
+        "Cheating, playing as someone else or changing a submission can mean removal at once.",
+        "Ties are decided by total submission time or an extra challenge.",
+        "The organisers may change the procedure, timing or scoring if needed. The coordinators' and judges' decisions are final."
       ],
-      "rounds": [],
+      "rounds": [
+        {
+          "name": "Round I: Task Challenge",
+          "time": "Timed",
+          "description": "Finish as many tasks from the list as you can, in any order. When you are done, or as soon as time runs out, report to the coordinators and hand in. Only tasks done in time count; early hand-ins may earn bonus points."
+        },
+        {
+          "name": "Round II: Riddle Challenge",
+          "time": "Timed",
+          "description": "Solve as many riddles as you can as a team. Hand your answer sheet to the coordinators as soon as you finish or time runs out. Scored on correct answers and how fast you hand in."
+        }
+      ],
       "judgingCriteria": [],
       "coordinators": [
         {
@@ -854,8 +1247,9 @@
       "title": "TREASURE HUNT",
       "tagline": "Follow the clues across campus",
       "category": "cultural",
-      "overview": "A 3-hour campus-wide treasure hunt. Decode the clues, race between checkpoints and find the treasure first.",
-      "registrationOpen": false
+      "overview": "A two-round team challenge: finish as many tasks from a list as you can, then solve as many riddles as you can. Your two round scores add up, and the highest total wins.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/treasure-hunt.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CULTURAL & FUN",
@@ -868,17 +1262,43 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
-      "venue": "Ground floor",
+      "entryFee": "₹20",
+      "entryFeeNum": 20,
+      "prizePool": "Medals for the top 3",
+      "venue": "To be notified",
       "date": "DAY 1 – 3",
-      "time": "Runs through the fest · final submission 4:00 PM",
+      "time": "Rounds 1 & 2: 1 hr each · final photo by 1 Nov, 9:00 AM",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Bring your own smartphone, DSLR or digital camera.",
+        "Entries are individual unless the coordinators announce team entries. The organisers decide how many people move on to each next round, based on entries and performance.",
+        "Take every photo during its round. No downloaded or older photos.",
+        "Ask before photographing people, and do not shoot in restricted areas.",
+        "Basic edits are fine: crop, exposure, contrast, colour, sharpness and light noise reduction.",
+        "Not allowed: AI images, swapped backgrounds, combined photos, adding or removing major objects, or heavy editing.",
+        "Keep the original file and its data (metadata); the organisers may ask for it.",
+        "Using past, AI-made, edited-in or someone else's photos, changing metadata, misconduct or breaking safety rules means removal at once.",
+        "You keep the rights to your photos. The organisers may show selected photos for the fest (exhibitions, social media), but will not sell them.",
+        "Photos are judged on symmetry and framing, quality and clarity, how well they fit the theme, and the meaning or story they carry.",
+        "Ties go to the higher On Theme score, then Meaningful, Quality, then Symmetry. The judges' decisions are final."
       ],
-      "rounds": [],
+      "rounds": [
+        {
+          "name": "Round 1: Colour Hunt",
+          "time": "1 hr",
+          "description": "Find and shoot the given colour."
+        },
+        {
+          "name": "Round 2: Theme Challenge",
+          "time": "1 hr",
+          "description": "Shoot a photo for the announced theme."
+        },
+        {
+          "name": "Round 3: Final Theme Challenge",
+          "time": "Till 1 Nov, 9:00 AM",
+          "description": "Submit one photo and the story or idea behind it."
+        }
+      ],
       "judgingCriteria": [],
       "coordinators": [
         {
@@ -892,34 +1312,79 @@
       ],
       "id": "capture-the-moment",
       "title": "CAPTURE THE MOMENT",
-      "tagline": "Photography: tell the fest's story in a frame",
+      "tagline": "Photography: tell the fest's story in one photo",
       "category": "cultural",
-      "overview": "A photography competition running through the fest. Capture the best moments of Chaitanya 2k26 and submit your entries by the 4:00 PM final submission deadline.",
-      "registrationOpen": false
+      "overview": "A photo contest across the fest: a Colour Hunt and a Theme Challenge (1 hour each), then a final theme photo with the story behind it, due by 1 Nov, 9:00 AM. Bring your own phone or camera.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/capture-the-moment.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CULTURAL & FUN",
       "categoryName": "CULTURAL & FUN",
-      "registrationType": "both",
+      "registrationType": "solo",
       "minTeam": 1,
-      "maxTeam": 10,
-      "format": "Solo or team (up to 10)",
-      "teamSize": "1–10",
+      "maxTeam": 1,
+      "format": "Solo",
+      "teamSize": "1",
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
-      "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "entryFee": "₹50",
+      "entryFeeNum": 50,
+      "prizePool": "1st ₹2,000 · 2nd ₹1,500 · 3rd ₹1,000",
       "venue": "To be notified",
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Pick one category when you register: Cultural Showcase (traditional dress and heritage of any region, community or era) or Cosplay (a character from anime, film, games, comics, books or mythology). You cannot switch on the day.",
+        "Report 30 minutes before the event.",
+        "Bring your own background music (BGM), send it in advance, and keep a backup.",
+        "Walk only: dancing or talking during the walk loses marks.",
+        "You carry, manage and clear your own props.",
+        "Prop weapons must be fake, light and safe. No real weapons, fire, sharp objects, liquids, powders or glass. Unsuitable props lose marks.",
+        "Outfits, actions and messages must not mock any culture, religion, community or gender. Costumes and lyrics must be decent.",
+        "Ties go to the higher Introduction & Message score. The judges' decisions are final.",
+        "1st, 2nd and 3rd prizes are given separately for Cultural Showcase and Cosplay."
       ],
-      "rounds": [],
-      "judgingCriteria": [],
+      "rounds": [
+        {
+          "name": "Round 1: Qualifying walk",
+          "time": "50 marks",
+          "description": "Ramp walk to your BGM, with poses, character actions and approved props. Judges pick the finalists from each category."
+        },
+        {
+          "name": "Round 2: Final walk & introduction",
+          "time": "70 marks",
+          "description": "Walk again (scored on the same 5 points, 50 marks), then introduce your character or culture, why you chose it and its message, in 2 minutes at most (20 marks). Going over 2 minutes loses marks."
+        }
+      ],
+      "judgingCriteria": [
+        {
+          "name": "Costume / dress",
+          "weight": "10"
+        },
+        {
+          "name": "Makeup & styling",
+          "weight": "10"
+        },
+        {
+          "name": "Effort in presentation",
+          "weight": "10"
+        },
+        {
+          "name": "Confidence & walk",
+          "weight": "10"
+        },
+        {
+          "name": "Actions & props",
+          "weight": "10"
+        },
+        {
+          "name": "Final: introduction & message",
+          "weight": "20"
+        }
+      ],
       "coordinators": [
         {
           "name": "Ankita Thakur",
@@ -936,10 +1401,11 @@
       ],
       "id": "cultural-walk",
       "title": "UNLEASHED",
-      "tagline": "A walk through the cultures of India",
+      "tagline": "Style without boundaries: culture and cosplay on the ramp",
       "category": "cultural",
-      "overview": "A cultural parade celebrating traditions, attire and heritage. Details will be announced soon.",
-      "registrationOpen": false
+      "overview": "A solo ramp walk in two categories: Cultural Showcase (traditional dress and heritage) and Cosplay (characters from anime, film, games, books or mythology). Pick one when you register.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/cultural-walk.pdf",
+      "registrationOpen": true
     },
     {
       "badge": "CULTURAL & FUN",
@@ -952,18 +1418,55 @@
       "deadline": "2026-10-29T23:59:00+05:30",
       "startsAt": null,
       "endsAt": null,
-      "entryFee": "To be notified",
+      "entryFee": "Free",
       "entryFeeNum": 0,
-      "prizePool": "To be notified",
+      "prizePool": "A winner in each category: Solo and Group",
       "venue": "To be notified",
       "date": "Day TBA",
       "time": "To be notified",
       "status": "REGISTRATION: TO BE NOTIFIED",
       "rules": [
-        "Detailed rules and eligibility will be announced soon."
+        "Two separate categories: Solo (1 dancer) and Group (2 or more). One winner in each.",
+        "Any style: classical, folk, hip-hop, contemporary, freestyle, fusion and more.",
+        "Perform for 5 to 8 minutes. Timing starts at the first beat or first move. Shorter or longer loses marks.",
+        "Report 30 minutes before the event. Send your music (MP3 or link) to the coordinators in advance and keep a backup.",
+        "Choreography must be your own. Inspiration is fine; steps copied from reels or YouTube lose marks.",
+        "Stunts earn extra points but must be done safely; unsafe stunts or harmful props lose marks. The organisers are not liable for injuries from unsafe stunts.",
+        "No fire, glass, sharp objects, liquids or powders. Clear your props right after you perform.",
+        "Songs, costumes and steps must not hurt religious or cultural feelings. No vulgar or offensive gestures. Any misbehaviour means removal at once.",
+        "Ties go to the higher Choreography score. The judges' decision is final; no appeals on the day."
       ],
       "rounds": [],
-      "judgingCriteria": [],
+      "judgingCriteria": [
+        {
+          "name": "Unique steps / choreography",
+          "weight": "15"
+        },
+        {
+          "name": "Expressions",
+          "weight": "10"
+        },
+        {
+          "name": "Energy",
+          "weight": "10"
+        },
+        {
+          "name": "Pace & rhythm",
+          "weight": "10"
+        },
+        {
+          "name": "Overall impact (solo)",
+          "weight": "5"
+        },
+        {
+          "name": "Coordination & sync (group)",
+          "weight": "10"
+        },
+        {
+          "name": "Formations & transitions (group)",
+          "weight": "5"
+        }
+      ],
       "coordinators": [
         {
           "name": "Ankita Thakur",
@@ -978,8 +1481,9 @@
       "title": "RHYTHMIC RUMBLE",
       "tagline": "Own the stage",
       "category": "cultural",
-      "overview": "Solo and group dance performances. Categories and rules will be announced soon.",
-      "registrationOpen": false
+      "overview": "Dance solo or in a group (2 or more), in any style, for 5–8 minutes. Solo and Group are judged separately, with a winner in each.",
+      "rulebook": "https://cdn.jsdelivr.net/gh/scarescream27/chaitainya-front-back@cdn-v2/rulebooks/dance-competition.pdf",
+      "registrationOpen": true
     }
   ]
 }
