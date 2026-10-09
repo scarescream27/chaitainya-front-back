@@ -6280,13 +6280,13 @@ let Ws,
             }
             if (
               (N === "updateProgress" && Le && Le.progress(A[0]),
-              // Le: model loaded (the slow-network reveal can fire first).
-              // Once per visit: a second call re-ran the glass burst.
-              N === "finishProgress" && Le && !Le.__finished)
+              N === "finishProgress" && Le) // Le: model loaded (the slow-network reveal can fire first)
             ) {
+              // Every call: the intro glass stops reacting to the pointer.
+              ((di = !0), i.hideCursor("", "none"));
+              // The grow and glass burst run once per visit (a second call re-ran the burst).
+              if (Le.__finished) return;
               ((Le.__finished = !0),
-                (di = !0),
-                i.hideCursor("", "none"),
                 // Grow the jellyfish to full size smoothly: jumping there in
                 // one frame while the scene faded in read as a flicker.
                 REDUCED_MOTION
@@ -7287,15 +7287,11 @@ let Ws,
               Gt.setFromCamera(ue, f);
               const N = Gt.intersectObject(as, !0);
               if (N.length > 0) {
-                Oe || ((Oe = !0), i.showCursor("Click<br> and hold", "none"));
+                Oe = !0;
                 const A = N[0].point;
                 Dt.position.set(A.x, A.y, A.z);
               }
-              N.length === 0 &&
-                Oe &&
-                ((Oe = !1),
-                Dt.position.set(0, 0, 0),
-                i.hideCursor(i.getCursorText, "none"));
+              N.length === 0 && Oe && ((Oe = !1), Dt.position.set(0, 0, 0));
             },
             Ha = () => {
               const N = [0.95, 0.8, 0.75, 0.6];
