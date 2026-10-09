@@ -38,8 +38,8 @@ chaitanya-2k26/
 ├── index.html                  # Single-page application entry point & SSR headers
 ├── server.py                   # Multi-threaded local dev server with MIME & CORS support
 ├── package.json                # Project metadata, deployment scripts & repository info
-├── vercel.json                 # Vercel SPA routing configuration
-├── netlify.toml                # Netlify SPA redirect rules
+├── firebase.json               # Firebase Hosting config + security headers (CSP)
+├── scripts/build-pages.mjs     # Cloudflare Pages build: copies the public files to dist/
 ├── FIREBASE_SETUP.md           # Guide for configuring Google Auth and Cloud Firestore
 │
 ├── _nuxt/                      # Application runtime, components, and styles
@@ -182,10 +182,11 @@ To configure custom credentials or set up your own Firebase project, follow the 
 
 ## Deployment
 
-The project is structured as a static Single Page Application (SPA) and can be deployed directly to:
-- **Vercel**: Run `vercel` from the root directory.
-- **Netlify**: Drag-and-drop the root directory or connect your repository.
-- **GitHub Pages**: Configure GitHub Pages to serve from the `main` branch root.
+The project is a static Single Page Application (SPA).
+- **Cloudflare Pages** (live at chaitanyahptu.dev): every push to `main` deploys. Build command `node scripts/build-pages.mjs`, output directory `dist`. The build writes `dist/_headers` from `firebase.json`, so both hosts send the same security headers.
+- **Firebase Hosting** (backup at chaitainya-hptu.web.app): `npm run deploy:hosting`.
+
+After editing an inline `<script>` in `index.html`, run `node scripts/check-csp-hashes.mjs`.
 
 ---
 

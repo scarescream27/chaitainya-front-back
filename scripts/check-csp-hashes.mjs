@@ -18,9 +18,6 @@ for (const [, attrs, body] of read("index.html").matchAll(/<script\b([^>]*)>([\s
 const csps = {
   "firebase.json": JSON.parse(read("firebase.json")).hosting.headers
     .flatMap((h) => h.headers).find((h) => h.key === "Content-Security-Policy")?.value,
-  "netlify.toml": read("netlify.toml").match(/Content-Security-Policy\s*=\s*"([^"]*)"/)?.[1],
-  "vercel.json": JSON.parse(read("vercel.json")).headers
-    .flatMap((h) => h.headers).find((h) => h.key === "Content-Security-Policy")?.value,
 };
 
 let failed = false;
@@ -38,4 +35,4 @@ if (failed) {
   console.error(`\nCurrent hashes for script-src:\n${hashes.join(" ")}`);
   process.exit(1);
 }
-console.log(`OK: ${hashes.length} inline script hashes present in firebase.json, netlify.toml, vercel.json`);
+console.log(`OK: ${hashes.length} inline script hashes present in firebase.json (Cloudflare Pages copies its headers)`);

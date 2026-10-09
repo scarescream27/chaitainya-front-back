@@ -4028,11 +4028,11 @@ let At,
       td = null,
       id = null,
       nd = null,
-      qi = { layout: "builder" },
+      qi = {},
       rd = null,
       sd = null,
       ad = null,
-      Yi = { layout: "builder" },
+      Yi = {},
       od = null,
       ld = null,
       iv = [
@@ -4042,13 +4042,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./case-dynamic-id.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([0, 1, 2, 3, 4, 5, 6, 7]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "cases-3d-configurator",
@@ -4056,13 +4049,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./case-3d-configurator.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([8, 1, 2, 3, 4, 5, 6, 7]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "cases-intel-ai-io",
@@ -4070,13 +4056,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./case-intel-ai.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([9, 1, 2, 3, 4, 5, 6, 7]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "cases-noomo-beat",
@@ -4084,13 +4063,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./case-noomo-beat.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([10, 1, 2, 3, 4, 5, 6, 7]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "cases-the-silly-bunny",
@@ -4098,13 +4070,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./case-the-silly-bunny.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([11, 1, 2, 3, 4, 5, 6, 7]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: (qi == null ? void 0 : qi.name) ?? "configurator",
@@ -4112,13 +4077,6 @@ let At,
           meta: qi || {},
           alias: (qi == null ? void 0 : qi.alias) || [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./403X8TDT.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([12, 13, 4, 5, 3, 14]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "contact",
@@ -4126,13 +4084,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/", // Contact Us is the form in the home footer
-          component: () =>
-            Si(
-              () =>
-                import("./contact-page.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([15, 4, 5, 13, 16]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "fwa",
@@ -4140,13 +4091,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./fwa-page.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([17, 4, 5, 18]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "index",
@@ -4168,13 +4112,6 @@ let At,
           meta: Yi || {},
           alias: (Yi == null ? void 0 : Yi.alias) || [],
           redirect: "/events", // Agency music demo removed (its CSS/audio/models are gone)
-          component: () =>
-            Si(
-              () =>
-                import("./music-demo-page.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([23, 4, 5, 24]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "privacy-policy",
@@ -4277,13 +4214,6 @@ let At,
           meta: {},
           alias: [],
           redirect: "/events", // Agency case-study pages removed
-          component: () =>
-            Si(
-              () =>
-                import("./work-page.js").then(async (t) => (await t.__tla, t)),
-              __vite__mapDeps([26, 20, 13, 4, 5, 21, 2, 3, 27]),
-              import.meta.url,
-            ).then((t) => t.default || t),
         },
         {
           name: "not-found",
@@ -5001,12 +4931,6 @@ let At,
       })),
       (_v = Xi({ name: "nuxt:global-components" })),
       (fr = {
-        builder: () =>
-          Si(
-            () => import("./route-utils.js").then(async (t) => (await t.__tla, t)),
-            __vite__mapDeps([28, 4, 5, 29]),
-            import.meta.url,
-          ).then((t) => t.default || t),
         default: () =>
           Si(
             () => import("./nuxt-router-utils.js").then(async (t) => (await t.__tla, t)),

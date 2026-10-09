@@ -41,9 +41,7 @@
       ".firebase/**",
       "**/*.exe",
       "**/*.cmd",
-      "**/*.sh",
-      "netlify.toml",
-      "vercel.json"
+      "**/*.sh"
     ],
     "rewrites": [
       {
