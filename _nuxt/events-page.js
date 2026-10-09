@@ -58,6 +58,7 @@ import {
   buildUpiLink,
   escapeHtml as e,
   phoneLinksHtml,
+  normalizePhone,
 } from "./fest-config.js";
 
 const UTR_PATTERN = /^\d{12}$/;
@@ -996,7 +997,7 @@ function detailsFieldsHtml(d, user) {
       </div>
       <div class="event-reg-group">
         <label class="event-reg-label" for="co-phone">WhatsApp number *</label>
-        <input type="tel" class="event-reg-input" id="co-phone" maxlength="20" value="${e(d.phone)}" autocomplete="tel" />
+        <input type="tel" class="event-reg-input" id="co-phone" inputmode="numeric" pattern="[0-9]{10}" title="10-digit mobile number" placeholder="10-digit number" value="${e(normalizePhone(d.phone))}" autocomplete="tel" />
       </div>
     </div>`;
 }
@@ -1006,13 +1007,13 @@ function readDetails(card) {
     displayName: card.querySelector("#co-name").value.trim(),
     college: card.querySelector("#co-college").value.trim(),
     year: card.querySelector("#co-year").value,
-    phone: card.querySelector("#co-phone").value.trim(),
+    phone: normalizePhone(card.querySelector("#co-phone").value),
   };
   const d = checkout.details;
   if (!d.displayName) throw new Error("Enter your full name.");
   if (!d.college) throw new Error("Enter your college or university.");
   if (!d.year) throw new Error("Select your year.");
-  if (d.phone.replace(/\D/g, "").length < 10) throw new Error("Enter a WhatsApp number with 10 digits. Country code is optional.");
+  if (d.phone.length !== 10) throw new Error("Enter your 10-digit WhatsApp number (digits only, no +91).");
 }
 
 function readTeams(card) {

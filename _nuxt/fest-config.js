@@ -76,6 +76,41 @@ export function phoneLinksHtml() {
     .join(" or ");
 }
 
+// Phone numbers are 10-digit mobile numbers, digits only. A pasted or
+// autofilled "+91 98765 43210" or "098765 43210" keeps just the 10 digits.
+export function normalizePhone(value) {
+  let d = String(value ?? "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  else if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return d.slice(0, 10);
+}
+
+// Every <input type="tel"> on the site: letters and symbols never appear and
+// nothing past 10 digits is kept, as the person types or pastes. Capture
+// phase, so the forms' own input handlers already see the clean value.
+if (typeof document !== "undefined" && !window.__phoneGuard) {
+  window.__phoneGuard = true;
+  document.addEventListener(
+    "input",
+    (ev) => {
+      const el = ev.target;
+      if (!(el instanceof HTMLInputElement) || el.type !== "tel") return;
+      const before = el.value;
+      const next = normalizePhone(before);
+      if (next === before) return;
+      const allDigits = before.replace(/\D/g, "");
+      const caretDigits = before.slice(0, el.selectionStart ?? before.length).replace(/\D/g, "").length;
+      const droppedLead = allDigits.length > 10 && allDigits.endsWith(next) ? allDigits.length - next.length : 0;
+      el.value = next;
+      const pos = Math.max(0, Math.min(next.length, caretDigits - droppedLead));
+      try {
+        el.setSelectionRange(pos, pos);
+      } catch {}
+    },
+    true,
+  );
+}
+
 export function escapeHtml(value) {
   if (value === null || value === undefined) return "";
   return String(value)

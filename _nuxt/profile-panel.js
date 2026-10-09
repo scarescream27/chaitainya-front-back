@@ -31,7 +31,7 @@ import { getEventById, googleCalendarLink } from "./events-data.js";
 import { getCartItems, removeFromCart, subscribeCart } from "./cart.js";
 import { isAdminUser } from "./firebase-config.js";
 import { qrSvg } from "./qr.js";
-import { escapeHtml as e } from "./fest-config.js";
+import { escapeHtml as e, normalizePhone } from "./fest-config.js";
 
 const SECTION_ANCHORS = {
   profile: "profile-details",
@@ -271,7 +271,7 @@ function detailsFormHtml(user) {
         </select>
       </label>
       <label class="pp-field"><span>WhatsApp number *</span>
-        <input type="tel" name="phone" maxlength="20" value="${e(user.phone)}" autocomplete="tel" required />
+        <input type="tel" name="phone" inputmode="numeric" pattern="[0-9]{10}" title="10-digit mobile number" placeholder="10-digit number" value="${e(normalizePhone(user.phone))}" autocomplete="tel" required />
       </label>
       <div class="pp-msg" role="status" aria-live="polite" hidden></div>
       <div class="prof-actions">
@@ -284,11 +284,11 @@ function validateDetails(form) {
   const name = form.displayName.value.trim();
   const college = form.college.value.trim();
   const year = form.year.value;
-  const digits = form.phone.value.replace(/\D/g, "").length;
+  const digits = normalizePhone(form.phone.value).length;
   if (!name) return ["displayName", "Enter your full name."];
   if (!college) return ["college", "Enter your college or university."];
   if (!year) return ["year", "Select your year."];
-  if (digits < 10 || digits > 15) return ["phone", "Enter a 10-digit WhatsApp number. The country code is optional."];
+  if (digits !== 10) return ["phone", "Enter your 10-digit WhatsApp number (digits only, no +91)."];
   return null;
 }
 
@@ -628,7 +628,7 @@ async function onPageSubmit(evt) {
         displayName: form.displayName.value,
         college: form.college.value,
         year: form.year.value,
-        phone: form.phone.value,
+        phone: normalizePhone(form.phone.value),
       });
       showFormMessage(form, "✓ Profile saved.", true);
     } catch (err) {

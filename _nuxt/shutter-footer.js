@@ -15,7 +15,7 @@
  */
 import { submitToWeb3Forms } from "./web3forms-config.js";
 import { submitQueryTicket, getCurrentUser } from "./auth-service.js";
-import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel, phoneLinksHtml } from "./fest-config.js";
+import { escapeHtml as esc, FEST_CONFIG, getFestDatesLabel, phoneLinksHtml, normalizePhone } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES, REGISTRATION_DEADLINE, formatDeadline, feeLabel } from "./events-data.js";
 import { marqueeHtml, eventCardHtml, personCardHtml } from "./m-marquee.js";
 import { allPeople } from "./teams-data.js";
@@ -404,7 +404,7 @@ export function mountShutterFooter(root, opts = {}) {
           <div class="sgf-field"><label class="sr-only" for="${uid}-email">Email</label>
             <input class="sgf-input" id="${uid}-email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" maxlength="120" placeholder="Email address" /></div>
           <div class="sgf-field"><label class="sr-only" for="${uid}-phone">Phone (optional)</label>
-            <input class="sgf-input" id="${uid}-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Phone (optional)" /></div>
+            <input class="sgf-input" id="${uid}-phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" title="10-digit mobile number" autocomplete="tel" placeholder="Phone, 10 digits (optional)" /></div>
           <div class="sgf-field sgf-field-msg"><label class="sr-only" for="${uid}-msg">Message</label>
             <textarea class="sgf-input" id="${uid}-msg" name="message" rows="3" maxlength="1500" placeholder="Your message"></textarea></div>
           <button class="sgf-send" type="submit"><span class="sgf-send-label">Send message</span><span class="sgf-go" aria-hidden="true">${ARROW}</span></button>
@@ -836,7 +836,7 @@ export function mountShutterFooter(root, opts = {}) {
     const problems = [
       [name.length < 2, "name", "Enter your name"],
       [!isEmail(email), "email", "Type an email like name@example.com"],
-      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Phone needs 10 digits, or leave it blank"],
+      [phone && normalizePhone(phone).length !== 10, "phone", "Phone needs 10 digits, or leave it blank"],
       [message.length < 3, "message", "Write a short message"],
     ].filter(([bad]) => bad);
     form.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
@@ -851,7 +851,7 @@ export function mountShutterFooter(root, opts = {}) {
     try {
       // Same path as the old contact page: e-mail via Web3Forms, then a ticket
       // for the admin dashboard (best effort; never blocks the reply).
-      await submitToWeb3Forms({ name, email, contact_no: phone, team_name: "", query: message });
+      await submitToWeb3Forms({ name, email, contact_no: normalizePhone(phone), team_name: "", query: message });
       submitQueryTicket({ name, email, phone, message, subject: "Website contact form" }).catch((err) =>
         console.warn("Contact ticket not saved:", err),
       );

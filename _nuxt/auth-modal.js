@@ -13,7 +13,7 @@ import {
   initFirebase,
 } from "./auth-service.js";
 import { isFirebaseConfigured, isAdminUser } from "./firebase-config.js";
-import { escapeHtml as e } from "./fest-config.js";
+import { escapeHtml as e, normalizePhone } from "./fest-config.js";
 import { openProfilePanel } from "./profile-panel.js";
 
 const DEMO_BANNER = `
@@ -398,7 +398,7 @@ function renderRegisterView(container, isConfigured) {
 
       <div class="chaitanya-form-group">
         <label class="chaitanya-form-label" for="reg-phone">WhatsApp number *</label>
-        <input type="tel" id="reg-phone" class="chaitanya-form-input" maxlength="20" autocomplete="tel" />
+        <input type="tel" id="reg-phone" class="chaitanya-form-input" inputmode="numeric" pattern="[0-9]{10}" title="10-digit mobile number" placeholder="10-digit number" autocomplete="tel" />
       </div>
 
       <div class="chaitanya-divider"><span>Finish with Google</span></div>
@@ -423,12 +423,12 @@ function renderRegisterView(container, isConfigured) {
     const year = container.querySelector("#reg-year").value;
     if (!college) return showAuthError("Enter your college or university.");
     if (!year) return showAuthError("Select your year.");
-    if (phone.replace(/\D/g, "").length < 10) return showAuthError("Enter a 10-digit WhatsApp number. The country code is optional.");
+    if (normalizePhone(phone).length !== 10) return showAuthError("Enter your 10-digit WhatsApp number (digits only, no +91).");
 
     const btn = container.querySelector("#btn-do-google-register");
     setBusy(btn, true, "Creating your account…");
     try {
-      const res = await signInWithGoogle({ college, phone, year });
+      const res = await signInWithGoogle({ college, phone: normalizePhone(phone), year });
       closeAuthModal();
       if (!res?.redirect) runAfterSignIn();
     } catch (err) {

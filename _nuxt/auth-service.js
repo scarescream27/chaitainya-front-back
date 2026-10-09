@@ -21,7 +21,7 @@ import {
 } from "./firebase-config.js";
 import { getEventById, isRegistrationOpen, isRegistrationPaused, isPastDeadline, EVENTS_DATA, ACCOMMODATION } from "./events-data.js";
 import { getCartItems, setCartOwner } from "./cart.js";
-import { FEST_CONFIG, isPaymentConfigured, isRazorpayEnabled } from "./fest-config.js";
+import { FEST_CONFIG, isPaymentConfigured, isRazorpayEnabled, normalizePhone } from "./fest-config.js";
 
 const SDK_VERSION = "10.12.0";
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
@@ -144,7 +144,7 @@ function cleanText(value, max = 120) {
 }
 
 function cleanPhone(value) {
-  return String(value ?? "").replace(/[^\d+\s-]/g, "").trim().slice(0, 20);
+  return normalizePhone(value);
 }
 
 function cleanYear(value) {

@@ -10,7 +10,7 @@
  */
 import { a as setHead, __tla as o } from "./app-main.js";
 import { k as defineComponent, H as openBlock, F as createBlock, M as h, E as onMounted } from "./vue-runtime.js";
-import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc } from "./fest-config.js";
+import { FEST_CONFIG, SPONSORS, getFestDatesLabel, escapeHtml as esc, normalizePhone } from "./fest-config.js";
 import { EVENTS_DATA, EVENT_CATEGORIES } from "./events-data.js";
 import { PHOTOS, PROFILES, initials, allPeople, teamGroups } from "./teams-data.js";
 import { marqueeHtml, eventCardHtml } from "./m-marquee.js";
@@ -65,7 +65,7 @@ function contactHtml() {
       <form class="m-form" novalidate>
         <label>Name<input name="name" autocomplete="name" required minlength="2" placeholder="Your name" /></label>
         <label>Email<input name="email" type="email" autocomplete="email" required placeholder="you@example.com" /></label>
-        <label>Phone <small>(optional)</small><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="10-digit number" /></label>
+        <label>Phone <small>(optional)</small><input name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="10-digit mobile number" placeholder="10-digit number" /></label>
         <label>Message<textarea name="message" rows="4" required placeholder="How can we help?"></textarea></label>
         <p class="m-form-status" role="status" aria-live="polite"></p>
         <button type="submit" class="privacy-cta-btn">SEND MESSAGE</button>
@@ -99,7 +99,7 @@ function wireForm(root) {
     const bad = [
       [name.length < 2, "name", "Enter your name"],
       [!isEmail(email), "email", "Enter an email like name@example.com"],
-      [phone && phone.replace(/\D/g, "").length < 10, "phone", "Enter a 10-digit phone number, or leave it empty"],
+      [phone && normalizePhone(phone).length !== 10, "phone", "Enter a 10-digit phone number, or leave it empty"],
       [message.length < 3, "message", "Write a short message"],
     ].filter(([b]) => b);
     if (bad.length) {
@@ -111,8 +111,8 @@ function wireForm(root) {
     btn.disabled = true;
     say("Sending…");
     try {
-      await submitToWeb3Forms({ name, email, contact_no: phone, team_name: "", query: message });
-      submitQueryTicket({ name, email, phone, message, subject: "Website contact form" }).catch(() => {});
+      await submitToWeb3Forms({ name, email, contact_no: normalizePhone(phone), team_name: "", query: message });
+      submitQueryTicket({ name, email, phone: normalizePhone(phone), message, subject: "Website contact form" }).catch(() => {});
       form.reset();
       say("Message sent. We'll reply by email.", "ok");
     } catch {
