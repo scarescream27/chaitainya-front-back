@@ -624,3 +624,66 @@ ol.adm-list li span::before {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Payments: below 1280px the 7 columns don't fit, and the Approve / Reject /
+   Undo buttons sat off-screen to the right of a sideways-scrolling table.
+   Each payment becomes a card instead, buttons always in view. */
+@media (max-width: 1279px) {
+  .admin-table.adm-pay-table,
+  .adm-pay-table tbody,
+  .adm-pay-table tr,
+  .adm-pay-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Header row: kept for screen readers, hidden visually (cells carry labels). */
+  .adm-pay-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .adm-pay-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px 20px;
+    padding: 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+
+  .adm-pay-table td {
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .adm-pay-table tr:hover td {
+    background: none;
+  }
+
+  .adm-pay-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .adm-pay-table td[data-label="Events"],
+  .adm-pay-table td[data-label="Payer"],
+  .adm-pay-table td[data-label="Action"] {
+    grid-column: 1 / -1;
+  }
+
+  .adm-pay-table td.adm-empty {
+    padding: 16px;
+  }
+}

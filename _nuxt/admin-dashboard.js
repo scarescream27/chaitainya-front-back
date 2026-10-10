@@ -451,7 +451,7 @@ const keepQuery = (q) =>
   (state.statusFilter === "all" || (q.status || "open") === state.statusFilter) &&
   matchesSearch(q.name, q.email, q.phone, q.subject, q.message, q.team_name);
 
-function table(headers, rows, emptyText, total) {
+function table(headers, rows, emptyText, total, cls = "") {
   const label = `${SECTIONS.find((s) => s.id === state.section)?.label || "Results"} table`;
   // The wrapper scrolls sideways on narrow screens, so it is a focusable,
   // named region (keyboard users can scroll it even when no row has a button).
@@ -459,7 +459,7 @@ function table(headers, rows, emptyText, total) {
     <div data-adm-results>
       <p class="adm-result-count">${rows.length} of ${total} shown</p>
       <div class="admin-table-wrap" role="region" tabindex="0" aria-label="${e(label)}">
-        <table class="admin-table">
+        <table class="admin-table${cls ? ` ${cls}` : ""}">
           <caption class="sr-only">${e(label)}, ${rows.length} of ${total} shown</caption>
           <thead><tr>${headers.map((h) => `<th scope="col">${e(h)}</th>`).join("")}</tr></thead>
           <tbody>${rows.join("") || `<tr><td colspan="${headers.length}" class="adm-empty">${e(emptyText)}</td></tr>`}</tbody>
@@ -628,13 +628,13 @@ function renderPayments({ utrCounts }) {
     ].join("");
     return `
       <tr>
-        <td>${items.map((it) => `<strong>${e(it.eventTitle || it.eventId)}</strong>${it.teamName ? ` <small>· Team ${e(it.teamName)}</small>` : ""}`).join("<br/>")}</td>
-        <td>${e(p.payerName)}<br/><small>${e(p.payerEmail)} · ${e(p.payerPhone)}</small></td>
-        <td><strong>₹${e(p.amount)}</strong></td>
-        <td><code>${e(p.transactionRef || "—")}</code>${flags}</td>
-        <td>${e(formatDate(p.createdAt))}</td>
-        <td>${statusBadge(p.status)}</td>
-        <td>${state.rejecting !== p.paymentId && p.status === "verified"
+        <td data-label="Events">${items.map((it) => `<strong>${e(it.eventTitle || it.eventId)}</strong>${it.teamName ? ` <small>· Team ${e(it.teamName)}</small>` : ""}`).join("<br/>")}</td>
+        <td data-label="Payer">${e(p.payerName)}<br/><small>${e(p.payerEmail)} · ${e(p.payerPhone)}</small></td>
+        <td data-label="Amount"><strong>₹${e(p.amount)}</strong></td>
+        <td data-label="Transaction ID"><code>${e(p.transactionRef || "—")}</code>${flags}</td>
+        <td data-label="Submitted">${e(formatDate(p.createdAt))}</td>
+        <td data-label="Status">${statusBadge(p.status)}</td>
+        <td data-label="Action">${state.rejecting !== p.paymentId && p.status === "verified"
           ? // Approved by mistake (e.g. a fake transaction ID): it can still be rejected.
             `<small>By ${e((p.verifiedBy || "").split("@")[0])}</small>
             <div class="admin-action-btn-group">
@@ -671,7 +671,7 @@ function renderPayments({ utrCounts }) {
       ${stat(state.payments.length, "All payments")}
     </div>
     ${toolbar({ statuses: ["pending_verification", "verified", "rejected"], placeholder: "Search payer, transaction ID, event…" })}
-    ${table(["Events", "Payer", "Amount", "Transaction ID", "Submitted", "Status", "Action"], rows, "No payments yet", state.payments.length)}`;
+    ${table(["Events", "Payer", "Amount", "Transaction ID", "Submitted", "Status", "Action"], rows, "No payments yet", state.payments.length, "adm-pay-table")}`;
 }
 
 // ---- Registrations ----------------------------------------------------------
