@@ -633,8 +633,14 @@ function renderPayments({ utrCounts }) {
         <td><code>${e(p.transactionRef || "—")}</code>${flags}</td>
         <td>${e(formatDate(p.createdAt))}</td>
         <td>${statusBadge(p.status)}</td>
-        <td>${p.status !== "pending_verification"
-          ? `<small>${e(p.status === "verified" ? `By ${(p.verifiedBy || "").split("@")[0]}` : p.rejectionReason || "")}</small>`
+        <td>${state.rejecting !== p.paymentId && p.status === "verified"
+          ? // Approved by mistake (e.g. a fake transaction ID): it can still be rejected.
+            `<small>By ${e((p.verifiedBy || "").split("@")[0])}</small>
+            <div class="admin-action-btn-group">
+              <button type="button" class="btn-action-reject" data-adm="reject" data-id="${e(p.paymentId)}">✕ Reject</button>
+            </div>`
+          : state.rejecting !== p.paymentId && p.status !== "pending_verification"
+          ? `<small>${e(p.rejectionReason || "")}</small>`
           : state.rejecting === p.paymentId
             ? `<form class="adm-reject-form" data-adm-form="reject" data-id="${e(p.paymentId)}" novalidate>
                 <label class="pp-field"><span>Reason (the participant sees this)</span>
