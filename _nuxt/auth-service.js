@@ -1513,7 +1513,8 @@ export function paymentItems(payment) {
 async function setPaymentStatus(payment, status, extra) {
   const admin = requireAdmin();
   const patch = { status, ...extra };
-  const teamStatus = status === PAYMENT_STATUS.VERIFIED ? "paid" : status;
+  // Teams store "paid" / "pending" (as written at checkout) rather than the payment's status.
+  const teamStatus = status === PAYMENT_STATUS.VERIFIED ? "paid" : status === PAYMENT_STATUS.PENDING ? "pending" : status;
   const items = paymentItems(payment);
 
   // Only the payer's own registration and team for each item; teamId is client-written.
@@ -1565,6 +1566,20 @@ export async function rejectPayment(payment, reason = "Transaction ID not found 
     rejectionReason: cleanText(reason, 200),
     rejectedAt: nowIso(),
     rejectedBy: admin.email,
+  });
+}
+
+// Undo an approval or a rejection: back to "waiting", to be checked again.
+export async function reopenPayment(payment) {
+  const admin = requireAdmin();
+  return setPaymentStatus(payment, PAYMENT_STATUS.PENDING, {
+    verifiedAt: null,
+    verifiedBy: null,
+    rejectionReason: null,
+    rejectedAt: null,
+    rejectedBy: null,
+    reopenedAt: nowIso(),
+    reopenedBy: admin.email,
   });
 }
 

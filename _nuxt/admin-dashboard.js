@@ -22,6 +22,7 @@ import {
   paymentItems,
   approvePayment,
   rejectPayment,
+  reopenPayment,
   backfillTeamCodes,
   adminSetField,
   adminDeleteDoc,
@@ -638,9 +639,13 @@ function renderPayments({ utrCounts }) {
             `<small>By ${e((p.verifiedBy || "").split("@")[0])}</small>
             <div class="admin-action-btn-group">
               <button type="button" class="btn-action-reject" data-adm="reject" data-id="${e(p.paymentId)}">✕ Reject</button>
+              <button type="button" class="pp-action subtle" data-adm="undo" data-id="${e(p.paymentId)}" title="Move back to Waiting">↺ Undo</button>
             </div>`
           : state.rejecting !== p.paymentId && p.status !== "pending_verification"
-          ? `<small>${e(p.rejectionReason || "")}</small>`
+          ? `<small>${e(p.rejectionReason || "")}</small>
+            <div class="admin-action-btn-group">
+              <button type="button" class="pp-action subtle" data-adm="undo" data-id="${e(p.paymentId)}" title="Move back to Waiting">↺ Undo</button>
+            </div>`
           : state.rejecting === p.paymentId
             ? `<form class="adm-reject-form" data-adm-form="reject" data-id="${e(p.paymentId)}" novalidate>
                 <label class="pp-field"><span>Reason (the participant sees this)</span>
@@ -999,19 +1004,22 @@ async function updatePayment(payment, kind, reason, btn) {
   state.actionError = "";
   if (btn) {
     btn.disabled = true;
-    btn.textContent = kind === "approve" ? "Approving…" : "Rejecting…";
+    btn.textContent = kind === "approve" ? "Approving…" : kind === "undo" ? "Undoing…" : "Rejecting…";
   }
   try {
-    const res = kind === "approve" ? await approvePayment(payment) : await rejectPayment(payment, reason);
+    const res =
+      kind === "approve" ? await approvePayment(payment) : kind === "undo" ? await reopenPayment(payment) : await rejectPayment(payment, reason);
     Object.assign(payment, res.payment);
     paymentItems(payment).forEach((item) => {
       const reg = state.registrations.find((r) => r.event_id === item.eventId && r.user_id === payment.payerUid);
       if (reg) reg.payment_status = payment.status;
       const team = item.teamId && state.teams.find((t) => t.teamId === item.teamId);
-      if (team) team.paymentStatus = payment.status === "verified" ? "paid" : payment.status;
+      if (team) team.paymentStatus = payment.status === "verified" ? "paid" : payment.status === "pending_verification" ? "pending" : payment.status;
     });
     state.rejecting = null;
-    announce(`Payment from ${payment.payerName || "the participant"} ${kind === "approve" ? "approved" : "rejected"}.`);
+    announce(
+      `Payment from ${payment.payerName || "the participant"} ${kind === "approve" ? "approved" : kind === "undo" ? "moved back to Waiting" : "rejected"}.`,
+    );
   } catch (err) {
     state.actionError = `Could not update the payment from ${payment.payerName || "this participant"}: ${err.message}`;
   }
@@ -1056,6 +1064,11 @@ async function onClick(evt) {
     renderMain();
     state.root.querySelector(".adm-reject-form input")?.select();
     announce(`Rejecting the payment from ${payment?.payerName || "this participant"}. Type the reason they will see, then press Reject payment.`);
+    return;
+  }
+  if (action === "undo") {
+    const payment = state.payments.find((p) => p.paymentId === btn.dataset.id);
+    if (payment) updatePayment(payment, "undo", null, btn);
     return;
   }
   if (action === "reject-cancel") {
